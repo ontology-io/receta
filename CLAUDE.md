@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # Receta
 
 > Practical FP recipes built on Remeda — higher-level patterns for real-world TypeScript applications.
@@ -47,6 +51,48 @@
 - Each module can be imported independently
 - No barrel files that force bundling everything
 - Side-effect free for dead code elimination
+
+---
+
+## Common Development Commands
+
+### Running Tests
+```bash
+# Run all tests
+bun test
+
+# Run tests in watch mode
+bun test --watch
+
+# Run specific test file
+bun test src/result/__tests__/constructors.test.ts
+```
+
+### Building & Type Checking
+```bash
+# Type check without emitting files
+bun run typecheck
+
+# Build the project (compiles TypeScript to dist/)
+bun run build
+
+# Clean build artifacts
+bun run clean
+```
+
+### Development Workflow
+```bash
+# Typical workflow for implementing a module:
+bun test --watch           # Keep running in terminal
+bun run typecheck          # Run before committing
+bun run build              # Verify build works
+```
+
+### Running Examples
+```bash
+# Run example files to verify implementation
+bun run examples/result-usage.ts
+```
 
 ---
 
@@ -582,37 +628,53 @@ Full reference: See `remeda-llms.txt` in project root.
 
 ---
 
-## Getting Started (For Contributors)
+## Development Workflow for New Modules
 
-1. Read this document fully
-2. Review `remeda-llms.txt` for Remeda API reference
-3. Check existing modules for patterns
-4. Write types first, implementation second
-5. Tests are required for all exports
-6. Run `pnpm test` and `pnpm typecheck` before committing
+When implementing a new module, follow the proven workflow documented in [docs/module-development-guide.md](./docs/module-development-guide.md):
+
+### Quick Start
+1. **Create feature branch**: `git checkout -b <module-name>-module-implementation`
+2. **Implement module** following existing patterns in `src/result/`
+3. **Write comprehensive tests** with 90%+ coverage
+4. **Add real-world examples** in `examples/`
+5. **Create documentation** (8 guides following Result module structure)
+6. **Commit in 3 phases**: implementation → examples → documentation
+
+### Key Resources
+- **Module guide**: `docs/module-development-guide.md` - Complete workflow and templates
+- **Remeda reference**: `remeda-llms.txt` - Full Remeda API documentation
+- **Result module**: `src/result/` - Reference implementation to follow
+- **Test patterns**: `src/result/__tests__/` - Testing conventions and structure
+
+### Before Committing
+```bash
+bun test           # All tests must pass
+bun run typecheck  # No TypeScript errors
+bun run build      # Build must succeed
+```
 
 ---
 
 ## Module Implementation Status
 
-| Module | Status | Priority |
-|--------|--------|----------|
-| result | 🔴 Not started | P0 |
-| option | 🔴 Not started | P0 |
-| async | 🔴 Not started | P0 |
-| predicate | 🔴 Not started | P1 |
-| validation | 🔴 Not started | P1 |
-| collection | 🔴 Not started | P2 |
-| object | 🔴 Not started | P2 |
-| string | 🔴 Not started | P2 |
-| number | 🔴 Not started | P2 |
-| date | 🔴 Not started | P3 |
-| memo | 🔴 Not started | P3 |
-| lens | 🔴 Not started | P3 |
-| compare | 🔴 Not started | P3 |
-| id | 🔴 Not started | P3 |
-| function | 🔴 Not started | P3 |
-| fetch | 🔴 Not started | P3 |
+| Module | Status | Priority | Notes |
+|--------|--------|----------|-------|
+| result | ✅ Complete | P0 | Full implementation with tests and docs |
+| async | ✅ Complete | P0 | Promise utilities, concurrency control |
+| option | 🔴 Not started | P0 | Similar to Result but for nullability |
+| predicate | 🔴 Not started | P1 | Predicate combinators and builders |
+| validation | 🔴 Not started | P1 | Data validation with error accumulation |
+| collection | 🔴 Not started | P2 | Advanced collection operations |
+| object | 🔴 Not started | P2 | Object manipulation utilities |
+| string | 🔴 Not started | P2 | String processing and formatting |
+| number | 🔴 Not started | P2 | Number formatting and calculations |
+| date | 🔴 Not started | P3 | Date utilities and formatting |
+| memo | 🔴 Not started | P3 | Memoization strategies |
+| lens | 🔴 Not started | P3 | Functional lenses for immutable updates |
+| compare | 🔴 Not started | P3 | Comparator builders |
+| id | 🔴 Not started | P3 | ID generation utilities |
+| function | 🔴 Not started | P3 | Function combinators |
+| fetch | 🔴 Not started | P3 | Fetch wrappers with Result integration |
 
 ---
 
@@ -647,3 +709,59 @@ const isValidUser = where({
 
 R.filter(users, isValidUser)
 ```
+
+---
+
+## Architecture Insights
+
+### Type System Architecture
+- **Discriminated Unions**: All core types use `_tag` for type narrowing
+- **Readonly by Default**: Ensures immutability at the type level
+- **Branded Types**: Use `_tag` to prevent accidental type mixing
+- **No Any**: Strict type safety enforced throughout
+
+### Data-First/Data-Last Pattern
+All transformers support both calling conventions via Remeda's `purry`:
+```typescript
+// Data-first (direct call)
+map(result, x => x * 2)
+
+// Data-last (in pipe)
+pipe(result, map(x => x * 2))
+```
+
+### Module Organization
+Each module follows this structure:
+```
+module-name/
+├── types.ts           # Type definitions only
+├── constructors.ts    # Creating instances
+├── guards.ts          # Type guards (is*)
+├── map.ts            # Individual transformer files
+├── flatMap.ts        # (one file per function)
+├── unwrap.ts         # Extractors
+├── match.ts          # Pattern matching
+├── collect.ts        # Combinators
+├── index.ts          # Barrel export
+└── __tests__/        # Test suite
+    ├── constructors.test.ts
+    ├── transformers.test.ts
+    ├── extractors.test.ts
+    ├── combinators.test.ts
+    └── laws.test.ts  # Property-based tests
+```
+
+### Testing Philosophy
+1. **Unit Tests**: Cover both data-first and data-last signatures
+2. **Type Tests**: Verify TypeScript inference works correctly
+3. **Property Tests**: Verify mathematical laws (functor, monad, etc.)
+4. **Integration Tests**: Real-world usage patterns
+5. **Edge Cases**: Empty values, errors, nested structures
+
+### Documentation Philosophy
+Documentation targets developers unfamiliar with functional programming:
+- **Real-world examples**: From Stripe, GitHub, AWS APIs
+- **No FP jargon**: Use practical terms
+- **Progressive learning**: Simple → Complex
+- **Copy-paste ready**: All examples are production-ready
+- **8-document structure**: Overview → API Reference
