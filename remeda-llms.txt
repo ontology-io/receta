@@ -1,0 +1,1123 @@
+# Remeda
+
+> Remeda is the first "data-first" and "data-last" utility library designed specifically for TypeScript. It provides functional programming utilities with excellent type inference, tree-shakeability, and support for both curried (data-last) and uncurried (data-first) calling conventions.
+
+## Key Concepts
+
+- **Data-First**: `R.map(array, fn)` - Traditional calling convention
+- **Data-Last**: `R.map(fn)(array)` - Curried form, ideal for `pipe()`
+- **Lazy Evaluation**: Many functions support lazy evaluation in pipes for performance
+- **TypeScript-First**: Designed for optimal type inference
+
+## Core Pattern: pipe()
+
+```typescript
+import * as R from 'remeda';
+
+// Compose operations left-to-right
+R.pipe(
+  [1, 2, 3, 4, 5],
+  R.filter(x => x > 2),
+  R.map(x => x * 2),
+  R.take(2)
+); // => [6, 8]
+```
+
+---
+
+## Array Functions
+
+### allPass
+Determines whether all predicates return true for the input data.
+```typescript
+R.allPass(12, [isDivisibleBy3, isDivisibleBy4]); // => true
+R.pipe(data, R.allPass([isDivisibleBy3, isDivisibleBy4])); // data-last
+```
+
+### anyPass
+Determines whether any predicate returns true for the input data.
+```typescript
+R.anyPass(8, [isDivisibleBy3, isDivisibleBy4]); // => true
+```
+
+### chunk
+Split an array into groups of specified length.
+```typescript
+R.chunk(['a', 'b', 'c', 'd'], 2); // => [['a', 'b'], ['c', 'd']]
+R.pipe(arr, R.chunk(2)); // data-last
+```
+
+### concat
+Merge two or more arrays (immutable).
+```typescript
+R.concat([1, 2, 3], ['a']); // => [1, 2, 3, 'a']
+```
+
+### countBy
+Categorize and count elements using a callback function.
+```typescript
+R.countBy(['a', 'b', 'c', 'B', 'A', 'a'], R.toLowerCase()); // => { a: 3, b: 2, c: 1 }
+```
+
+### difference
+Excludes values from another array (treats as multi-sets).
+```typescript
+R.difference([1, 2, 3, 4], [2, 5, 3]); // => [1, 4]
+R.difference([1, 1, 2, 2], [1]); // => [1, 2, 2]
+```
+
+### differenceWith
+Excludes values using custom comparator.
+```typescript
+R.differenceWith([{ a: 1 }, { a: 2 }], [2], ({ a }, b) => a === b); // => [{ a: 1 }]
+```
+
+### drop
+Removes first n elements.
+```typescript
+R.drop([1, 2, 3, 4, 5], 2); // => [3, 4, 5]
+```
+
+### dropLast
+Removes last n elements.
+```typescript
+R.dropLast([1, 2, 3, 4, 5], 2); // => [1, 2, 3]
+```
+
+### dropWhile
+Removes elements from beginning until predicate returns false.
+```typescript
+R.dropWhile([1, 2, 10, 3, 4], x => x < 10); // => [10, 3, 4]
+```
+
+### dropLastWhile
+Removes elements from end until predicate returns false.
+```typescript
+R.dropLastWhile([1, 2, 10, 3, 4], x => x < 10); // => [1, 2, 10]
+```
+
+### dropFirstBy
+Drop first n items based on ordering criteria. O(Nlogn).
+```typescript
+R.dropFirstBy(['aa', 'aaaa', 'a', 'aaa'], 2, x => x.length); // => ['aaa', 'aaaa']
+```
+
+### filter
+Creates shallow copy with elements passing test. Equivalent to Array.prototype.filter.
+```typescript
+R.filter([1, 2, 3], x => x % 2 === 1); // => [1, 3]
+R.pipe([1, 2, 3], R.filter(x => x % 2 === 1)); // data-last, lazy
+```
+
+### find
+Returns first element satisfying predicate, or undefined.
+```typescript
+R.find([1, 3, 4, 6], n => n % 2 === 0); // => 4
+```
+
+### findIndex
+Returns index of first element satisfying predicate, or -1.
+```typescript
+R.findIndex([1, 3, 4, 6], n => n % 2 === 0); // => 2
+```
+
+### findLast
+Returns last element satisfying predicate.
+```typescript
+R.findLast([1, 3, 4, 6], n => n % 2 === 1); // => 3
+```
+
+### findLastIndex
+Returns index of last element satisfying predicate.
+```typescript
+R.findLastIndex([1, 3, 4, 6], n => n % 2 === 1); // => 1
+```
+
+### first
+Gets first element.
+```typescript
+R.first([1, 2, 3]); // => 1
+R.first([]); // => undefined
+```
+
+### firstBy
+Find first element based on ordering rules. O(n). Superset of maxBy/minBy.
+```typescript
+R.firstBy([1, 2, 3], [R.identity(), 'desc']); // => 3 (max)
+R.firstBy([1, 2, 3], R.identity()); // => 1 (min)
+R.firstBy(data, [item => item.a.length, 'desc']); // maxBy length
+```
+
+### flat
+Flattens array to specified depth. Equivalent to Array.prototype.flat.
+```typescript
+R.flat([[1, 2], [3, 4], [5], [[6]]]); // => [1, 2, 3, 4, 5, [6]]
+R.flat([[[1]], [[2]]], 2); // => [1, 2]
+```
+
+### flatMap
+Map then flatten by one level. Equivalent to Array.prototype.flatMap.
+```typescript
+R.flatMap([1, 2, 3], x => [x, x * 10]); // => [1, 10, 2, 20, 3, 30]
+```
+
+### forEach
+Executes function for each element. Returns original array in data-last form.
+```typescript
+R.forEach([1, 2, 3], x => console.log(x));
+R.pipe([1, 2, 3], R.forEach(x => console.log(x))); // => [1, 2, 3]
+```
+
+### groupBy
+Groups elements by callback return value.
+```typescript
+R.groupBy([{ a: 'cat' }, { a: 'dog' }], R.prop('a')); 
+// => { cat: [{ a: 'cat' }], dog: [{ a: 'dog' }] }
+```
+
+### groupByProp
+Groups objects by a property value (better typing than groupBy for this case).
+```typescript
+R.groupByProp([{ a: 'cat' }, { a: 'dog' }], 'a');
+// => { cat: [{ a: 'cat' }], dog: [{ a: 'dog' }] }
+```
+
+### hasAtLeast
+Checks if array has at least n elements. Narrows type for index access.
+```typescript
+R.hasAtLeast([], 4); // => false
+R.hasAtLeast([1, 2, 3, 4], 1); // => true, data[0] typed as number
+```
+
+### indexBy
+Converts array to object indexed by key function. Last value wins for duplicates.
+```typescript
+R.indexBy(['one', 'two', 'three'], x => x.length); // => { 3: 'two', 5: 'three' }
+```
+
+### intersection
+Returns elements that exist in both arrays (multi-set).
+```typescript
+R.intersection([1, 2, 3], [2, 3, 5]); // => [2, 3]
+```
+
+### intersectionWith
+Intersection with custom comparator.
+```typescript
+R.intersectionWith([{ id: 1 }, { id: 3 }], [3, 5], (a, b) => a.id === b); 
+// => [{ id: 3 }]
+```
+
+### join
+Joins array elements into string with glue.
+```typescript
+R.join([1, 2, 3], ','); // => "1,2,3"
+R.join(['hello', 'world'] as const, ' '); // => "hello world" (typed literal)
+```
+
+### last
+Gets last element.
+```typescript
+R.last([1, 2, 3]); // => 3
+R.last([]); // => undefined
+```
+
+### length
+Returns array length.
+```typescript
+R.length([1, 2, 3]); // => 3
+```
+
+### map
+Creates new array with callback results. Equivalent to Array.prototype.map.
+```typescript
+R.map([1, 2, 3], R.multiply(2)); // => [2, 4, 6]
+R.map([0, 0], (value, index) => value + index); // => [0, 1]
+```
+
+### mapToObj
+Map array to object entries. Consider using pullObject or fromEntries(map()) instead.
+```typescript
+R.mapToObj([1, 2, 3], x => [String(x), x * 2]); // => { 1: 2, 2: 4, 3: 6 }
+```
+
+### mapWithFeedback
+Map with access to previous result (like scan/reduce that returns array).
+```typescript
+R.mapWithFeedback([1, 2, 3, 4, 5], (prev, x) => prev + x, 100); 
+// => [101, 103, 106, 110, 115]
+```
+
+### meanBy
+Returns mean of elements using provided mapper.
+```typescript
+R.meanBy([{ a: 5 }, { a: 1 }, { a: 3 }], x => x.a); // => 3
+```
+
+### mergeAll
+Merges array of objects into single object.
+```typescript
+R.mergeAll([{ a: 1, b: 1 }, { b: 2, c: 3 }, { d: 10 }]); 
+// => { a: 1, b: 2, c: 3, d: 10 }
+```
+
+### nthBy
+Get element at index if array were sorted by rules. O(n) QuickSelect.
+```typescript
+R.nthBy([2, 1, 4, 5, 3], 2, R.identity()); // => 3
+```
+
+### only
+Returns first and only element, or undefined if length !== 1.
+```typescript
+R.only([]); // => undefined
+R.only([1]); // => 1
+R.only([1, 2]); // => undefined
+```
+
+### partition
+Splits array into two groups based on predicate.
+```typescript
+R.partition(['one', 'two', 'forty two'], x => x.length === 3); 
+// => [['one', 'two'], ['forty two']]
+```
+
+### range
+Returns array of numbers from start (inclusive) to end (exclusive).
+```typescript
+R.range(1, 5); // => [1, 2, 3, 4]
+```
+
+### rankBy
+Calculates rank (sorted position) of item in array. O(n).
+```typescript
+R.rankBy([{ a: 5 }, { a: 1 }, { a: 3 }], 2, R.prop('a')); // => 1
+```
+
+### reduce
+Reduces array to single value. Equivalent to Array.prototype.reduce.
+```typescript
+R.reduce([1, 2, 3, 4, 5], (acc, x) => acc + x, 100); // => 115
+```
+
+### reverse
+Returns reversed array (immutable).
+```typescript
+R.reverse([1, 2, 3]); // => [3, 2, 1]
+```
+
+### sample
+Returns random subset of specified size.
+```typescript
+R.sample(['hello', 'world'], 1); // => ['hello'] or ['world']
+```
+
+### shuffle
+Returns shuffled array.
+```typescript
+R.shuffle([4, 2, 7, 5]); // => [7, 5, 4, 2] (random order)
+```
+
+### sort
+Sorts array with comparator function (immutable).
+```typescript
+R.sort([4, 2, 7, 5], (a, b) => a - b); // => [2, 4, 5, 7]
+```
+
+### sortBy
+Sorts array using ordering rules.
+```typescript
+R.sortBy([{ a: 1 }, { a: 3 }, { a: 2 }], R.prop('a')); 
+// => [{ a: 1 }, { a: 2 }, { a: 3 }]
+
+// Multiple rules with direction
+R.sortBy(data, [R.prop('weight'), 'asc'], R.prop('color'));
+```
+
+### sortedIndex
+Binary search for insertion index (first occurrence). O(logN).
+```typescript
+R.sortedIndex(['a', 'a', 'b', 'c', 'c'], 'c'); // => 3
+```
+
+### sortedLastIndex
+Binary search for insertion index (last occurrence). O(logN).
+```typescript
+R.sortedLastIndex(['a', 'a', 'b', 'c', 'c'], 'c'); // => 5
+```
+
+### sortedIndexBy / sortedLastIndexBy
+Binary search with value function.
+```typescript
+R.sortedIndexBy([{ age: 20 }, { age: 22 }], { age: 21 }, R.prop('age')); // => 1
+```
+
+### splice
+Removes/inserts elements (immutable).
+```typescript
+R.splice([1, 2, 3, 4, 5], 2, 2, [9, 10]); // => [1, 2, 9, 10, 5]
+```
+
+### splitAt
+Splits array at index.
+```typescript
+R.splitAt([1, 2, 3], 1); // => [[1], [2, 3]]
+R.splitAt([1, 2, 3, 4, 5], -1); // => [[1, 2, 3, 4], [5]]
+```
+
+### splitWhen
+Splits array at first index where predicate returns true.
+```typescript
+R.splitWhen([1, 2, 3], x => x === 2); // => [[1], [2, 3]]
+```
+
+### sumBy
+Returns sum using mapper. Supports number and bigint.
+```typescript
+R.sumBy([{ a: 5 }, { a: 1 }, { a: 3 }], x => x.a); // => 9
+R.sumBy([{ a: 5n }, { a: 1n }], x => x.a); // => 6n
+```
+
+### swapIndices
+Swaps two elements at indices (supports negative indices).
+```typescript
+R.swapIndices(['a', 'b', 'c'], 0, 1); // => ['b', 'a', 'c']
+R.swapIndices('abc', 0, 1); // => 'bac'
+```
+
+### take
+Returns first n elements.
+```typescript
+R.take([1, 2, 3, 4], 2); // => [1, 2]
+```
+
+### takeFirstBy
+Take first n items based on ordering criteria. O(Nlogn).
+```typescript
+R.takeFirstBy(['aa', 'aaaa', 'a', 'aaa'], 2, x => x.length); // => ['a', 'aa']
+```
+
+### takeLast
+Returns last n elements.
+```typescript
+R.takeLast([1, 2, 3, 4, 5], 2); // => [4, 5]
+```
+
+### takeWhile
+Returns elements from start until predicate returns false.
+```typescript
+R.takeWhile([1, 2, 3, 4, 3, 2, 1], x => x !== 4); // => [1, 2, 3]
+```
+
+### takeLastWhile
+Returns elements from end until predicate returns false.
+```typescript
+R.takeLastWhile([1, 2, 10, 3, 4, 5], x => x < 10); // => [3, 4, 5]
+```
+
+### times
+Calls function n times, returns array of results.
+```typescript
+R.times(5, R.identity()); // => [0, 1, 2, 3, 4]
+```
+
+### unique
+Returns array with unique elements (by reference).
+```typescript
+R.unique([1, 2, 2, 5, 1, 6, 7]); // => [1, 2, 5, 6, 7]
+```
+
+### uniqueBy
+Returns unique elements using key function.
+```typescript
+R.uniqueBy([{ n: 1 }, { n: 2 }, { n: 2 }], obj => obj.n); 
+// => [{ n: 1 }, { n: 2 }]
+```
+
+### uniqueWith
+Returns unique elements using custom comparator.
+```typescript
+R.uniqueWith([{ a: 1 }, { a: 2 }, { a: 1 }], R.isDeepEqual); 
+// => [{ a: 1 }, { a: 2 }]
+```
+
+### zip
+Pairs elements from two arrays.
+```typescript
+R.zip([1, 2], ['a', 'b']); // => [[1, 'a'], [2, 'b']]
+```
+
+### zipWith
+Combines two arrays using function.
+```typescript
+R.zipWith(['1', '2', '3'], ['a', 'b', 'c'], (a, b) => a + b); 
+// => ['1a', '2b', '3c']
+```
+
+---
+
+## Function Utilities
+
+### pipe
+Left-to-right function composition with lazy evaluation support.
+```typescript
+R.pipe(
+  [1, 2, 3],
+  R.map(R.multiply(3)),
+  R.filter(x => x > 3),
+  R.take(2)
+); // => [6, 9]
+```
+
+### piped
+Data-last version of pipe for creating reusable transformations.
+```typescript
+R.map([{ a: 1 }, { a: 2 }], R.piped(R.prop('a'), R.add(1))); // => [2, 3]
+```
+
+### purry
+Creates function with both data-first and data-last signatures.
+```typescript
+function myFunc(...args: unknown[]) {
+  return R.purry(implementation, args);
+}
+```
+
+### identity
+Returns first argument unchanged.
+```typescript
+R.map([1, 2, 3], R.identity()); // => [1, 2, 3]
+```
+
+### constant
+Returns function that always returns the given value.
+```typescript
+R.map([1, 2, 3], R.constant('a')); // => ['a', 'a', 'a']
+```
+
+### doNothing
+Function that takes any arguments and does nothing (void).
+```typescript
+myApi({ onSuccess: handleSuccess, onError: R.doNothing() });
+```
+
+### once
+Creates function that only invokes once, returns cached value after.
+```typescript
+const initialize = R.once(createApplication);
+```
+
+### conditional
+Executes transformer based on first matching predicate (if...else if chain).
+```typescript
+R.conditional(
+  data,
+  [R.isString, name => `Hello ${name}`],
+  [R.isNumber, id => `Hello ID: ${id}`],
+  R.constant(undefined) // default case
+);
+```
+
+### when
+Conditionally run function based on predicate (ternary operator).
+```typescript
+R.when(data, R.isNullish, R.constant(42));
+R.when(data, x => x > 3, { onTrue: R.add(1), onFalse: R.multiply(2) });
+```
+
+### partialBind
+Creates function with some arguments pre-filled (from start).
+```typescript
+const add5 = R.partialBind((x, y) => x + y, 5);
+add5(3); // => 8
+```
+
+### partialLastBind
+Creates function with some arguments pre-filled (from end).
+```typescript
+const parseBinary = R.partialLastBind(parseInt, '2');
+parseBinary('101'); // => 5
+```
+
+### funnel
+Controls timing/execution of callbacks (debounce, throttle, batch).
+```typescript
+// Debounce
+const debouncer = R.funnel(() => save(), { minQuietPeriodMs: 100 });
+
+// Throttle
+const throttle = R.funnel(() => update(), { minGapMs: 100, triggerAt: 'start' });
+```
+
+### debounce (DEPRECATED)
+Use funnel instead.
+
+---
+
+## Guard Functions (Type Predicates)
+
+### isArray
+```typescript
+R.isArray([5]); // => true
+R.isArray('string'); // => false
+```
+
+### isString
+```typescript
+R.isString('hello'); // => true
+```
+
+### isNumber
+```typescript
+R.isNumber(5); // => true
+R.isNumber(NaN); // => true
+```
+
+### isBigInt
+```typescript
+R.isBigInt(1n); // => true
+```
+
+### isBoolean
+```typescript
+R.isBoolean(true); // => true
+```
+
+### isDate
+```typescript
+R.isDate(new Date()); // => true
+```
+
+### isFunction
+```typescript
+R.isFunction(() => {}); // => true
+```
+
+### isError
+```typescript
+R.isError(new Error()); // => true
+```
+
+### isPromise
+```typescript
+R.isPromise(Promise.resolve()); // => true
+```
+
+### isSymbol
+```typescript
+R.isSymbol(Symbol('test')); // => true
+```
+
+### isPlainObject
+```typescript
+R.isPlainObject({}); // => true
+R.isPlainObject(new Date()); // => false
+```
+
+### isObjectType
+```typescript
+R.isObjectType({}); // => true
+R.isObjectType([]); // => true
+```
+
+### isDefined
+Checks !== undefined.
+```typescript
+R.isDefined(null); // => true
+R.isDefined(undefined); // => false
+```
+
+### isNullish
+Checks === null || === undefined.
+```typescript
+R.isNullish(null); // => true
+R.isNullish(undefined); // => true
+```
+
+### isNonNull
+```typescript
+R.isNonNull(null); // => false
+```
+
+### isNonNullish
+```typescript
+R.isNonNullish(undefined); // => false
+```
+
+### isTruthy
+```typescript
+R.isTruthy(1); // => true
+R.isTruthy(0); // => false
+R.isTruthy(''); // => false
+```
+
+### isEmpty
+Checks if string/array/object is empty.
+```typescript
+R.isEmpty(''); // => true
+R.isEmpty([]); // => true
+R.isEmpty({}); // => true
+```
+
+### isEmptyish
+Like isEmpty but also accepts null/undefined.
+```typescript
+R.isEmptyish(null); // => true
+R.isEmptyish(undefined); // => true
+```
+
+### isDeepEqual
+Deep structural comparison.
+```typescript
+R.isDeepEqual([1, 2, 3], [1, 2, 3]); // => true
+R.isDeepEqual({ a: 1 }, { a: 1 }); // => true
+```
+
+### isShallowEqual
+Shallow comparison (one level deep).
+```typescript
+R.isShallowEqual([1, 2], [1, 2]); // => true
+```
+
+### isStrictEqual
+Strict equality (===).
+```typescript
+R.isStrictEqual(1, 1); // => true
+```
+
+### isNot
+Negates a predicate.
+```typescript
+R.filter(data, R.isNot(R.isNullish));
+```
+
+### isIncludedIn
+Checks if value is in array.
+```typescript
+R.isIncludedIn(2, [1, 2, 3]); // => true
+```
+
+### hasSubObject
+Checks if object contains all properties of sub-object.
+```typescript
+R.hasSubObject({ a: 1, b: 2, c: 3 }, { a: 1, c: 3 }); // => true
+```
+
+---
+
+## Number Functions
+
+### add
+```typescript
+R.add(1, 2); // => 3
+R.pipe(1, R.add(2)); // => 3
+```
+
+### subtract
+```typescript
+R.subtract(10, 5); // => 5
+```
+
+### multiply
+```typescript
+R.multiply(3, 4); // => 12
+```
+
+### divide
+```typescript
+R.divide(10, 2); // => 5
+```
+
+### sum
+Sum of array.
+```typescript
+R.sum([1, 2, 3]); // => 6
+```
+
+### product
+Product of array.
+```typescript
+R.product([1, 2, 3, 4]); // => 24
+```
+
+### mean
+Average of array.
+```typescript
+R.mean([1, 2, 3]); // => 2
+```
+
+### median
+Median of array.
+```typescript
+R.median([1, 2, 3, 4, 5]); // => 3
+```
+
+### clamp
+Clamps value to range.
+```typescript
+R.clamp(10, { min: 0, max: 5 }); // => 5
+R.clamp(-5, { min: 0, max: 10 }); // => 0
+```
+
+### round / floor / ceil
+```typescript
+R.round(1.5); // => 2
+R.floor(1.9); // => 1
+R.ceil(1.1); // => 2
+R.round(1.567, 2); // => 1.57 (precision)
+```
+
+### randomInteger
+Random integer in range.
+```typescript
+R.randomInteger(1, 10); // => random 1-10
+```
+
+### randomBigInt
+Random bigint in range.
+```typescript
+R.randomBigInt(1n, 1000000000000n);
+```
+
+---
+
+## Object Functions
+
+### prop
+Gets property value.
+```typescript
+R.prop({ a: 1 }, 'a'); // => 1
+R.pipe({ a: 1 }, R.prop('a')); // => 1
+```
+
+### pick
+Creates object with only specified keys.
+```typescript
+R.pick({ a: 1, b: 2, c: 3 }, ['a', 'c']); // => { a: 1, c: 3 }
+```
+
+### pickBy
+Creates object with properties passing predicate.
+```typescript
+R.pickBy({ a: 1, b: 2, c: 3 }, (val, key) => val > 1); // => { b: 2, c: 3 }
+```
+
+### omit
+Creates object without specified keys.
+```typescript
+R.omit({ a: 1, b: 2, c: 3 }, ['a', 'c']); // => { b: 2 }
+```
+
+### omitBy
+Creates object without properties passing predicate.
+```typescript
+R.omitBy({ a: 1, b: 2, c: 3 }, (val, key) => val > 1); // => { a: 1 }
+```
+
+### keys
+Returns array of keys.
+```typescript
+R.keys({ a: 1, b: 2 }); // => ['a', 'b']
+```
+
+### values
+Returns array of values.
+```typescript
+R.values({ a: 1, b: 2 }); // => [1, 2]
+```
+
+### entries
+Returns array of [key, value] pairs.
+```typescript
+R.entries({ a: 1, b: 2 }); // => [['a', 1], ['b', 2]]
+```
+
+### fromEntries
+Creates object from [key, value] pairs.
+```typescript
+R.fromEntries([['a', 1], ['b', 2]]); // => { a: 1, b: 2 }
+```
+
+### fromKeys
+Creates object from keys array with mapper for values.
+```typescript
+R.fromKeys(['a', 'b'], key => key.toUpperCase()); // => { a: 'A', b: 'B' }
+```
+
+### mapKeys
+Maps object keys.
+```typescript
+R.mapKeys({ a: 1, b: 2 }, (key, val) => key.toUpperCase()); 
+// => { A: 1, B: 2 }
+```
+
+### mapValues
+Maps object values.
+```typescript
+R.mapValues({ a: 1, b: 2 }, (val, key) => val * 2); // => { a: 2, b: 4 }
+```
+
+### merge
+Shallow merge of objects.
+```typescript
+R.merge({ a: 1, b: 2 }, { b: 3, c: 4 }); // => { a: 1, b: 3, c: 4 }
+```
+
+### mergeDeep
+Deep merge of objects.
+```typescript
+R.mergeDeep({ a: { x: 1 } }, { a: { y: 2 } }); // => { a: { x: 1, y: 2 } }
+```
+
+### clone
+Deep clone of value.
+```typescript
+R.clone({ a: { b: 1 } }); // => new object with same structure
+```
+
+### set
+Sets property value (immutable).
+```typescript
+R.set({ a: 1 }, 'b', 2); // => { a: 1, b: 2 }
+```
+
+### setPath
+Sets nested property value (immutable).
+```typescript
+R.setPath({ a: { b: 1 } }, ['a', 'b'], 2); // => { a: { b: 2 } }
+```
+
+### addProp
+Adds property to object (immutable).
+```typescript
+R.addProp({ a: 1 }, 'b', 2); // => { a: 1, b: 2 }
+```
+
+### pathOr
+Gets nested value with default.
+```typescript
+R.pathOr({ a: { b: 1 } }, ['a', 'b'], 0); // => 1
+R.pathOr({ a: {} }, ['a', 'b'], 0); // => 0
+```
+
+### evolve
+Transforms object properties using functions.
+```typescript
+R.evolve({ a: 1, b: 2 }, { a: x => x + 1 }); // => { a: 2, b: 2 }
+```
+
+### invert
+Swaps keys and values.
+```typescript
+R.invert({ a: 'x', b: 'y' }); // => { x: 'a', y: 'b' }
+```
+
+### swapProps
+Swaps two property values.
+```typescript
+R.swapProps({ a: 1, b: 2 }, 'a', 'b'); // => { a: 2, b: 1 }
+```
+
+### pullObject
+Builds object from array with mappers for keys and values.
+```typescript
+R.pullObject([{ id: 1, name: 'a' }], item => item.id, item => item.name);
+// => { 1: 'a' }
+```
+
+### forEachObj
+Iterates over object properties.
+```typescript
+R.forEachObj({ a: 1, b: 2 }, (val, key) => console.log(key, val));
+```
+
+### objOf
+Creates object with single property.
+```typescript
+R.objOf('a', 1); // => { a: 1 }
+```
+
+---
+
+## String Functions
+
+### split
+Splits string by separator.
+```typescript
+R.split('a,b,c', ','); // => ['a', 'b', 'c']
+```
+
+### join (see Array)
+
+### capitalize
+Capitalizes first character.
+```typescript
+R.capitalize('hello'); // => 'Hello'
+```
+
+### uncapitalize
+Lowercases first character.
+```typescript
+R.uncapitalize('Hello'); // => 'hello'
+```
+
+### toLowerCase
+```typescript
+R.toLowerCase('HELLO'); // => 'hello'
+```
+
+### toUpperCase
+```typescript
+R.toUpperCase('hello'); // => 'HELLO'
+```
+
+### toCamelCase
+```typescript
+R.toCamelCase('hello-world'); // => 'helloWorld'
+```
+
+### toKebabCase
+```typescript
+R.toKebabCase('helloWorld'); // => 'hello-world'
+```
+
+### toSnakeCase
+```typescript
+R.toSnakeCase('helloWorld'); // => 'hello_world'
+```
+
+### toTitleCase
+```typescript
+R.toTitleCase('hello world'); // => 'Hello World'
+```
+
+### sliceString
+Extracts substring.
+```typescript
+R.sliceString('hello', 1, 3); // => 'el'
+```
+
+### truncate
+Truncates string to length.
+```typescript
+R.truncate('hello world', 5); // => 'hello...'
+```
+
+### startsWith
+```typescript
+R.startsWith('hello', 'he'); // => true
+```
+
+### endsWith
+```typescript
+R.endsWith('hello', 'lo'); // => true
+```
+
+### randomString
+Generates random string.
+```typescript
+R.randomString(10); // => random 10-char string
+```
+
+---
+
+## Other Utilities
+
+### tap
+Executes side effect and returns input unchanged.
+```typescript
+R.pipe(
+  [1, 2, 3],
+  R.tap(x => console.log(x)),
+  R.map(R.add(1))
+);
+```
+
+### defaultTo
+Returns default if value is nullish.
+```typescript
+R.defaultTo(null, 'default'); // => 'default'
+R.defaultTo('value', 'default'); // => 'value'
+```
+
+### stringToPath
+Converts string path to array.
+```typescript
+R.stringToPath('a.b[0].c'); // => ['a', 'b', '0', 'c']
+```
+
+---
+
+## Lazy Evaluation
+
+Functions marked with "Lazy" support lazy evaluation in pipes. They process items one at a time and can short-circuit early:
+
+```typescript
+// Only processes items until 2 results found
+R.pipe(
+  hugeArray,
+  R.map(expensiveComputation),  // Lazy
+  R.filter(complexPredicate),    // Lazy
+  R.take(2)                      // Lazy - causes early termination
+);
+```
+
+Lazy functions: `difference`, `differenceWith`, `drop`, `filter`, `find`, `first`, `flat`, `flatMap`, `forEach`, `intersection`, `intersectionWith`, `map`, `mapWithFeedback`, `take`, `unique`, `uniqueBy`, `uniqueWith`, `zip`
+
+---
+
+## Migration from Lodash
+
+Common equivalents:
+- `_.chain` → `R.pipe`
+- `_.get` → `R.pathOr`
+- `_.set` → `R.setPath`
+- `_.cloneDeep` → `R.clone`
+- `_.isEqual` → `R.isDeepEqual`
+- `_.groupBy` → `R.groupBy`
+- `_.keyBy` → `R.indexBy`
+- `_.mapValues` → `R.mapValues`
+- `_.pick` → `R.pick`
+- `_.omit` → `R.omit`
+- `_.uniq` → `R.unique`
+- `_.uniqBy` → `R.uniqueBy`
+- `_.sortBy` → `R.sortBy`
+- `_.maxBy` → `R.firstBy(data, [fn, 'desc'])`
+- `_.minBy` → `R.firstBy(data, fn)`
+- `_.flatten` → `R.flat`
+- `_.flattenDeep` → `R.flat(Infinity)`
+- `_.compact` → `R.filter(R.isTruthy)`
+- `_.partition` → `R.partition`
+- `_.zip` → `R.zip`
+- `_.zipWith` → `R.zipWith`
+- `_.chunk` → `R.chunk`
+- `_.difference` → `R.difference`
+- `_.intersection` → `R.intersection`
+- `_.throttle` → `R.funnel({ minGapMs, triggerAt: 'start' })`
+- `_.debounce` → `R.funnel({ minQuietPeriodMs })`
+
+## Installation
+
+```bash
+npm install remeda
+# or
+yarn add remeda
+# or  
+pnpm add remeda
+```
+
+## Import
+
+```typescript
+// Named imports (recommended for tree-shaking)
+import { pipe, map, filter } from 'remeda';
+
+// Namespace import
+import * as R from 'remeda';
+```
+
+## Links
+
+- Documentation: https://remedajs.com/docs
+- GitHub: https://github.com/remeda/remeda
+- npm: https://www.npmjs.com/package/remeda
