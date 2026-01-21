@@ -52,21 +52,6 @@ export interface ConcurrencyOptions {
 }
 
 /**
- * Options for timeout operations.
- */
-export interface TimeoutOptions {
-  /**
-   * Timeout in milliseconds.
-   */
-  readonly timeout: number
-
-  /**
-   * Custom error to throw on timeout.
-   */
-  readonly timeoutError?: Error
-}
-
-/**
  * Options for polling operations.
  */
 export interface PollOptions {

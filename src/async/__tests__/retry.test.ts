@@ -1,11 +1,15 @@
 import { describe, it, expect } from 'bun:test'
 import { retry, sleep } from '../retry'
+import { isOk, isErr, unwrapOr } from '../../result'
 
 describe('Async.retry', () => {
   describe('basic retry', () => {
-    it('returns result on first success', async () => {
+    it('returns Ok on first success', async () => {
       const result = await retry(async () => 42)
-      expect(result).toBe(42)
+      expect(isOk(result)).toBe(true)
+      if (isOk(result)) {
+        expect(result.value).toBe(42)
+      }
     })
 
     it('retries on failure and succeeds', async () => {
@@ -17,36 +21,44 @@ describe('Async.retry', () => {
         return 'success'
       })
 
-      expect(result).toBe('success')
+      expect(isOk(result)).toBe(true)
+      if (isOk(result)) {
+        expect(result.value).toBe('success')
+      }
       expect(attempts).toBe(3)
     })
 
-    it('throws after max attempts exceeded', async () => {
+    it('returns Err after max attempts exceeded', async () => {
       let attempts = 0
 
-      await expect(
-        retry(
-          async () => {
-            attempts++
-            throw new Error(`Attempt ${attempts}`)
-          },
-          { maxAttempts: 3 }
-        )
-      ).rejects.toThrow('Attempt 3')
+      const result = await retry(
+        async () => {
+          attempts++
+          throw new Error(`Attempt ${attempts}`)
+        },
+        { maxAttempts: 3 }
+      )
 
+      expect(isErr(result)).toBe(true)
+      if (isErr(result)) {
+        expect(result.error.type).toBe('max_attempts_exceeded')
+        expect(result.error.attempts).toBe(3)
+      }
       expect(attempts).toBe(3)
     })
 
     it('uses default maxAttempts of 3', async () => {
       let attempts = 0
 
-      await expect(
-        retry(async () => {
-          attempts++
-          throw new Error('Failed')
-        })
-      ).rejects.toThrow('Failed')
+      const result = await retry(async () => {
+        attempts++
+        throw new Error('Failed')
+      })
 
+      expect(isErr(result)).toBe(true)
+      if (isErr(result)) {
+        expect(result.error.attempts).toBe(3)
+      }
       expect(attempts).toBe(3)
     })
   })
@@ -57,25 +69,24 @@ describe('Async.retry', () => {
       const delays: number[] = []
       let lastTime = Date.now()
 
-      await expect(
-        retry(
-          async () => {
-            attempts++
-            const now = Date.now()
-            if (attempts > 1) {
-              delays.push(now - lastTime)
-            }
-            lastTime = now
-            throw new Error('Failed')
-          },
-          {
-            maxAttempts: 3,
-            delay: 100,
-            backoff: 2,
+      const result = await retry(
+        async () => {
+          attempts++
+          const now = Date.now()
+          if (attempts > 1) {
+            delays.push(now - lastTime)
           }
-        )
-      ).rejects.toThrow('Failed')
+          lastTime = now
+          throw new Error('Failed')
+        },
+        {
+          maxAttempts: 3,
+          delay: 100,
+          backoff: 2,
+        }
+      )
 
+      expect(isErr(result)).toBe(true)
       expect(attempts).toBe(3)
       expect(delays.length).toBe(2)
       // First delay ~100ms, second delay ~200ms (with some tolerance)
@@ -90,25 +101,24 @@ describe('Async.retry', () => {
       const delays: number[] = []
       let lastTime = Date.now()
 
-      await expect(
-        retry(
-          async () => {
-            attempts++
-            const now = Date.now()
-            if (attempts > 1) {
-              delays.push(now - lastTime)
-            }
-            lastTime = now
-            throw new Error('Failed')
-          },
-          {
-            maxAttempts: 3,
-            delay: 100,
-            backoff: 1,
+      const result = await retry(
+        async () => {
+          attempts++
+          const now = Date.now()
+          if (attempts > 1) {
+            delays.push(now - lastTime)
           }
-        )
-      ).rejects.toThrow('Failed')
+          lastTime = now
+          throw new Error('Failed')
+        },
+        {
+          maxAttempts: 3,
+          delay: 100,
+          backoff: 1,
+        }
+      )
 
+      expect(isErr(result)).toBe(true)
       expect(delays.length).toBe(2)
       // Both delays should be ~100ms
       expect(delays[0]!).toBeGreaterThanOrEqual(90)
@@ -122,26 +132,25 @@ describe('Async.retry', () => {
       const delays: number[] = []
       let lastTime = Date.now()
 
-      await expect(
-        retry(
-          async () => {
-            attempts++
-            const now = Date.now()
-            if (attempts > 1) {
-              delays.push(now - lastTime)
-            }
-            lastTime = now
-            throw new Error('Failed')
-          },
-          {
-            maxAttempts: 4,
-            delay: 100,
-            backoff: 10, // Would cause very large delays
-            maxDelay: 200,
+      const result = await retry(
+        async () => {
+          attempts++
+          const now = Date.now()
+          if (attempts > 1) {
+            delays.push(now - lastTime)
           }
-        )
-      ).rejects.toThrow('Failed')
+          lastTime = now
+          throw new Error('Failed')
+        },
+        {
+          maxAttempts: 4,
+          delay: 100,
+          backoff: 10, // Would cause very large delays
+          maxDelay: 200,
+        }
+      )
 
+      expect(isErr(result)).toBe(true)
       // All delays should be capped at maxDelay
       delays.forEach((delay) => {
         expect(delay).toBeLessThan(250)
@@ -153,22 +162,21 @@ describe('Async.retry', () => {
     it('stops retrying when shouldRetry returns false', async () => {
       let attempts = 0
 
-      await expect(
-        retry(
-          async () => {
-            attempts++
-            throw new Error('Network error')
+      const result = await retry(
+        async () => {
+          attempts++
+          throw new Error('Network error')
+        },
+        {
+          maxAttempts: 5,
+          shouldRetry: (error) => {
+            // Only retry first 2 attempts
+            return attempts < 2
           },
-          {
-            maxAttempts: 5,
-            shouldRetry: (error) => {
-              // Only retry first 2 attempts
-              return attempts < 2
-            },
-          }
-        )
-      ).rejects.toThrow('Network error')
+        }
+      )
 
+      expect(isErr(result)).toBe(true)
       expect(attempts).toBe(2)
     })
 
@@ -188,7 +196,10 @@ describe('Async.retry', () => {
         }
       )
 
-      expect(result).toBe('success')
+      expect(isOk(result)).toBe(true)
+      if (isOk(result)) {
+        expect(result.value).toBe('success')
+      }
       expect(attempts).toBe(3)
     })
   })
@@ -197,21 +208,20 @@ describe('Async.retry', () => {
     it('calls onRetry on each retry attempt', async () => {
       const retryAttempts: Array<{ error: unknown; attempt: number; delay: number }> = []
 
-      await expect(
-        retry(
-          async () => {
-            throw new Error('Failed')
+      const result = await retry(
+        async () => {
+          throw new Error('Failed')
+        },
+        {
+          maxAttempts: 3,
+          delay: 50,
+          onRetry: (error, attempt, delay) => {
+            retryAttempts.push({ error, attempt, delay })
           },
-          {
-            maxAttempts: 3,
-            delay: 50,
-            onRetry: (error, attempt, delay) => {
-              retryAttempts.push({ error, attempt, delay })
-            },
-          }
-        )
-      ).rejects.toThrow('Failed')
+        }
+      )
 
+      expect(isErr(result)).toBe(true)
       expect(retryAttempts.length).toBe(2) // Called for attempts 1 and 2, not 3
       expect(retryAttempts[0]!.attempt).toBe(1)
       expect(retryAttempts[1]!.attempt).toBe(2)
@@ -229,7 +239,10 @@ describe('Async.retry', () => {
         }
       )
 
-      expect(result).toBe('success')
+      expect(isOk(result)).toBe(true)
+      if (isOk(result)) {
+        expect(result.value).toBe('success')
+      }
       expect(onRetryCalled).toBe(false)
     })
   })
@@ -238,34 +251,35 @@ describe('Async.retry', () => {
     it('handles maxAttempts of 1 (no retries)', async () => {
       let attempts = 0
 
-      await expect(
-        retry(
-          async () => {
-            attempts++
-            throw new Error('Failed')
-          },
-          { maxAttempts: 1 }
-        )
-      ).rejects.toThrow('Failed')
+      const result = await retry(
+        async () => {
+          attempts++
+          throw new Error('Failed')
+        },
+        { maxAttempts: 1 }
+      )
 
+      expect(isErr(result)).toBe(true)
       expect(attempts).toBe(1)
     })
 
     it('handles different error types', async () => {
       let attempts = 0
 
-      await expect(
-        retry(
-          async () => {
-            attempts++
-            if (attempts === 1) throw new Error('First')
-            if (attempts === 2) throw 'String error'
-            throw { custom: 'error' }
-          },
-          { maxAttempts: 3, delay: 10 }
-        )
-      ).rejects.toEqual({ custom: 'error' })
+      const result = await retry(
+        async () => {
+          attempts++
+          if (attempts === 1) throw new Error('First')
+          if (attempts === 2) throw 'String error'
+          throw { custom: 'error' }
+        },
+        { maxAttempts: 3, delay: 10 }
+      )
 
+      expect(isErr(result)).toBe(true)
+      if (isErr(result)) {
+        expect(result.error.lastError).toEqual({ custom: 'error' })
+      }
       expect(attempts).toBe(3)
     })
   })

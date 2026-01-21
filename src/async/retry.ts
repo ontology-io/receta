@@ -2,27 +2,45 @@ import type { RetryOptions } from './types'
 import { ok, err, type Result } from '../result'
 
 /**
- * Retries an async function with exponential backoff.
+ * Error type returned when all retry attempts fail.
+ */
+export interface RetryError {
+  readonly type: 'max_attempts_exceeded'
+  readonly lastError: unknown
+  readonly attempts: number
+}
+
+/**
+ * Retries an async function with exponential backoff, returning a Result.
  *
  * Useful for handling transient failures like network errors, rate limits,
- * or temporary service unavailability.
+ * or temporary service unavailability. Returns Result for explicit error handling.
  *
  * @param fn - Async function to retry
  * @param options - Retry options
- * @returns Promise resolving to the result of fn
- * @throws The last error if all retry attempts fail
+ * @returns Promise resolving to Result containing either the value or retry error
  *
  * @example
  * ```typescript
+ * import * as R from 'remeda'
+ * import { unwrapOr, mapErr } from 'receta/result'
+ *
  * // Basic retry with defaults (3 attempts, exponential backoff)
- * const data = await retry(async () => {
+ * const result = await retry(async () => {
  *   const res = await fetch('/api/data')
  *   if (!res.ok) throw new Error(`HTTP ${res.status}`)
  *   return res.json()
  * })
  *
+ * // Handle with Result pattern
+ * const data = R.pipe(
+ *   result,
+ *   mapErr(error => console.error('Failed after retries:', error)),
+ *   unwrapOr({ default: 'data' })
+ * )
+ *
  * // Custom retry options
- * const result = await retry(
+ * const customResult = await retry(
  *   async () => fetchData(),
  *   {
  *     maxAttempts: 5,
@@ -39,10 +57,11 @@ import { ok, err, type Result } from '../result'
  *   }
  * )
  *
- * // Retry with constant delay (no backoff)
- * const fixed = await retry(
- *   async () => checkStatus(),
- *   { delay: 1000, backoff: 1 }
+ * // Compose with other Result operations
+ * const processed = R.pipe(
+ *   await retry(() => fetchUser(id)),
+ *   map(user => user.email),
+ *   unwrapOr('noreply@example.com')
  * )
  * ```
  *
@@ -50,107 +69,6 @@ import { ok, err, type Result } from '../result'
  * @see timeout - for adding timeout to promises
  */
 export async function retry<T>(
-  fn: () => Promise<T>,
-  options: RetryOptions = {}
-): Promise<T> {
-  const {
-    maxAttempts = 3,
-    delay: initialDelay = 1000,
-    backoff = 2,
-    maxDelay = 30000,
-    shouldRetry,
-    onRetry,
-  } = options
-
-  let lastError: unknown
-  let currentDelay = initialDelay
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      return await fn()
-    } catch (error) {
-      lastError = error
-
-      // Check if we should retry this error
-      if (shouldRetry && !shouldRetry(error, attempt)) {
-        throw error
-      }
-
-      // If this was the last attempt, throw the error
-      if (attempt === maxAttempts) {
-        throw error
-      }
-
-      // Calculate delay with exponential backoff
-      const delayMs = Math.min(currentDelay, maxDelay)
-
-      // Call onRetry callback if provided
-      if (onRetry) {
-        onRetry(error, attempt, delayMs)
-      }
-
-      // Wait before retrying
-      await sleep(delayMs)
-
-      // Increase delay for next attempt
-      currentDelay = currentDelay * backoff
-    }
-  }
-
-  // This should never be reached, but TypeScript needs it
-  throw lastError
-}
-
-/**
- * Error type returned by retryResult when all retry attempts fail.
- */
-export interface RetryError {
-  readonly type: 'max_attempts_exceeded'
-  readonly lastError: unknown
-  readonly attempts: number
-}
-
-/**
- * Retries an async function with exponential backoff, returning a Result.
- *
- * Unlike `retry()` which throws on failure, this returns a Result type
- * for composable, type-safe error handling.
- *
- * @param fn - Async function to retry
- * @param options - Retry options
- * @returns Promise resolving to Result containing either the value or retry error
- *
- * @example
- * ```typescript
- * import { pipe } from 'remeda'
- * import { unwrapOr, mapErr } from 'receta/result'
- *
- * // Basic retry with Result
- * const result = await retryResult(async () => {
- *   const res = await fetch('/api/data')
- *   if (!res.ok) throw new Error(`HTTP ${res.status}`)
- *   return res.json()
- * })
- *
- * // Handle with Result pattern
- * const data = pipe(
- *   result,
- *   mapErr(error => console.error('Failed after retries:', error)),
- *   unwrapOr({ default: 'data' })
- * )
- *
- * // Compose with other Result operations
- * const processed = pipe(
- *   await retryResult(() => fetchUser(id)),
- *   map(user => user.email),
- *   unwrapOr('noreply@example.com')
- * )
- * ```
- *
- * @see retry - for the throwing version
- * @see Result - for error handling patterns
- */
-export async function retryResult<T>(
   fn: () => Promise<T>,
   options: RetryOptions = {}
 ): Promise<Result<T, RetryError>> {
