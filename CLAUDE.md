@@ -106,6 +106,7 @@ bun run build              # Verify build works
 ```bash
 # Run example files to verify implementation
 bun run examples/result-usage.ts
+bun run examples/option-usage.ts
 ```
 
 ---
@@ -355,7 +356,41 @@ export async function fetchUser(id: string): Promise<Result<User, FetchError>> {
 }
 ```
 
-### Pattern 2: Predicate Builders
+### Pattern 2: Option-Returning Functions (For Nullable Values)
+
+All functions dealing with potentially absent values should return Option by default:
+
+```typescript
+import { Option, some, none, fromNullable } from '../option'
+
+// ✅ Option for database queries
+export function findUserById(id: string): Option<User> {
+  return fromNullable(users.find(u => u.id === id))
+}
+
+// ✅ Option for configuration with potential absence
+export function getEnv(key: string): Option<string> {
+  return fromNullable(process.env[key])
+}
+
+// ✅ Option for parsing when error details don't matter
+export function parsePositiveInt(str: string): Option<number> {
+  return pipe(
+    tryCatch(() => Number(str)),
+    filter(n => !isNaN(n) && n > 0 && Number.isInteger(n))
+  )
+}
+
+// ✅ Converting between Option and Result
+export function getUserOrError(id: string): Result<User, NotFoundError> {
+  return pipe(
+    findUserById(id),
+    toResult({ code: 'USER_NOT_FOUND', userId: id })
+  )
+}
+```
+
+### Pattern 3: Predicate Builders
 
 ```typescript
 import * as R from 'remeda'
@@ -384,7 +419,7 @@ export const not = <T>(predicate: Predicate<T>): Predicate<T> =>
 R.filter(numbers, and(gt(0), lt(100)))
 ```
 
-### Pattern 3: Async Utilities
+### Pattern 4: Async Utilities
 
 ```typescript
 import * as R from 'remeda'
@@ -426,7 +461,7 @@ export async function mapAsync<T, U>(
 }
 ```
 
-### Pattern 4: Lens Implementation
+### Pattern 5: Lens Implementation
 
 ```typescript
 import * as R from 'remeda'
@@ -733,7 +768,7 @@ bun run build      # Build must succeed
 |--------|--------|----------|-------|
 | result | ✅ Complete | P0 | Full implementation with tests and docs |
 | async | ✅ Complete | P0 | Promise utilities, concurrency control |
-| option | 🔴 Not started | P0 | Similar to Result but for nullability |
+| option | ✅ Complete | P0 | Type-safe nullable handling, Result interop |
 | predicate | 🔴 Not started | P1 | Predicate combinators and builders |
 | validation | 🔴 Not started | P1 | Data validation with error accumulation |
 | collection | 🔴 Not started | P2 | Advanced collection operations |
