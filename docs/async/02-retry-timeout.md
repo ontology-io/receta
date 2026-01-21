@@ -6,10 +6,11 @@
 
 1. [Retry Patterns](#retry-patterns)
 2. [Timeout Patterns](#timeout-patterns)
-3. [Combined Patterns](#combined-patterns)
-4. [Real-World Examples](#real-world-examples)
-5. [Best Practices](#best-practices)
-6. [Common Mistakes](#common-mistakes)
+3. [Result Integration](#result-integration)
+4. [Combined Patterns](#combined-patterns)
+5. [Real-World Examples](#real-world-examples)
+6. [Best Practices](#best-practices)
+7. [Common Mistakes](#common-mistakes)
 
 ---
 
@@ -331,6 +332,389 @@ const robustFetch = async (url: string) => {
     // Other errors
     throw error
   }
+}
+```
+
+---
+
+## Result Integration
+
+### Why Result Pattern?
+
+Traditional retry and timeout functions throw exceptions, making error handling verbose and error-prone:
+
+```typescript
+// Traditional: Requires try-catch
+try {
+  const data = await retry(() => fetch(url))
+} catch (error) {
+  // Error handling here
+}
+
+// Result: Errors as values
+const result = await retryResult(() => fetch(url))
+if (isOk(result)) {
+  // Use result.value
+} else {
+  // Handle result.error
+}
+```
+
+**Benefits:**
+- ✅ Errors visible in function signature
+- ✅ Composable with Result utilities (map, flatMap, unwrapOr)
+- ✅ No exceptions - pure functional error handling
+- ✅ Full error context (attempts, last error, etc.)
+
+---
+
+### retryResult()
+
+Type-safe retry with Result pattern instead of throwing exceptions.
+
+#### Signature
+
+```typescript
+function retryResult<T>(
+  fn: () => Promise<T>,
+  options?: RetryOptions
+): Promise<Result<T, RetryError>>
+
+type RetryError = {
+  type: 'max_attempts_exceeded'
+  lastError: unknown
+  attempts: number
+}
+```
+
+#### Real-World: Database Connection with Result
+
+```typescript
+import { retryResult } from 'receta/async'
+import { unwrapOr, mapErr, isOk } from 'receta/result'
+import * as R from 'remeda'
+
+const connectToDatabase = async (): Promise<Database> => {
+  const result = await retryResult(
+    async () => {
+      const db = await mongoose.connect(connectionString)
+      return db
+    },
+    {
+      maxAttempts: 5,
+      delay: 1000,
+      backoff: 2,
+      onRetry: (error, attempt, delay) => {
+        logger.warn(`DB connection attempt ${attempt} failed, retrying in ${delay}ms`)
+      }
+    }
+  )
+
+  return R.pipe(
+    result,
+    mapErr(error => {
+      logger.error(`DB connection failed after ${error.attempts} attempts`)
+      return error
+    }),
+    unwrapOr(fallbackDatabase)
+  )
+}
+
+// No try-catch needed!
+const db = await connectToDatabase()
+```
+
+#### Real-World: API Call with Error Recovery
+
+```typescript
+import { retryResult } from 'receta/async'
+import { match, ok } from 'receta/result'
+
+const fetchUser = async (id: string) => {
+  const result = await retryResult(
+    async () => {
+      const res = await fetch(`/api/users/${id}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return res.json()
+    },
+    {
+      maxAttempts: 3,
+      delay: 1000,
+      backoff: 2,
+    }
+  )
+
+  return match(result, {
+    Ok: (user) => user,
+    Err: (error) => {
+      // Graceful fallback
+      logger.error('Failed to fetch user, using cache', {
+        id,
+        attempts: error.attempts,
+        lastError: error.lastError
+      })
+      return getCachedUser(id)
+    }
+  })
+}
+```
+
+#### Comparison: Traditional vs Result
+
+| Aspect | Traditional `retry()` | `retryResult()` |
+|--------|----------------------|-----------------|
+| Error handling | try-catch required | Explicit Result type |
+| Error visibility | Hidden (throws) | Visible in signature |
+| Composability | Limited | Full Result API (map, flatMap, etc.) |
+| Error context | Lost in exception | Preserved (attempts, lastError) |
+| Type safety | ❌ Error type unknown | ✅ `Result<T, RetryError>` |
+| Pure function | ❌ Throws exceptions | ✅ Returns values |
+
+#### Advanced: Combining Multiple Retries
+
+```typescript
+import { retryResult } from 'receta/async'
+import { flatMap, ok, err, isOk } from 'receta/result'
+import * as R from 'remeda'
+
+// Fetch user, then their posts (both with retry)
+const fetchUserWithPosts = async (userId: string) => {
+  const userResult = await retryResult(
+    () => fetch(`/api/users/${userId}`).then(r => r.json()),
+    { maxAttempts: 3, delay: 1000 }
+  )
+
+  return R.pipe(
+    userResult,
+    flatMap(async (user) => {
+      const postsResult = await retryResult(
+        () => fetch(`/api/users/${userId}/posts`).then(r => r.json()),
+        { maxAttempts: 3, delay: 500 }
+      )
+
+      return isOk(postsResult)
+        ? ok({ ...user, posts: postsResult.value })
+        : err(`Failed to fetch posts: ${postsResult.error.lastError}`)
+    })
+  )
+}
+
+// Usage
+const result = await fetchUserWithPosts('123')
+if (isOk(result)) {
+  console.log('User with posts:', result.value)
+} else {
+  console.error('Error:', result.error)
+}
+```
+
+---
+
+### timeoutResult()
+
+Add timeout with Result pattern for type-safe timeout handling.
+
+#### Signature
+
+```typescript
+function timeoutResult<T>(
+  promise: Promise<T>,
+  ms: number
+): Promise<Result<T, TimeoutError>>
+
+type TimeoutError = {
+  type: 'timeout'
+  timeoutMs: number
+  message: string
+}
+```
+
+#### Real-World: API Call with Timeout
+
+```typescript
+import { timeoutResult } from 'receta/async'
+import { unwrapOr, mapErr, isErr } from 'receta/result'
+import * as R from 'remeda'
+
+const fetchWithTimeout = async (url: string) => {
+  const result = await timeoutResult(
+    fetch(url).then(r => r.json()),
+    5000
+  )
+
+  return R.pipe(
+    result,
+    mapErr(error => {
+      logger.warn(`Request to ${url} timed out after ${error.timeoutMs}ms`)
+      return error
+    }),
+    unwrapOr({ error: 'Request timed out' })
+  )
+}
+```
+
+#### Real-World: Multiple Services with Fallback
+
+```typescript
+import { timeoutResult, retryResult } from 'receta/async'
+import { unwrapOr, match, ok } from 'receta/result'
+
+// Try primary service, fall back to secondary
+const fetchDataResilient = async (query: string) => {
+  // Try primary service with timeout
+  const primaryResult = await timeoutResult(
+    fetch(`https://primary-api.com/search?q=${query}`).then(r => r.json()),
+    3000
+  )
+
+  if (isOk(primaryResult)) {
+    return primaryResult.value
+  }
+
+  // Primary failed, try secondary with retry
+  logger.warn('Primary service failed, trying secondary', {
+    error: primaryResult.error
+  })
+
+  const secondaryResult = await retryResult(
+    async () => {
+      const res = await timeoutResult(
+        fetch(`https://secondary-api.com/search?q=${query}`).then(r => r.json()),
+        5000
+      )
+      if (isErr(res)) throw res.error
+      return res.value
+    },
+    { maxAttempts: 2, delay: 500 }
+  )
+
+  return match(secondaryResult, {
+    Ok: (data) => data,
+    Err: (error) => {
+      logger.error('Both services failed', {
+        primary: primaryResult.error,
+        secondary: error
+      })
+      return { error: 'All services unavailable' }
+    }
+  })
+}
+```
+
+#### Comparison: Traditional vs Result
+
+| Aspect | Traditional `timeout()` | `timeoutResult()` |
+|--------|------------------------|-------------------|
+| Error handling | try-catch required | Explicit Result type |
+| Timeout detection | instanceof check | Type in error object |
+| Composability | Limited | Full Result API |
+| Error metadata | Basic TimeoutError | Full context (ms, message) |
+| Type safety | ❌ Error type unknown | ✅ `Result<T, TimeoutError>` |
+| Pure function | ❌ Throws exceptions | ✅ Returns values |
+
+#### Advanced: Combining Timeout and Retry with Result
+
+```typescript
+import { retryResult, timeoutResult } from 'receta/async'
+import { flatMap, isErr } from 'receta/result'
+
+// Each retry attempt has its own timeout
+const resilientFetch = async (url: string) => {
+  return retryResult(
+    async () => {
+      const res = await timeoutResult(
+        fetch(url).then(r => r.json()),
+        3000
+      )
+
+      // Convert timeout Result to exception for retry logic
+      if (isErr(res)) throw res.error
+      return res.value
+    },
+    {
+      maxAttempts: 3,
+      delay: 500,
+      onRetry: (error, attempt, delay) => {
+        logger.warn(`Retry ${attempt} after timeout`, { url, delay })
+      }
+    }
+  )
+}
+
+// Usage
+const result = await resilientFetch('https://api.example.com/data')
+if (isOk(result)) {
+  console.log('Data:', result.value)
+} else {
+  console.error('Failed after retries:', result.error)
+}
+```
+
+#### Real-World: Microservice Circuit Breaker with Result
+
+```typescript
+import { timeoutResult, retryResult } from 'receta/async'
+import { Result, ok, err, isOk, match } from 'receta/result'
+
+class ServiceClient {
+  private circuitOpen = false
+  private failures = 0
+  private readonly threshold = 5
+
+  async request<T>(
+    endpoint: string,
+    timeoutMs: number = 5000
+  ): Promise<Result<T, string>> {
+    // Check circuit breaker
+    if (this.circuitOpen) {
+      return err('Circuit breaker open - service unavailable')
+    }
+
+    const result = await retryResult(
+      async () => {
+        const res = await timeoutResult(
+          fetch(endpoint).then(r => r.json()),
+          timeoutMs
+        )
+
+        if (isErr(res)) throw res.error
+        return res.value as T
+      },
+      { maxAttempts: 2, delay: 500 }
+    )
+
+    return match(result, {
+      Ok: (data) => {
+        // Reset on success
+        this.failures = 0
+        return ok(data)
+      },
+      Err: (error) => {
+        // Track failures
+        this.failures++
+        if (this.failures >= this.threshold) {
+          this.circuitOpen = true
+          setTimeout(() => {
+            this.circuitOpen = false
+            this.failures = 0
+          }, 30000) // Reset after 30s
+        }
+
+        return err(`Service error: ${error.lastError}`)
+      }
+    })
+  }
+}
+
+// Usage
+const client = new ServiceClient()
+
+const result = await client.request('/api/users/123', 3000)
+if (isOk(result)) {
+  console.log('User:', result.value)
+} else {
+  console.error('Error:', result.error)
+  // No exception thrown - safe to continue
 }
 ```
 
@@ -976,33 +1360,59 @@ const data = await retry(operation, {
 })
 ```
 
-### 6. Combine with Result Type
+### 6. Prefer Result Pattern for Error Handling
 
 ```typescript
-import { retry, timeout } from 'receta/async'
-import { Result, tryCatchAsync } from 'receta/result'
+import { retryResult, timeoutResult } from 'receta/async'
+import { Result, isOk } from 'receta/result'
 
-// Return Result instead of throwing
+// Good: Result pattern - errors as values
 const fetchUserSafe = async (id: string): Promise<Result<User, string>> => {
-  return tryCatchAsync(
+  const result = await retryResult(
     async () => {
-      return retry(
-        () => timeout(fetch(`/api/users/${id}`).then(r => r.json()), 5000),
-        { maxAttempts: 3 }
+      const res = await timeoutResult(
+        fetch(`/api/users/${id}`).then(r => r.json()),
+        5000
       )
+      if (isErr(res)) throw res.error
+      return res.value
     },
-    (error) => error instanceof Error ? error.message : String(error)
+    { maxAttempts: 3 }
+  )
+
+  return mapErr(result, error =>
+    error instanceof Error ? error.message : String(error)
   )
 }
 
 // Caller doesn't need try-catch
 const result = await fetchUserSafe('123')
-if (Result.isOk(result)) {
+if (isOk(result)) {
   console.log('User:', result.value)
 } else {
   console.error('Failed:', result.error)
 }
+
+// Bad: Traditional approach requires try-catch everywhere
+const fetchUserUnsafe = async (id: string): Promise<User> => {
+  try {
+    return await retry(
+      () => timeout(fetch(`/api/users/${id}`).then(r => r.json()), 5000),
+      { maxAttempts: 3 }
+    )
+  } catch (error) {
+    // Error handling required here
+    throw error
+  }
+}
 ```
+
+**Benefits of Result Pattern:**
+- ✅ No try-catch needed at call sites
+- ✅ Errors visible in function signature
+- ✅ Composable with other Result operations
+- ✅ Full error context preserved
+- ✅ Type-safe error handling
 
 ---
 
@@ -1165,7 +1575,74 @@ try {
     console.error('Operation failed:', error)
   }
 }
+
+// Better: Use Result pattern for type-safe error handling
+const result = await timeoutResult(operation(), 5000)
+if (isErr(result)) {
+  if (result.error.type === 'timeout') {
+    console.error('Operation timed out - might be slow network')
+  }
+} else {
+  console.log('Success:', result.value)
+}
 ```
+
+### 8. Mixing Exception and Result Patterns
+
+```typescript
+// Bad: Inconsistent error handling
+const fetchData = async (url: string) => {
+  const result = await retryResult(() => fetch(url), { maxAttempts: 3 })
+
+  if (isErr(result)) {
+    throw new Error('Fetch failed')  // Breaks Result pattern!
+  }
+
+  return result.value
+}
+
+// Good: Stay consistent with Result pattern
+const fetchData = async (url: string): Promise<Result<Data, string>> => {
+  const result = await retryResult(
+    () => fetch(url).then(r => r.json()),
+    { maxAttempts: 3 }
+  )
+
+  return mapErr(result, error =>
+    `Failed after ${error.attempts} attempts: ${error.lastError}`
+  )
+}
+
+// Or: Stay consistent with exceptions
+const fetchData = async (url: string): Promise<Data> => {
+  return retry(
+    () => fetch(url).then(r => r.json()),
+    { maxAttempts: 3 }
+  )
+  // Let exceptions propagate
+}
+```
+
+---
+
+## When to Use Result Pattern
+
+Use `retryResult()` and `timeoutResult()` when:
+
+✅ Building APIs where callers need to handle errors gracefully
+✅ Composing multiple async operations with error handling
+✅ You want errors to be visible in function signatures
+✅ You need detailed error context (attempts, timeout duration)
+✅ Building functional pipelines with `pipe()`
+
+Use traditional `retry()` and `timeout()` when:
+
+✅ Working with existing exception-based code
+✅ Simple scripts where try-catch is acceptable
+✅ You want operations to fail fast with exceptions
+✅ Integration with libraries that expect exceptions
+
+**Recommendation:** Prefer Result pattern for application code, use traditional for scripts/tools.
 
 ---
 
