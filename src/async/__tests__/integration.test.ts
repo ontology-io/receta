@@ -10,6 +10,7 @@ import {
   sequential,
   sleep,
 } from '../index'
+import { isOk, isErr, unwrapOr } from '../../result'
 
 describe('Async Integration Tests', () => {
   describe('mapAsync + retry pattern', () => {
@@ -20,7 +21,7 @@ describe('Async Integration Tests', () => {
       const results = await mapAsync(
         items,
         async (x) => {
-          return retry(
+          const result = await retry(
             async () => {
               attempts++
               if (x === 2 && attempts < 3) {
@@ -30,6 +31,7 @@ describe('Async Integration Tests', () => {
             },
             { maxAttempts: 3, delay: 10 }
           )
+          return unwrapOr(result, 0) // Unwrap for simple test
         },
         { concurrency: 2 }
       )
@@ -43,14 +45,17 @@ describe('Async Integration Tests', () => {
     it('applies timeout to each mapped operation', async () => {
       const items = [50, 100, 150]
 
-      await expect(
-        mapAsync(
-          items,
-          async (delay) => {
-            return timeout(sleep(delay).then(() => delay), 120)
-          }
-        )
-      ).rejects.toThrow() // 150ms item times out
+      const results = await mapAsync(
+        items,
+        async (delay) => {
+          return timeout(sleep(delay).then(() => delay), 120)
+        }
+      )
+
+      // 150ms item should timeout, others should succeed
+      expect(isOk(results[0]!)).toBe(true)
+      expect(isOk(results[1]!)).toBe(true)
+      expect(isErr(results[2]!)).toBe(true) // 150ms times out
     })
 
     it('processes items with timeouts using concurrency', async () => {
@@ -59,7 +64,8 @@ describe('Async Integration Tests', () => {
       const results = await mapAsync(
         items,
         async (delay) => {
-          return timeout(sleep(delay).then(() => delay), 1000)
+          const result = await timeout(sleep(delay).then(() => delay), 1000)
+          return unwrapOr(result, 0)
         },
         { concurrency: 2 }
       )
@@ -76,7 +82,7 @@ describe('Async Integration Tests', () => {
       const results = await batch(
         items,
         async (batchItems) => {
-          return retry(
+          const result = await retry(
             async () => {
               batchAttempts++
               if (batchAttempts === 2) {
@@ -86,6 +92,7 @@ describe('Async Integration Tests', () => {
             },
             { maxAttempts: 3, delay: 10 }
           )
+          return unwrapOr(result, 0)
         },
         { batchSize: 3 }
       )
@@ -99,32 +106,32 @@ describe('Async Integration Tests', () => {
     it('polls with overall timeout', async () => {
       let attempts = 0
 
-      const result = await timeout(
-        poll(
-          async () => {
-            attempts++
-            if (attempts < 3) return null
-            return 'ready'
-          },
-          { interval: 50 }
-        ),
-        500
+      const pollResult = await poll(
+        async () => {
+          attempts++
+          if (attempts < 3) return null
+          return 'ready'
+        },
+        { interval: 50, timeout: 500 }
       )
 
-      expect(result).toBe('ready')
+      expect(isOk(pollResult)).toBe(true)
+      if (isOk(pollResult)) {
+        expect(pollResult.value).toBe('ready')
+      }
       expect(attempts).toBe(3)
     })
 
     it('times out if polling takes too long', async () => {
-      await expect(
-        timeout(
-          poll(
-            async () => null, // Never returns truthy
-            { interval: 50, maxAttempts: 100 }
-          ),
-          200
-        )
-      ).rejects.toThrow()
+      const result = await poll(
+        async () => null, // Never returns truthy
+        { interval: 50, maxAttempts: 100, timeout: 200 }
+      )
+
+      expect(isErr(result)).toBe(true)
+      if (isErr(result)) {
+        expect(result.error.type).toBe('timeout')
+      }
     })
   })
 
@@ -149,12 +156,15 @@ describe('Async Integration Tests', () => {
       const results = await mapAsync(
         userIds,
         async (id) => {
-          return retry(
+          const retryResult = await retry(
             async () => {
-              return timeout(mockFetch(id), 1000)
+              const timeoutResult = await timeout(mockFetch(id), 1000)
+              if (isErr(timeoutResult)) throw new Error('Timeout')
+              return timeoutResult.value
             },
             { maxAttempts: 3, delay: 10 }
           )
+          return unwrapOr(retryResult, { id, data: '' })
         },
         { concurrency: 2 } // Max 2 concurrent requests
       )
