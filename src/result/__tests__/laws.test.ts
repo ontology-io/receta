@@ -53,7 +53,7 @@ describe('Result Laws', () => {
       expect(map(map(okResult, f), g)).toEqual(map(okResult, composed))
 
       // Test with Err
-      const errResult = err<number, string>('fail')
+      const errResult = err('fail')
       expect(map(map(errResult, f), g)).toEqual(map(errResult, composed))
 
       // Test with different transformations
@@ -141,9 +141,9 @@ describe('Result Laws', () => {
       )
 
       // Test with Err
-      const errResult = err<number, string>('initial error')
+      const errResult = err('initial error')
       expect(flatMap(flatMap(errResult, f), g)).toEqual(
-        flatMap(errResult, x => flatMap(f(x), g))
+        flatMap(errResult, (x: number) => flatMap(f(x), g))
       )
     })
   })
@@ -163,8 +163,8 @@ describe('Result Laws', () => {
       expect(map(okResult, f)).toEqual(flatMap(okResult, x => ok(f(x))))
 
       // Test with Err
-      const errResult = err<number, string>('fail')
-      expect(map(errResult, f)).toEqual(flatMap(errResult, x => ok(f(x))))
+      const errResult = err('fail')
+      expect(map(errResult, f)).toEqual(flatMap(errResult, (x: number) => ok(f(x))))
     })
 
     /**
@@ -172,11 +172,11 @@ describe('Result Laws', () => {
      * Once a Result is Err, it stays Err through all operations.
      */
     it('preserves errors through operations', () => {
-      const initial = err<number, string>('initial error')
+      const initial = err('initial error')
 
       const result = flatMap(
         flatMap(
-          map(initial, x => x + 1),
+          map(initial, (x: number) => x + 1),
           x => ok(x * 2)
         ),
         x => ok(x.toString())

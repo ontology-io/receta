@@ -1,4 +1,5 @@
 import type { TimeoutOptions } from './types'
+import { ok, err, type Result } from '../result'
 
 /**
  * Error thrown when a promise times out.
@@ -110,5 +111,69 @@ export function timeoutFn<TArgs extends readonly unknown[], TReturn>(
       return timeout(fn(...args), ms, options as TimeoutOptions)
     }
     return timeout(fn(...args), ms)
+  }
+}
+
+/**
+ * Adds a timeout to a promise, returning a Result.
+ *
+ * Unlike `timeout()` which throws TimeoutError, this returns a Result type
+ * for composable, type-safe error handling.
+ *
+ * @param promise - Promise to add timeout to
+ * @param ms - Timeout in milliseconds
+ * @returns Promise resolving to Result with value or TimeoutError
+ *
+ * @example
+ * ```typescript
+ * import * as R from 'remeda'
+ * import { unwrapOr, mapErr } from 'receta/result'
+ *
+ * // Basic timeout with Result
+ * const result = await timeoutResult(
+ *   fetch('/api/data'),
+ *   5000
+ * )
+ *
+ * // Handle with Result pattern
+ * const data = R.pipe(
+ *   result,
+ *   mapErr(error => console.error('Timeout:', error)),
+ *   unwrapOr({ fallback: 'data' })
+ * )
+ *
+ * // Compose with other async operations
+ * const processed = await R.pipe(
+ *   timeoutResult(fetchUser(id), 3000),
+ *   async (result) => result, // Already a Result
+ *   (result) => R.pipe(
+ *     result,
+ *     map(user => user.email),
+ *     unwrapOr('noreply@example.com')
+ *   )
+ * )
+ * ```
+ *
+ * @see timeout - for the throwing version
+ * @see Result - for error handling patterns
+ */
+export async function timeoutResult<T>(
+  promise: Promise<T>,
+  ms: number
+): Promise<Result<T, TimeoutError>> {
+  try {
+    const value = await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new TimeoutError(`Operation timed out after ${ms}ms`)), ms)
+      }),
+    ])
+    return ok(value)
+  } catch (error) {
+    if (error instanceof TimeoutError) {
+      return err(error)
+    }
+    // Re-throw non-timeout errors
+    throw error
   }
 }

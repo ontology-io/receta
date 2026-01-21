@@ -37,7 +37,7 @@ describe('Result Extractors', () => {
 
     it('uses default for Err in pipe', () => {
       const result = R.pipe(
-        err<number, string>('fail'),
+        err('fail'),
         unwrapOr(100)
       )
       expect(result).toBe(100)
@@ -68,7 +68,7 @@ describe('Result Extractors', () => {
 
     it('works in pipe (data-last)', () => {
       const result = R.pipe(
-        err<number, string>('fail'),
+        err('fail'),
         unwrapOrElse(() => 100)
       )
       expect(result).toBe(100)
@@ -162,8 +162,8 @@ describe('Result Extractors', () => {
     it('tap does not execute for Err', () => {
       const logs: number[] = []
       const result = R.pipe(
-        err<number, string>('fail'),
-        tap(n => logs.push(n))
+        err('fail'),
+        tap((n: number) => logs.push(n))
       )
       expect(result).toEqual(err('fail'))
       expect(logs).toEqual([])
@@ -199,7 +199,7 @@ describe('Result Extractors', () => {
       )
 
       const processErr = R.pipe(
-        err<number, string>('fail'),
+        err('fail'),
         tap(n => logs.push(`Ok: ${n}`)),
         tapErr(e => logs.push(`Err: ${e}`))
       )
