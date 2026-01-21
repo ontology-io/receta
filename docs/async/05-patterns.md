@@ -2,6 +2,281 @@
 
 Real-world patterns for async operations using Receta's async module. All examples are production-ready and use actual APIs.
 
+## Table of Contents
+- [Result Integration Patterns](#result-integration-patterns)
+- [API Integration Patterns](#api-integration-patterns)
+- [Bulk Operations](#bulk-operations)
+- [Real-time Updates](#real-time-updates)
+- [Error Recovery](#error-recovery)
+- [Performance Optimization](#performance-optimization)
+
+## Result Integration Patterns
+
+All major async functions have Result-returning variants for type-safe error handling. This section shows how to build production-ready patterns using the Result approach.
+
+### Pattern: Resilient API Client with Result
+
+```typescript
+import * as R from 'remeda'
+import { retryResult, timeoutResult, mapAsyncResult } from 'receta/async'
+import { map, mapErr, unwrapOr, flatMap, isOk, isErr, err } from 'receta/result'
+import type { Result } from 'receta/result'
+
+type APIError = {
+  type: 'network' | 'timeout' | 'rate_limit' | 'not_found'
+  message: string
+  retryable: boolean
+}
+
+class ResilientAPIClient {
+  constructor(private baseURL: string, private apiKey: string) {}
+
+  private async request<T>(
+    endpoint: string,
+    options?: RequestInit
+  ): Promise<Result<T, APIError>> {
+    const result = await retryResult(
+      async () => {
+        const res = await timeoutResult(
+          fetch(`${this.baseURL}${endpoint}`, {
+            ...options,
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+              ...options?.headers,
+            },
+          }),
+          10000 // 10s timeout
+        )
+
+        if (isErr(res)) {
+          throw new Error('Timeout')
+        }
+
+        const response = res.value
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
+        }
+
+        return response.json() as Promise<T>
+      },
+      {
+        maxAttempts: 3,
+        delay: 1000,
+        backoff: 2,
+        shouldRetry: (error, attempt) => {
+          // Only retry network errors, not client errors
+          return error instanceof Error && !error.message.includes('4')
+        },
+      }
+    )
+
+    return R.pipe(
+      result,
+      mapErr((error): APIError => {
+        if (error.lastError instanceof Error) {
+          if (error.lastError.message.includes('Timeout')) {
+            return { type: 'timeout', message: 'Request timed out', retryable: true }
+          }
+          if (error.lastError.message.includes('429')) {
+            return { type: 'rate_limit', message: 'Rate limit exceeded', retryable: true }
+          }
+          if (error.lastError.message.includes('404')) {
+            return { type: 'not_found', message: 'Resource not found', retryable: false }
+          }
+        }
+        return { type: 'network', message: 'Network error', retryable: true }
+      })
+    )
+  }
+
+  async getUser(id: string) {
+    return this.request<User>(`/users/${id}`)
+  }
+
+  async getUsers(ids: string[]) {
+    return mapAsyncResult(
+      ids,
+      (id) => this.getUser(id),
+      { concurrency: 5 }
+    )
+  }
+}
+
+// Usage - no try-catch needed!
+const client = new ResilientAPIClient('https://api.example.com', 'key')
+
+const userResult = await client.getUser('123')
+const user = R.pipe(
+  userResult,
+  mapErr(err => console.error('Failed to fetch user:', err)),
+  unwrapOr({ id: '123', name: 'Unknown' })
+)
+
+const usersResult = await client.getUsers(['1', '2', '3'])
+if (isErr(usersResult)) {
+  console.error(`Failed at user ${usersResult.error.index}`)
+}
+```
+
+### Pattern: Batch Processing with Result
+
+```typescript
+import { batchResult, retryResult } from 'receta/async'
+import { collect, partition } from 'receta/result'
+import type { Result } from 'receta/result'
+
+type ProcessResult<T> = Result<T, { item: T; error: string }>
+
+async function batchProcessWithResult<T, U>(
+  items: T[],
+  processor: (item: T) => Promise<Result<U, string>>,
+  options: { batchSize: number; delayBetweenBatches: number }
+): Promise<{ successes: U[]; failures: Array<{ item: T; error: string }> }> {
+  const results: Array<Result<U, { item: T; error: string }>> = []
+
+  await batchResult(
+    items,
+    async (batchItems) => {
+      for (const item of batchItems) {
+        const result = await processor(item)
+        results.push(
+          R.pipe(
+            result,
+            mapErr(error => ({ item, error }))
+          )
+        )
+      }
+    },
+    options
+  )
+
+  const [successes, failures] = partition(results)
+
+  return {
+    successes: successes.map(r => r.value),
+    failures: failures.map(r => r.error),
+  }
+}
+
+// Usage
+const { successes, failures } = await batchProcessWithResult(
+  records,
+  async (record) => processRecord(record),
+  { batchSize: 100, delayBetweenBatches: 1000 }
+)
+
+console.log(`Processed ${successes.length} successfully`)
+console.log(`Failed ${failures.length}:`, failures)
+```
+
+### Pattern: Parallel Operations with All Success
+
+```typescript
+import { allResult } from 'receta/async'
+import { isOk } from 'receta/result'
+import type { Result } from 'receta/result'
+
+// Fetch all required data in parallel, fail fast if any request fails
+async function loadDashboard(userId: string): Promise<Result<Dashboard, string>> {
+  const result = await allResult([
+    fetchUser(userId),
+    fetchUserPosts(userId),
+    fetchUserStats(userId),
+    fetchUserNotifications(userId),
+  ])
+
+  if (isOk(result)) {
+    const [user, posts, stats, notifications] = result.value
+    return ok({
+      user,
+      posts,
+      stats,
+      notifications,
+    })
+  }
+
+  return result
+}
+
+// Usage
+const dashboardResult = await loadDashboard('user_123')
+if (isOk(dashboardResult)) {
+  renderDashboard(dashboardResult.value)
+} else {
+  showError(dashboardResult.error)
+}
+```
+
+### Pattern: Parallel Operations with Partial Success
+
+```typescript
+import { allSettledResult } from 'receta/async'
+import { isOk } from 'receta/result'
+import type { Result } from 'receta/result'
+
+// Fetch all data but continue even if some requests fail
+async function loadDashboardResilient(
+  userId: string
+): Promise<{
+  user: User | null
+  posts: Post[]
+  stats: Stats | null
+  notifications: Notification[]
+}> {
+  const results = await allSettledResult([
+    fetchUser(userId),
+    fetchUserPosts(userId),
+    fetchUserStats(userId),
+    fetchUserNotifications(userId),
+  ])
+
+  return {
+    user: isOk(results[0]) ? results[0].value : null,
+    posts: isOk(results[1]) ? results[1].value : [],
+    stats: isOk(results[2]) ? results[2].value : null,
+    notifications: isOk(results[3]) ? results[3].value : [],
+  }
+}
+
+// Usage - never fails!
+const dashboard = await loadDashboardResilient('user_123')
+renderDashboard(dashboard) // Show what we have, handle nulls gracefully
+```
+
+### Pattern: Race with First Success
+
+```typescript
+import { raceResult } from 'receta/async'
+import { isOk } from 'receta/result'
+import type { Result } from 'receta/result'
+
+// Try multiple endpoints, use the first one that succeeds
+async function fetchFromMirrors<T>(
+  endpoints: string[]
+): Promise<Result<T, string>> {
+  const result = await raceResult(
+    endpoints.map(url => fetch(url).then(r => r.json()))
+  )
+
+  if (isOk(result)) {
+    return result
+  }
+
+  // All requests failed
+  return err('All mirror endpoints failed')
+}
+
+// Usage
+const dataResult = await fetchFromMirrors([
+  'https://primary.api.com/data',
+  'https://mirror1.api.com/data',
+  'https://mirror2.api.com/data',
+])
+```
+
+---
+
 ## API Integration Patterns
 
 ### GitHub API Client with Rate Limiting
@@ -153,6 +428,14 @@ const repos = await client.getReposBatch([
 const successful = repos.filter(Result.isOk)
 console.log(`Successfully fetched ${successful.length}/${repos.length} repos`)
 ```
+
+#### Result Version
+
+The example above already uses Result extensively. Key benefits:
+- No try-catch blocks needed
+- Type-safe error handling with `Result.isOk` and `Result.isErr`
+- Easy composition with `Result.ok` and `Result.err`
+- Rate limit errors are values, not exceptions
 
 ### Stripe Payment Processing
 
@@ -355,6 +638,14 @@ if (Result.isOk(paymentResult)) {
   }
 }
 ```
+
+#### Result Version
+
+The Stripe example already uses Result for type-safe payment processing:
+- Payment failures return `Result.err` instead of throwing
+- `waitForPaymentSuccess` uses `timeout` with Result for safe polling
+- Refunds use `retryWithBackoff` to handle transient failures
+- All operations compose cleanly with pipes and `Result.isOk`
 
 ### AWS S3 File Operations
 
@@ -601,6 +892,14 @@ if (Result.isOk(listResult)) {
 }
 ```
 
+#### Result Version
+
+The S3 example demonstrates Result-based file operations:
+- Upload/download operations return `Result<S3Object, string>` instead of throwing
+- `uploadBatch` uses `mapAsync` to process files with concurrency control
+- All network errors become Result errors for consistent handling
+- Batch operations use `filter(Result.isOk)` to count successes
+
 ## Bulk Operations
 
 ### User Import/Export
@@ -790,6 +1089,15 @@ if (Result.isOk(importResult)) {
 }
 ```
 
+#### Result Version
+
+The User Import example shows comprehensive Result usage:
+- CSV validation returns `Result.err` for malformed data
+- Each row import returns `Result<void, string>` for tracking failures
+- Validation errors are collected without stopping the entire import
+- Progress reporting works seamlessly with Result-based error tracking
+- Final statistics aggregate successes and failures from Result values
+
 ### Data Synchronization
 
 Sync data between systems with conflict resolution and incremental updates.
@@ -976,6 +1284,15 @@ if (Result.isOk(syncResult)) {
 }
 ```
 
+#### Result Version
+
+The Data Sync example uses Result for safe synchronization:
+- Create/update/delete operations return `Result<void, string>`
+- Conflict detection and resolution happen without exceptions
+- Errors are accumulated in a structured format
+- The final sync result aggregates all operation results
+- Type-safe error handling ensures no sync failures are missed
+
 ### Batch Email Sending
 
 Send emails in batches with rate limiting and failure tracking.
@@ -1114,6 +1431,15 @@ if (Result.isOk(result)) {
 }
 ```
 
+#### Result Version
+
+The Batch Email example demonstrates Result for email campaigns:
+- Each email send returns `Result<string, string>` with message ID or error
+- Retry logic is built into the Result flow without try-catch
+- Success/failure tracking is type-safe and explicit
+- Final report aggregates Result values for statistics
+- No silent failures - every error is captured and reported
+
 ## Real-time Updates
 
 ### Webhook Delivery
@@ -1233,6 +1559,15 @@ if (Result.isOk(result)) {
 }
 ```
 
+#### Result Version
+
+The Webhook Delivery example shows Result for reliable delivery:
+- `deliverWebhook` returns `Result<void, string>` for explicit success/failure
+- `retryWithBackoff` wraps network calls with Result-based retry logic
+- Signature generation and validation errors are Result values
+- Webhook failures are logged without throwing exceptions
+- Easy to track delivery success rates with Result filtering
+
 ### Job Status Polling
 
 Poll for job completion with timeout and progress updates.
@@ -1336,6 +1671,15 @@ if (Result.isOk(result)) {
 }
 ```
 
+#### Result Version
+
+The Job Polling example uses Result for async job tracking:
+- `waitForJobCompletion` returns `Result<Job, string>` when complete or failed
+- `timeout` wraps polling loop with Result-based timeout handling
+- Job status checks use `Result.isErr` for early termination
+- Progress callbacks work seamlessly with Result-based flow
+- Terminal states (completed/failed) are distinguished by Result value
+
 ## Error Recovery
 
 ### Circuit Breaker Pattern
@@ -1431,6 +1775,15 @@ async function callExternalAPI(): Promise<string> {
 }
 ```
 
+#### Result Version
+
+The Circuit Breaker example demonstrates Result for fault tolerance:
+- `execute` method returns `Result<T, string>` for all operations
+- Circuit state transitions are based on Result success/failure
+- Open circuit returns `Result.err` immediately without calling function
+- Half-open state tests recovery using Result-based success tracking
+- Fallback logic is explicit and type-safe with Result pattern
+
 ## Performance Optimization
 
 ### Concurrency Tuning
@@ -1479,6 +1832,64 @@ const optimal = await findOptimalConcurrency(
 )
 
 console.log(`Optimal concurrency: ${optimal.concurrency}`)
+```
+
+---
+
+## Summary: Why Use Result Patterns?
+
+The patterns in this document demonstrate the power of Result-based async operations:
+
+### Benefits
+
+1. **No try-catch blocks**: Errors are values that compose naturally
+2. **Type-safe error handling**: TypeScript ensures you handle all error cases
+3. **Explicit error propagation**: See exactly where errors can occur
+4. **Easy composition**: Chain operations with `pipe`, `map`, `flatMap`
+5. **Consistent API**: All async utilities follow the same Result pattern
+6. **Better testing**: Mock errors by returning `Result.err` values
+7. **No silent failures**: All errors are explicit and tracked
+
+### When to Use Result vs Exceptions
+
+**Use Result when:**
+- Building API clients with expected failures (rate limits, 404s, etc.)
+- Processing batches where some items may fail
+- Implementing retry logic with multiple failure modes
+- Need to collect errors without stopping execution
+- Want explicit error handling in function signatures
+
+**Use exceptions when:**
+- Truly unexpected errors (bugs, programmer errors)
+- Need to abort execution immediately
+- Working with libraries that expect exception handling
+- Validating function preconditions
+
+### Migration Path
+
+To migrate existing try-catch code to Result:
+
+```typescript
+// Before: try-catch
+async function fetchUser(id: string): Promise<User> {
+  try {
+    const response = await fetch(`/users/${id}`)
+    if (!response.ok) throw new Error('Not found')
+    return await response.json()
+  } catch (error) {
+    console.error('Failed to fetch user:', error)
+    throw error
+  }
+}
+
+// After: Result
+async function fetchUser(id: string): Promise<Result<User, string>> {
+  return retryResult(async () => {
+    const response = await fetch(`/users/${id}`)
+    if (!response.ok) throw new Error('Not found')
+    return await response.json()
+  }, { maxAttempts: 3 })
+}
 ```
 
 This document provides production-ready patterns for common async operations. All examples use real APIs and include proper error handling, retry logic, and performance optimization.
