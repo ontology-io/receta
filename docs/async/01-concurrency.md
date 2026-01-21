@@ -9,6 +9,7 @@ Concurrency control lets you execute multiple async operations efficiently while
 | Function | Purpose | Real-World Analogy |
 |----------|---------|-------------------|
 | `mapAsync(items, fn, { concurrency })` | Transform items in parallel with limit | Processing orders with N workers |
+| `mapAsyncResult(items, fn, { concurrency })` | Transform with Result-returning functions | Type-safe batch operations with error tracking |
 | `filterAsync(items, predicate, { concurrency })` | Filter items using async predicate | Checking inventory across warehouses |
 | `parallel(tasks)` | Run all tasks simultaneously | Fetching data from multiple APIs at once |
 | `sequential(tasks)` | Run tasks one after another | Processing payments in order |
@@ -205,6 +206,246 @@ await mapAsync(urls, fetch, { concurrency: 1 })
 - Memory constraints (lower)
 - Network capacity (higher)
 - Need for speed (higher)
+
+---
+
+## `mapAsyncResult()` - Result-Returning Async Mapping
+
+**When to use**: Your mapping function returns `Result<T, E>` and you want type-safe error handling without exceptions.
+
+### Signature
+
+```typescript
+function mapAsyncResult<T, U, E>(
+  items: readonly T[],
+  fn: (item: T, index: number) => Promise<Result<U, E>>,
+  options?: ConcurrencyOptions
+): Promise<Result<U[], MapAsyncError<E>>>
+```
+
+### Error Type
+
+```typescript
+type MapAsyncError<E> = {
+  type: 'item_failed'
+  index: number
+  item: unknown
+  error: E
+}
+```
+
+### When to Use
+
+Use `mapAsyncResult()` when:
+- Your mapping function returns `Result<T, E>`
+- You want type-safe error handling without exceptions
+- You need to know which item failed and why
+- You're building composable async pipelines
+
+### Real-World: Stripe Batch Payments
+
+```typescript
+import { mapAsyncResult } from 'receta/async'
+import { Result, ok, err, isErr, map, mapErr } from 'receta/result'
+import * as R from 'remeda'
+
+type Payment = { id: string; amount: number; status: 'success' | 'failed' }
+type PaymentError = { type: 'insufficient_funds' | 'network'; message: string }
+
+const processPayment = async (
+  customerId: string
+): Promise<Result<Payment, PaymentError>> => {
+  // Returns Result instead of throwing
+  const result = await retryResult(() =>
+    stripe.charges.create({ customer: customerId, amount: 1000 })
+  )
+
+  return R.pipe(
+    result,
+    map(charge => ({ id: charge.id, amount: charge.amount, status: 'success' as const })),
+    mapErr(error => ({ type: 'network' as const, message: error.lastError }))
+  )
+}
+
+// Process payments with concurrency control
+const result = await mapAsyncResult(
+  customerIds,
+  processPayment,
+  { concurrency: 5 }
+)
+
+// Handle result - no exceptions!
+if (isErr(result)) {
+  console.error(`Payment ${result.error.index} failed:`, result.error.error.message)
+  // Retry just the failed payment
+} else {
+  console.log(`Processed ${result.value.length} payments successfully`)
+}
+```
+
+### Comparison: mapAsync vs mapAsyncResult
+
+| Feature | `mapAsync()` | `mapAsyncResult()` |
+|---------|-------------|-------------------|
+| Error handling | Throws exception | Returns Result |
+| Type safety | `Promise<U[]>` | `Promise<Result<U[], E>>` |
+| Error info | Exception only | Index + item + error |
+| Composable | try-catch | pipe + Result functions |
+| Use case | Simple mapping | Type-safe pipelines |
+
+### Real-World: GitHub Repository Validation
+
+```typescript
+type RepoData = { name: string; stars: number; language: string }
+type RepoError = { type: 'not_found' | 'rate_limit' | 'network'; repo: string }
+
+const fetchRepo = async (repoName: string): Promise<Result<RepoData, RepoError>> => {
+  try {
+    const [owner, repo] = repoName.split('/')
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      headers: { Authorization: `token ${GITHUB_TOKEN}` }
+    })
+
+    if (res.status === 404) {
+      return err({ type: 'not_found', repo: repoName })
+    }
+
+    if (res.status === 429) {
+      return err({ type: 'rate_limit', repo: repoName })
+    }
+
+    if (!res.ok) {
+      return err({ type: 'network', repo: repoName })
+    }
+
+    const data = await res.json()
+    return ok({
+      name: data.name,
+      stars: data.stargazers_count,
+      language: data.language
+    })
+  } catch {
+    return err({ type: 'network', repo: repoName })
+  }
+}
+
+// Fetch multiple repos with Result handling
+const result = await mapAsyncResult(
+  ['facebook/react', 'microsoft/typescript', 'invalid/repo'],
+  fetchRepo,
+  { concurrency: 10 }
+)
+
+if (isErr(result)) {
+  const { index, error } = result.error
+  console.error(`Failed at repo ${index}: ${error.repo} (${error.type})`)
+
+  // Continue with partial results or retry specific repo
+} else {
+  console.log(`Successfully fetched ${result.value.length} repositories`)
+}
+```
+
+### Real-World: File Processing Pipeline
+
+```typescript
+type ProcessedFile = { path: string; size: number; hash: string }
+type FileError = { type: 'read' | 'parse' | 'write'; path: string; message: string }
+
+const processFile = async (path: string): Promise<Result<ProcessedFile, FileError>> => {
+  // Read file
+  const readResult = await Result.tryCatch(
+    () => fs.readFile(path),
+    (error) => ({ type: 'read' as const, path, message: String(error) })
+  )
+
+  if (isErr(readResult)) return readResult
+
+  // Process file
+  const processResult = await Result.tryCatch(
+    () => processData(readResult.value),
+    (error) => ({ type: 'parse' as const, path, message: String(error) })
+  )
+
+  if (isErr(processResult)) return processResult
+
+  // Return result
+  return ok({
+    path,
+    size: readResult.value.length,
+    hash: processResult.value.hash
+  })
+}
+
+// Process files with concurrency
+const result = await mapAsyncResult(
+  filePaths,
+  processFile,
+  { concurrency: 4 }
+)
+
+// Handle errors gracefully
+if (isErr(result)) {
+  const { index, item, error } = result.error
+  console.error(`Failed to process file ${item} at index ${index}:`, error.message)
+
+  // Log error and continue with remaining files
+  await logError({ file: item, error })
+} else {
+  console.log(`Processed ${result.value.length} files`)
+  console.log(`Total size: ${result.value.reduce((sum, f) => sum + f.size, 0)} bytes`)
+}
+```
+
+### Composing with Result Functions
+
+The power of `mapAsyncResult()` is that it composes naturally with other Result functions:
+
+```typescript
+import { Result, ok, err, isErr, map, flatMap, collect } from 'receta/result'
+import { mapAsyncResult } from 'receta/async'
+import * as R from 'remeda'
+
+// Complex pipeline with Result composition
+const processOrders = async (orderIds: string[]) => {
+  return R.pipe(
+    // Fetch orders (returns Result)
+    await mapAsyncResult(orderIds, fetchOrder, { concurrency: 10 }),
+
+    // Validate orders
+    flatMap(orders =>
+      collect(orders.map(validateOrder))
+    ),
+
+    // Transform to payment requests
+    map(orders =>
+      orders.map(order => ({ customerId: order.customerId, amount: order.total }))
+    ),
+
+    // Process payments (returns Result)
+    flatMap(async payments =>
+      await mapAsyncResult(payments, processPayment, { concurrency: 5 })
+    )
+  )
+}
+
+// Single error-handling point
+const result = await processOrders(['order-1', 'order-2', 'order-3'])
+
+if (isErr(result)) {
+  console.error('Pipeline failed:', result.error)
+} else {
+  console.log(`Successfully processed ${result.value.length} orders`)
+}
+```
+
+### Benefits Over mapAsync
+
+1. **No try-catch**: Errors are values, not exceptions
+2. **Type-safe**: `Result<T[], E>` vs `Promise<T[]>`
+3. **Detailed errors**: Know which item failed and why
+4. **Composable**: Works with all Result functions
+5. **Fail-fast**: Stops on first error (configurable)
 
 ---
 
@@ -782,18 +1023,22 @@ const processByPriority = async (tasks: Task[]) => {
 
 ## Comparison Table
 
-| Function | Execution | Use Case | Concurrency Control |
-|----------|-----------|----------|---------------------|
-| `mapAsync` | Parallel with limit | Transform many items | ✅ Yes (configurable) |
-| `filterAsync` | Parallel with limit | Filter with async check | ✅ Yes (configurable) |
-| `parallel` | All at once | Independent tasks | ❌ No (all run together) |
-| `sequential` | One by one | Dependent tasks | ❌ No (always sequential) |
+| Function | Execution | Use Case | Concurrency Control | Error Handling |
+|----------|-----------|----------|---------------------|----------------|
+| `mapAsync` | Parallel with limit | Transform many items | ✅ Yes (configurable) | Throws exceptions |
+| `mapAsyncResult` | Parallel with limit | Transform with Result | ✅ Yes (configurable) | Returns Result |
+| `filterAsync` | Parallel with limit | Filter with async check | ✅ Yes (configurable) | Throws exceptions |
+| `parallel` | All at once | Independent tasks | ❌ No (all run together) | Throws exceptions |
+| `sequential` | One by one | Dependent tasks | ❌ No (always sequential) | Throws exceptions |
 
 ### When to Use Each
 
 ```typescript
 // mapAsync - Transform with rate limit
 const results = await mapAsync(items, fetchData, { concurrency: 10 })
+
+// mapAsyncResult - Transform with Result-returning functions
+const result = await mapAsyncResult(items, fetchDataResult, { concurrency: 10 })
 
 // filterAsync - Filter with async validation
 const valid = await filterAsync(items, isValid, { concurrency: 20 })
