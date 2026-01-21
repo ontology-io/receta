@@ -33,6 +33,50 @@ const result = await timeout(
 )
 ```
 
+## Result Integration
+
+All major async functions have **Result-returning variants** for type-safe, composable error handling without exceptions.
+
+### Quick Example
+
+```typescript
+import * as R from 'remeda'
+import { retryResult, mapAsyncResult } from 'receta/async'
+import { map, unwrapOr } from 'receta/result'
+
+// No try-catch needed!
+const result = await retryResult(() => fetchUser(id))
+const email = R.pipe(result, map(user => user.email), unwrapOr('fallback@example.com'))
+
+// Type-safe batch operations
+const users = await mapAsyncResult(
+  userIds,
+  (id) => fetchUserResult(id),
+  { concurrency: 5 }
+)
+// Returns: Result<User[], MapAsyncError>
+```
+
+### Result Variants
+
+| Throwing | Result Variant | Error Type |
+|----------|----------------|------------|
+| `retry()` | `retryResult()` | `RetryError` |
+| `mapAsync()` | `mapAsyncResult()` | `MapAsyncError<E>` |
+| `timeout()` | `timeoutResult()` | `TimeoutError` |
+| `poll()` | `pollResult()` | `PollError` |
+
+### Why Result?
+
+✅ **Type-safe** - Errors visible in function signatures
+✅ **Composable** - Chain with `pipe`, `map`, `mapErr`
+✅ **No exceptions** - Pure functional error handling
+✅ **Explicit** - Compiler enforces error handling
+
+See [Result Integration Examples](../../examples/async-result-integration.ts) for complete patterns.
+
+---
+
 ## Documentation Structure
 
 ### 📚 Learning Path
@@ -104,6 +148,7 @@ const results = await mapAsync(
 ✅ **Automatic retries** - Handle transient failures gracefully
 ✅ **Timeout protection** - Prevent hanging operations
 ✅ **Rate limiting** - Debounce/throttle user input
+✅ **Result integration** - Type-safe error handling without exceptions
 ✅ **Type-safe** - Full TypeScript support
 ✅ **Composable** - Works with Remeda's pipe
 
@@ -180,19 +225,19 @@ const results = await batch(
 
 ## Quick Reference
 
-| I want to... | Function | Example |
-|--------------|----------|---------|
-| Process array concurrently | `mapAsync` | `mapAsync(items, fn, { concurrency: 10 })` |
-| Filter with async predicate | `filterAsync` | `filterAsync(items, asyncCheck, { concurrency: 5 })` |
-| Retry on failure | `retry` | `retry(fn, { maxAttempts: 3, delay: 1000 })` |
-| Add timeout | `timeout` | `timeout(promise, 5000)` |
-| Run tasks in parallel | `parallel` | `parallel(tasks, { concurrency: 10 })` |
-| Run tasks sequentially | `sequential` | `sequential(tasks)` |
-| Poll until condition | `poll` | `poll(fn, { interval: 1000, maxAttempts: 30 })` |
-| Process in batches | `batch` | `batch(items, fn, { batchSize: 50 })` |
-| Debounce calls | `debounce` | `debounce(fn, { delay: 300 })` |
-| Throttle calls | `throttle` | `throttle(fn, { delay: 1000 })` |
-| Wait for duration | `sleep` | `await sleep(1000)` |
+| I want to... | Function | Result Variant | Example |
+|--------------|----------|----------------|---------|
+| Process array concurrently | `mapAsync` | `mapAsyncResult` | `mapAsync(items, fn, { concurrency: 10 })` |
+| Filter with async predicate | `filterAsync` | `filterAsyncResult` | `filterAsync(items, asyncCheck, { concurrency: 5 })` |
+| Retry on failure | `retry` | `retryResult` | `retry(fn, { maxAttempts: 3, delay: 1000 })` |
+| Add timeout | `timeout` | `timeoutResult` | `timeout(promise, 5000)` |
+| Run tasks in parallel | `parallel` | `parallelResult` | `parallel(tasks, { concurrency: 10 })` |
+| Run tasks sequentially | `sequential` | `sequentialResult` | `sequential(tasks)` |
+| Poll until condition | `poll` | `pollResult` | `poll(fn, { interval: 1000, maxAttempts: 30 })` |
+| Process in batches | `batch` | `batchResult` | `batch(items, fn, { batchSize: 50 })` |
+| Debounce calls | `debounce` | - | `debounce(fn, { delay: 300 })` |
+| Throttle calls | `throttle` | - | `throttle(fn, { delay: 1000 })` |
+| Wait for duration | `sleep` | - | `await sleep(1000)` |
 
 ## Real-World Examples
 
@@ -348,6 +393,11 @@ Do you need to...
 
 ### ✅ Do
 
+- **Prefer Result pattern for type-safe error handling**:
+  ```typescript
+  const result = await retryResult(() => fetchData())
+  return pipe(result, unwrapOr(defaultData))
+  ```
 - Use concurrency limits for API calls (respect rate limits)
 - Add timeouts to prevent hanging operations
 - Retry on transient failures (network errors, rate limits)

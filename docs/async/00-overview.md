@@ -710,6 +710,94 @@ batch(items, {
 chunk([1,2,3,4,5], 2) // [[1,2], [3,4], [5]]
 ```
 
+## Integration with Result Pattern
+
+All major async functions now have Result-returning variants for type-safe, composable error handling:
+
+### Why Result + Async?
+
+Instead of throwing exceptions, Result-returning functions make errors **explicit in type signatures**:
+
+```typescript
+// Before: Error handling with try-catch
+try {
+  const data = await retry(() => fetchUser(id))
+  return data.email
+} catch (error) {
+  return 'noreply@example.com'
+}
+
+// After: Error handling with Result
+const result = await retryResult(() => fetchUser(id))
+return pipe(
+  result,
+  map(user => user.email),
+  unwrapOr('noreply@example.com')
+)
+```
+
+### Result-Returning Functions
+
+| Throwing Version | Result Version | Error Type |
+|-----------------|----------------|------------|
+| `retry()` | `retryResult()` | `RetryError` |
+| `mapAsync()` | `mapAsyncResult()` | `MapAsyncError<E>` |
+| `timeout()` | `timeoutResult()` | `TimeoutError` |
+| `poll()` | `pollResult()` | `PollError` |
+
+### Real-World: GitHub API with Result
+
+```typescript
+import * as R from 'remeda'
+import { retryResult, timeoutResult } from 'receta/async'
+import { unwrapOr, map, mapErr, isErr } from 'receta/result'
+
+type Repo = { name: string; stars: number }
+type FetchError = { type: 'network' | 'timeout' | 'rate_limit'; message: string }
+
+const fetchRepo = async (owner: string, repo: string): Promise<Result<Repo, FetchError>> => {
+  // Combine retry + timeout for resilient API calls
+  const result = await retryResult(
+    async () => {
+      const res = await timeoutResult(
+        fetch(`https://api.github.com/repos/${owner}/${repo}`),
+        5000
+      )
+
+      if (isErr(res)) {
+        throw new Error('Timeout')
+      }
+
+      const data = await res.value.json()
+      return { name: data.full_name, stars: data.stargazers_count }
+    },
+    { maxAttempts: 3, delay: 1000 }
+  )
+
+  return pipe(
+    result,
+    mapErr(error => ({
+      type: 'network' as const,
+      message: `Failed after ${error.attempts} attempts`
+    }))
+  )
+}
+
+// Usage - no try-catch needed!
+const repo = await fetchRepo('facebook', 'react')
+const stars = pipe(repo, map(r => r.stars), unwrapOr(0))
+```
+
+### Benefits
+
+✅ **Type-safe errors** - `Result<User, FetchError>` in signatures
+✅ **No exceptions** - Pure functional approach
+✅ **Composable** - Chain with `pipe`, `map`, `mapErr`
+✅ **Explicit** - Errors visible at compile time
+✅ **Non-breaking** - Original functions still available
+
+See [Result Integration Examples](../../examples/async-result-integration.ts) for more patterns.
+
 ## When to Use Async Utilities
 
 ✅ **Use async utilities when:**

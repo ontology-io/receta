@@ -581,6 +581,398 @@ function useAutoSave(documentId: string) {
 
 ---
 
+## Step 6: Migrate to Result Pattern
+
+### Why Migrate to Result?
+
+Result-returning functions provide **type-safe error handling** without exceptions:
+
+**Before (exceptions)**:
+```typescript
+try {
+  const data = await retry(() => fetchUser(id))
+  return data.email
+} catch (error) {
+  console.error('Failed:', error)
+  return 'fallback@example.com'
+}
+```
+
+**After (Result)**:
+```typescript
+const result = await retryResult(() => fetchUser(id))
+return pipe(
+  result,
+  map(user => user.email),
+  mapErr(err => console.error('Failed after', err.attempts, 'attempts')),
+  unwrapOr('fallback@example.com')
+)
+```
+
+### Benefits
+
+✅ **Errors in type signatures** - `Result<User, FetchError>` visible at compile time
+✅ **No exceptions** - Pure functional error handling
+✅ **Composable** - Chain with `pipe`, `map`, `mapErr`, `flatMap`
+✅ **Explicit** - Must handle errors, can't forget
+✅ **Better DX** - IDE shows error types
+
+### Migration Path: retry → retryResult
+
+**Before**:
+```typescript
+const fetchUser = async (id: string): Promise<User> => {
+  return retry(
+    async () => {
+      const res = await fetch(`/api/users/${id}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return res.json()
+    },
+    { maxAttempts: 3 }
+  )
+}
+
+// Usage requires try-catch
+try {
+  const user = await fetchUser('123')
+  console.log(user.name)
+} catch (error) {
+  console.error('Failed to fetch user')
+}
+```
+
+**After**:
+```typescript
+const fetchUserResult = async (id: string): Promise<Result<User, FetchError>> => {
+  const result = await retryResult(
+    async () => {
+      const res = await fetch(`/api/users/${id}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return res.json()
+    },
+    { maxAttempts: 3 }
+  )
+
+  return pipe(
+    result,
+    mapErr((err): FetchError => ({
+      type: 'network',
+      message: `Failed after ${err.attempts} attempts`,
+      retryable: true
+    }))
+  )
+}
+
+// Usage is type-safe, no try-catch
+const result = await fetchUserResult('123')
+const name = pipe(result, map(u => u.name), unwrapOr('Unknown'))
+```
+
+### Migration Path: mapAsync → mapAsyncResult
+
+**Before**:
+```typescript
+const processUsers = async (userIds: string[]): Promise<User[]> => {
+  try {
+    return await mapAsync(
+      userIds,
+      async (id) => fetchUser(id),
+      { concurrency: 5 }
+    )
+  } catch (error) {
+    console.error('One user failed, entire batch failed')
+    return []
+  }
+}
+```
+
+**After**:
+```typescript
+const processUsersResult = async (
+  userIds: string[]
+): Promise<Result<User[], FetchError>> => {
+  return mapAsyncResult(
+    userIds,
+    (id) => fetchUserResult(id),
+    { concurrency: 5 }
+  )
+}
+
+// Know exactly which user failed
+const result = await processUsersResult(userIds)
+if (isErr(result)) {
+  console.error(`User at index ${result.error.index} failed:`, result.error.error)
+  // Can retry just that user!
+} else {
+  console.log(`Processed ${result.value.length} users`)
+}
+```
+
+### Migration Path: timeout → timeoutResult
+
+**Before**:
+```typescript
+const fetchWithTimeout = async (url: string) => {
+  try {
+    return await timeout(fetch(url), 5000)
+  } catch (error) {
+    if (error instanceof TimeoutError) {
+      return fallbackData
+    }
+    throw error
+  }
+}
+```
+
+**After**:
+```typescript
+const fetchWithTimeoutResult = async (url: string) => {
+  const result = await timeoutResult(fetch(url), 5000)
+  return pipe(result, unwrapOr(fallbackData))
+}
+```
+
+### Migration Path: poll → pollResult
+
+**Before**:
+```typescript
+const waitForJob = async (jobId: string) => {
+  try {
+    return await poll(
+      async () => {
+        const status = await checkJobStatus(jobId)
+        if (status.state === 'failed') throw new Error('Job failed')
+        return status.state === 'completed' ? status : null
+      },
+      { interval: 2000, maxAttempts: 30 }
+    )
+  } catch (error) {
+    console.error('Job polling failed:', error)
+    throw error
+  }
+}
+```
+
+**After**:
+```typescript
+const waitForJobResult = async (jobId: string) => {
+  return pollResult(
+    async () => {
+      const status = await checkJobStatus(jobId)
+      if (status.state === 'failed') return err({ type: 'job_failed', jobId })
+      return status.state === 'completed' ? ok(status) : null
+    },
+    { interval: 2000, maxAttempts: 30 }
+  )
+}
+
+// Usage
+const result = await waitForJobResult('job-123')
+pipe(
+  result,
+  match(
+    (status) => console.log('Job completed:', status),
+    (error) => console.error('Job failed:', error.type)
+  )
+)
+```
+
+### Real-World Example: Payment Processing with Result
+
+**Before (exception-based)**:
+```typescript
+async function processPayment(paymentId: string): Promise<Payment> {
+  try {
+    // Fetch payment details with retry
+    const payment = await retry(
+      async () => {
+        const res = await fetch(`/api/payments/${paymentId}`)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      },
+      { maxAttempts: 3 }
+    )
+
+    // Process with timeout
+    const result = await timeout(
+      stripe.charges.create({
+        amount: payment.amount,
+        currency: payment.currency,
+        source: payment.sourceId
+      }),
+      10000
+    )
+
+    return result
+  } catch (error) {
+    // Can't distinguish between fetch error, timeout, or Stripe error
+    console.error('Payment processing failed:', error)
+    throw error
+  }
+}
+
+// Usage requires try-catch everywhere
+try {
+  const payment = await processPayment('pay-123')
+  console.log('Success:', payment.id)
+} catch (error) {
+  // Generic error handling
+  console.error('Failed:', error)
+}
+```
+
+**After (Result-based)**:
+```typescript
+type PaymentError =
+  | { type: 'fetch_failed'; attempts: number; message: string }
+  | { type: 'timeout'; operation: string }
+  | { type: 'stripe_error'; code: string; message: string }
+
+async function processPaymentResult(
+  paymentId: string
+): Promise<Result<Payment, PaymentError>> {
+  // Fetch payment details with retry
+  const paymentResult = await retryResult(
+    async () => {
+      const res = await fetch(`/api/payments/${paymentId}`)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      return res.json()
+    },
+    { maxAttempts: 3 }
+  )
+
+  // Early return if fetch failed
+  if (isErr(paymentResult)) {
+    return err({
+      type: 'fetch_failed',
+      attempts: paymentResult.error.attempts,
+      message: paymentResult.error.error.message
+    })
+  }
+
+  const payment = paymentResult.value
+
+  // Process with timeout
+  const chargeResult = await timeoutResult(
+    stripe.charges.create({
+      amount: payment.amount,
+      currency: payment.currency,
+      source: payment.sourceId
+    }),
+    10000
+  )
+
+  // Transform timeout or Stripe errors
+  return pipe(
+    chargeResult,
+    mapErr((error): PaymentError => {
+      if (error instanceof TimeoutError) {
+        return { type: 'timeout', operation: 'stripe_charge' }
+      }
+      return {
+        type: 'stripe_error',
+        code: error.code || 'unknown',
+        message: error.message
+      }
+    })
+  )
+}
+
+// Usage is type-safe and explicit
+const result = await processPaymentResult('pay-123')
+
+pipe(
+  result,
+  match(
+    (payment) => {
+      console.log('Payment succeeded:', payment.id)
+      // Continue with success flow
+    },
+    (error) => {
+      // Type-safe error handling
+      switch (error.type) {
+        case 'fetch_failed':
+          console.error(`Failed to fetch payment after ${error.attempts} attempts`)
+          // Retry with exponential backoff
+          break
+        case 'timeout':
+          console.error(`Stripe charge timed out`)
+          // Notify user to check payment status
+          break
+        case 'stripe_error':
+          console.error(`Stripe error [${error.code}]: ${error.message}`)
+          // Show specific error to user
+          break
+      }
+    }
+  )
+)
+```
+
+### Combining Result with Async Utilities
+
+**Pattern: Retry + Result + mapAsync**:
+```typescript
+// Process multiple payments with retry and Result
+const processPaymentsResult = async (
+  paymentIds: string[]
+): Promise<Result<Payment[], { index: number; error: PaymentError }>> => {
+  return mapAsyncResult(
+    paymentIds,
+    (id) => processPaymentResult(id),
+    { concurrency: 5 }
+  )
+}
+
+// Usage
+const result = await processPaymentsResult(paymentIds)
+
+if (isOk(result)) {
+  console.log(`Successfully processed ${result.value.length} payments`)
+} else {
+  const { index, error } = result.error
+  console.error(`Payment ${paymentIds[index]} failed:`, error.type)
+
+  // Retry just the failed payment
+  const retryResult = await processPaymentResult(paymentIds[index])
+  // Handle retry result...
+}
+```
+
+### Migration Checklist for Result Pattern
+
+- [ ] Identify functions that return `Promise<T>` and throw exceptions
+- [ ] Change return type to `Promise<Result<T, E>>`
+- [ ] Define custom error types (unions) instead of using `Error`
+- [ ] Replace `retry()` with `retryResult()`
+- [ ] Replace `mapAsync()` with `mapAsyncResult()` where appropriate
+- [ ] Replace `timeout()` with `timeoutResult()`
+- [ ] Replace `poll()` with `pollResult()`
+- [ ] Replace try-catch blocks with `pipe()` + Result functions
+- [ ] Use `isOk()`/`isErr()` for type narrowing
+- [ ] Use `match()` for exhaustive error handling
+- [ ] Use `unwrapOr()` or `unwrapOrElse()` for default values
+- [ ] Use `mapErr()` to transform and enrich errors
+- [ ] Test error paths with type-safe assertions
+- [ ] Update documentation to reflect Result return types
+
+### When to Use Result Pattern
+
+**Use Result when:**
+- ✅ Operation can fail in predictable ways
+- ✅ Errors are part of normal control flow
+- ✅ You want compile-time guarantee that errors are handled
+- ✅ Errors need to be transformed or enriched
+- ✅ Multiple operations need to be chained
+
+**Stick with exceptions when:**
+- ❌ Truly exceptional conditions (out of memory, etc.)
+- ❌ Working with libraries that expect exceptions
+- ❌ Simple scripts where type safety isn't critical
+- ❌ Legacy code that's not worth refactoring
+
+---
+
 ## Pattern-by-Pattern Migration
 
 ### Pattern 1: Parallel Fetch → mapAsync

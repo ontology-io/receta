@@ -50,6 +50,135 @@ Do you need to...
 
 ---
 
+## Result-Returning Variants
+
+All major async functions have Result-returning variants for type-safe error handling without exceptions.
+
+### retryResult() {#retryresult}
+
+Retry with Result pattern instead of throwing.
+
+**Signature**:
+```typescript
+function retryResult<T>(
+  fn: () => Promise<T>,
+  options?: RetryOptions
+): Promise<Result<T, RetryError>>
+
+type RetryError = {
+  readonly type: 'max_attempts_exceeded'
+  readonly lastError: unknown
+  readonly attempts: number
+}
+```
+
+**When to use**: When you want type-safe retry without exceptions
+
+**Example**:
+```typescript
+const result = await retryResult(() => fetchData())
+const data = pipe(result, unwrapOr(defaultData))
+```
+
+**See also**: `retry()` for throwing version
+
+---
+
+### mapAsyncResult() {#mapasyncresult}
+
+Map with Result-returning functions and concurrency control.
+
+**Signature**:
+```typescript
+function mapAsyncResult<T, U, E>(
+  items: readonly T[],
+  fn: (item: T, index: number) => Promise<Result<U, E>>,
+  options?: ConcurrencyOptions
+): Promise<Result<U[], MapAsyncError<E>>>
+
+type MapAsyncError<E> = {
+  readonly type: 'item_failed'
+  readonly index: number
+  readonly item: unknown
+  readonly error: E
+}
+```
+
+**When to use**: Mapping with Result-returning functions
+
+**Example**:
+```typescript
+const result = await mapAsyncResult(
+  userIds,
+  (id) => fetchUserResult(id),
+  { concurrency: 5 }
+)
+```
+
+**See also**: `mapAsync()` for throwing version
+
+---
+
+### timeoutResult() {#timeoutresult}
+
+Add timeout with Result pattern.
+
+**Signature**:
+```typescript
+function timeoutResult<T>(
+  promise: Promise<T>,
+  ms: number
+): Promise<Result<T, TimeoutError>>
+
+type TimeoutError = {
+  readonly type: 'timeout'
+  readonly timeout: number
+}
+```
+
+**When to use**: Type-safe timeout handling without exceptions
+
+**Example**:
+```typescript
+const result = await timeoutResult(fetch(url), 5000)
+const data = pipe(result, unwrapOr(fallback))
+```
+
+**See also**: `timeout()` for throwing version
+
+---
+
+### pollResult() {#pollresult}
+
+Poll with Result pattern.
+
+**Signature**:
+```typescript
+function pollResult<T>(
+  fn: () => Promise<T | null | undefined | false>,
+  options?: PollOptions
+): Promise<Result<T, PollError>>
+
+type PollError =
+  | { readonly type: 'max_attempts'; readonly attempts: number }
+  | { readonly type: 'timeout'; readonly elapsed: number }
+  | { readonly type: 'stopped'; readonly attempt: number }
+```
+
+**When to use**: Type-safe polling without exceptions
+
+**Example**:
+```typescript
+const result = await pollResult(() => checkStatus(jobId), {
+  interval: 1000,
+  maxAttempts: 30
+})
+```
+
+**See also**: `poll()` for throwing version
+
+---
+
 ## Function Reference
 
 ### mapAsync
@@ -897,21 +1026,21 @@ setLoading(false)
 
 ## Quick Lookup Cheat Sheet
 
-| I want to... | Use this | Key option |
-|--------------|----------|------------|
-| Map over array with async fn | `mapAsync` | `concurrency` |
-| Filter array with async predicate | `filterAsync` | `concurrency` |
-| Retry on failure | `retry` | `maxAttempts`, `backoff` |
-| Add timeout to promise | `timeout` | `timeout` |
-| Add timeout to function | `timeoutFn` | `timeout` |
-| Run tasks in parallel | `parallel` | `concurrency` |
-| Run tasks in sequence | `sequential` | - |
-| Poll until condition met | `poll` | `interval`, `maxAttempts` |
-| Process in batches | `batch` | `batchSize`, `delayBetweenBatches` |
-| Split array into chunks | `chunk` | - |
-| Debounce function calls | `debounce` | `delay` |
-| Throttle function calls | `throttle` | `delay` |
-| Wait for duration | `sleep` | - |
+| I want to... | Use this | Result variant | Key option |
+|--------------|----------|----------------|------------|
+| Map over array with async fn | `mapAsync` | `mapAsyncResult` | `concurrency` |
+| Filter array with async predicate | `filterAsync` | - | `concurrency` |
+| Retry on failure | `retry` | `retryResult` | `maxAttempts`, `backoff` |
+| Add timeout to promise | `timeout` | `timeoutResult` | `timeout` |
+| Add timeout to function | `timeoutFn` | - | `timeout` |
+| Run tasks in parallel | `parallel` | - | `concurrency` |
+| Run tasks in sequence | `sequential` | - | - |
+| Poll until condition met | `poll` | `pollResult` | `interval`, `maxAttempts` |
+| Process in batches | `batch` | - | `batchSize`, `delayBetweenBatches` |
+| Split array into chunks | `chunk` | - | - |
+| Debounce function calls | `debounce` | - | `delay` |
+| Throttle function calls | `throttle` | - | `delay` |
+| Wait for duration | `sleep` | - | - |
 
 ---
 
