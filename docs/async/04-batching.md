@@ -314,6 +314,144 @@ type PollError =
 
 ---
 
+## pollResult()
+
+Type-safe polling with Result pattern instead of throwing exceptions.
+
+### Signature
+
+```typescript
+function pollResult<T>(
+  fn: () => Promise<T | null | undefined | false>,
+  options?: PollOptions
+): Promise<Result<T, PollError>>
+
+type PollError =
+  | { readonly type: 'max_attempts'; readonly attempts: number }
+  | { readonly type: 'timeout'; readonly elapsed: number }
+  | { readonly type: 'stopped'; readonly attempt: number }
+```
+
+### When to Use
+
+Use `pollResult()` when:
+- You want type-safe polling without exceptions
+- Need to distinguish between different failure modes
+- Building composable async workflows
+- Prefer explicit error handling over try-catch
+
+### Real-World: CI/CD Job Monitoring with Result
+
+```typescript
+import { pollResult } from 'receta/async'
+import { map, unwrapOr, isOk, isErr } from 'receta/result'
+import * as R from 'remeda'
+
+type JobStatus = {
+  id: string
+  status: 'pending' | 'running' | 'success' | 'failed'
+  result?: string
+  error?: string
+}
+
+const monitorCIJob = async (jobId: string) => {
+  const result = await pollResult(
+    async () => {
+      const response = await fetch(`/api/jobs/${jobId}`)
+      const job: JobStatus = await response.json()
+
+      if (job.status === 'success' || job.status === 'failed') {
+        return job
+      }
+      return null // Keep polling
+    },
+    {
+      intervalMs: 5000,
+      maxAttempts: 60, // 5 minutes max
+      timeoutMs: 300000,
+      onAttempt: (attempt) => {
+        console.log(`Checking job ${jobId} (attempt ${attempt})`)
+      }
+    }
+  )
+
+  // Handle different error types
+  if (isErr(result)) {
+    if (result.error.type === 'timeout') {
+      return { status: 'timeout', message: `Job timed out after ${result.error.elapsed}ms` }
+    }
+    if (result.error.type === 'max_attempts') {
+      return { status: 'failed', message: `Max polling attempts (${result.error.attempts}) reached` }
+    }
+    return { status: 'stopped', message: 'Polling stopped' }
+  }
+
+  return R.pipe(
+    result,
+    map(job => ({ status: job.status, result: job.result })),
+    unwrapOr({ status: 'unknown', result: undefined })
+  )
+}
+```
+
+### Real-World: Order Processing with Result
+
+```typescript
+import { pollResult, retryResult } from 'receta/async'
+import { flatMap, unwrapOrElse, mapErr } from 'receta/result'
+import * as R from 'remeda'
+
+type Order = { id: string; status: 'processing' | 'complete'; total: number }
+
+const waitForOrder = async (orderId: string): Promise<Result<Order, string>> => {
+  // Poll with retry on network failures
+  const pollRes = await pollResult(
+    async () => {
+      const res = await retryResult(
+        () => fetch(`/api/orders/${orderId}`).then(r => r.json()),
+        { maxAttempts: 2, delayMs: 500 }
+      )
+
+      if (isErr(res)) return null // Retry polling
+
+      const order = res.value
+      return order.status === 'complete' ? order : null
+    },
+    { intervalMs: 2000, maxAttempts: 30 }
+  )
+
+  return R.pipe(
+    pollRes,
+    mapErr(error => {
+      if (error.type === 'max_attempts') {
+        return `Order ${orderId} processing timed out`
+      }
+      return `Order polling failed: ${error.type}`
+    })
+  )
+}
+```
+
+### Comparison: poll() vs pollResult()
+
+| Feature | `poll()` | `pollResult()` |
+|---------|----------|----------------|
+| Error handling | Throws exception | Returns Result |
+| Error types | String message | Discriminated union |
+| Type safety | `Promise<T>` | `Promise<Result<T, PollError>>` |
+| Error details | Limited | Full (attempts, elapsed, etc.) |
+| Composable | try-catch | pipe + Result functions |
+| Use case | Simple polling | Type-safe workflows |
+
+### Benefits
+
+✅ **Discriminated error types** - Know exactly why polling failed
+✅ **No exceptions** - Pure functional polling
+✅ **Composable** - Chain with other Result operations
+✅ **Full context** - Access attempts, elapsed time, etc.
+
+---
+
 ## Polling Patterns
 
 ### Job Status Polling
