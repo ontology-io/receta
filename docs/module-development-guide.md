@@ -24,11 +24,20 @@ This guide documents the proven process used to build the Result module, which c
 
 ### Development Principles
 
-1. **Implementation First**: Write code before docs (docs reflect reality)
-2. **Test Everything**: 100% coverage with property-based tests
-3. **Real-World Inspiration**: Examples from Stripe, GitHub, AWS, etc.
-4. **Beginner-Friendly**: Assume no FP background
-5. **Production-Ready**: Code and docs ready for real projects
+1. **Compositional Architecture**: Build functions from other functions, never duplicate logic
+   - Higher-level functions compose lower-level ones
+   - Single source of truth for each behavior
+   - Example: If you need both throwing and Result versions, implement Result first, then build throwing from it
+   - **Anti-pattern**: Having `retry()` and `retryResult()` with duplicate implementations
+2. **Result-First Error Handling**: Functions return `Result<T, E>` by default, not throw exceptions
+   - No `*Result` suffix - Result is the standard pattern
+   - Throwing versions are rare and built from Result versions when needed
+   - Example: `retry()` returns `Result<T, RetryError>` by default
+3. **Implementation First**: Write code before docs (docs reflect reality)
+4. **Test Everything**: 100% coverage with property-based tests
+5. **Real-World Inspiration**: Examples from Stripe, GitHub, AWS, etc.
+6. **Beginner-Friendly**: Assume no FP background
+7. **Production-Ready**: Code and docs ready for real projects
 
 ### Timeline for a Module
 
@@ -326,7 +335,51 @@ Follow same pattern as transformers but these typically don't need data-last var
 
 For functions that work with arrays of the main type.
 
-### Step 2.8: Create Barrel Export
+### Step 2.8: Compositional Patterns (Avoid Duplication)
+
+**CRITICAL**: Never implement duplicate versions of the same logic.
+
+```typescript
+// ❌ ANTI-PATTERN: Duplicate implementations
+export async function retry<T>(fn: () => Promise<T>): Promise<T> {
+  // 50 lines of retry logic with try/catch
+}
+
+export async function retryResult<T>(fn: () => Promise<T>): Promise<Result<T, E>> {
+  // 50 lines of DUPLICATE retry logic with Result wrapping
+}
+
+// ✅ CORRECT PATTERN: Single source of truth
+export async function retry<T>(fn: () => Promise<T>): Promise<Result<T, RetryError>> {
+  // Single implementation returning Result
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return ok(await fn())
+    } catch (error) {
+      if (attempt === maxAttempts) {
+        return err({ type: 'max_attempts_exceeded', lastError: error, attempts: attempt })
+      }
+      await sleep(delay)
+    }
+  }
+}
+
+// If throwing version needed (rare), build from Result version
+export async function retryOrThrow<T>(fn: () => Promise<T>): Promise<T> {
+  const result = await retry(fn)
+  if (isErr(result)) throw result.error.lastError
+  return result.value
+}
+```
+
+**Compositional checklist:**
+- [ ] Single implementation per logical operation
+- [ ] Higher-level functions call lower-level ones
+- [ ] Result-returning is the default
+- [ ] Throwing versions (if needed) wrap Result versions
+- [ ] Never duplicate core logic
+
+### Step 2.9: Create Barrel Export
 
 **File**: `src/<module-name>/index.ts`
 

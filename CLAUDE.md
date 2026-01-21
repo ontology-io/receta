@@ -24,30 +24,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Design Principles
 
-### 1. Remeda as Infrastructure
+### 1. Compositional Architecture - Build Up, Never Duplicate
+- **Core Principle**: Functions are built from other functions, never duplicated
+- Higher-level functions compose lower-level ones
+- Single source of truth for each behavior
+- Example: `retryResult()` calls `retry()`, doesn't reimplement retry logic
+- **Anti-pattern**: Having separate throwing and Result-returning versions with duplicate logic
+
+### 2. Remeda as Infrastructure
 - Receta **depends on** Remeda and uses it internally
 - Never reimplement what Remeda already provides
 - Re-export Remeda utilities only when extending them
 - Follow Remeda's data-first/data-last pattern
 
-### 2. Type Safety First
+### 3. Result-First Error Handling
+- **Default**: Functions return `Result<T, E>`, not throw exceptions
+- Errors as values for explicit, composable error handling
+- No `*Result` suffix - Result pattern is the standard, not an option
+- Throwing functions only when absolutely necessary (rare)
+- Example: `retry()` returns `Result<T, RetryError>` by default
+
+### 4. Type Safety First
 - Leverage TypeScript's type system to the fullest
 - Prefer narrowing over type assertions
 - Use branded/opaque types where semantic meaning matters
 - All functions must be fully typed — no `any`
 
-### 3. Explicit Over Magic
+### 5. Explicit Over Magic
 - No hidden side effects
-- Errors as values (Result), not exceptions
 - Nullability handled via Option, not silent defaults
 - Pure functions wherever possible
+- Clear function names that indicate behavior
 
-### 4. Practical Over Academic
+### 6. Practical Over Academic
 - Solve real problems, not theoretical exercises
 - API should read like intent: `Result.tryCatch(() => JSON.parse(str))`
 - Optimize for the 90% use case, escape hatch for the 10%
 
-### 5. Tree-Shakeable
+### 7. Tree-Shakeable
 - Each module can be imported independently
 - No barrel files that force bundling everything
 - Side-effect free for dead code elimination
@@ -262,12 +276,55 @@ Every exported function must have:
 
 ## Implementation Patterns
 
-### Pattern 1: Result-Returning Functions
+### Pattern 1: Compositional Functions (Build Up, Not Duplicate)
+
+**Core principle**: Build higher-level functions from lower-level ones.
 
 ```typescript
-import * as R from 'remeda'
+import { ok, err, type Result } from '../result'
+
+// ❌ ANTI-PATTERN: Duplicate implementations
+export async function retry<T>(fn: () => Promise<T>): Promise<T> {
+  // ... retry logic with try/catch
+}
+
+export async function retryResult<T>(fn: () => Promise<T>): Promise<Result<T, E>> {
+  // ... DUPLICATE retry logic returning Result
+}
+
+// ✅ CORRECT: Compose from existing functions
+export async function retry<T>(fn: () => Promise<T>): Promise<Result<T, RetryError>> {
+  // Single implementation returning Result
+  let lastError: unknown
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return ok(await fn())
+    } catch (error) {
+      lastError = error
+      if (attempt === maxAttempts) {
+        return err({ type: 'max_attempts_exceeded', lastError, attempts: attempt })
+      }
+      await sleep(delay)
+    }
+  }
+}
+
+// If you need a throwing version (rare), build it from the Result version
+export async function retryOrThrow<T>(fn: () => Promise<T>): Promise<T> {
+  const result = await retry(fn)
+  if (isErr(result)) throw result.error
+  return result.value
+}
+```
+
+### Pattern 2: Result-Returning Functions (Default Pattern)
+
+All async error-handling functions should return Result by default:
+
+```typescript
 import { Result, ok, err, tryCatch } from '../result'
 
+// ✅ Result by default
 export function parseJSON<T>(str: string): Result<T, SyntaxError> {
   return tryCatch(
     () => JSON.parse(str) as T,
@@ -275,11 +332,26 @@ export function parseJSON<T>(str: string): Result<T, SyntaxError> {
   )
 }
 
+// ✅ Result with custom error type
 export function parseNumber(str: string): Result<number, string> {
   const n = Number(str)
-  return Number.isNaN(n) 
+  return Number.isNaN(n)
     ? err(`Invalid number: "${str}"`)
     : ok(n)
+}
+
+// ✅ Async function returning Result
+export async function fetchUser(id: string): Promise<Result<User, FetchError>> {
+  try {
+    const response = await fetch(`/api/users/${id}`)
+    if (!response.ok) {
+      return err({ type: 'http_error', status: response.status })
+    }
+    const user = await response.json()
+    return ok(user)
+  } catch (error) {
+    return err({ type: 'network_error', cause: error })
+  }
 }
 ```
 
