@@ -771,7 +771,7 @@ bun run build      # Build must succeed
 | option | ✅ Complete | P0 | Type-safe nullable handling, Result interop |
 | predicate | ✅ Complete | P1 | Composable predicates, type guards, combinators |
 | validation | ✅ Complete | P1 | Error accumulation, form validation, schema validation |
-| collection | 🔴 Not started | P2 | Advanced collection operations |
+| collection | ✅ Complete | P2 | Advanced collection operations (nest, diff, paginate, indexByUnique, set operations) |
 | object | 🔴 Not started | P2 | Object manipulation utilities |
 | string | 🔴 Not started | P2 | String processing and formatting |
 | number | 🔴 Not started | P2 | Number formatting and calculations |
