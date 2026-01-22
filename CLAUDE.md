@@ -775,13 +775,13 @@ bun run build      # Build must succeed
 | object | ✅ Complete | P2 | Safe object manipulation (flatten, unflatten, getPath, mask, deepMerge, validateShape) |
 | string | ✅ Complete | P2 | String processing, validation, sanitization (slugify, case conversions, template, HTML escape, validators) |
 | number | ✅ Complete | P2 | Number formatting, validation, calculations, conversions (format, toCurrency, toBytes, round, percentage, etc.) |
-| date | 🔴 Not started | P3 | Date utilities and formatting |
-| memo | 🔴 Not started | P3 | Memoization strategies |
+| memo | ✅ Complete | P3 | Memoization strategies (memoize, memoizeBy, memoizeAsync, TTL/LRU/WeakMap caches, deduplication) |
 | lens | 🔴 Not started | P3 | Functional lenses for immutable updates |
 | compare | 🔴 Not started | P3 | Comparator builders |
 | id | 🔴 Not started | P3 | ID generation utilities |
 | function | 🔴 Not started | P3 | Function combinators |
 | fetch | 🔴 Not started | P3 | Fetch wrappers with Result integration |
+| date | 🔴 Not started | P3 | Date utilities and formatting |
 
 ---
 
