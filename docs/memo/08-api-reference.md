@@ -147,7 +147,7 @@ const fn = memoizeBy(
 
 ### clearCache()
 
-Clear memoized function cache.
+Clear entire cache of a memoized function.
 
 ```typescript
 function clearCache<Args, R>(
@@ -161,6 +161,82 @@ import { memoize, clearCache } from 'receta/memo'
 
 const fn = memoize(expensive)
 clearCache(fn)
+```
+
+---
+
+### invalidateMany()
+
+Invalidate multiple cache entries by their keys.
+
+```typescript
+function invalidateMany<K>(
+  memoized: MemoizedFunction | MemoizedAsyncFunction,
+  keys: K[]
+): void
+```
+
+**Example**:
+```typescript
+import { memoize, invalidateMany } from 'receta/memo'
+
+const getUser = memoize(fetchUser)
+
+// After batch update
+await updateUsers(['1', '2', '3'], newData)
+invalidateMany(getUser, ['1', '2', '3'])
+```
+
+---
+
+### invalidateWhere()
+
+Invalidate cache entries matching a predicate.
+
+```typescript
+function invalidateWhere<K = unknown, V = unknown>(
+  memoized: MemoizedFunction | MemoizedAsyncFunction,
+  predicate: (key: K, value?: V) => boolean
+): void
+```
+
+**Example**:
+```typescript
+import { memoize, invalidateWhere } from 'receta/memo'
+
+const getUser = memoize(fetchUser)
+
+// Invalidate all admin users
+invalidateWhere(getUser, (_key, user) => user?.role === 'admin')
+
+// Invalidate by key pattern
+invalidateWhere(getPost, (key: string) => key.startsWith('draft:'))
+```
+
+**Note**: Only works with Map-based caches (default, ttlCache, lruCache). Throws error for WeakMap.
+
+---
+
+### invalidateAll()
+
+Clear cache of multiple memoized functions at once.
+
+```typescript
+function invalidateAll(
+  ...memoized: Array<MemoizedFunction | MemoizedAsyncFunction>
+): void
+```
+
+**Example**:
+```typescript
+import { memoizeAsync, invalidateAll } from 'receta/memo'
+
+const getUser = memoizeAsync(fetchUser)
+const getUserPosts = memoizeAsync(fetchUserPosts)
+const getUserComments = memoizeAsync(fetchUserComments)
+
+// Clear all related caches
+invalidateAll(getUser, getUserPosts, getUserComments)
 ```
 
 ---
@@ -259,6 +335,9 @@ import {
 
   // Utilities
   clearCache,
+  invalidateMany,
+  invalidateWhere,
+  invalidateAll,
 
   // Types
   type Cache,

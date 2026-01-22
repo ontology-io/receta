@@ -17,3 +17,4 @@ export { ttlCache, lruCache, weakCache } from './caches'
 
 // Utilities
 export { clearCache } from './clearCache'
+export { invalidateMany, invalidateWhere, invalidateAll } from './invalidation'
