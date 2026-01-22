@@ -774,7 +774,7 @@ bun run build      # Build must succeed
 | collection | ✅ Complete | P2 | Advanced collection operations (nest, diff, paginate, indexByUnique, set operations) |
 | object | ✅ Complete | P2 | Safe object manipulation (flatten, unflatten, getPath, mask, deepMerge, validateShape) |
 | string | ✅ Complete | P2 | String processing, validation, sanitization (slugify, case conversions, template, HTML escape, validators) |
-| number | 🔴 Not started | P2 | Number formatting and calculations |
+| number | ✅ Complete | P2 | Number formatting, validation, calculations, conversions (format, toCurrency, toBytes, round, percentage, etc.) |
 | date | 🔴 Not started | P3 | Date utilities and formatting |
 | memo | 🔴 Not started | P3 | Memoization strategies |
 | lens | 🔴 Not started | P3 | Functional lenses for immutable updates |
