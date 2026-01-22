@@ -1,7 +1,7 @@
-import * as R from 'remeda'
 import type { Option } from '../option/types'
 import { some, none } from '../option/constructors'
 import type { CondPair } from './types'
+import { purryConfig } from '../utils'
 
 /**
  * Creates a function that applies the first matching predicate-function pair.
@@ -58,13 +58,8 @@ import type { CondPair } from './types'
  */
 export function cond<T, U>(pairs: readonly CondPair<T, U>[]): (value: T) => Option<U>
 export function cond<T, U>(pairs: readonly CondPair<T, U>[], value: T): Option<U>
-export function cond<T, U>(
-  pairs: readonly CondPair<T, U>[],
-  value?: T
-): Option<U> | ((value: T) => Option<U>) {
-  return value === undefined
-    ? (v: T) => condImplementation(pairs, v)
-    : condImplementation(pairs, value)
+export function cond(...args: unknown[]): unknown {
+  return purryConfig(condImplementation, args)
 }
 
 function condImplementation<T, U>(pairs: readonly CondPair<T, U>[], value: T): Option<U> {

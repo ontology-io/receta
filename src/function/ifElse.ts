@@ -1,5 +1,5 @@
-import * as R from 'remeda'
 import type { Predicate, Mapper } from './types'
+import { purryConfig3 } from '../utils'
 
 /**
  * Creates a function that conditionally applies one of two functions based on a predicate.
@@ -56,15 +56,8 @@ export function ifElse<T, U>(
   onFalse: Mapper<T, U>,
   value: T
 ): U
-export function ifElse<T, U>(
-  predicate: Predicate<T>,
-  onTrue: Mapper<T, U>,
-  onFalse: Mapper<T, U>,
-  value?: T
-): U | ((value: T) => U) {
-  return value === undefined
-    ? (v: T) => ifElseImplementation(predicate, onTrue, onFalse, v)
-    : ifElseImplementation(predicate, onTrue, onFalse, value)
+export function ifElse(...args: unknown[]): unknown {
+  return purryConfig3(ifElseImplementation, args)
 }
 
 function ifElseImplementation<T, U>(

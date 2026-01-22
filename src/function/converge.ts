@@ -1,5 +1,6 @@
 import * as R from 'remeda'
 import type { FunctionTuple } from './types'
+import { purryConfig2 } from '../utils'
 
 /**
  * Creates a function that applies multiple functions to the same input, then combines their results.
@@ -70,14 +71,8 @@ export function converge<T, Args extends readonly unknown[], R>(
   fns: FunctionTuple<T, Args>,
   value: T
 ): R
-export function converge<T, Args extends readonly unknown[], R>(
-  after: (...args: Args) => R,
-  fns: FunctionTuple<T, Args>,
-  value?: T
-): R | ((value: T) => R) {
-  return value === undefined
-    ? (v: T) => convergeImplementation(after, fns, v)
-    : convergeImplementation(after, fns, value)
+export function converge(...args: unknown[]): unknown {
+  return purryConfig2(convergeImplementation, args)
 }
 
 function convergeImplementation<T, Args extends readonly unknown[], R>(
@@ -85,6 +80,6 @@ function convergeImplementation<T, Args extends readonly unknown[], R>(
   fns: FunctionTuple<T, Args>,
   value: T
 ): R {
-  const results = fns.map((fn) => fn(value)) as unknown as Args
+  const results = R.map(fns, (fn) => fn(value)) as unknown as Args
   return after(...results)
 }

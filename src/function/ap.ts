@@ -1,4 +1,5 @@
 import * as R from 'remeda'
+import { purryConfig } from '../utils'
 
 /**
  * Applies an array of functions to an array of values (applicative apply).
@@ -52,18 +53,16 @@ import * as R from 'remeda'
  */
 export function ap<T, U>(fns: readonly ((value: T) => U)[]): (values: readonly T[]) => U[]
 export function ap<T, U>(fns: readonly ((value: T) => U)[], values: readonly T[]): U[]
-export function ap<T, U>(
-  fns: readonly ((value: T) => U)[],
-  values?: readonly T[]
-): U[] | ((values: readonly T[]) => U[]) {
-  return values === undefined
-    ? (vals: readonly T[]) => apImplementation(fns, vals)
-    : apImplementation(fns, values)
+export function ap(...args: unknown[]): unknown {
+  return purryConfig(apImplementation, args)
 }
 
 function apImplementation<T, U>(
   fns: readonly ((value: T) => U)[],
   values: readonly T[]
 ): U[] {
-  return fns.flatMap((fn) => values.map(fn))
+  return R.pipe(
+    fns,
+    R.flatMap((fn) => R.map(values, fn))
+  )
 }

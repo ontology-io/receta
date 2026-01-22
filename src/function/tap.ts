@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { purryConfig } from '../utils'
 
 /**
  * Executes a side effect function and returns the original value unchanged.
@@ -59,8 +59,8 @@ import * as R from 'remeda'
  */
 export function tap<T>(fn: (value: T) => void): (value: T) => T
 export function tap<T>(fn: (value: T) => void, value: T): T
-export function tap<T>(fn: (value: T) => void, value?: T): T | ((value: T) => T) {
-  return value === undefined ? (v: T) => tapImplementation(fn, v) : tapImplementation(fn, value)
+export function tap(...args: unknown[]): unknown {
+  return purryConfig(tapImplementation, args)
 }
 
 function tapImplementation<T>(fn: (value: T) => void, value: T): T {

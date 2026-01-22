@@ -1,5 +1,5 @@
-import * as R from 'remeda'
 import type { Predicate, Mapper } from './types'
+import { purryConfig2 } from '../utils'
 
 /**
  * Creates a function that conditionally applies a transformation.
@@ -50,14 +50,8 @@ import type { Predicate, Mapper } from './types'
  */
 export function when<T>(predicate: Predicate<T>, fn: Mapper<T, T>): (value: T) => T
 export function when<T>(predicate: Predicate<T>, fn: Mapper<T, T>, value: T): T
-export function when<T>(
-  predicate: Predicate<T>,
-  fn: Mapper<T, T>,
-  value?: T
-): T | ((value: T) => T) {
-  return value === undefined
-    ? (v: T) => whenImplementation(predicate, fn, v)
-    : whenImplementation(predicate, fn, value)
+export function when(...args: unknown[]): unknown {
+  return purryConfig2(whenImplementation, args)
 }
 
 function whenImplementation<T>(predicate: Predicate<T>, fn: Mapper<T, T>, value: T): T {
