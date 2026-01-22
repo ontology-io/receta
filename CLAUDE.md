@@ -777,7 +777,7 @@ bun run build      # Build must succeed
 | number | ✅ Complete | P2 | Number formatting, validation, calculations, conversions (format, toCurrency, toBytes, round, percentage, etc.) |
 | memo | ✅ Complete | P3 | Memoization strategies (memoize, memoizeBy, memoizeAsync, TTL/LRU/WeakMap caches, deduplication) |
 | lens | ✅ Complete | P3 | Functional lenses for immutable updates (prop, path, index, compose, optional, view/set/over operations) |
-| compare | 🔴 Not started | P3 | Comparator builders |
+| compare | ✅ Complete | P3 | Comparator builders (ascending, descending, natural, compose, type-specific comparators) |
 | id | 🔴 Not started | P3 | ID generation utilities |
 | function | 🔴 Not started | P3 | Function combinators |
 | fetch | 🔴 Not started | P3 | Fetch wrappers with Result integration |
