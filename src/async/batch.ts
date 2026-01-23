@@ -1,3 +1,4 @@
+import * as R from 'remeda'
 import type { BatchOptions } from './types'
 import { sleep } from './retry'
 import { mapAsync } from './mapAsync'
@@ -63,11 +64,8 @@ export async function batch<T, U>(
     concurrency = 1,
   } = options
 
-  // Split items into batches
-  const batches: T[][] = []
-  for (let i = 0; i < items.length; i += batchSize) {
-    batches.push(items.slice(i, i + batchSize))
-  }
+  // Split items into batches using Remeda's chunk utility
+  const batches = R.chunk(items, batchSize)
 
   // Process batches
   const results: U[] = []
@@ -96,34 +94,3 @@ export async function batch<T, U>(
   return results
 }
 
-/**
- * Creates a chunk (batch) of items from an array.
- *
- * Utility function to split an array into chunks of a specific size.
- *
- * @param items - Array to chunk
- * @param size - Size of each chunk
- * @returns Array of chunks
- *
- * @example
- * ```typescript
- * const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9]
- * const chunks = chunk(numbers, 3)
- * // => [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
- *
- * const users = await fetchUsers()
- * const userBatches = chunk(users, 50)
- * for (const batch of userBatches) {
- *   await processBatch(batch)
- * }
- * ```
- *
- * @see batch - for processing items in batches
- */
-export function chunk<T>(items: readonly T[], size: number): T[][] {
-  const chunks: T[][] = []
-  for (let i = 0; i < items.length; i += size) {
-    chunks.push(items.slice(i, i + size))
-  }
-  return chunks
-}

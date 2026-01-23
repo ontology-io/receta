@@ -145,8 +145,9 @@ function paginateCursorImplementation<T, TCursor>(
 
   // nextCursor is undefined if this is the last page
   // Otherwise it's the cursor of the last item (for continuing pagination)
-  const nextCursor = hasMore && pageItems.length > 0
-    ? getCursor(pageItems[pageItems.length - 1]!)
+  const lastItem = R.last(pageItems)
+  const nextCursor = hasMore && lastItem !== undefined
+    ? getCursor(lastItem)
     : undefined
 
   return {

@@ -1,9 +1,14 @@
 import * as R from 'remeda'
+import { getPath } from '../object/getPath'
+import { unwrapOr } from '../option'
 
 /**
  * Groups items by a nested object path.
  *
  * Useful for grouping objects by nested properties like `user.role` or `metadata.category`.
+ *
+ * Uses type-safe path access via Option pattern. Items with undefined/null paths
+ * are grouped under the 'undefined' key.
  *
  * @param items - The array of items to group
  * @param path - Dot-separated path to the property (e.g., 'user.role')
@@ -54,13 +59,9 @@ function groupByPathImplementation<T>(
   const keys = path.split('.')
 
   return R.groupBy(items, (item) => {
-    let value: unknown = item
-    for (const key of keys) {
-      if (value === null || value === undefined) {
-        return 'undefined'
-      }
-      value = (value as Record<string, unknown>)[key]
-    }
+    // Use type-safe getPath from object module with Option pattern
+    const valueOption = getPath<unknown>(keys, item as Record<string, unknown>)
+    const value = unwrapOr(valueOption, undefined)
     return String(value)
   })
 }

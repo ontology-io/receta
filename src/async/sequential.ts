@@ -1,3 +1,5 @@
+import * as R from 'remeda'
+
 /**
  * Executes an array of async tasks sequentially (one at a time).
  *
@@ -34,12 +36,14 @@
 export async function sequential<T>(
   tasks: ReadonlyArray<() => Promise<T>>
 ): Promise<T[]> {
-  const results: T[] = []
-
-  for (const task of tasks) {
-    const result = await task()
-    results.push(result)
-  }
-
-  return results
+  // Use Remeda's reduce for a functional approach
+  return R.reduce(
+    tasks,
+    async (accPromise, task) => {
+      const acc = await accPromise
+      const result = await task()
+      return [...acc, result]
+    },
+    Promise.resolve([] as T[])
+  )
 }

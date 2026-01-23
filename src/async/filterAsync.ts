@@ -76,6 +76,10 @@ async function filterAsyncImplementation<T>(
     options
   )
 
-  // Filter to only items where shouldKeep is true
-  return results.filter(([, shouldKeep]) => shouldKeep).map(([item]) => item)
+  // Filter to only items where shouldKeep is true using Remeda's pipe
+  return R.pipe(
+    results,
+    R.filter(([, shouldKeep]) => shouldKeep),
+    R.map(([item]) => item)
+  )
 }

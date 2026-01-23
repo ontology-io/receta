@@ -1,5 +1,6 @@
 import type { RetryOptions } from './types'
 import { ok, err, type Result } from '../result'
+import { clamp } from '../number/clamp'
 
 /**
  * Error type returned when all retry attempts fail.
@@ -109,8 +110,8 @@ export async function retry<T>(
         })
       }
 
-      // Calculate delay with exponential backoff
-      const delayMs = Math.min(currentDelay, maxDelay)
+      // Calculate delay with exponential backoff using clamp for clarity
+      const delayMs = clamp(currentDelay, 0, maxDelay)
 
       // Call onRetry callback if provided
       if (onRetry) {

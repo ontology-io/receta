@@ -116,5 +116,5 @@ function diffImplementation<T, TId extends string | number>(
 }
 
 function defaultEqual<T>(a: T, b: T): boolean {
-  return JSON.stringify(a) === JSON.stringify(b)
+  return R.isDeepEqual(a, b)
 }

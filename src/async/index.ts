@@ -28,7 +28,10 @@ export { timeout, TimeoutError } from './timeout'
 
 // Polling and batching
 export { poll, type PollError } from './poll'
-export { batch, chunk } from './batch'
+export { batch } from './batch'
+
+// Re-export Remeda's chunk utility (no need to reimplement)
+export { chunk } from 'remeda'
 
 // Rate limiting
 export { debounce } from './debounce'

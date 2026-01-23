@@ -103,8 +103,9 @@ export async function poll<T>(
       const result = await fn()
 
       // If result is truthy, we're done
-      if (result) {
-        return ok(result as T)
+      // Type narrowing: result is T when truthy (not null/undefined/false)
+      if (result !== null && result !== undefined && result !== false) {
+        return ok(result)
       }
 
       // If this was the last attempt, return error

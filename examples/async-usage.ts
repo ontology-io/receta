@@ -263,4 +263,210 @@ const existingUserIds = await filterAsync(
 console.log('Existing user IDs:', existingUserIds)
 console.log()
 
+// Example 10: Result + Async Composition Pattern
+console.log('Example 10: Result + Async Composition Pattern')
+console.log('-----------------------------------------------')
+
+import { isOk, isErr, unwrapOr, mapErr } from '../src/result'
+import * as Result from '../src/result'
+import * as R from 'remeda'
+
+interface User {
+  id: number
+  email: string
+  verified: boolean
+}
+
+interface Post {
+  id: number
+  userId: number
+  title: string
+}
+
+// Simulate API calls that return Results
+const fetchUserResult = async (id: number) => {
+  await sleep(50)
+  if (id > 0) {
+    return Result.ok({ id, email: `user${id}@example.com`, verified: true })
+  }
+  return Result.err({ code: 'USER_NOT_FOUND', userId: id })
+}
+
+const fetchUserPostsResult = async (userId: number) => {
+  await sleep(50)
+  return Result.ok([
+    { id: 1, userId, title: 'First Post' },
+    { id: 2, userId, title: 'Second Post' },
+  ] as Post[])
+}
+
+// Compose async operations with Result chaining
+const getUserWithPosts = async (userId: number) => {
+  // Retry the user fetch operation
+  const userResult = await retry(() => fetchUserResult(userId), {
+    maxAttempts: 3,
+    delay: 50,
+  })
+
+  // Use flatMap to chain the next async operation only if user exists
+  if (isErr(userResult)) {
+    return userResult
+  }
+
+  const user = userResult.value
+
+  if (isErr(user)) {
+    return user
+  }
+
+  // Fetch posts and combine with user data
+  const postsResult = await fetchUserPostsResult(user.value.id)
+
+  if (isErr(postsResult)) {
+    return postsResult
+  }
+
+  return Result.ok({
+    user: user.value,
+    posts: postsResult.value,
+  })
+}
+
+const userWithPosts = await getUserWithPosts(1)
+console.log('User with posts:', isOk(userWithPosts) ? 'Success' : 'Failed')
+console.log()
+
+// Example 11: Predicate Integration in Retry Logic
+console.log('Example 11: Predicate Integration in Retry Logic')
+console.log('------------------------------------------------')
+
+import { lt as predicateLt } from '../src/predicate'
+
+class NetworkError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'NetworkError'
+  }
+}
+
+class AuthError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'AuthError'
+  }
+}
+
+let networkAttempts = 0
+const unreliableNetworkCall = async () => {
+  networkAttempts++
+  if (networkAttempts < 3) {
+    throw new NetworkError('Connection failed')
+  }
+  if (networkAttempts === 3) {
+    throw new AuthError('Not authorized') // Should not retry
+  }
+  return { success: true, data: 'Response data' }
+}
+
+// Use predicate builders to create retry conditions
+const isRetryableError = (error: unknown): boolean => {
+  return error instanceof NetworkError
+}
+
+const isWithinRetryLimit = (attempt: number): boolean => {
+  return predicateLt(5)(attempt)
+}
+
+networkAttempts = 0
+const resultWithPredicates = await retry(unreliableNetworkCall, {
+  maxAttempts: 5,
+  delay: 50,
+  shouldRetry: (error, attempt) => {
+    // Combine predicates: only retry if it's a network error AND within limit
+    return isRetryableError(error) && isWithinRetryLimit(attempt)
+  },
+  onRetry: (error, attempt, delay) => {
+    console.log(`Retry ${attempt}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  },
+})
+
+console.log('Result with predicates:', isOk(resultWithPredicates) ? 'Eventually succeeded' : 'Failed')
+if (isErr(resultWithPredicates)) {
+  console.log('Error type:', resultWithPredicates.error.type)
+}
+console.log()
+
+// Example 12: Complex Async Pipeline with Result and Predicates
+console.log('Example 12: Complex Async Pipeline with Result and Predicates')
+console.log('--------------------------------------------------------------')
+
+import { gte, between } from '../src/predicate'
+
+interface Product {
+  id: number
+  name: string
+  price: number
+  stock: number
+}
+
+// Simulate product API with Result pattern
+const fetchProducts = async (): Promise<Result.Result<Product[], string>> => {
+  await sleep(50)
+  return Result.ok([
+    { id: 1, name: 'Widget', price: 29.99, stock: 100 },
+    { id: 2, name: 'Gadget', price: 49.99, stock: 0 },
+    { id: 3, name: 'Doohickey', price: 19.99, stock: 50 },
+    { id: 4, name: 'Thingamajig', price: 99.99, stock: 25 },
+    { id: 5, name: 'Whatsit', price: 5.99, stock: 200 },
+  ])
+}
+
+const checkStock = async (product: Product): Promise<boolean> => {
+  await sleep(10)
+  return gte(1)(product.stock)
+}
+
+const applyDiscount = (product: Product): Product => ({
+  ...product,
+  price: product.price * 0.9, // 10% discount
+})
+
+// Complex pipeline: fetch products, filter by stock, filter by price range, apply discount
+const getAffordableInStockProducts = async () => {
+  // Fetch products with retry
+  const productsResult = await retry(fetchProducts, {
+    maxAttempts: 3,
+    delay: 50,
+  })
+
+  if (isErr(productsResult)) {
+    return productsResult
+  }
+
+  const products = unwrapOr(productsResult.value, [])
+
+  // Filter products with async stock check (concurrency: 3)
+  const inStockProducts = await filterAsync(products, checkStock, { concurrency: 3 })
+
+  // Filter by price range using predicates
+  const affordableProducts = R.filter(inStockProducts, (p) => between(10, 60)(p.price))
+
+  // Apply discounts using mapAsync
+  const discountedProducts = await mapAsync(affordableProducts, async (p) => {
+    await sleep(5) // Simulate async discount calculation
+    return applyDiscount(p)
+  })
+
+  return Result.ok(discountedProducts)
+}
+
+const affordableProducts = await getAffordableInStockProducts()
+if (isOk(affordableProducts)) {
+  console.log(`Found ${affordableProducts.value.length} affordable in-stock products:`)
+  affordableProducts.value.forEach((p) => {
+    console.log(`  - ${p.name}: $${p.price.toFixed(2)} (stock: ${p.stock})`)
+  })
+}
+console.log()
+
 console.log('=== All Examples Complete ===')

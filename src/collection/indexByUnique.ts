@@ -60,8 +60,10 @@ export function indexByUnique<T, TKey extends string | number>(
   config?: IndexConfig
 ): (items: readonly T[]) => Result<Record<TKey, T>, DuplicateKeyError>
 export function indexByUnique(...args: unknown[]): unknown {
-  // Handle data-first: indexByUnique(items, getKey, config?)
+  // Use Remeda's purry pattern for consistent data-first/data-last handling
+  // Note: This requires handling optional 3rd parameter manually
   if (Array.isArray(args[0])) {
+    // Data-first: indexByUnique(items, getKey, config?)
     return indexByUniqueImplementation(
       args[0] as readonly unknown[],
       args[1] as (item: unknown) => string | number,
@@ -69,7 +71,7 @@ export function indexByUnique(...args: unknown[]): unknown {
     )
   }
 
-  // Handle data-last: indexByUnique(getKey, config?)
+  // Data-last: indexByUnique(getKey, config?)
   const getKey = args[0] as (item: unknown) => string | number
   const config = args[1] as IndexConfig | undefined
   return (items: readonly unknown[]) => indexByUniqueImplementation(items, getKey, config)
