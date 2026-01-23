@@ -1,3 +1,4 @@
+import * as R from 'remeda'
 import type { Lens } from './types'
 import { lens } from './lens'
 
@@ -52,9 +53,8 @@ export function index<A>(idx: number): Lens<readonly A[], A | undefined> {
       if (idx < 0 || idx >= source.length || value === undefined) {
         return source
       }
-      const copy = [...source]
-      copy[idx] = value
-      return copy
+      // Use Remeda's splice to immutably replace element at index
+      return R.splice(source, idx, 1, [value])
     }
   )
 }

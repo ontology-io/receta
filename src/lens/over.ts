@@ -1,5 +1,5 @@
-import * as R from 'remeda'
 import type { Lens } from './types'
+import { purryConfig2 } from '../utils'
 
 /**
  * Applies a transformation function to the value focused by a Lens.
@@ -78,15 +78,12 @@ import type { Lens } from './types'
  */
 export function over<S, A>(l: Lens<S, A>, fn: (a: A) => A, source: S): S
 export function over<S, A>(l: Lens<S, A>, fn: (a: A) => A): (source: S) => S
-export function over<S, A>(l: Lens<S, A>, fn: (a: A) => A, source?: S): S | ((source: S) => S) {
-  if (arguments.length === 2) {
-    return (s: S) => {
-      const currentValue = l.get(s)
-      const newValue = fn(currentValue)
-      return l.set(newValue)(s)
-    }
-  }
-  const currentValue = l.get(source!)
+export function over(...args: unknown[]): unknown {
+  return purryConfig2(overImplementation, args)
+}
+
+function overImplementation<S, A>(l: Lens<S, A>, fn: (a: A) => A, source: S): S {
+  const currentValue = l.get(source)
   const newValue = fn(currentValue)
-  return l.set(newValue)(source!)
+  return l.set(newValue)(source)
 }

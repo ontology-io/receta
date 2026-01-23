@@ -1,6 +1,7 @@
 import * as R from 'remeda'
 import { some, none, type Option } from '../option'
 import type { WordsOptions } from './types'
+import { purryConfig2 } from '../utils/purry'
 
 /**
  * Splits a string into an array of words.
@@ -96,24 +97,24 @@ export function lines(str: string): string[] {
  * Returns Some with the extracted text if both delimiters are found,
  * None otherwise.
  *
- * @param str - The string to search
  * @param start - The starting delimiter
  * @param end - The ending delimiter
+ * @param str - The string to search
  * @returns Option containing the text between delimiters
  *
  * @example
  * ```typescript
  * // Data-first
- * between('Hello [world]!', '[', ']')
+ * between('[', ']', 'Hello [world]!')
  * // => Some('world')
  *
- * between('Price: $99.99', '$', '.')
+ * between('$', '.', 'Price: $99.99')
  * // => Some('99')
  *
- * between('No delimiters', '[', ']')
+ * between('[', ']', 'No delimiters')
  * // => None
  *
- * between('[first] and [second]', '[', ']')
+ * between('[', ']', '[first] and [second]')
  * // => Some('first') (only returns first match)
  *
  * // Data-last (in pipe)
@@ -128,16 +129,16 @@ export function lines(str: string): string[] {
  * @see words - to split into words
  * @see lines - to split into lines
  */
-export function between(str: string, start: string, end: string): Option<string>
+export function between(start: string, end: string, str: string): Option<string>
 export function between(
   start: string,
   end: string
 ): (str: string) => Option<string>
 export function between(...args: unknown[]): unknown {
-  return R.purry(betweenImplementation, args)
+  return purryConfig2(betweenImplementation, args)
 }
 
-function betweenImplementation(str: string, start: string, end: string): Option<string> {
+function betweenImplementation(start: string, end: string, str: string): Option<string> {
   const startIndex = str.indexOf(start)
   if (startIndex === -1) {
     return none()

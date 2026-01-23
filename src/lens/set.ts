@@ -1,5 +1,5 @@
-import * as R from 'remeda'
 import type { Lens } from './types'
+import { purryConfig2 } from '../utils'
 
 /**
  * Sets a new value through a Lens, returning an updated source object.
@@ -58,9 +58,10 @@ import type { Lens } from './types'
  */
 export function set<S, A>(l: Lens<S, A>, value: A, source: S): S
 export function set<S, A>(l: Lens<S, A>, value: A): (source: S) => S
-export function set<S, A>(l: Lens<S, A>, value: A, source?: S): S | ((source: S) => S) {
-  if (arguments.length === 2) {
-    return (s: S) => l.set(value)(s)
-  }
-  return l.set(value)(source!)
+export function set(...args: unknown[]): unknown {
+  return purryConfig2(setImplementation, args)
+}
+
+function setImplementation<S, A>(l: Lens<S, A>, value: A, source: S): S {
+  return l.set(value)(source)
 }

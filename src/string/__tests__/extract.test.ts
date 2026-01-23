@@ -74,7 +74,7 @@ describe('String.lines', () => {
 describe('String.between', () => {
   describe('data-first', () => {
     it('extracts text between delimiters', () => {
-      const result = between('Hello [world]!', '[', ']')
+      const result = between('[', ']', 'Hello [world]!')
       expect(isSome(result)).toBe(true)
       if (isSome(result)) {
         expect(result.value).toBe('world')
@@ -82,7 +82,7 @@ describe('String.between', () => {
     })
 
     it('extracts text with different delimiters', () => {
-      const result = between('Price: $99.99', '$', '.')
+      const result = between('$', '.', 'Price: $99.99')
       expect(isSome(result)).toBe(true)
       if (isSome(result)) {
         expect(result.value).toBe('99')
@@ -90,7 +90,7 @@ describe('String.between', () => {
     })
 
     it('returns first match for multiple occurrences', () => {
-      const result = between('[first] and [second]', '[', ']')
+      const result = between('[', ']', '[first] and [second]')
       expect(isSome(result)).toBe(true)
       if (isSome(result)) {
         expect(result.value).toBe('first')
@@ -98,17 +98,17 @@ describe('String.between', () => {
     })
 
     it('returns None when start delimiter not found', () => {
-      const result = between('No delimiters', '[', ']')
+      const result = between('[', ']', 'No delimiters')
       expect(isNone(result)).toBe(true)
     })
 
     it('returns None when end delimiter not found', () => {
-      const result = between('[incomplete', '[', ']')
+      const result = between('[', ']', '[incomplete')
       expect(isNone(result)).toBe(true)
     })
 
     it('handles empty content between delimiters', () => {
-      const result = between('Empty []', '[', ']')
+      const result = between('[', ']', 'Empty []')
       expect(isSome(result)).toBe(true)
       if (isSome(result)) {
         expect(result.value).toBe('')
@@ -116,7 +116,7 @@ describe('String.between', () => {
     })
 
     it('handles multi-character delimiters', () => {
-      const result = between('<<content>>', '<<', '>>')
+      const result = between('<<', '>>', '<<content>>')
       expect(isSome(result)).toBe(true)
       if (isSome(result)) {
         expect(result.value).toBe('content')

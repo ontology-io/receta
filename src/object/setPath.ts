@@ -4,8 +4,8 @@
  * @module object/setPath
  */
 
-import * as R from 'remeda'
 import type { ObjectPath, PlainObject } from './types'
+import { purryConfig2 } from '../utils/purry'
 
 /**
  * Immutably sets a value at a given path in an object.
@@ -14,24 +14,24 @@ import type { ObjectPath, PlainObject } from './types'
  * Creates intermediate objects/arrays as needed. Returns a shallow copy
  * with only the path modified.
  *
- * @param obj - The object to update
  * @param path - The path where to set the value
  * @param value - The value to set
+ * @param obj - The object to update
  * @returns A new object with the value set at the path
  *
  * @example
  * ```typescript
  * // Data-first
  * const config = { database: { host: 'localhost' } }
- * setPath(config, ['database', 'port'], 5432)
+ * setPath(['database', 'port'], 5432, config)
  * // => { database: { host: 'localhost', port: 5432 } }
  *
  * // Creating intermediate paths
- * setPath({}, ['api', 'endpoints', 'users'], '/api/v1/users')
+ * setPath(['api', 'endpoints', 'users'], '/api/v1/users', {})
  * // => { api: { endpoints: { users: '/api/v1/users' } } }
  *
  * // Array indices
- * setPath({ items: ['a', 'b'] }, ['items', 1], 'updated')
+ * setPath(['items', 1], 'updated', { items: ['a', 'b'] })
  * // => { items: ['a', 'updated'] }
  *
  * // Data-last (in pipe)
@@ -45,13 +45,13 @@ import type { ObjectPath, PlainObject } from './types'
  * @see getPath - for safely reading a value at a path
  * @see updatePath - for updating with a function
  */
-export function setPath<T extends PlainObject>(obj: T, path: ObjectPath, value: unknown): T
+export function setPath<T extends PlainObject>(path: ObjectPath, value: unknown, obj: T): T
 export function setPath(path: ObjectPath, value: unknown): <T extends PlainObject>(obj: T) => T
 export function setPath(...args: unknown[]): unknown {
-  return R.purry(setPathImplementation, args)
+  return purryConfig2(setPathImplementation, args)
 }
 
-function setPathImplementation<T extends PlainObject>(obj: T, path: ObjectPath, value: unknown): T {
+function setPathImplementation<T extends PlainObject>(path: ObjectPath, value: unknown, obj: T): T {
   if (path.length === 0) {
     return value as T
   }
@@ -89,7 +89,7 @@ function setPathImplementation<T extends PlainObject>(obj: T, path: ObjectPath, 
     nextValue = shouldBeArray ? [] : {}
   }
 
-  const updatedNext = setPathImplementation(nextValue, tail, value)
+  const updatedNext = setPathImplementation(tail, value, nextValue)
 
   if (Array.isArray(obj)) {
     const newArray = [...obj]

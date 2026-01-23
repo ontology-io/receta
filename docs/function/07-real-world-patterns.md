@@ -78,8 +78,9 @@ const user = unwrapOr(result, null)
 ## Pattern 2: Multi-Stage Data Pipeline
 
 ```typescript
-import { pipe, map, filter, groupBy } from 'remeda'
-import { when, unless, tap, converge } from 'receta/function'
+import * as R from 'remeda'
+import { when, unless, tap, converge, juxt } from 'receta/function'
+import { where, and } from 'receta/predicate'
 
 interface RawEvent {
   id: string
@@ -95,58 +96,70 @@ interface ProcessedEvent extends RawEvent {
   enriched: boolean
 }
 
-// Multi-stage processing pipeline
+// Define predicates for validation
+const hasUserId = where({ userId: (x: string) => x.length > 0 })
+const hasEventType = where({ eventType: (x: string) => x.length > 0 })
+const hasTimestamp = where({ timestamp: (x: string) => x.length > 0 })
+const isValidEvent = and(hasUserId, hasEventType, hasTimestamp)
+
+// Multi-stage processing pipeline with Remeda
 const processEvents = (events: RawEvent[]) =>
-  pipe(
+  R.pipe(
     events,
     tap((evts) => metrics.gauge('events.input', evts.length)),
-    
-    // Stage 1: Normalization
-    map(when(
+
+    // Stage 1: Normalization using Remeda's map + when
+    R.map(when(
       (evt) => !evt.timestamp.endsWith('Z'),
       (evt) => ({ ...evt, timestamp: `${evt.timestamp}Z` })
     )),
-    map((evt) => ({ ...evt, normalized: true })),
+    R.map((evt) => ({ ...evt, normalized: true })),
     tap((evts) => logger.debug('Normalized', { count: evts.length })),
-    
-    // Stage 2: Validation
-    filter((evt) => {
-      const isValid = evt.userId && evt.eventType && evt.timestamp
-      if (!isValid) {
+
+    // Stage 2: Validation using Predicate module
+    R.filter((evt) => {
+      const valid = isValidEvent(evt)
+      if (!valid) {
         logger.warn('Invalid event', { id: evt.id })
       }
-      return isValid
+      return valid
     }),
-    map((evt) => ({ ...evt, validated: true } as ProcessedEvent)),
+    R.map((evt) => ({ ...evt, validated: true } as ProcessedEvent)),
     tap((evts) => metrics.gauge('events.validated', evts.length)),
-    
+
     // Stage 3: Enrichment
-    map(unless(
+    R.map(unless(
       (evt) => 'sessionId' in evt.data,
       (evt) => ({
         ...evt,
         data: { ...evt.data, sessionId: generateSessionId(evt.userId) }
       })
     )),
-    map((evt) => ({ ...evt, enriched: true })),
-    
-    // Stage 4: Grouping and Analytics
-    (events) => pipe(
+    R.map((evt) => ({ ...evt, enriched: true })),
+
+    // Stage 4: Grouping and Analytics with Remeda
+    (events) => R.pipe(
       events,
-      groupBy((evt) => evt.eventType),
-      (grouped) => converge(
-        (byType, totalCount, uniqueUsers) => ({
+      // Use converge with Remeda operations
+      converge(
+        (byType, totalCount, uniqueUsers, typeCount) => ({
           byType,
           totalCount,
           uniqueUsers,
+          eventTypeCount: typeCount,
           processingComplete: true
         }),
         [
-          () => grouped,
+          // Group using Remeda
+          (evts: ProcessedEvent[]) => R.groupBy(evts, (e) => e.eventType),
+          // Count using length
           (evts: ProcessedEvent[]) => evts.length,
-          (evts: ProcessedEvent[]) => new Set(evts.map(e => e.userId)).size
+          // Unique users using Remeda
+          (evts: ProcessedEvent[]) => R.uniqueBy(evts, (e) => e.userId).length,
+          // Unique event types
+          (evts: ProcessedEvent[]) => R.pipe(evts, R.map(e => e.eventType), R.unique).length
         ]
-      )(events)
+      )
     ),
     tap((result) => {
       metrics.gauge('events.processed', result.totalCount)
@@ -399,7 +412,7 @@ if (isOk(result)) {
 ## Pattern 5: Event-Driven Analytics
 
 ```typescript
-import { pipe, groupBy, mapValues } from 'remeda'
+import * as R from 'remeda'
 import { juxt, converge, tap } from 'receta/function'
 
 interface Event {
@@ -409,68 +422,71 @@ interface Event {
   properties: Record<string, any>
 }
 
-// Extract comprehensive analytics
-const analyzeEvents = pipe(
-  tap((events: Event[]) => logger.info('Analyzing events', { count: events.length })),
-  
-  converge(
-    (byType, byUser, timeline, summary) => ({
-      byType,
-      byUser,
-      timeline,
-      summary
-    }),
-    [
-      // Group by event type
-      (events: Event[]) => pipe(
-        events,
-        groupBy(e => e.type),
-        mapValues(evts => ({
-          count: evts.length,
-          uniqueUsers: new Set(evts.map(e => e.userId)).size
-        }))
-      ),
-      
-      // Group by user
-      (events: Event[]) => pipe(
-        events,
-        groupBy(e => e.userId),
-        mapValues(evts => ({
-          eventCount: evts.length,
-          eventTypes: [...new Set(evts.map(e => e.type))],
-          firstEvent: evts[0]?.timestamp,
-          lastEvent: evts[evts.length - 1]?.timestamp
-        }))
-      ),
-      
-      // Timeline buckets
-      (events: Event[]) => pipe(
-        events,
-        groupBy(e => e.timestamp.toISOString().split('T')[0]),
-        mapValues(evts => evts.length)
-      ),
-      
-      // Overall summary using juxt
-      juxt([
-        (events: Event[]) => events.length,
-        (events: Event[]) => new Set(events.map(e => e.userId)).size,
-        (events: Event[]) => new Set(events.map(e => e.type)).size,
-        (events: Event[]) => events[0]?.timestamp,
-        (events: Event[]) => events[events.length - 1]?.timestamp
-      ])
-    ]
-  ),
-  
-  tap((analytics) => {
-    const [total, uniqueUsers, uniqueTypes, firstEvent, lastEvent] = analytics.summary
-    logger.info('Analytics complete', {
-      total,
-      uniqueUsers,
-      uniqueTypes,
-      timespan: { start: firstEvent, end: lastEvent }
+// Extract comprehensive analytics using Remeda + Function combinators
+const analyzeEvents = (events: Event[]) =>
+  R.pipe(
+    events,
+    tap((evts) => logger.info('Analyzing events', { count: evts.length })),
+
+    // Use converge to extract multiple dimensions
+    converge(
+      (byType, byUser, timeline, summary) => ({
+        byType,
+        byUser,
+        timeline,
+        summary
+      }),
+      [
+        // Group by event type using Remeda
+        (evts: Event[]) => R.pipe(
+          evts,
+          R.groupBy(e => e.type),
+          R.mapValues(grouped => ({
+            count: grouped.length,
+            uniqueUsers: R.uniqueBy(grouped, e => e.userId).length
+          }))
+        ),
+
+        // Group by user
+        (evts: Event[]) => R.pipe(
+          evts,
+          R.groupBy(e => e.userId),
+          R.mapValues(grouped => ({
+            eventCount: grouped.length,
+            eventTypes: R.pipe(grouped, R.map(e => e.type), R.unique),
+            firstEvent: R.first(grouped)?.timestamp,
+            lastEvent: R.last(grouped)?.timestamp
+          }))
+        ),
+
+        // Timeline buckets using Remeda
+        (evts: Event[]) => R.pipe(
+          evts,
+          R.groupBy(e => e.timestamp.toISOString().split('T')[0]),
+          R.mapValues(grouped => grouped.length)
+        ),
+
+        // Overall summary using juxt for parallel extraction
+        juxt([
+          (evts: Event[]) => evts.length,
+          (evts: Event[]) => R.uniqueBy(evts, e => e.userId).length,
+          (evts: Event[]) => R.pipe(evts, R.map(e => e.type), R.unique).length,
+          (evts: Event[]) => R.first(evts)?.timestamp,
+          (evts: Event[]) => R.last(evts)?.timestamp
+        ])
+      ]
+    ),
+
+    tap((analytics) => {
+      const [total, uniqueUsers, uniqueTypes, firstEvent, lastEvent] = analytics.summary
+      logger.info('Analytics complete', {
+        total,
+        uniqueUsers,
+        uniqueTypes,
+        timespan: { start: firstEvent, end: lastEvent }
+      })
     })
-  })
-)
+  )
 ```
 
 ## Next Steps

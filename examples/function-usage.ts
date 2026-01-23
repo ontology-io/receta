@@ -26,6 +26,9 @@ import {
 } from '../src/function'
 import { unwrapOr, unwrap } from '../src/option'
 import { isOk, unwrap as unwrapResult, ok } from '../src/result'
+import { where, gt, lt, between, and as andPred, or as orPred } from '../src/predicate'
+import { nest, indexByUnique } from '../src/collection'
+import { flatten, getPath } from '../src/object'
 
 console.log('='.repeat(60))
 console.log('Function Module - Real-World Examples')
@@ -368,6 +371,204 @@ console.log('Raw User:', rawUser)
 console.log('\nProcessed Profile:')
 console.log(JSON.stringify(buildProfile(rawUser), null, 2))
 
+// ============================================================================
+// Example 12: Integration with Predicate Module
+// ============================================================================
+console.log('\n12. Using Predicate Module with Function Combinators')
+console.log('-'.repeat(60))
+
+interface Product {
+  id: string
+  name: string
+  price: number
+  inStock: boolean
+  category: string
+}
+
+const products: Product[] = [
+  { id: '1', name: 'Laptop', price: 1200, inStock: true, category: 'Electronics' },
+  { id: '2', name: 'Mouse', price: 25, inStock: true, category: 'Electronics' },
+  { id: '3', name: 'Desk', price: 350, inStock: false, category: 'Furniture' },
+  { id: '4', name: 'Chair', price: 200, inStock: true, category: 'Furniture' },
+  { id: '5', name: 'Monitor', price: 400, inStock: true, category: 'Electronics' },
+]
+
+// Use predicate module to create reusable predicates
+const isAffordable = where({ price: lt(500) })
+const isExpensive = where({ price: gt(1000) })
+const isAvailable = where({ inStock: (x: boolean) => x === true })
+const isElectronics = where({ category: (c: string) => c === 'Electronics' })
+
+// Combine predicates with function module
+const categorizeProduct = cond<Product, string>([
+  [andPred(isExpensive, isAvailable), (p) => `💎 Premium (${p.name})`],
+  [andPred(isAffordable, isAvailable), (p) => `✓ Available (${p.name})`],
+  [orPred(isExpensive, isElectronics), (p) => `⚡ High-Value (${p.name})`],
+  [(p) => !p.inStock, (p) => `✗ Out of Stock (${p.name})`],
+])
+
+console.log('Product Categories:')
+products.forEach((product) => {
+  const category = unwrapOr(categorizeProduct(product), `Unknown (${product.name})`)
+  console.log(`  ${category}`)
+})
+
+// Using where with filter in pipeline
+const affordableElectronics = R.pipe(
+  products,
+  R.filter(andPred(isAffordable, isElectronics, isAvailable)),
+  R.map((p) => `${p.name} - $${p.price}`)
+)
+
+console.log('\nAffordable Electronics in Stock:')
+affordableElectronics.forEach((item) => console.log(`  ${item}`))
+
+// ============================================================================
+// Example 13: Integration with Collection Module
+// ============================================================================
+console.log('\n13. Using Collection Module with Function Combinators')
+console.log('-'.repeat(60))
+
+interface Order {
+  orderId: string
+  userId: string
+  region: string
+  items: Array<{ productId: string; quantity: number; price: number }>
+  timestamp: string
+}
+
+const orders: Order[] = [
+  {
+    orderId: 'O1',
+    userId: 'U1',
+    region: 'North',
+    items: [
+      { productId: 'P1', quantity: 2, price: 100 },
+      { productId: 'P2', quantity: 1, price: 50 },
+    ],
+    timestamp: '2026-01-01',
+  },
+  {
+    orderId: 'O2',
+    userId: 'U2',
+    region: 'South',
+    items: [{ productId: 'P1', quantity: 1, price: 100 }],
+    timestamp: '2026-01-02',
+  },
+  {
+    orderId: 'O3',
+    userId: 'U1',
+    region: 'North',
+    items: [{ productId: 'P3', quantity: 3, price: 75 }],
+    timestamp: '2026-01-03',
+  },
+]
+
+// Use converge with collection operations
+const analyzeOrders = converge(
+  (byRegion: any, byUser: any, totalRevenue: number) => ({
+    byRegion,
+    byUser,
+    totalRevenue,
+    orderCount: orders.length,
+  }),
+  [
+    // Nest by region (using R.groupBy which has simpler API)
+    (orders: Order[]) => R.groupBy(orders, (o) => o.region),
+    // Index by user (using indexByUnique from collection)
+    (orders: Order[]) => {
+      const grouped: Record<string, Order[]> = {}
+      orders.forEach((o) => {
+        if (!grouped[o.userId]) grouped[o.userId] = []
+        grouped[o.userId]!.push(o)
+      })
+      return grouped
+    },
+    // Calculate total revenue
+    (orders: Order[]) =>
+      orders.reduce(
+        (sum, o) => sum + o.items.reduce((s, item) => s + item.quantity * item.price, 0),
+        0
+      ),
+  ]
+)
+
+console.log('Order Analysis:')
+console.log(JSON.stringify(analyzeOrders(orders), null, 2))
+
+// ============================================================================
+// Example 14: Integration with Object Module
+// ============================================================================
+console.log('\n14. Using Object Module with Function Combinators')
+console.log('-'.repeat(60))
+
+interface Config {
+  api: {
+    baseUrl: string
+    timeout: number
+    retries: {
+      max: number
+      delay: number
+    }
+  }
+  features: {
+    darkMode: boolean
+    notifications: boolean
+  }
+}
+
+const config: Config = {
+  api: {
+    baseUrl: 'https://api.example.com',
+    timeout: 5000,
+    retries: {
+      max: 3,
+      delay: 1000,
+    },
+  },
+  features: {
+    darkMode: true,
+    notifications: false,
+  },
+}
+
+// Use converge with object operations
+const extractConfigSummary = converge(
+  (flattened: any, apiUrl: string, retries: number, features: string[]) => ({
+    flattened,
+    apiUrl,
+    retryCount: retries,
+    enabledFeatures: features,
+  }),
+  [
+    (cfg: Config) => flatten(cfg),
+    (cfg: Config) => unwrapOr(getPath(cfg, ['api', 'baseUrl']), 'unknown'),
+    (cfg: Config) => unwrapOr(getPath(cfg, ['api', 'retries', 'max']), 0),
+    (cfg: Config) => {
+      const features = unwrapOr(getPath(cfg, ['features']), {})
+      return Object.entries(features)
+        .filter(([_, enabled]) => enabled)
+        .map(([name]) => name)
+    },
+  ]
+)
+
+console.log('Config Summary:')
+console.log(JSON.stringify(extractConfigSummary(config), null, 2))
+
+// Using when/unless with object paths
+const ensureRetries = unless(
+  (cfg: Config) => unwrapOr(getPath(cfg, ['api', 'retries', 'max']), 0) > 0,
+  (cfg: Config) => ({
+    ...cfg,
+    api: { ...cfg.api, retries: { max: 3, delay: 1000 } },
+  })
+)
+
+const configWithDefaults = ensureRetries(config)
+console.log('\nConfig with defaults:', JSON.stringify(configWithDefaults.api.retries, null, 2))
+
 console.log('\n' + '='.repeat(60))
 console.log('Examples completed successfully!')
+console.log('All integrations with Receta modules demonstrated!')
 console.log('='.repeat(60))

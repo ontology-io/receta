@@ -213,7 +213,7 @@ describe('Lens Operations', () => {
       const updated = over(
         todosLens,
         (todos) =>
-          todos.map((todo) =>
+          R.map(todos, (todo) =>
             todo.id === 1 ? { ...todo, done: true } : todo
           ),
         state

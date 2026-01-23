@@ -1,3 +1,4 @@
+import * as R from 'remeda'
 import type { Lens, Path, PathValue } from './types'
 import { lens } from './lens'
 
@@ -56,26 +57,33 @@ export function path<S, A = unknown>(pathStr: string): Lens<S, A> {
 
   return lens(
     (source) => {
-      let current: any = source
+      let current: unknown = source
       for (const key of keys) {
         if (current == null) return undefined as A
-        current = current[key]
+        // Type-safe property access
+        current = R.isPlainObject(current) || Array.isArray(current)
+          ? (current as Record<string, unknown>)[key]
+          : undefined
       }
       return current as A
     },
     (value) => (source) => {
       if (keys.length === 0) return source
       if (keys.length === 1) {
-        return { ...source, [keys[0]!]: value } as S
+        const key = keys[0]!
+        return { ...source, [key]: value } as S
       }
 
-      // Recursively update nested path
+      // Recursively update nested path using typed helper
       const [head, ...tail] = keys
-      const nested = (source as any)[head!]
+      const headKey = head!
+      const nested = R.isPlainObject(source) || Array.isArray(source)
+        ? (source as Record<string, unknown>)[headKey]
+        : undefined
 
       return {
         ...source,
-        [head!]: setNested(nested, tail, value),
+        [headKey]: setNested(nested, tail, value),
       } as S
     }
   )
@@ -85,15 +93,41 @@ export function path<S, A = unknown>(pathStr: string): Lens<S, A> {
  * Helper to set a value at a nested path immutably.
  * @internal
  */
-function setNested(obj: any, keys: string[], value: any): any {
+function setNested(obj: unknown, keys: readonly string[], value: unknown): unknown {
   if (keys.length === 0) return value
   if (keys.length === 1) {
-    return { ...obj, [keys[0]!]: value }
+    const key = keys[0]!
+    // Handle objects and arrays
+    if (R.isPlainObject(obj)) {
+      return { ...obj, [key]: value }
+    }
+    if (Array.isArray(obj)) {
+      return { ...obj, [key]: value }
+    }
+    // If obj is null/undefined, create new object
+    return { [key]: value }
   }
 
   const [head, ...tail] = keys
+  const headKey = head!
+  const currentValue = R.isPlainObject(obj) || Array.isArray(obj)
+    ? (obj as Record<string, unknown>)[headKey]
+    : undefined
+
+  if (R.isPlainObject(obj)) {
+    return {
+      ...obj,
+      [headKey]: setNested(currentValue, tail, value),
+    }
+  }
+  if (Array.isArray(obj)) {
+    return {
+      ...obj,
+      [headKey]: setNested(currentValue, tail, value),
+    }
+  }
+  // If obj is null/undefined, create new object
   return {
-    ...obj,
-    [head!]: setNested(obj?.[head!], tail, value),
+    [headKey]: setNested(currentValue, tail, value),
   }
 }

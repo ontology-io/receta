@@ -1,3 +1,5 @@
+import * as R from 'remeda'
+
 /**
  * Creates a function that only accepts one argument, ignoring additional arguments.
  *
@@ -111,6 +113,6 @@ export function binary<A, B, R>(fn: (a: A, b: B, ...rest: any[]) => R): (a: A, b
  */
 export function nAry<R>(n: number, fn: (...args: any[]) => R): (...args: any[]) => R {
   return function nAryFunction(...args: any[]): R {
-    return fn(...args.slice(0, n))
+    return fn(...R.take(args, n))
   }
 }

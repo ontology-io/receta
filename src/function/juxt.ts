@@ -84,5 +84,5 @@ function juxtImplementation<Fns extends readonly ((...args: any[]) => any)[]>(
   fns: Fns,
   ...args: any[]
 ): ReturnTypes<Fns> {
-  return fns.map((fn) => fn(...args)) as ReturnTypes<Fns>
+  return R.map(fns, (fn) => fn(...args)) as ReturnTypes<Fns>
 }
