@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'bun:test'
-import { parallel, sequential } from '../index'
+import { parallel, sequential, parallelOrThrow, sequentialOrThrow } from '../index'
 import { sleep } from '../retry'
-import { filterAsync } from '../filterAsync'
+import { filterAsync, filterAsyncOrThrow } from '../filterAsync'
+import { isOk, isErr, unwrapOr } from '../../result'
 
 describe('Async.parallel', () => {
   describe('basic parallel execution', () => {
@@ -12,8 +13,9 @@ describe('Async.parallel', () => {
         async () => 3,
       ]
 
-      const results = await parallel(tasks)
-      expect(results).toEqual([1, 2, 3])
+      const result = await parallel(tasks)
+      expect(isOk(result)).toBe(true)
+      expect(unwrapOr(result, [])).toEqual([1, 2, 3])
     })
 
     it('preserves order of results', async () => {
@@ -23,13 +25,15 @@ describe('Async.parallel', () => {
         async () => { await sleep(50); return 'medium' },
       ]
 
-      const results = await parallel(tasks)
-      expect(results).toEqual(['slow', 'fast', 'medium'])
+      const result = await parallel(tasks)
+      expect(isOk(result)).toBe(true)
+      expect(unwrapOr(result, [])).toEqual(['slow', 'fast', 'medium'])
     })
 
     it('handles empty task array', async () => {
-      const results = await parallel([])
-      expect(results).toEqual([])
+      const result = await parallel([])
+      expect(isOk(result)).toBe(true)
+      expect(unwrapOr(result, [])).toEqual([])
     })
   })
 
@@ -70,14 +74,15 @@ describe('Async.parallel', () => {
   })
 
   describe('error handling', () => {
-    it('propagates first error', async () => {
+    it('returns Err when task fails', async () => {
       const tasks = [
         async () => 1,
         async () => { throw new Error('Task 2 failed') },
         async () => 3,
       ]
 
-      await expect(parallel(tasks)).rejects.toThrow('Task 2 failed')
+      const result = await parallel(tasks)
+      expect(isErr(result)).toBe(true)
     })
 
     it('stops execution on error (with concurrency)', async () => {
@@ -90,7 +95,18 @@ describe('Async.parallel', () => {
         return id
       })
 
-      await expect(parallel(tasks, { concurrency: 2 })).rejects.toThrow('Failed')
+      const result = await parallel(tasks, { concurrency: 2 })
+      expect(isErr(result)).toBe(true)
+    })
+
+    it('parallelOrThrow variant throws on error', async () => {
+      const tasks = [
+        async () => 1,
+        async () => { throw new Error('Task 2 failed') },
+        async () => 3,
+      ]
+
+      await expect(parallelOrThrow(tasks)).rejects.toThrow()
     })
   })
 })
@@ -106,9 +122,10 @@ describe('Async.sequential', () => {
         return id
       })
 
-      const results = await sequential(tasks)
+      const result = await sequential(tasks)
 
-      expect(results).toEqual([1, 2, 3])
+      expect(isOk(result)).toBe(true)
+      expect(unwrapOr(result, [])).toEqual([1, 2, 3])
       expect(order).toEqual([1, 2, 3])
     })
 
@@ -130,14 +147,16 @@ describe('Async.sequential', () => {
         },
       ]
 
-      await sequential(tasks)
+      const result = await sequential(tasks)
 
+      expect(isOk(result)).toBe(true)
       expect(events).toEqual(['start-1', 'end-1', 'start-2', 'end-2'])
     })
 
     it('handles empty task array', async () => {
-      const results = await sequential([])
-      expect(results).toEqual([])
+      const result = await sequential([])
+      expect(isOk(result)).toBe(true)
+      expect(unwrapOr(result, [])).toEqual([])
     })
   })
 
@@ -151,9 +170,16 @@ describe('Async.sequential', () => {
         async () => { executed.push(3); return 3 },
       ]
 
-      await expect(sequential(tasks)).rejects.toThrow('Failed')
+      const result = await sequential(tasks)
 
+      expect(isErr(result)).toBe(true)
       expect(executed).toEqual([1, 2]) // Task 3 never executed
+
+      if (isErr(result)) {
+        expect(result.error.type).toBe('sequential_error')
+        expect(result.error.taskIndex).toBe(1)
+        expect(result.error.completedTasks).toBe(1)
+      }
     })
 
     it('propagates error from failing task', async () => {
@@ -162,7 +188,17 @@ describe('Async.sequential', () => {
         async () => { throw new Error('Task error') },
       ]
 
-      await expect(sequential(tasks)).rejects.toThrow('Task error')
+      const result = await sequential(tasks)
+      expect(isErr(result)).toBe(true)
+    })
+
+    it('sequentialOrThrow variant throws on error', async () => {
+      const tasks = [
+        async () => 1,
+        async () => { throw new Error('Task error') },
+      ]
+
+      await expect(sequentialOrThrow(tasks)).rejects.toThrow()
     })
   })
 
@@ -176,9 +212,10 @@ describe('Async.sequential', () => {
         async () => { state += 10; return state },
       ]
 
-      const results = await sequential(tasks)
+      const result = await sequential(tasks)
 
-      expect(results).toEqual([1, 2, 12])
+      expect(isOk(result)).toBe(true)
+      expect(unwrapOr(result, [])).toEqual([1, 2, 12])
       expect(state).toBe(12)
     })
   })
@@ -187,40 +224,45 @@ describe('Async.sequential', () => {
 describe('Async.filterAsync', () => {
   describe('basic filtering', () => {
     it('filters array with async predicate', async () => {
-      const results = await filterAsync(
+      const result = await filterAsync(
         [1, 2, 3, 4, 5],
         async (x) => x % 2 === 0
       )
-      expect(results).toEqual([2, 4])
+      expect(isOk(result)).toBe(true)
+      expect(unwrapOr(result, [])).toEqual([2, 4])
     })
 
     it('passes index to predicate', async () => {
-      const results = await filterAsync(
+      const result = await filterAsync(
         ['a', 'b', 'c', 'd'],
         async (x, i) => i % 2 === 0
       )
-      expect(results).toEqual(['a', 'c'])
+      expect(isOk(result)).toBe(true)
+      expect(unwrapOr(result, [])).toEqual(['a', 'c'])
     })
 
     it('handles empty array', async () => {
-      const results = await filterAsync([], async () => true)
-      expect(results).toEqual([])
+      const result = await filterAsync([], async () => true)
+      expect(isOk(result)).toBe(true)
+      expect(unwrapOr(result, [])).toEqual([])
     })
 
     it('handles predicate that filters everything', async () => {
-      const results = await filterAsync(
+      const result = await filterAsync(
         [1, 2, 3],
         async () => false
       )
-      expect(results).toEqual([])
+      expect(isOk(result)).toBe(true)
+      expect(unwrapOr(result, [])).toEqual([])
     })
 
     it('handles predicate that keeps everything', async () => {
-      const results = await filterAsync(
+      const result = await filterAsync(
         [1, 2, 3],
         async () => true
       )
-      expect(results).toEqual([1, 2, 3])
+      expect(isOk(result)).toBe(true)
+      expect(unwrapOr(result, [])).toEqual([1, 2, 3])
     })
   })
 
@@ -229,7 +271,7 @@ describe('Async.filterAsync', () => {
       const executing = new Set<number>()
       let maxConcurrent = 0
 
-      await filterAsync(
+      const result = await filterAsync(
         [1, 2, 3, 4, 5],
         async (x) => {
           executing.add(x)
@@ -241,6 +283,7 @@ describe('Async.filterAsync', () => {
         { concurrency: 2 }
       )
 
+      expect(isOk(result)).toBe(true)
       expect(maxConcurrent).toBeLessThanOrEqual(2)
     })
   })
@@ -250,8 +293,38 @@ describe('Async.filterAsync', () => {
       const filterEven = filterAsync(async (x: number) => x % 2 === 0)
       expect(typeof filterEven).toBe('function')
 
-      const results = await filterEven([1, 2, 3, 4, 5])
-      expect(results).toEqual([2, 4])
+      const result = await filterEven([1, 2, 3, 4, 5])
+      expect(isOk(result)).toBe(true)
+      expect(unwrapOr(result, [])).toEqual([2, 4])
+    })
+  })
+
+  describe('error handling', () => {
+    it('returns Err when predicate fails', async () => {
+      const result = await filterAsync(
+        [1, 2, 3, 4, 5],
+        async (x) => {
+          if (x === 3) throw new Error('Predicate failed')
+          return x % 2 === 0
+        }
+      )
+
+      expect(isErr(result)).toBe(true)
+      if (isErr(result)) {
+        expect(result.error.type).toBe('filter_async_error')
+      }
+    })
+
+    it('filterAsyncOrThrow variant throws on error', async () => {
+      await expect(
+        filterAsyncOrThrow(
+          [1, 2, 3, 4, 5],
+          async (x) => {
+            if (x === 3) throw new Error('Predicate failed')
+            return x % 2 === 0
+          }
+        )
+      ).rejects.toThrow()
     })
   })
 })

@@ -16,11 +16,11 @@ export type {
   ThrottleOptions,
 } from './types'
 
-// Concurrency control
-export { mapAsync } from './mapAsync'
-export { filterAsync } from './filterAsync'
-export { parallel } from './parallel'
-export { sequential } from './sequential'
+// Concurrency control with Result pattern
+export { mapAsync, mapAsyncOrThrow, type MapAsyncError } from './mapAsync'
+export { filterAsync, filterAsyncOrThrow, type FilterAsyncError } from './filterAsync'
+export { parallel, parallelOrThrow } from './parallel'
+export { sequential, sequentialOrThrow, type SequentialError } from './sequential'
 
 // Error handling with Result pattern
 export { retry, sleep, type RetryError } from './retry'
@@ -28,7 +28,7 @@ export { timeout, TimeoutError } from './timeout'
 
 // Polling and batching
 export { poll, type PollError } from './poll'
-export { batch } from './batch'
+export { batch, batchOrThrow, type BatchError } from './batch'
 
 // Re-export Remeda's chunk utility (no need to reimplement)
 export { chunk } from 'remeda'

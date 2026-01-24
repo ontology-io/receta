@@ -24,7 +24,8 @@
     "test": "bun test",
     "test:watch": "bun test --watch",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "generate-llm": "bun run scripts/generate-llm-txt.ts"
   },
   "keywords": [
     "functional-programming",

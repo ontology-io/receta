@@ -22,22 +22,76 @@ This guide documents the proven process used to build the Result module, which c
 
 ## Overview
 
+### ⚠️ CRITICAL: Use Receta/Remeda First - MANDATORY FOR ALL MODULES
+
+**NON-NEGOTIABLE RULE**: When implementing ANY module functionality, you MUST:
+
+1. **Use Receta patterns first** - Result for errors, Option for nullable, Async for promises, Predicate for filtering
+2. **Use Remeda for all data operations** - `R.pipe`, `R.map`, `R.filter`, etc. instead of vanilla array/object methods
+3. **NEVER use vanilla patterns** - No try/catch, no null returns, no `.map().filter()` chains, no Promise.all
+
+**Examples of mandatory conversions:**
+
+```typescript
+// ❌ WRONG: Vanilla patterns (NEVER DO THIS)
+try {
+  const data = JSON.parse(str)
+  return data
+} catch (e) {
+  return null
+}
+
+const filtered = users.filter(u => u.age > 18).map(u => u.name)
+
+await Promise.all(urls.map(url => fetch(url)))
+
+// ✅ CORRECT: Receta + Remeda patterns (ALWAYS DO THIS)
+import { Result, tryCatch } from 'receta/result'
+import { Option, fromNullable } from 'receta/option'
+import { mapAsync } from 'receta/async'
+import { where, gt } from 'receta/predicate'
+import * as R from 'remeda'
+
+const data = tryCatch(() => JSON.parse(str))
+
+const filtered = R.pipe(
+  users,
+  R.filter(where({ age: gt(18) })),
+  R.map(u => u.name)
+)
+
+await mapAsync(urls, url => fetch(url))
+```
+
+**This applies to:**
+- All module implementation code
+- All test files
+- All examples
+- All code snippets in documentation
+
 ### Development Principles
 
-1. **Compositional Architecture**: Build functions from other functions, never duplicate logic
+1. **Receta/Remeda First (MANDATORY)**: ALWAYS use library patterns over vanilla JavaScript/TypeScript
+   - Use `Result.tryCatch` instead of try/catch blocks
+   - Use `Option.fromNullable` instead of null/undefined returns
+   - Use `R.pipe` instead of array method chains (.map().filter())
+   - Use `Async.mapAsync` instead of Promise.all
+   - Use `Predicate.where` instead of inline predicates
+   - **This is the #1 priority** - violating this principle is a critical error
+2. **Compositional Architecture**: Build functions from other functions, never duplicate logic
    - Higher-level functions compose lower-level ones
    - Single source of truth for each behavior
    - Example: If you need both throwing and Result versions, implement Result first, then build throwing from it
    - **Anti-pattern**: Having `retry()` and `retryResult()` with duplicate implementations
-2. **Result-First Error Handling**: Functions return `Result<T, E>` by default, not throw exceptions
+3. **Result-First Error Handling**: Functions return `Result<T, E>` by default, not throw exceptions
    - No `*Result` suffix - Result is the standard pattern
    - Throwing versions are rare and built from Result versions when needed
    - Example: `retry()` returns `Result<T, RetryError>` by default
-3. **Implementation First**: Write code before docs (docs reflect reality)
-4. **Test Everything**: 100% coverage with property-based tests
-5. **Real-World Inspiration**: Examples from Stripe, GitHub, AWS, etc.
-6. **Beginner-Friendly**: Assume no FP background
-7. **Production-Ready**: Code and docs ready for real projects
+4. **Implementation First**: Write code before docs (docs reflect reality)
+5. **Test Everything**: 100% coverage with property-based tests
+6. **Real-World Inspiration**: Examples from Stripe, GitHub, AWS, etc.
+7. **Beginner-Friendly**: Assume no FP background
+8. **Production-Ready**: Code and docs ready for real projects
 
 ### Timeline for a Module
 

@@ -1,0 +1,1188 @@
+# Receta LLM Guide - Module Selection & Navigation
+
+**Generated**: 2026-01-23
+**Purpose**: Help AI agents efficiently discover and use Receta functions
+
+## What's in This File
+
+This file contains:
+1. **Root Decision Tree** - Select which module to use
+2. **Module Decision Trees** - Function selection within each module
+3. **Function File Map** - Paths to individual function documentation
+
+This file does NOT contain individual function documentation to save tokens.
+
+## How AI Agents Should Use This System
+
+### Step 1: Module Selection (Use Root Tree Below)
+Read the Root Decision Tree to determine which module(s) solve your problem.
+
+### Step 2: Function Selection (Use Module Tree Below)
+Read the module's DECISION-TREE section to select the right function.
+
+### Step 3: Implementation Details (Read Function File)
+For detailed examples and type signatures, read the specific function file:
+- **Path**: `src/{module}/{category}/{function}.md`
+- **Contains**: Examples, patterns, type signatures, related functions
+- **Example**: `src/result/constructors/ok.md`
+
+## File Structure Reference
+
+```
+src/
+├── async/
+│   ├── DECISION-TREE.md           # Module overview (included below)
+│   ├── {category}/
+│   │   ├── {function}.md          # Function details (read when needed)
+│   │   └── ...
+├── collection/
+│   ├── DECISION-TREE.md           # Module overview (included below)
+│   ├── {category}/
+│   │   ├── {function}.md          # Function details (read when needed)
+│   │   └── ...
+├── compare/
+│   ├── DECISION-TREE.md           # Module overview (included below)
+│   ├── {category}/
+│   │   ├── {function}.md          # Function details (read when needed)
+│   │   └── ...
+└── ...
+```
+
+## Token Efficiency Strategy
+
+✅ **This file is lightweight** - Only module decision trees
+✅ **Lazy load details** - Read function docs only when needed
+✅ **Two-step discovery** - Module → Function (not all functions upfront)
+✅ **Full information available** - Nothing is hidden, just referenced
+
+## Modules Included
+
+- **async** - 1 function doc
+- **collection** - 4 function docs
+- **compare** - 0 function docs
+- **function** - 3 function docs
+- **lens** - 0 function docs
+- **memo** - 0 function docs
+- **number** - 0 function docs
+- **object** - 0 function docs
+- **option** - 10 function docs
+- **predicate** - 0 function docs
+- **result** - 9 function docs
+- **string** - 0 function docs
+- **validation** - 0 function docs
+
+================================================================================
+
+# ROOT DECISION TREE: Which Module Do I Need?
+
+# Receta Function Selection Guide
+
+## Root Decision Tree: Which Module Do I Need?
+
+```
+START: What are you trying to do?
+│
+├─ Handle operations that can FAIL?
+│  │
+│  ├─ Need detailed error information? ────────────────────► result/
+│  │
+│  └─ Just care if value exists or not? ───────────────────► option/
+│
+├─ Work with ASYNC/PROMISE operations?
+│  │
+│  ├─ Control concurrency or timing? ──────────────────────► async/
+│  │
+│  └─ Error handling? ─────────────────────────────────────► async/ + result/
+│
+├─ FILTER or TEST values?
+│  │
+│  ├─ Simple yes/no checks? ───────────────────────────────► predicate/
+│  │
+│  └─ Collect multiple errors? ────────────────────────────► validation/
+│
+├─ Work with COLLECTIONS (arrays, lists)?
+│  │
+│  ├─ Basic operations (map, filter)? ─────────────────────► remeda directly
+│  │
+│  ├─ Hierarchical grouping or nesting? ───────────────────► collection/
+│  │
+│  ├─ Change detection or diffing? ────────────────────────► collection/
+│  │
+│  └─ Pagination? ─────────────────────────────────────────► collection/
+│
+├─ Work with OBJECTS?
+│  │
+│  ├─ Simple pick/omit/mapValues? ────────────────────────► remeda directly
+│  │
+│  ├─ Flatten/unflatten nested objects? ───────────────────► object/
+│  │
+│  ├─ Safe nested access? ─────────────────────────────────► object/ (getPath)
+│  │
+│  └─ Deep merging or validation? ─────────────────────────► object/
+│
+├─ Work with STRINGS?
+│  │
+│  ├─ Format/transform (case, slugify)? ───────────────────► string/
+│  │
+│  ├─ Validate (email, URL)? ──────────────────────────────► string/validators
+│  │
+│  └─ Sanitize (HTML escape, trim)? ───────────────────────► string/sanitize
+│
+├─ Work with NUMBERS?
+│  │
+│  ├─ Format (currency, percentage, bytes)? ───────────────► number/
+│  │
+│  ├─ Validate or clamp ranges? ───────────────────────────► number/
+│  │
+│  └─ Parse safely from string? ───────────────────────────► number/fromString
+│
+├─ OPTIMIZE performance?
+│  │
+│  ├─ Cache function results? ──────────────────────────────► memo/
+│  │
+│  └─ Deduplicate async calls? ─────────────────────────────► memo/memoizeAsync
+│
+├─ UPDATE nested immutable data?
+│  │
+│  ├─ Simple property updates? ────────────────────────────► object/setPath
+│  │
+│  └─ Complex compositional updates? ──────────────────────► lens/
+│
+├─ SORT collections?
+│  │
+│  ├─ Simple ascending/descending? ────────────────────────► remeda sortBy
+│  │
+│  └─ Multi-level or custom sorting? ──────────────────────► compare/
+│
+└─ Transform or compose FUNCTIONS?
+   │
+   ├─ Conditional logic (if/switch)? ─────────────────────► function/ifElse, cond
+   │
+   ├─ Compose multiple functions? ────────────────────────► function/compose
+   │
+   ├─ Partial application? ───────────────────────────────► function/partial
+   │
+   └─ Memoize? ───────────────────────────────────────────► function/memoize
+```
+
+## Quick Reference by Problem Type
+
+### Error Handling
+- **Known to fail, need error details** → `result/tryCatch`, `result/map`, `result/flatMap`
+- **Optional/nullable values** → `option/fromNullable`, `option/map`
+- **Form validation (multiple errors)** → `validation/schema`, `validation/validateAll`
+
+### Async Operations
+- **Retry failed requests** → `async/retry`
+- **Timeout promises** → `async/timeout`
+- **Process array in parallel** → `async/mapAsync`
+- **Rate limiting** → `async/debounce`, `async/throttle`
+
+### Data Transformation
+- **Filter arrays** → `predicate/where`, `remeda/filter`
+- **Transform nested objects** → `object/mapValues`, `lens/over`
+- **Group hierarchically** → `collection/nest`
+- **Detect changes** → `collection/diff`
+
+### Formatting
+- **Currency** → `number/toCurrency`
+- **Dates** → Use date library (not yet in Receta)
+- **File sizes** → `number/toBytes`
+- **URLs/slugs** → `string/slugify`
+
+### Type Safety
+- **Type guards** → `predicate/isString`, `predicate/isNumber`, etc.
+- **Runtime validation** → `validation/schema`, `object/validateShape`
+- **Narrowing unions** → `result/match`, `option/match`
+
+## Module Relationships
+
+```
+Core Types (Always Available):
+┌──────────┐       ┌──────────┐
+│  Result  │       │  Option  │
+└────┬─────┘       └────┬─────┘
+     │                  │
+     └──────┬───────────┘
+            │
+    ┌───────▼────────┐
+    │  Validation    │  (Extends Result with error accumulation)
+    └────────────────┘
+
+Functional Utilities:
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│Predicate │─▶│  Where   │─▶│ Filter   │
+└──────────┘  └──────────┘  └──────────┘
+
+Data Operations:
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│Collection│  │  Object  │  │  String  │
+└──────────┘  └──────────┘  └──────────┘
+                    │
+            ┌───────▼───────┐
+            │     Lens      │  (Immutable updates)
+            └───────────────┘
+
+Performance:
+┌──────────┐  ┌──────────┐
+│   Memo   │  │  Async   │
+└──────────┘  └──────────┘
+```
+
+## Decision Tree Usage Tips
+
+1. **Start broad, narrow down**: Use this root tree first, then dive into module-specific trees
+2. **Multiple modules**: Complex problems often need 2-3 modules together
+3. **Remeda first**: If Remeda has it, use Remeda. Receta builds on top
+4. **Result by default**: When in doubt about error handling, use Result pattern
+5. **Option for nullability**: If you'd check `value != null`, use Option instead
+
+## Next Steps
+
+For detailed function selection within each module, see:
+- [result/_module.md](result/_module.md)
+- [option/_module.md](option/_module.md)
+- [async/_module.md](async/_module.md)
+- [predicate/_module.md](predicate/_module.md)
+- [validation/_module.md](validation/_module.md)
+- [collection/_module.md](collection/_module.md)
+- [object/_module.md](object/_module.md)
+- [string/_module.md](string/_module.md)
+- [number/_module.md](number/_module.md)
+- [memo/_module.md](memo/_module.md)
+- [lens/_module.md](lens/_module.md)
+- [compare/_module.md](compare/_module.md)
+- [function/_module.md](function/_module.md)
+
+================================================================================
+
+################################################################################
+# MODULE: ASYNC
+################################################################################
+
+# Async Module Decision Tree
+
+## When to Use
+Async operations with concurrency control, error handling, retries, timeouts, and rate limiting.
+
+## Function Selection
+```
+START: What async problem are you solving?
+│
+├─ Control CONCURRENCY?
+│  ├─ Process array with limit ──────────────────► mapAsync(), filterAsync()
+│  ├─ Run all in parallel ───────────────────────► parallel()
+│  └─ Run one after another ─────────────────────► sequential()
+│
+├─ Handle ERRORS with Result?
+│  ├─ Retry failed operations ───────────────────► retry()
+│  ├─ Timeout promises ──────────────────────────► timeout()
+│  └─ Wrap async throwing code ──────────────────► Result.tryCatchAsync()
+│
+├─ RATE LIMITING?
+│  ├─ Debounce rapid calls ───────────────────────► debounce()
+│  └─ Throttle to max rate ──────────────────────► throttle()
+│
+├─ POLLING?
+│  └─ Poll until condition ───────────────────────► poll()
+│
+└─ BATCHING?
+    └─ Process in batches ────────────────────────► batch()
+```
+
+## Key Functions
+- `retry()` - Retry with exponential backoff, returns Result
+- `timeout()` - Add timeout to Promise, returns Result
+- `mapAsync()` - Process array with concurrency control
+- `debounce()` - Delay until quiet period
+- `throttle()` - Limit rate of execution
+
+## Available Function Documentation
+
+For detailed implementation help, read these files:
+
+- `sleep` - src/async/sleep.md
+
+================================================================================
+
+################################################################################
+# MODULE: COLLECTION
+################################################################################
+
+# Collection Module Decision Tree
+
+## When to Use
+Advanced collection operations beyond basic map/filter.
+
+## Function Selection
+```
+START: What collection operation?
+│
+├─ HIERARCHICAL grouping?
+│  ├─ Nested groupBy (tree structure) ────────────► nest()
+│  └─ Group by nested path ───────────────────────► groupByPath()
+│
+├─ CHANGE DETECTION?
+│  └─ Diff two arrays (added/removed/updated) ────► diff()
+│
+├─ PAGINATION?
+│  ├─ Offset-based (page numbers) ────────────────► paginate()
+│  └─ Cursor-based (infinite scroll) ─────────────► paginateCursor()
+│
+├─ INDEXING?
+│  └─ Index by unique key (safe) ─────────────────► indexByUnique()
+│
+└─ SET OPERATIONS?
+    ├─ Union (combine) ───────────────────────────► union()
+    ├─ Intersection (common elements) ────────────► intersect()
+    └─ Symmetric difference (unique to each) ─────► symmetricDiff()
+```
+
+## When NOT to Use
+Use Remeda directly for: map, filter, groupBy, sortBy, uniq, etc.
+Collection module is for MORE COMPLEX operations.
+
+## Available Function Documentation
+
+For detailed implementation help, read these files:
+
+### paginate
+- `paginateCursor` - src/collection/paginate/paginateCursor.md
+
+### setOps
+- `intersect` - src/collection/setOps/intersect.md
+- `symmetricDiff` - src/collection/setOps/symmetricDiff.md
+- `union` - src/collection/setOps/union.md
+
+================================================================================
+
+################################################################################
+# MODULE: COMPARE
+################################################################################
+
+# Compare Module Decision Tree
+
+## When to Use
+Build composable comparators for sorting complex data.
+
+## Function Selection
+```
+START: What sorting need?
+│
+├─ BASIC sorting?
+│  ├─ Ascending order ────────────────────────────► ascending()
+│  ├─ Descending order ───────────────────────────► descending()
+│  ├─ Natural sort (e.g., "file10" after "file2") ► natural()
+│  └─ By object key ──────────────────────────────► byKey()
+│
+├─ COMBINE comparators?
+│  ├─ Multi-level sort (priority) ────────────────► compose()
+│  ├─ Reverse order ──────────────────────────────► reverse()
+│  ├─ Nulls first ────────────────────────────────► nullsFirst()
+│  ├─ Nulls last ─────────────────────────────────► nullsLast()
+│  └─ Tiebreaker ─────────────────────────────────► withTiebreaker()
+│
+├─ TYPE-SPECIFIC?
+│  ├─ Date comparison ─────────────────────────────► byDate()
+│  ├─ Number comparison ───────────────────────────► byNumber()
+│  ├─ String comparison ───────────────────────────► byString()
+│  └─ Boolean comparison ──────────────────────────► byBoolean()
+│
+└─ ADVANCED string sorting?
+    ├─ Case-insensitive ──────────────────────────► caseInsensitive()
+    └─ Locale-aware ──────────────────────────────► localeCompare()
+```
+
+## Common Pattern
+```typescript
+// Multi-level sorting
+users.sort(compose(
+  ascending(u => u.status),      // First by status
+  descending(u => u.priority),   // Then by priority
+  byDate(u => u.createdAt)       // Finally by date
+))
+```
+
+================================================================================
+
+################################################################################
+# MODULE: FUNCTION
+################################################################################
+
+# Function Module Decision Tree
+
+## When to Use
+Transform, compose, and control function behavior.
+
+## Function Selection
+```
+START: What function operation?
+│
+├─ CONDITIONAL logic?
+│  ├─ If-then-else ───────────────────────────────► ifElse()
+│  ├─ If-then (no else) ──────────────────────────► when()
+│  ├─ If-not-then ────────────────────────────────► unless()
+│  └─ Switch-case style ──────────────────────────► cond()
+│
+├─ COMPOSITION?
+│  ├─ Compose functions (right-to-left) ──────────► compose()
+│  ├─ Apply args to multiple fns (fan-out) ───────► converge()
+│  ├─ Apply args to array of fns ─────────────────► juxt()
+│  └─ Apply function to array of args ────────────► ap()
+│
+├─ PARTIAL APPLICATION?
+│  ├─ Fix leftmost args ──────────────────────────► partial()
+│  ├─ Fix rightmost args ─────────────────────────► partialRight()
+│  ├─ Flip first two args ────────────────────────► flip()
+│  ├─ Force to 1 arg ──────────────────────────────► unary()
+│  ├─ Force to 2 args ─────────────────────────────► binary()
+│  └─ Force to N args ─────────────────────────────► nAry()
+│
+└─ CONTROL FLOW?
+    ├─ Side effect in chain ──────────────────────► tap()
+    ├─ Wrap with try/catch ───────────────────────► tryCatch()
+    └─ Cache results ─────────────────────────────► memoize()
+```
+
+## Common Patterns
+- **Replace switch**: `cond([[pred1, fn1], [pred2, fn2]])`
+- **Data pipelines**: `compose(parse, validate, transform)`
+- **API adapters**: `partial(fetchUrl, baseUrl)`
+
+## Available Function Documentation
+
+For detailed implementation help, read these files:
+
+### arity
+- `binary` - src/function/arity/binary.md
+- `nAry` - src/function/arity/nAry.md
+- `unary` - src/function/arity/unary.md
+
+================================================================================
+
+################################################################################
+# MODULE: LENS
+################################################################################
+
+# Lens Module Decision Tree
+
+## When to Use
+Composable, immutable updates to nested data structures.
+
+## Function Selection
+```
+START: What lens operation?
+│
+├─ CREATE a lens?
+│  ├─ For object property ────────────────────────► prop()
+│  ├─ For nested path ────────────────────────────► path()
+│  ├─ For array index ────────────────────────────► index()
+│  ├─ Custom getter/setter ───────────────────────► lens()
+│  └─ Optional path (might not exist) ────────────► optional()
+│
+├─ USE a lens?
+│  ├─ Get value ──────────────────────────────────► view()
+│  ├─ Set value ──────────────────────────────────► set()
+│  └─ Update value (transform) ───────────────────► over()
+│
+└─ COMPOSE lenses?
+    └─ Chain multiple lenses ─────────────────────► compose()
+```
+
+## When to Use Lens vs Direct Access
+Use Lens when:
+- ✅ Deep nesting (3+ levels)
+- ✅ Reusable access patterns
+- ✅ Compositional updates
+- ✅ Type-safe immutable updates
+
+Use direct access when:
+- ❌ Shallow updates (1-2 levels)
+- ❌ One-off operations
+- ❌ Simple destructuring works
+
+## Example
+```typescript
+const emailLens = compose(
+  prop('user'),
+  prop('contact'),
+  prop('email')
+)
+
+view(emailLens, state)           // Get nested email
+set(emailLens, 'new@email.com')  // Update immutably
+over(emailLens, s => s.toLowerCase())  // Transform
+```
+
+================================================================================
+
+################################################################################
+# MODULE: MEMO
+################################################################################
+
+# Memo Module Decision Tree
+
+## When to Use
+Cache expensive function calls for performance optimization.
+
+## Function Selection
+```
+START: What caching strategy?
+│
+├─ BASIC memoization?
+│  └─ Default (Map-based) ────────────────────────► memoize()
+│
+├─ CUSTOM cache key?
+│  └─ Based on specific args ─────────────────────► memoizeBy()
+│
+├─ ASYNC functions?
+│  └─ Deduplicate concurrent calls ───────────────► memoizeAsync()
+│
+├─ CACHE STRATEGIES?
+│  ├─ TTL (time-to-live) ─────────────────────────► ttlCache()
+│  ├─ LRU (least recently used) ──────────────────► lruCache()
+│  └─ WeakMap (garbage collected) ────────────────► weakCache()
+│
+└─ CACHE MANAGEMENT?
+    ├─ Clear specific cache ──────────────────────► clearCache()
+    ├─ Invalidate many ───────────────────────────► invalidateMany()
+    ├─ Invalidate by predicate ───────────────────► invalidateWhere()
+    └─ Invalidate all ────────────────────────────► invalidateAll()
+```
+
+## Common Use Cases
+- **API calls**: Avoid duplicate requests with `memoizeAsync()`
+- **Expensive computations**: Cache pure function results with `memoize()`
+- **Temporary data**: Use `ttlCache()` for time-sensitive data
+- **Memory management**: Use `lruCache()` for bounded memory usage
+
+================================================================================
+
+################################################################################
+# MODULE: NUMBER
+################################################################################
+
+# Number Module Decision Tree
+
+## When to Use
+Number formatting, validation, calculations, and safe conversions.
+
+## Function Selection
+```
+START: What number operation?
+│
+├─ FORMAT for display?
+│  ├─ Currency ───────────────────────────────────► toCurrency()
+│  ├─ Percentage ─────────────────────────────────► toPercent()
+│  ├─ Compact (1K, 1M) ────────────────────────────► toCompact()
+│  ├─ Bytes (1.5 MB) ──────────────────────────────► toBytes()
+│  ├─ Fixed precision ─────────────────────────────► toPrecision()
+│  ├─ Ordinal (1st, 2nd) ──────────────────────────► toOrdinal()
+│  └─ Custom format ───────────────────────────────► format()
+│
+├─ VALIDATE number?
+│  ├─ Is integer? ────────────────────────────────► isInteger()
+│  ├─ Is finite? ──────────────────────────────────► isFinite()
+│  ├─ Is positive? ────────────────────────────────► isPositive()
+│  ├─ Is negative? ────────────────────────────────► isNegative()
+│  ├─ In range? ───────────────────────────────────► inRange()
+│  └─ Clamp to range ──────────────────────────────► clamp()
+│
+├─ CALCULATE?
+│  ├─ Sum array ───────────────────────────────────► sum()
+│  ├─ Average ─────────────────────────────────────► average()
+│  ├─ Round with precision ────────────────────────► round()
+│  ├─ Percentage of total ─────────────────────────► percentage()
+│  └─ Ratio ───────────────────────────────────────► ratio()
+│
+├─ PARSE safely?
+│  ├─ From string ─────────────────────────────────► fromString()
+│  ├─ From currency string ────────────────────────► fromCurrency()
+│  └─ From byte string ────────────────────────────► fromBytes()
+│
+└─ UTILITIES?
+    ├─ Random in range ───────────────────────────► random()
+    ├─ Step through range ────────────────────────► step()
+    └─ Interpolate ───────────────────────────────► interpolate()
+```
+
+## Common Patterns
+- **Money**: `toCurrency(1234.56, { currency: 'USD' })`
+- **File sizes**: `toBytes(1048576)` → `"1.00 MB"`
+- **Stats**: `percentage(correct, total)`
+- **Safe parsing**: `fromString("123.45")` returns `Result<number, ParseError>`
+
+================================================================================
+
+################################################################################
+# MODULE: OBJECT
+################################################################################
+
+# Object Module Decision Tree
+
+## When to Use
+Safe nested access, flattening, validation, and transformation of objects.
+
+## Function Selection
+```
+START: What object operation?
+│
+├─ FLATTEN/UNFLATTEN?
+│  ├─ Nested object → flat keys ──────────────────► flatten()
+│  └─ Flat keys → nested object ──────────────────► unflatten()
+│
+├─ SAFE ACCESS to nested paths?
+│  ├─ Get nested value safely ────────────────────► getPath()
+│  ├─ Set nested value ────────────────────────────► setPath()
+│  └─ Update nested value ─────────────────────────► updatePath()
+│
+├─ VALIDATION?
+│  ├─ Validate object shape ───────────────────────► validateShape()
+│  ├─ Strip undefined values ──────────────────────► stripUndefined()
+│  └─ Remove nullish values ────────────────────────► compact()
+│
+├─ TRANSFORMATION?
+│  ├─ Rename keys ─────────────────────────────────► rename()
+│  ├─ Mask sensitive fields ────────────────────────► mask()
+│  ├─ Deep merge objects ───────────────────────────► deepMerge()
+│  ├─ Transform keys ───────────────────────────────► mapKeys()
+│  ├─ Transform values ─────────────────────────────► mapValues()
+│  ├─ Filter by keys ───────────────────────────────► filterKeys()
+│  └─ Filter by values ─────────────────────────────► filterValues()
+│
+└─ Simple pick/omit/mapValues?
+    └─ Use Remeda directly (not this module)
+```
+
+## Common Patterns
+- **Config access**: `getPath(config, ['database', 'host'])`
+- **API response flattening**: `flatten(nestedApiResponse)`
+- **Sensitive data**: `mask(user, ['password', 'ssn'])`
+
+================================================================================
+
+################################################################################
+# MODULE: OPTION
+################################################################################
+
+# Option Module Decision Tree
+
+## When to Use Option Module
+
+Use Option when:
+- ✅ Value might be absent (null/undefined)
+- ✅ You don't need detailed error information
+- ✅ Absence is normal, not exceptional
+- ✅ Working with optional/nullable APIs
+
+Don't use Option when:
+- ❌ Need error details (use Result instead)
+- ❌ Multiple error cases (use Result or Validation)
+- ❌ Accumulating errors (use Validation)
+
+## Function Selection Decision Tree
+
+```
+START: What do you need to do with Option?
+│
+├─ CREATE an Option?
+│  │
+│  ├─ Have a present value? ───────────────────────► some()
+│  ├─ Represent absence? ──────────────────────────► none()
+│  ├─ From nullable (null/undefined)? ─────────────► fromNullable()
+│  ├─ From Result? ────────────────────────────────► fromResult()
+│  └─ From code that might throw? ─────────────────► tryCatch()
+│
+├─ CHECK what type?
+│  │
+│  ├─ Is it Some? ─────────────────────────────────► isSome()
+│  └─ Is it None? ─────────────────────────────────► isNone()
+│
+├─ TRANSFORM Option?
+│  │
+│  ├─ Transform value? ─────────────────────────────► map()
+│  ├─ Chain Options? ───────────────────────────────► flatMap()
+│  ├─ Filter by predicate? ────────────────────────► filter()
+│  └─ Flatten nested Option<Option<T>>? ───────────► flatten()
+│
+├─ EXTRACT value?
+│  │
+│  ├─ Get or throw? ────────────────────────────────► unwrap()
+│  ├─ Get with default? ───────────────────────────► unwrapOr()
+│  ├─ Get with computed default? ──────────────────► unwrapOrElse()
+│  └─ Pattern match? ──────────────────────────────► match()
+│
+├─ SIDE EFFECTS?
+│  │
+│  ├─ Effect on Some? ──────────────────────────────► tap()
+│  └─ Effect on None? ──────────────────────────────► tapNone()
+│
+├─ Work with MULTIPLE Options?
+│  │
+│  ├─ Collect all present values? ──────────────────► collect()
+│  └─ Split into Some/None arrays? ─────────────────► partition()
+│
+└─ CONVERT to other type?
+   │
+   ├─ To Result? ─────────────────────────────────────► toResult()
+   └─ To null/undefined? ─────────────────────────────► toNullable()
+```
+
+## Common Patterns
+
+### Database Queries
+```
+Query → Option<User>
+├─ Found → Some(user)
+└─ Not found → None (not an error!)
+```
+
+### Configuration
+```
+Config key → Option<string>
+├─ Present → Some(value)
+└─ Missing → None (use default)
+```
+
+### Array Operations
+```
+array.find() → T | undefined
+├─ Wrap → fromNullable()
+├─ Transform → map()
+└─ Default → unwrapOr()
+```
+
+## Function Categories
+
+### Constructors
+- [some.md](some.md), [none.md](none.md), [fromNullable.md](fromNullable.md), [fromResult.md](fromResult.md), [tryCatch.md](tryCatch.md)
+
+### Guards
+- [isSome.md](isSome.md), [isNone.md](isNone.md)
+
+### Transformers
+- [map.md](map.md), [flatMap.md](flatMap.md), [filter.md](filter.md), [flatten.md](flatten.md)
+
+### Extractors
+- [unwrap.md](unwrap.md), [unwrapOr.md](unwrapOr.md), [unwrapOrElse.md](unwrapOrElse.md), [match.md](match.md)
+
+### Side Effects
+- [tap.md](tap.md), [tapNone.md](tapNone.md)
+
+### Combinators
+- [collect.md](collect.md), [partition.md](partition.md)
+
+### Conversions
+- [toResult.md](toResult.md), [toNullable.md](toNullable.md)
+
+## Available Function Documentation
+
+For detailed implementation help, read these files:
+
+### constructors
+- `fromNullable` - src/option/constructors/fromNullable.md
+- `fromResult` - src/option/constructors/fromResult.md
+- `none` - src/option/constructors/none.md
+- `some` - src/option/constructors/some.md
+- `tryCatch` - src/option/constructors/tryCatch.md
+
+### guards
+- `isNone` - src/option/guards/isNone.md
+- `isSome` - src/option/guards/isSome.md
+
+### tap
+- `tapNone` - src/option/tap/tapNone.md
+
+### unwrap
+- `unwrapOr` - src/option/unwrap/unwrapOr.md
+- `unwrapOrElse` - src/option/unwrap/unwrapOrElse.md
+
+================================================================================
+
+################################################################################
+# MODULE: PREDICATE
+################################################################################
+
+# Predicate Module Decision Tree
+
+## When to Use Predicate Module
+
+Use Predicate when:
+- ✅ Filtering collections
+- ✅ Runtime type checking
+- ✅ Composable boolean logic
+- ✅ Reusable validation rules
+
+## Function Selection Decision Tree
+
+```
+START: What kind of predicate do you need?
+│
+├─ COMPARISON (numbers, strings)?
+│  │
+│  ├─ Greater than? ───────────────────────────────► gt(), gte()
+│  ├─ Less than? ──────────────────────────────────► lt(), lte()
+│  ├─ Equal? ──────────────────────────────────────► eq(), neq()
+│  ├─ Range? ──────────────────────────────────────► between()
+│  ├─ String starts/ends? ─────────────────────────► startsWith(), endsWith()
+│  ├─ Contains? ───────────────────────────────────► includes()
+│  ├─ Regex? ──────────────────────────────────────► matches()
+│  └─ Empty check? ────────────────────────────────► isEmpty(), isNotEmpty()
+│
+├─ COMBINE predicates?
+│  │
+│  ├─ ALL must match? ─────────────────────────────► and()
+│  ├─ ANY can match? ──────────────────────────────► or()
+│  ├─ Invert? ─────────────────────────────────────► not()
+│  ├─ Exactly one? ────────────────────────────────► xor()
+│  ├─ Always true? ────────────────────────────────► always()
+│  └─ Always false? ───────────────────────────────► never()
+│
+├─ BUILD complex predicates?
+│  │
+│  ├─ Check object properties? ────────────────────► where()
+│  ├─ Value in list? ──────────────────────────────► oneOf()
+│  ├─ Single property? ────────────────────────────► prop()
+│  ├─ Object shape match? ─────────────────────────► matchesShape()
+│  ├─ Has property? ───────────────────────────────► hasProperty()
+│  ├─ Custom predicate? ───────────────────────────► satisfies()
+│  └─ Extract then test? ──────────────────────────► by()
+│
+└─ TYPE GUARDS?
+   │
+   ├─ Basic types? ──────────────────────────────────► isString, isNumber, etc.
+   ├─ Null checks? ──────────────────────────────────► isNull, isNullish, isDefined
+   ├─ Collections? ──────────────────────────────────► isArray, isObject
+   ├─ Functions? ────────────────────────────────────► isFunction
+   ├─ Special types? ────────────────────────────────► isDate, isRegExp, isError
+   └─ Custom instance? ──────────────────────────────► isInstanceOf()
+```
+
+## Common Use Cases
+
+### Filter Array
+```typescript
+import { where, gt, includes } from 'receta/predicate'
+R.filter(users, where({
+  age: gt(18),
+  role: includes(['admin', 'user'])
+}))
+```
+
+### Complex Logic
+```typescript
+and(
+  gt(0),
+  lt(100),
+  not(eq(50))
+)
+```
+
+### Type Guards
+```typescript
+if (isString(value) && isNotEmpty(value)) {
+  // TypeScript knows value is non-empty string
+}
+```
+
+================================================================================
+
+################################################################################
+# MODULE: RESULT
+################################################################################
+
+# Result Module Decision Tree
+
+## When to Use Result Module
+
+Use Result when:
+- ✅ Operations can fail and you need detailed error information
+- ✅ You want explicit error handling in types
+- ✅ You need to chain multiple fallible operations
+- ✅ You want to avoid try/catch and throwing exceptions
+
+Don't use Result when:
+- ❌ Value is just missing (use Option instead)
+- ❌ You're validating forms (use Validation for error accumulation)
+- ❌ Simple null checks are sufficient
+
+## Function Selection Decision Tree
+
+```
+START: What do you need to do with Result?
+│
+├─ CREATE a Result?
+│  │
+│  ├─ From a successful value? ────────────────────────────► ok()
+│  │
+│  ├─ From an error? ───────────────────────────────────────► err()
+│  │
+│  ├─ From code that might throw? ──────────────────────────► tryCatch()
+│  │
+│  ├─ From async code that might throw? ────────────────────► tryCatchAsync()
+│  │
+│  └─ From nullable value? ─────────────────────────────────► fromNullable()
+│
+├─ CHECK what type of Result you have?
+│  │
+│  ├─ Is it Ok? ────────────────────────────────────────────► isOk()
+│  │
+│  └─ Is it Err? ───────────────────────────────────────────► isErr()
+│
+├─ TRANSFORM a Result?
+│  │
+│  ├─ Transform the Ok value? ──────────────────────────────► map()
+│  │
+│  ├─ Transform the Err value? ─────────────────────────────► mapErr()
+│  │
+│  ├─ Transform to another Result (chain)? ─────────────────► flatMap()
+│  │
+│  └─ Flatten nested Result<Result<T, E>, E>? ─────────────► flatten()
+│
+├─ EXTRACT the value?
+│  │
+│  ├─ Get value or throw error? ────────────────────────────► unwrap()
+│  │
+│  ├─ Get value or provide default? ────────────────────────► unwrapOr()
+│  │
+│  ├─ Get value or compute default? ────────────────────────► unwrapOrElse()
+│  │
+│  └─ Pattern match both cases? ────────────────────────────► match()
+│
+├─ PERFORM side effects?
+│  │
+│  ├─ Side effect on Ok value? ─────────────────────────────► tap()
+│  │
+│  └─ Side effect on Err value? ────────────────────────────► tapErr()
+│
+└─ Work with MULTIPLE Results?
+   │
+   ├─ Convert array of Results to Result of array? ───────► collect()
+   │
+   └─ Split Results into separate arrays? ────────────────► partition()
+```
+
+## Common Patterns by Use Case
+
+### API/Network Calls
+```
+Input: fetch() call
+├─ Wrapping → tryCatchAsync()
+├─ Transforming response → map()
+├─ Chaining requests → flatMap()
+└─ Default on error → unwrapOr()
+```
+
+### JSON Parsing
+```
+Input: JSON string
+├─ Safe parsing → tryCatch(() => JSON.parse(str))
+├─ Validating structure → flatMap(validateSchema)
+└─ Using parsed data → map(), unwrapOr()
+```
+
+### File Operations
+```
+Input: File path
+├─ Reading → tryCatchAsync(fs.readFile)
+├─ Parsing → flatMap(parseContent)
+├─ Transforming errors → mapErr()
+└─ Extracting → unwrapOrElse()
+```
+
+### Database Queries
+```
+Input: Query parameters
+├─ Query execution → tryCatchAsync()
+├─ Not found vs error → fromNullable() then toResult()
+├─ Multiple queries → collect([query1, query2])
+└─ Transaction rollback → tapErr(rollback)
+```
+
+### Form Submission
+```
+Input: Form data
+├─ Single validation error → Result
+└─ Multiple validation errors → Use Validation module instead!
+```
+
+## Function Categories
+
+### Constructors (Create Results)
+- [ok.md](ok.md) - Create successful Result
+- [err.md](err.md) - Create error Result
+- [tryCatch.md](tryCatch.md) - Wrap throwing code
+- [tryCatchAsync.md](tryCatchAsync.md) - Wrap async throwing code
+- [fromNullable.md](fromNullable.md) - Convert nullable to Result
+
+### Guards (Type Checking)
+- [isOk.md](isOk.md) - Check if Result is Ok
+- [isErr.md](isErr.md) - Check if Result is Err
+
+### Transformers (Change Results)
+- [map.md](map.md) - Transform Ok value
+- [mapErr.md](mapErr.md) - Transform Err value
+- [flatMap.md](flatMap.md) - Chain Results
+- [flatten.md](flatten.md) - Flatten nested Results
+
+### Extractors (Get Values Out)
+- [unwrap.md](unwrap.md) - Extract or throw
+- [unwrapOr.md](unwrapOr.md) - Extract with default
+- [unwrapOrElse.md](unwrapOrElse.md) - Extract with computed default
+- [match.md](match.md) - Pattern match both cases
+
+### Side Effects (Do Something Without Changing)
+- [tap.md](tap.md) - Side effect on Ok
+- [tapErr.md](tapErr.md) - Side effect on Err
+
+### Combinators (Work with Multiple Results)
+- [collect.md](collect.md) - All or nothing
+- [partition.md](partition.md) - Split into Oks and Errs
+
+## Quick Decision Helpers
+
+**"I need to..."**
+- ...wrap code that throws → `tryCatch()` / `tryCatchAsync()`
+- ...handle successful result → `map()`
+- ...handle failed result → `mapErr()` or `tapErr()`
+- ...chain operations → `flatMap()`
+- ...get the value safely → `unwrapOr()` or `match()`
+- ...do something without changing Result → `tap()` / `tapErr()`
+- ...work with many Results → `collect()` or `partition()`
+- ...convert null to error → `fromNullable()` then `toResult()`
+
+**"The operation might..."**
+- ...throw an exception → `tryCatch()` / `tryCatchAsync()`
+- ...return null → Use `Option` instead, then `toResult()` if needed
+- ...return multiple errors → Use `Validation` module instead
+- ...need retry logic → Use `async/retry()` which returns Result
+
+## Related Modules
+
+- **Option**: Use when you don't need detailed error info, just presence/absence
+- **Validation**: Use when you need to accumulate multiple errors
+- **Async**: Combines well with Result for async error handling
+
+## Available Function Documentation
+
+For detailed implementation help, read these files:
+
+### constructors
+- `err` - src/result/constructors/err.md
+- `ok` - src/result/constructors/ok.md
+- `tryCatch` - src/result/constructors/tryCatch.md
+- `tryCatchAsync` - src/result/constructors/tryCatchAsync.md
+
+### guards
+- `isErr` - src/result/guards/isErr.md
+- `isOk` - src/result/guards/isOk.md
+
+### tap
+- `tapErr` - src/result/tap/tapErr.md
+
+### unwrap
+- `unwrapOr` - src/result/unwrap/unwrapOr.md
+- `unwrapOrElse` - src/result/unwrap/unwrapOrElse.md
+
+================================================================================
+
+################################################################################
+# MODULE: STRING
+################################################################################
+
+# String Module Decision Tree
+
+## When to Use
+String formatting, validation, sanitization, and transformation.
+
+## Function Selection
+```
+START: What string operation?
+│
+├─ TRANSFORM format?
+│  ├─ URL-friendly slug ──────────────────────────► slugify()
+│  ├─ Case conversion ─────────────────────────────► kebabCase, camelCase, etc.
+│  ├─ Truncate with ellipsis ──────────────────────► truncate()
+│  └─ Template interpolation ──────────────────────► template()
+│
+├─ VALIDATE string?
+│  ├─ Email format ────────────────────────────────► isEmail()
+│  ├─ URL format ──────────────────────────────────► isUrl()
+│  ├─ Alphanumeric ────────────────────────────────► isAlphanumeric()
+│  ├─ Numeric ─────────────────────────────────────► isNumeric()
+│  ├─ Hex color ───────────────────────────────────► isHexColor()
+│  └─ Empty checks ────────────────────────────────► isEmpty(), isBlank()
+│
+├─ SANITIZE string?
+│  ├─ Remove HTML tags ────────────────────────────► stripHtml()
+│  ├─ Escape HTML entities ────────────────────────► escapeHtml()
+│  ├─ Unescape HTML ───────────────────────────────► unescapeHtml()
+│  └─ Trim whitespace ─────────────────────────────► trim(), trimStart(), trimEnd()
+│
+└─ EXTRACT parts?
+    ├─ Split into words ──────────────────────────► words()
+    ├─ Split into lines ──────────────────────────► lines()
+    ├─ Extract between delimiters ────────────────► between()
+    └─ Custom extraction ─────────────────────────► extract()
+```
+
+## Common Use Cases
+- **URLs**: `slugify('Hello World')` → `'hello-world'`
+- **Display**: `truncate(longText, { length: 100 })`
+- **Security**: `escapeHtml(userInput)`
+- **Forms**: `isEmail(input)`, `isUrl(input)`
+
+================================================================================
+
+################################################################################
+# MODULE: VALIDATION
+################################################################################
+
+# Validation Module Decision Tree
+
+## When to Use
+Multi-field validation with error accumulation (collect ALL errors, not just first).
+
+## Function Selection
+```
+START: What validation do you need?
+│
+├─ SINGLE field with multiple rules?
+│  └─ Use: validate(value, [rule1, rule2, ...])
+│
+├─ MULTIPLE fields (form/object)?
+│  └─ Use: schema({ field1: rules, field2: rules })
+│
+├─ Array of validations?
+│  └─ Use: validateAll([val1, val2, ...])
+│
+├─ BUILD validators?
+│  ├─ From predicate ─────────────────────────────► fromPredicate()
+│  ├─ String validators ──────────────────────────► required, email, url
+│  ├─ Number validators ──────────────────────────► min, max, positive
+│  └─ Custom logic ───────────────────────────────► fromPredicateWithError()
+│
+└─ CONVERT to/from Result?
+    └─ Use: toResult(), fromResult()
+```
+
+## Key Difference from Result
+- **Result**: Fails fast (stops at first error)
+- **Validation**: Accumulates errors (collects all errors)
+
+Use Validation for: forms, multi-field validation, user input
+Use Result for: API calls, file operations, parsing
+
+================================================================================
+
+
+## End of Module Decision Trees
+
+**Next Steps for AI Agents:**
+
+1. You've selected a module from the root tree above
+2. You've selected a function from the module tree
+3. Now read the function file for implementation details
+
+Total modules: 13
+Total function docs: 27

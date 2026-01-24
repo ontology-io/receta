@@ -18,10 +18,10 @@ describe('Async Integration Tests', () => {
       let attempts = 0
 
       const items = [1, 2, 3]
-      const results = await mapAsync(
+      const result = await mapAsync(
         items,
         async (x) => {
-          const result = await retry(
+          const retryResult = await retry(
             async () => {
               attempts++
               if (x === 2 && attempts < 3) {
@@ -31,11 +31,13 @@ describe('Async Integration Tests', () => {
             },
             { maxAttempts: 3, delay: 10 }
           )
-          return unwrapOr(result, 0) // Unwrap for simple test
+          return unwrapOr(retryResult, 0) // Unwrap for simple test
         },
         { concurrency: 2 }
       )
 
+      expect(isOk(result)).toBe(true)
+      const results = unwrapOr(result, [])
       expect(results).toEqual([2, 4, 6])
       expect(attempts).toBeGreaterThan(3) // Some retries happened
     })
@@ -45,12 +47,15 @@ describe('Async Integration Tests', () => {
     it('applies timeout to each mapped operation', async () => {
       const items = [50, 100, 150]
 
-      const results = await mapAsync(
+      const result = await mapAsync(
         items,
         async (delay) => {
           return timeout(sleep(delay).then(() => delay), 120)
         }
       )
+
+      expect(isOk(result)).toBe(true)
+      const results = unwrapOr(result, [])
 
       // 150ms item should timeout, others should succeed
       expect(isOk(results[0]!)).toBe(true)
@@ -61,15 +66,17 @@ describe('Async Integration Tests', () => {
     it('processes items with timeouts using concurrency', async () => {
       const items = [10, 20, 30, 40, 50]
 
-      const results = await mapAsync(
+      const result = await mapAsync(
         items,
         async (delay) => {
-          const result = await timeout(sleep(delay).then(() => delay), 1000)
-          return unwrapOr(result, 0)
+          const timeoutResult = await timeout(sleep(delay).then(() => delay), 1000)
+          return unwrapOr(timeoutResult, 0)
         },
         { concurrency: 2 }
       )
 
+      expect(isOk(result)).toBe(true)
+      const results = unwrapOr(result, [])
       expect(results).toEqual([10, 20, 30, 40, 50])
     })
   })
@@ -79,10 +86,10 @@ describe('Async Integration Tests', () => {
       let batchAttempts = 0
 
       const items = [1, 2, 3, 4, 5, 6]
-      const results = await batch(
+      const result = await batch(
         items,
         async (batchItems) => {
-          const result = await retry(
+          const retryResult = await retry(
             async () => {
               batchAttempts++
               if (batchAttempts === 2) {
@@ -92,11 +99,13 @@ describe('Async Integration Tests', () => {
             },
             { maxAttempts: 3, delay: 10 }
           )
-          return unwrapOr(result, 0)
+          return unwrapOr(retryResult, 0)
         },
         { batchSize: 3 }
       )
 
+      expect(isOk(result)).toBe(true)
+      const results = unwrapOr(result, [])
       expect(results.length).toBe(2)
       expect(batchAttempts).toBeGreaterThan(2)
     })
@@ -153,7 +162,7 @@ describe('Async Integration Tests', () => {
 
       const userIds = [1, 2, 3, 4, 5]
 
-      const results = await mapAsync(
+      const result = await mapAsync(
         userIds,
         async (id) => {
           const retryResult = await retry(
@@ -169,6 +178,8 @@ describe('Async Integration Tests', () => {
         { concurrency: 2 } // Max 2 concurrent requests
       )
 
+      expect(isOk(result)).toBe(true)
+      const results = unwrapOr(result, [])
       expect(results).toHaveLength(5)
       expect(results[0]!.id).toBe(1)
       expect(results[4]!.id).toBe(5)
@@ -184,7 +195,7 @@ describe('Async Integration Tests', () => {
 
       const processedBatches: number[] = []
 
-      const results = await batch(
+      const result = await batch(
         records,
         async (batchRecords) => {
           // Simulate batch processing
@@ -198,6 +209,8 @@ describe('Async Integration Tests', () => {
         }
       )
 
+      expect(isOk(result)).toBe(true)
+      const results = unwrapOr(result, [])
       expect(results).toHaveLength(4) // 100 / 25 = 4 batches
       expect(processedBatches).toEqual([25, 25, 25, 25])
       expect(results.flat()).toHaveLength(100)
@@ -209,7 +222,7 @@ describe('Async Integration Tests', () => {
       const events: string[] = []
 
       // Phase 1: Independent tasks (parallel)
-      const phase1 = await parallel([
+      const phase1Result = await parallel([
         async () => {
           await sleep(50)
           events.push('fetch-users')
@@ -227,8 +240,11 @@ describe('Async Integration Tests', () => {
         },
       ])
 
+      expect(isOk(phase1Result)).toBe(true)
+      const phase1 = unwrapOr(phase1Result, [])
+
       // Phase 2: Dependent tasks (sequential)
-      const phase2 = await sequential([
+      const phase2Result = await sequential([
         async () => {
           events.push('process-users')
           return phase1[0]
@@ -242,6 +258,9 @@ describe('Async Integration Tests', () => {
           return phase1[2]
         },
       ])
+
+      expect(isOk(phase2Result)).toBe(true)
+      const phase2 = unwrapOr(phase2Result, [])
 
       // Phase 1 tasks should run concurrently
       expect(events.slice(0, 3).sort()).toEqual([

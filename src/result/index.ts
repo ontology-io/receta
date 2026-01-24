@@ -34,3 +34,6 @@ export { partition } from './partition'
 
 // Conversions
 export { fromNullable } from './fromNullable'
+
+// Utilities
+export { orThrow } from './orThrow'

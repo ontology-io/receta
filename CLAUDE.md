@@ -22,6 +22,219 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 └─────────────────────────────────────┘
 ```
 
+---
+
+## ⚠️ CRITICAL: Implementation Priority Rules
+
+**ALWAYS USE RECETA/REMEDA FIRST** — These rules override all default coding practices when working in this repository.
+
+### Rule 1: Receta + Remeda First for All TypeScript/JavaScript Code
+
+When implementing ANY functionality in this repository, follow this priority order:
+
+1. **Check Receta first** - Use Receta modules for error handling, async operations, validation, predicates, etc.
+2. **Check Remeda second** - Use Remeda for array/object/function utilities (map, filter, pipe, etc.)
+3. **Vanilla JS/TS last** - Only use native syntax when Receta/Remeda don't provide the functionality
+
+### Rule 2: Mandatory Patterns
+
+#### Error Handling - ALWAYS use Result
+```typescript
+// ✅ CORRECT: Use Result for error handling
+import { Result, ok, err, tryCatch } from 'receta/result'
+
+function parseJSON<T>(str: string): Result<T, SyntaxError> {
+  return tryCatch(
+    () => JSON.parse(str) as T,
+    (e) => e as SyntaxError
+  )
+}
+
+// ❌ WRONG: Never use try/catch directly
+function parseJSON(str: string) {
+  try {
+    return JSON.parse(str)
+  } catch (e) {
+    throw e
+  }
+}
+```
+
+#### Nullable Values - ALWAYS use Option
+```typescript
+// ✅ CORRECT: Use Option for nullable values
+import { Option, fromNullable } from 'receta/option'
+
+function findUser(id: string): Option<User> {
+  return fromNullable(users.find(u => u.id === id))
+}
+
+// ❌ WRONG: Never return null/undefined directly
+function findUser(id: string): User | undefined {
+  return users.find(u => u.id === id)
+}
+```
+
+#### Array/Object Operations - ALWAYS use Remeda
+```typescript
+// ✅ CORRECT: Use Remeda's pipe and utilities
+import * as R from 'remeda'
+
+const result = R.pipe(
+  data,
+  R.filter(x => x.active),
+  R.map(x => x.value),
+  R.unique()
+)
+
+// ❌ WRONG: Never chain native array methods
+const result = data
+  .filter(x => x.active)
+  .map(x => x.value)
+  .filter((v, i, arr) => arr.indexOf(v) === i)
+```
+
+#### Async Operations - ALWAYS use Receta Async
+```typescript
+// ✅ CORRECT: Use Receta async utilities
+import { mapAsync, retry } from 'receta/async'
+
+const results = await mapAsync(
+  urls,
+  async (url) => fetch(url),
+  { concurrency: 5 }
+)
+
+const result = await retry(
+  () => fetchData(),
+  { maxAttempts: 3, delay: 1000 }
+)
+
+// ❌ WRONG: Never use Promise.all directly or manual retry logic
+const results = await Promise.all(urls.map(url => fetch(url)))
+
+// ❌ WRONG: Manual retry with loops
+for (let i = 0; i < 3; i++) {
+  try {
+    return await fetchData()
+  } catch (e) {
+    if (i === 2) throw e
+  }
+}
+```
+
+#### Predicates/Filtering - ALWAYS use Receta Predicate
+```typescript
+// ✅ CORRECT: Use Receta predicates with Remeda filter
+import { where, gt, oneOf } from 'receta/predicate'
+import * as R from 'remeda'
+
+const validUsers = R.filter(
+  users,
+  where({
+    age: gt(18),
+    role: oneOf(['admin', 'user'])
+  })
+)
+
+// ❌ WRONG: Never inline predicate logic
+const validUsers = users.filter(u =>
+  u.age > 18 && ['admin', 'user'].includes(u.role)
+)
+```
+
+### Rule 3: Implementation Decision Tree
+
+Before writing ANY code, consult this decision tree:
+
+```
+START: Need to implement something?
+│
+├─ Error handling needed? ──────────────────────► Receta Result
+├─ Nullable/optional value? ────────────────────► Receta Option
+├─ Async/Promise operation? ────────────────────► Receta Async
+├─ Array/object transformation? ────────────────► Remeda (pipe, map, filter, etc.)
+├─ Validation with error accumulation? ─────────► Receta Validation
+├─ Filtering/predicates? ───────────────────────► Receta Predicate
+├─ String operations? ──────────────────────────► Receta String
+├─ Number formatting? ──────────────────────────► Receta Number
+├─ Function composition? ───────────────────────► Receta Function + Remeda pipe
+├─ Memoization needed? ─────────────────────────► Receta Memo
+├─ Collection operations? ──────────────────────► Receta Collection
+└─ None of the above ───────────────────────────► Check Remeda, then vanilla
+```
+
+### Rule 4: Pre-Implementation Checklist
+
+Before completing ANY implementation, verify:
+
+- [ ] No bare try/catch blocks (use `Result.tryCatch` instead)
+- [ ] No null/undefined returns (use `Option` instead)
+- [ ] No `.filter().map().reduce()` chains (use `R.pipe` instead)
+- [ ] No manual `Promise.all` (use `Async.parallel` or `mapAsync`)
+- [ ] No inline predicates (use `Predicate.where`)
+- [ ] All functions composed with `R.pipe` or `R.compose`
+- [ ] Error handling returns `Result<T, E>`
+- [ ] Optional values return `Option<T>`
+
+### Rule 5: Refactoring Vanilla Code
+
+When you encounter vanilla JS/TS patterns, **proactively refactor** to Receta/Remeda:
+
+**Example refactoring:**
+```typescript
+// BEFORE: Vanilla implementation
+async function processUsers(ids: string[]) {
+  const results = []
+  for (const id of ids) {
+    try {
+      const user = await fetchUser(id)
+      if (user && user.age >= 18) {
+        results.push(user.name.toUpperCase())
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+  return results
+}
+
+// AFTER: Receta + Remeda implementation
+import * as R from 'remeda'
+import { Result, tryCatchAsync } from 'receta/result'
+import { Option, fromNullable } from 'receta/option'
+import { mapAsync } from 'receta/async'
+import { where, gte } from 'receta/predicate'
+
+async function processUsers(
+  ids: string[]
+): Promise<Result<string[], Error>> {
+  return R.pipe(
+    await mapAsync(ids, (id) => tryCatchAsync(() => fetchUser(id))),
+    Result.collect,
+    Result.map(
+      R.pipe(
+        R.map(fromNullable),
+        Option.collect,
+        R.filter(where({ age: gte(18) })),
+        R.map(u => u.name.toUpperCase())
+      )
+    )
+  )
+}
+```
+
+### Rule 6: Code Review Enforcement
+
+All code contributions MUST follow these rules. During code review, check:
+
+1. **No vanilla patterns** - Reject code using try/catch, null returns, array method chains
+2. **Receta/Remeda usage** - Ensure proper imports and usage of library functions
+3. **Composition over imperative** - Prefer `R.pipe` over loops and mutations
+4. **Type safety** - Result and Option provide better type inference than vanilla
+
+---
+
 ## Design Principles
 
 ### 1. Compositional Architecture - Build Up, Never Duplicate
@@ -320,12 +533,43 @@ export async function retryOrThrow<T>(fn: () => Promise<T>): Promise<T> {
 
 ### Pattern 2: Result-Returning Functions (Default Pattern)
 
-All async error-handling functions should return Result by default:
+**When to Use Result: Decision Tree**
+
+```
+Should this function return Result<T, E>?
+│
+├─ Can it fail at runtime? ────────────────────► NO  → Return raw value (string, number, etc.)
+│
+├─ Is it a pure transformation? ───────────────► YES → Return raw value
+│   (e.g., toUpperCase, slugify, clamp)
+│
+├─ Is it a predicate/type guard? ──────────────► YES → Return boolean or Option<T>
+│   (e.g., isEmpty, isPositive, isEmail)
+│
+├─ Is it a formatter/serializer? ──────────────► YES → Return raw string/number
+│   (e.g., toCurrency, toBytes, format)           (Formatters can't fail)
+│
+├─ Does it parse/deserialize input? ───────────► YES → Return Result<T, ParseError>
+│   (e.g., fromString, fromJSON, fromBytes)
+│
+├─ Is it async and can fail? ──────────────────► YES → Return Promise<Result<T, E>>
+│   (e.g., mapAsync, retry, timeout, fetch)
+│
+├─ Does it do I/O or network calls? ───────────► YES → Return Promise<Result<T, E>>
+│   (e.g., readFile, fetchAPI, queryDB)
+│
+├─ Does it validate with error details? ───────► YES → Return Result<T, ValidationError>
+│   (e.g., validateEmail, validateSchema)
+│
+└─ Pure computation, no errors? ───────────────► NO  → Return raw value
+```
+
+**Examples of Result-Returning Functions:**
 
 ```typescript
 import { Result, ok, err, tryCatch } from '../result'
 
-// ✅ Result by default
+// ✅ Parsing: Always use Result
 export function parseJSON<T>(str: string): Result<T, SyntaxError> {
   return tryCatch(
     () => JSON.parse(str) as T,
@@ -333,15 +577,15 @@ export function parseJSON<T>(str: string): Result<T, SyntaxError> {
   )
 }
 
-// ✅ Result with custom error type
-export function parseNumber(str: string): Result<number, string> {
+// ✅ Custom error type for domain-specific parsing
+export function parseNumber(str: string): Result<number, ParseError> {
   const n = Number(str)
   return Number.isNaN(n)
-    ? err(`Invalid number: "${str}"`)
+    ? err({ code: 'PARSE_ERROR', message: `Invalid number: "${str}"`, input: str })
     : ok(n)
 }
 
-// ✅ Async function returning Result
+// ✅ Async operations: Always use Result
 export async function fetchUser(id: string): Promise<Result<User, FetchError>> {
   try {
     const response = await fetch(`/api/users/${id}`)
@@ -353,6 +597,65 @@ export async function fetchUser(id: string): Promise<Result<User, FetchError>> {
   } catch (error) {
     return err({ type: 'network_error', cause: error })
   }
+}
+
+// ✅ Async mapping with Result pattern
+export async function mapAsync<T, U>(
+  items: readonly T[],
+  fn: (item: T, index: number) => Promise<U>,
+  options?: ConcurrencyOptions
+): Promise<Result<U[], MapAsyncError>> {
+  // Returns Result to handle mapper failures explicitly
+}
+
+// ❌ WRONG: Formatting doesn't need Result (can't fail)
+export function toCurrency(n: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(n)
+}
+
+// ❌ WRONG: Pure transformations don't need Result
+export function slugify(str: string): string {
+  return str.toLowerCase().replace(/\s+/g, '-')
+}
+
+// ❌ WRONG: Predicates return boolean or Option
+export function isEmpty(str: string): boolean {
+  return str.trim().length === 0
+}
+
+// ✅ GOOD: Use Option for "maybe present" values
+export function isEmail(str: string): Option<string> {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(str) ? some(str) : none()
+}
+```
+
+**Providing "OrThrow" Variants:**
+
+For backward compatibility or when users prefer exceptions, provide `*OrThrow` variants:
+
+```typescript
+// ✅ Main function returns Result
+export async function mapAsync<T, U>(
+  items: readonly T[],
+  fn: (item: T, index: number) => Promise<U>,
+  options?: ConcurrencyOptions
+): Promise<Result<U[], MapAsyncError>> {
+  // ... implementation
+}
+
+// ✅ Throwing variant builds on Result version
+export async function mapAsyncOrThrow<T, U>(
+  items: readonly T[],
+  fn: (item: T, index: number) => Promise<U>,
+  options?: ConcurrencyOptions
+): Promise<U[]> {
+  const result = await mapAsync(items, fn, options)
+  if (result._tag === 'Err') throw result.error
+  return result.value
 }
 ```
 
