@@ -1,0 +1,665 @@
+# Why Receta? Real-World Problems & Solutions
+
+> **TL;DR**: Receta eliminates the gap between TypeScript's promise of type safety and the reality of runtime errors. It replaces try/catch hell, null checking chaos, and Promise.all footguns with composable, type-safe patterns **powered by `pipe` — the most elegant invention in functional programming.**
+
+---
+
+## 🚀 The Secret Weapon: `pipe`
+
+### The Single Greatest Invention in Functional Programming
+
+**`pipe` transforms code from imperative spaghetti into declarative poetry.**
+
+It's not just syntax sugar — it's a fundamentally different way of thinking about computation:
+
+```typescript
+// ❌ IMPERATIVE: Read bottom-to-top, inside-out
+const result = await saveToDatabase(
+  transformData(
+    validateInput(
+      parseJSON(rawInput)
+    )
+  )
+)
+
+// ✅ DECLARATIVE: Read top-to-bottom, left-to-right (like English!)
+const result = await R.pipe(
+  rawInput,
+  parseJSON,
+  validateInput,
+  transformData,
+  saveToDatabase
+)
+```
+
+**Why pipe changes everything:**
+
+1. **Reads like a recipe** — Top to bottom, step by step
+2. **No intermediate variables** — No `const temp1 = ...`, `const temp2 = ...`
+3. **Easy to refactor** — Add/remove/reorder steps without touching syntax
+4. **Type inference flows** — TypeScript knows the output of each step
+5. **Composability** — Build complex logic from simple functions
+6. **Testability** — Each step is a pure function you can test in isolation
+
+---
+
+### Real-World Example: API Request Processing
+
+**Vanilla nightmare:**
+```typescript
+// ❌ Nested hell — read this bottom-to-top!
+async function processUserRequest(userId: string) {
+  try {
+    const rawResponse = await fetch(`/api/users/${userId}`)
+    if (!rawResponse.ok) throw new Error('Fetch failed')
+
+    const jsonData = await rawResponse.json()
+    if (!jsonData) throw new Error('No data')
+
+    const validatedUser = validateUser(jsonData)
+    if (!validatedUser) throw new Error('Invalid user')
+
+    const transformedData = transformUserData(validatedUser)
+
+    const enrichedData = await enrichWithMetadata(transformedData)
+
+    const finalResult = formatForDisplay(enrichedData)
+
+    return finalResult
+  } catch (error) {
+    console.error(error)
+    return null
+  }
+}
+```
+
+**Receta with pipe — pure elegance:**
+```typescript
+// ✅ Pipeline of transformations — reads like English!
+import * as R from 'remeda'
+import { Result, tryCatchAsync } from 'receta/result'
+import { Option, fromNullable } from 'receta/option'
+
+async function processUserRequest(
+  userId: string
+): Promise<Result<DisplayUser, ProcessError>> {
+  return R.pipe(
+    // 1. Fetch raw data
+    await tryCatchAsync(
+      () => fetch(`/api/users/${userId}`).then(r => r.json()),
+      (e): ProcessError => ({ type: 'fetch_error', cause: e })
+    ),
+
+    // 2. Validate the JSON structure
+    Result.flatMap(data =>
+      validateUser(data)
+        ? Result.ok(data)
+        : Result.err({ type: 'validation_error', data })
+    ),
+
+    // 3. Transform to domain model
+    Result.map(transformUserData),
+
+    // 4. Enrich with metadata
+    Result.flatMapAsync(user =>
+      tryCatchAsync(
+        () => enrichWithMetadata(user),
+        (e): ProcessError => ({ type: 'enrichment_error', cause: e })
+      )
+    ),
+
+    // 5. Format for display
+    Result.map(formatForDisplay)
+  )
+}
+```
+
+**Every step is:**
+- ✅ **Self-documenting** — Comments describe intent, not implementation
+- ✅ **Type-safe** — TypeScript infers types at each step
+- ✅ **Error-aware** — Errors propagate through the pipeline
+- ✅ **Testable** — Mock any step independently
+- ✅ **Reorderable** — Swap steps without breaking everything
+
+---
+
+### pipe + Result = Composability Nirvana
+
+**The killer combo:** `pipe` makes error handling composable.
+
+**Without pipe (try/catch hell):**
+```typescript
+// ❌ Each step needs its own try/catch
+async function processPayment(orderId: string) {
+  try {
+    const order = await fetchOrder(orderId)
+
+    try {
+      const validated = validateOrder(order)
+
+      try {
+        const payment = await chargeCard(validated)
+
+        try {
+          await updateDatabase(payment)
+          return payment
+        } catch (e) {
+          console.error('DB error:', e)
+          throw e
+        }
+      } catch (e) {
+        console.error('Payment error:', e)
+        throw e
+      }
+    } catch (e) {
+      console.error('Validation error:', e)
+      throw e
+    }
+  } catch (e) {
+    console.error('Fetch error:', e)
+    throw e
+  }
+}
+```
+
+**With pipe + Result:**
+```typescript
+// ✅ Errors flow through the pipeline automatically
+async function processPayment(
+  orderId: string
+): Promise<Result<Payment, PaymentError>> {
+  return R.pipe(
+    await fetchOrder(orderId),      // Result<Order, FetchError>
+    Result.flatMap(validateOrder),  // Result<Order, ValidationError>
+    Result.flatMapAsync(chargeCard),// Result<Payment, ChargeError>
+    Result.flatMapAsync(updateDatabase) // Result<Payment, DBError>
+  )
+  // If ANY step fails, the error propagates automatically
+  // No try/catch needed!
+}
+```
+
+**This is the magic:**
+- Errors **flow through** the pipeline
+- No nested try/catch
+- No error handling logic mixed with business logic
+- Type-safe error accumulation
+
+---
+
+### pipe Enables Point-Free Style (The Ultimate Elegance)
+
+**Point-free style** = defining functions without explicitly mentioning their arguments.
+
+**Verbose style:**
+```typescript
+// ❌ Repetitive — keep typing `users`
+const activeAdminEmails = (users: User[]) =>
+  R.pipe(
+    users,
+    R.filter(user => user.active),
+    R.filter(user => user.role === 'admin'),
+    R.map(user => user.email),
+    R.filter(email => email.includes('@'))
+  )
+```
+
+**Point-free style:**
+```typescript
+// ✅ Pure composition — no argument mentioned twice
+const activeAdminEmails = R.pipe(
+  R.filter(where({ active: true, role: 'admin' })),
+  R.map(R.prop('email')),
+  R.filter(includes('@'))
+)
+
+// Use it:
+const emails = activeAdminEmails(users)
+```
+
+**Benefits:**
+- Function composition becomes **building blocks**
+- Reusable, composable, testable
+- Reads like a **declarative spec**, not imperative instructions
+
+---
+
+### pipe Makes Refactoring Trivial
+
+**Add a step? Just insert a line:**
+```typescript
+// Before
+const result = R.pipe(
+  data,
+  parseJSON,
+  validateSchema,
+  saveToDatabase
+)
+
+// After — added logging
+const result = R.pipe(
+  data,
+  parseJSON,
+  validateSchema,
+  tap(data => logger.info('Validated:', data)), // ← Just add this!
+  saveToDatabase
+)
+```
+
+**Remove a step? Delete a line:**
+```typescript
+// Before
+const result = R.pipe(
+  data,
+  parseJSON,
+  validateSchema,
+  enrichWithMetadata, // ← Delete this line
+  saveToDatabase
+)
+
+// After
+const result = R.pipe(
+  data,
+  parseJSON,
+  validateSchema,
+  saveToDatabase
+)
+```
+
+**Reorder steps? Cut and paste:**
+```typescript
+// Swap validation and parsing order? Just swap lines!
+const result = R.pipe(
+  data,
+  validateSchema,  // ← Moved up
+  parseJSON,       // ← Moved down
+  saveToDatabase
+)
+```
+
+**Try doing that with nested function calls or imperative code!**
+
+---
+
+### pipe + TypeScript = Type Inference Heaven
+
+TypeScript **infers types at every step** of the pipeline:
+
+```typescript
+const result = R.pipe(
+  '{"id": 123}',              // string
+  parseJSON,                  // Result<unknown, SyntaxError>
+  Result.map(validateUser),   // Result<User, SyntaxError>
+  Result.map(u => u.email),   // Result<string, SyntaxError>
+  Result.map(toUpperCase)     // Result<string, SyntaxError>
+)
+
+// TypeScript knows: result is Result<string, SyntaxError>
+// No type annotations needed!
+```
+
+**Hover over any intermediate step** in VSCode and TypeScript shows you the exact type:
+
+```typescript
+R.pipe(
+  data,               // ← Hover: readonly User[]
+  R.filter(isActive), // ← Hover: readonly User[]
+  R.map(u => u.id),   // ← Hover: readonly number[]
+  R.unique()          // ← Hover: number[]
+)
+```
+
+---
+
+### pipe Turns Complex Logic into Readable Specs
+
+**Real-world example: Analytics data processing**
+
+**Vanilla approach:**
+```typescript
+// ❌ 50 lines of imperative spaghetti
+async function generateUserReport(userId: string) {
+  const user = await db.users.findById(userId)
+  if (!user) throw new Error('User not found')
+
+  const events = await db.events.findByUser(userId)
+  const filteredEvents = events.filter(e => e.timestamp > Date.now() - 30 * 24 * 60 * 60 * 1000)
+
+  const groupedByType = {}
+  for (const event of filteredEvents) {
+    if (!groupedByType[event.type]) {
+      groupedByType[event.type] = []
+    }
+    groupedByType[event.type].push(event)
+  }
+
+  const metrics = {}
+  for (const [type, events] of Object.entries(groupedByType)) {
+    const count = events.length
+    const avgDuration = events.reduce((sum, e) => sum + e.duration, 0) / count
+    metrics[type] = { count, avgDuration }
+  }
+
+  return {
+    user: user.name,
+    period: '30 days',
+    metrics
+  }
+}
+```
+
+**Receta with pipe:**
+```typescript
+// ✅ 15 lines of declarative elegance
+import * as R from 'remeda'
+import { Result } from 'receta/result'
+import { nest } from 'receta/collection'
+import { gte } from 'receta/predicate'
+
+async function generateUserReport(
+  userId: string
+): Promise<Result<UserReport, ReportError>> {
+  return R.pipe(
+    // Fetch user and events in parallel
+    await Result.combine({
+      user: fetchUser(userId),
+      events: fetchUserEvents(userId)
+    }),
+
+    // Filter events from last 30 days
+    Result.map(({ user, events }) => ({
+      user,
+      events: R.filter(events, where({
+        timestamp: gte(Date.now() - 30 * 24 * 60 * 60 * 1000)
+      }))
+    })),
+
+    // Group by event type
+    Result.map(({ user, events }) => ({
+      user,
+      grouped: nest(events, e => e.type)
+    })),
+
+    // Calculate metrics per type
+    Result.map(({ user, grouped }) => ({
+      user: user.name,
+      period: '30 days',
+      metrics: R.mapValues(grouped, events => ({
+        count: events.length,
+        avgDuration: R.pipe(
+          events,
+          R.map(e => e.duration),
+          R.mean()
+        )
+      }))
+    }))
+  )
+}
+```
+
+**Every step:**
+- Has a clear, single responsibility
+- Is independently testable
+- Can be extracted into a reusable function
+- Reads like a **specification**, not implementation
+
+---
+
+### The Philosophy: Unix Pipes for Your Code
+
+**`pipe` brings Unix philosophy to TypeScript:**
+
+```bash
+# Unix pipeline
+cat data.txt | grep "error" | sort | uniq -c | head -10
+
+# Receta pipeline
+R.pipe(
+  data,
+  filter(contains('error')),
+  sortBy(x => x),
+  unique(),
+  take(10)
+)
+```
+
+**Same principles:**
+- Small, composable utilities
+- Data flows left-to-right
+- Each step does one thing well
+- Easy to reason about
+
+---
+
+## The Problem: TypeScript Doesn't Save You From Runtime
+
+TypeScript gives you compile-time safety, but runtime is still the Wild West:
+
+```typescript
+// ❌ THE VANILLA NIGHTMARE
+async function getUserProfile(userId: string) {
+  try {
+    // Problem 1: fetch can fail (network error)
+    const response = await fetch(`/api/users/${userId}`)
+
+    // Problem 2: 404/500 don't throw, but you check anyway
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+
+    // Problem 3: JSON parsing can fail
+    const user = await response.json()
+
+    // Problem 4: User might not exist (null/undefined)
+    if (!user) {
+      throw new Error('User not found')
+    }
+
+    // Problem 5: Nested optional properties require verbose guards
+    const email = user.profile?.contact?.email
+    if (!email) {
+      throw new Error('Email not found')
+    }
+
+    // Problem 6: Validation is manual and scattered
+    if (!email.includes('@')) {
+      throw new Error('Invalid email')
+    }
+
+    return { email, name: user.name }
+  } catch (error) {
+    // Problem 7: Error handling is a mess
+    console.error(error)
+    // What do we even return here?
+    return null // 🤮
+  }
+}
+
+// Problem 8: Caller has no idea what went wrong
+const profile = await getUserProfile('123')
+if (!profile) {
+  // Was it a network error? Invalid data? 404? Who knows!
+  alert('Something went wrong')
+}
+```
+
+**7+ runtime failure points. Zero compile-time help. Good luck debugging production.**
+
+---
+
+## Solution 1: Result — Errors Are Values, Not Exceptions
+
+### Real-World Problem: Stripe Payment Processing
+
+**Vanilla approach:**
+```typescript
+// ❌ Exception hell with unclear error handling
+async function processPayment(orderId: string, amount: number) {
+  try {
+    const order = await db.orders.findById(orderId)
+    if (!order) throw new Error('Order not found')
+
+    if (order.status !== 'pending') {
+      throw new Error('Order already processed')
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount,
+      currency: 'usd'
+    })
+
+    await db.orders.update(orderId, {
+      status: 'paid',
+      paymentIntentId: paymentIntent.id
+    })
+
+    return paymentIntent
+  } catch (error) {
+    // What kind of error? Network? Validation? Stripe API?
+    // Caller has no idea what went wrong
+    logger.error(error)
+    throw error // Re-throw and hope someone handles it
+  }
+}
+```
+
+**Receta approach:**
+```typescript
+// ✅ Explicit, composable error handling
+import { Result, ok, err, tryCatchAsync } from 'receta/result'
+import { Option, fromNullable } from 'receta/option'
+import * as R from 'remeda'
+
+type PaymentError =
+  | { type: 'order_not_found'; orderId: string }
+  | { type: 'order_already_processed'; status: string }
+  | { type: 'stripe_error'; cause: unknown }
+  | { type: 'database_error'; cause: unknown }
+
+async function processPayment(
+  orderId: string,
+  amount: number
+): Promise<Result<PaymentIntent, PaymentError>> {
+  return R.pipe(
+    // Step 1: Fetch order (with explicit error type)
+    await tryCatchAsync(
+      () => db.orders.findById(orderId),
+      (cause): PaymentError => ({ type: 'database_error', cause })
+    ),
+
+    // Step 2: Convert nullable to Option, then to Result
+    Result.flatMap(order =>
+      Option.toResult(
+        fromNullable(order),
+        { type: 'order_not_found', orderId }
+      )
+    ),
+
+    // Step 3: Validate order status
+    Result.flatMap(order =>
+      order.status === 'pending'
+        ? ok(order)
+        : err({ type: 'order_already_processed', status: order.status })
+    ),
+
+    // Step 4: Call Stripe API
+    Result.flatMapAsync(order =>
+      tryCatchAsync(
+        () => stripe.paymentIntents.create({ amount, currency: 'usd' }),
+        (cause): PaymentError => ({ type: 'stripe_error', cause })
+      )
+    ),
+
+    // Step 5: Update database
+    Result.flatMapAsync(paymentIntent =>
+      tryCatchAsync(
+        async () => {
+          await db.orders.update(orderId, {
+            status: 'paid',
+            paymentIntentId: paymentIntent.id
+          })
+          return paymentIntent
+        },
+        (cause): PaymentError => ({ type: 'database_error', cause })
+      )
+    )
+  )
+}
+
+// Caller knows EXACTLY what can fail and handles each case
+import { cond } from 'receta/function'
+
+R.pipe(
+  await processPayment('order_123', 5000),
+  Result.match({
+    Ok: (intent) =>
+      R.pipe(
+        intent,
+        R.tap(i => console.log('Payment successful:', i.id)),
+        () => showSuccessToast('Payment processed!')
+      ),
+    Err: (error) =>
+      cond([
+        [(e) => e.type === 'order_not_found', (e) => show404Error(e.orderId)],
+        [(e) => e.type === 'order_already_processed', (e) => showWarning(`Order already ${e.status}`)],
+        [(e) => e.type === 'stripe_error', () => showPaymentError('Payment failed. Please try again.')],
+        [(e) => e.type === 'database_error', () => showInternalError('Database error. Contact support.')]
+      ])(error)
+  })
+)
+```
+
+**Benefits:**
+- ✅ **Compile-time error exhaustiveness** — TypeScript forces you to handle all error cases
+- ✅ **No hidden exceptions** — Errors are explicit in the return type
+- ✅ **Composable** — Chain operations with `flatMap` without nested try/catch
+- ✅ **Self-documenting** — Function signature tells you what can fail
+- ✅ **Testable** — Mock errors easily: `err({ type: 'stripe_error' })`
+
+---
+
+## The Bottom Line
+
+### Vanilla TypeScript
+- ❌ Try/catch soup
+- ❌ Null checking everywhere
+- ❌ Promise.all footguns
+- ❌ Scattered validation logic
+- ❌ Unreadable filters
+- ❌ Manual retry/concurrency
+- ❌ Error types hidden in JSDoc
+
+### Receta
+- ✅ **Result** — Errors as values
+- ✅ **Option** — Type-safe nullability
+- ✅ **Async** — Concurrency control + retry
+- ✅ **Validation** — Error accumulation
+- ✅ **Predicate** — Composable filters
+- ✅ **Collection** — Set operations, diffing
+- ✅ **Lens** — Immutable updates
+- ✅ **Types tell the truth** — Return types encode failure modes
+
+---
+
+## Getting Started
+
+```bash
+bun add receta remeda
+```
+
+```typescript
+import { Result, ok, err } from 'receta/result'
+import { Option, fromNullable } from 'receta/option'
+import { mapAsync, retry } from 'receta/async'
+import * as R from 'remeda'
+
+// Start small: Replace one try/catch with Result
+// Then: Replace null checks with Option
+// Finally: Compose with R.pipe
+```
+
+---
+
+**Receta + pipe: Where TypeScript meets elegance.**
+
+**Stop fighting runtime errors. Start composing solutions.**

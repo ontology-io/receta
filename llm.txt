@@ -1,6 +1,6 @@
 # Receta LLM Guide - Module Selection & Navigation
 
-**Generated**: 2026-01-23
+**Generated**: 2026-01-24
 **Purpose**: Help AI agents efficiently discover and use Receta functions
 
 ## What's in This File
