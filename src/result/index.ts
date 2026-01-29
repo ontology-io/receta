@@ -35,5 +35,9 @@ export { partition } from './partition'
 // Conversions
 export { fromNullable } from './fromNullable'
 
+// Parsing
+export { parseJSON, parseNumber, parseInt } from './parsing'
+export type { ParseNumberError } from './parsing'
+
 // Utilities
 export { orThrow } from './orThrow'

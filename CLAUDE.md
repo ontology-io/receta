@@ -1094,8 +1094,9 @@ High-value functions from the original brainstorming that could be added to exis
 - `promiseAllSettled` — Typed wrapper with result extraction helpers
 
 #### Result Module
-- `parseNumber/parseInt/parseFloat` — Safe number parsing to Result
-- `parseJSON` — Safe JSON.parse (already in examples, could be formalized)
+- ~~`parseNumber`~~ — ✅ **IMPLEMENTED** - Safe number parsing to Result with finite validation
+- ~~`parseInt`~~ — ✅ **IMPLEMENTED** - Safe parseInt with radix support (2-36)
+- ~~`parseJSON`~~ — ✅ **IMPLEMENTED** - Safe JSON.parse returning Result<T, SyntaxError>
 - `parseUrl` — Safe URL parsing
 
 #### Number Module
@@ -1145,6 +1146,10 @@ These modules are **intentionally excluded** as they are too opinionated or bett
 - **Event/Stream patterns** — Better handled by RxJS, xstate, or native EventTarget
 - **JSON Patch (RFC 6902)** — Too specialized, use dedicated libraries like `fast-json-patch`
 - **Advanced combinatorics** — Permutations, combinations are niche use cases
+
+### Future Spin-off: receta-stats
+
+Statistical utilities (median, mode, variance, standardDeviation, percentile) could be packaged as a separate **receta-stats** module if there's demand. This keeps the core `number` module focused on formatting/validation while allowing statistical analysis as an optional extension.
 
 ---
 
