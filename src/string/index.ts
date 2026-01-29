@@ -12,6 +12,10 @@ export type {
   EscapeHtmlOptions,
   TemplateError,
   TemplateVars,
+  PluralizeOptions,
+  TruncateWordsOptions,
+  InitialsOptions,
+  HighlightOptions,
 } from './types'
 
 // Template utilities
@@ -21,6 +25,10 @@ export { template, parseTemplate } from './template'
 export { slugify } from './slugify'
 export { kebabCase, snakeCase, camelCase, pascalCase, capitalize, titleCase } from './case'
 export { truncate } from './truncate'
+export { truncateWords } from './truncateWords'
+export { pluralize } from './pluralize'
+export { initials } from './initials'
+export { highlight } from './highlight'
 
 // Validators
 export {
@@ -42,6 +50,10 @@ export {
   trimStart,
   trimEnd,
 } from './sanitize'
+
+// Utilities
+export { escapeRegex } from './escapeRegex'
+export { normalizeWhitespace } from './normalizeWhitespace'
 
 // Extractors
 export { words, lines, between, extract } from './extract'

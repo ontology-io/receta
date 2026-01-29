@@ -75,3 +75,9 @@ export type TemplateError =
  * Variable map for template interpolation.
  */
 export type TemplateVars = Record<string, string | number | boolean | null | undefined>
+
+// Re-export types from function modules
+export type { PluralizeOptions } from './pluralize'
+export type { TruncateWordsOptions } from './truncateWords'
+export type { InitialsOptions } from './initials'
+export type { HighlightOptions } from './highlight'
