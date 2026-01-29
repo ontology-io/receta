@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test'
-import { sum, average, round, percentage, ratio } from '../index'
+import { sum, average, round, roundTo, percentage, ratio } from '../index'
 import * as R from 'remeda'
 import { isSome, isNone, unwrapOr } from '../../option'
 
@@ -154,6 +154,89 @@ describe('Number Calculations', () => {
         const roundPrice = (price: number) => round(price, 2)
         expect(roundPrice(19.999)).toBe(20)
         expect(roundPrice(19.994)).toBe(19.99)
+      })
+    })
+  })
+
+  describe('roundTo', () => {
+    describe('data-first', () => {
+      it('rounds to nearest step value', () => {
+        expect(roundTo(4.23, 0.25)).toBe(4.25)
+        expect(roundTo(4.22, 0.25)).toBe(4.25)
+        expect(roundTo(4.10, 0.25)).toBe(4.0)
+        expect(roundTo(4.12, 0.25)).toBe(4.0)
+        expect(roundTo(4.13, 0.25)).toBe(4.25)
+      })
+
+      it('rounds integers to step', () => {
+        expect(roundTo(127, 5)).toBe(125)
+        expect(roundTo(128, 5)).toBe(130)
+        expect(roundTo(122, 5)).toBe(120)
+        expect(roundTo(125, 5)).toBe(125)
+      })
+
+      it('rounds to decimal step', () => {
+        expect(roundTo(1.234, 0.1)).toBeCloseTo(1.2)
+        expect(roundTo(1.266, 0.1)).toBeCloseTo(1.3)
+        expect(roundTo(1.25, 0.1)).toBeCloseTo(1.3)
+      })
+
+      it('handles step of 1', () => {
+        expect(roundTo(4.4, 1)).toBe(4)
+        expect(roundTo(4.5, 1)).toBe(5)
+        expect(roundTo(4.6, 1)).toBe(5)
+      })
+
+      it('handles negative numbers', () => {
+        expect(roundTo(-4.23, 0.25)).toBe(-4.25)
+        expect(roundTo(-4.10, 0.25)).toBe(-4.0)
+        expect(roundTo(-127, 5)).toBe(-125)
+      })
+
+      it('handles zero', () => {
+        expect(roundTo(0, 0.25)).toBe(0)
+        expect(roundTo(0, 5)).toBe(0)
+      })
+
+      it('throws error for negative or zero step', () => {
+        expect(() => roundTo(5, 0)).toThrow('roundTo step must be greater than 0')
+        expect(() => roundTo(5, -0.5)).toThrow('roundTo step must be greater than 0')
+      })
+    })
+
+    describe('data-last', () => {
+      it('works in pipe', () => {
+        const result = R.pipe(4.23, roundTo(0.25))
+        expect(result).toBe(4.25)
+      })
+
+      it('works in map', () => {
+        const prices = [4.23, 4.10, 4.37]
+        const rounded = R.map(prices, roundTo(0.25))
+        expect(rounded).toEqual([4.25, 4.0, 4.25])
+      })
+    })
+
+    describe('real-world: price quantization', () => {
+      it('rounds prices to nearest quarter', () => {
+        const roundToQuarter = (price: number) => roundTo(price, 0.25)
+        expect(roundToQuarter(19.99)).toBe(20.0)
+        expect(roundToQuarter(19.88)).toBe(20.0)
+        expect(roundToQuarter(19.82)).toBe(19.75)
+      })
+
+      it('rounds stock prices to nearest cent', () => {
+        const roundToCent = (price: number) => roundTo(price, 0.01)
+        expect(roundToCent(123.456)).toBeCloseTo(123.46)
+        expect(roundToCent(123.454)).toBeCloseTo(123.45)
+      })
+    })
+
+    describe('real-world: slider step values', () => {
+      it('quantizes slider values', () => {
+        const sliderValues = [12.3, 17.8, 22.4, 27.9]
+        const quantized = R.map(sliderValues, roundTo(5))
+        expect(quantized).toEqual([10, 20, 20, 30])
       })
     })
   })

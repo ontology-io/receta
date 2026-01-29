@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test'
-import { random, step, interpolate } from '../index'
+import { random, step, interpolate, normalize } from '../index'
 import * as R from 'remeda'
 
 describe('Number Utilities', () => {
@@ -127,6 +127,125 @@ describe('Number Utilities', () => {
         const snapSlider = (value: number) => step(value, 10)
         expect(snapSlider(23)).toBe(20)
         expect(snapSlider(27)).toBe(30)
+      })
+    })
+  })
+
+  describe('normalize', () => {
+    describe('data-first', () => {
+      it('normalizes to 0-1 range', () => {
+        expect(normalize(75, 0, 100)).toBe(0.75)
+        expect(normalize(50, 0, 100)).toBe(0.5)
+        expect(normalize(25, 0, 100)).toBe(0.25)
+        expect(normalize(0, 0, 100)).toBe(0)
+        expect(normalize(100, 0, 100)).toBe(1)
+      })
+
+      it('works with different ranges', () => {
+        expect(normalize(5, 0, 10)).toBe(0.5)
+        expect(normalize(7.5, 5, 10)).toBe(0.5)
+        expect(normalize(15, 10, 20)).toBe(0.5)
+      })
+
+      it('works with negative ranges', () => {
+        expect(normalize(0, -10, 10)).toBe(0.5)
+        expect(normalize(-5, -10, 10)).toBe(0.25)
+        expect(normalize(5, -10, 10)).toBe(0.75)
+      })
+
+      it('works with decimal values', () => {
+        expect(normalize(0.5, 0, 1)).toBe(0.5)
+        expect(normalize(0.25, 0, 1)).toBe(0.25)
+        expect(normalize(0.75, 0, 1)).toBe(0.75)
+      })
+
+      it('handles min value', () => {
+        expect(normalize(0, 0, 100)).toBe(0)
+        expect(normalize(-10, -10, 10)).toBe(0)
+      })
+
+      it('handles max value', () => {
+        expect(normalize(100, 0, 100)).toBe(1)
+        expect(normalize(10, -10, 10)).toBe(1)
+      })
+
+      it('handles values outside range (extrapolation)', () => {
+        expect(normalize(150, 0, 100)).toBe(1.5)
+        expect(normalize(-50, 0, 100)).toBe(-0.5)
+      })
+
+      it('handles min === max edge case', () => {
+        expect(normalize(5, 5, 5)).toBe(0)
+        expect(normalize(10, 10, 10)).toBe(0)
+      })
+    })
+
+    describe('data-last', () => {
+      it('works in pipe', () => {
+        const result = R.pipe(75, normalize(0, 100))
+        expect(result).toBe(0.75)
+      })
+
+      it('works in map', () => {
+        const values = [0, 25, 50, 75, 100]
+        const normalized = R.map(values, normalize(0, 100))
+        expect(normalized).toEqual([0, 0.25, 0.5, 0.75, 1])
+      })
+    })
+
+    describe('real-world: progress calculation', () => {
+      it('calculates progress percentage', () => {
+        const progress = (current: number, total: number) =>
+          R.pipe(current, normalize(0, total), (n) => n * 100)
+
+        expect(progress(0, 100)).toBe(0)
+        expect(progress(25, 100)).toBe(25)
+        expect(progress(50, 100)).toBe(50)
+        expect(progress(100, 100)).toBe(100)
+      })
+
+      it('calculates download progress', () => {
+        const bytesDownloaded = 7500000
+        const totalBytes = 10000000
+        const progressPercent = normalize(bytesDownloaded, 0, totalBytes) * 100
+        expect(progressPercent).toBe(75)
+      })
+    })
+
+    describe('real-world: data visualization', () => {
+      it('scales data points for chart', () => {
+        const data = [0, 50, 100, 150, 200]
+        const min = 0
+        const max = 200
+        const scaledData = R.map(data, normalize(min, max))
+        expect(scaledData).toEqual([0, 0.25, 0.5, 0.75, 1])
+      })
+
+      it('normalizes temperature readings', () => {
+        const temps = [20, 25, 30, 35, 40]
+        const scaled = R.map(temps, normalize(20, 40))
+        expect(scaled).toEqual([0, 0.25, 0.5, 0.75, 1])
+      })
+    })
+
+    describe('real-world: ML feature scaling', () => {
+      it('scales features to 0-1', () => {
+        const ages = [25, 35, 45, 55]
+        const min = Math.min(...ages)
+        const max = Math.max(...ages)
+        const scaled = R.map(ages, normalize(min, max))
+        expect(scaled).toEqual([0, 1 / 3, 2 / 3, 1])
+      })
+    })
+
+    describe('normalize and interpolate are inverses', () => {
+      it('normalize -> interpolate returns original', () => {
+        const value = 75
+        const min = 0
+        const max = 100
+        const normalized = normalize(value, min, max)
+        const interpolated = interpolate(min, max, normalized)
+        expect(interpolated).toBe(value)
       })
     })
   })

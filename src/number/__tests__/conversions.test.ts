@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test'
-import { fromString, fromCurrency, toBytes, fromBytes } from '../index'
+import { fromString, fromCurrency, toBytes, fromBytes, parseFormattedNumber } from '../index'
 import * as R from 'remeda'
 import { isOk, isErr, unwrap, unwrapOr } from '../../result'
 
@@ -72,6 +72,200 @@ describe('Number Conversions', () => {
 
         const invalid = validatePrice('abc')
         expect(isErr(invalid)).toBe(true)
+      })
+    })
+  })
+
+  describe('parseFormattedNumber', () => {
+    describe('basic formatted numbers', () => {
+      it('parses US format with commas', () => {
+        const result = parseFormattedNumber('1,234.56')
+        expect(isOk(result)).toBe(true)
+        if (isOk(result)) {
+          expect(result.value).toBe(1234.56)
+        }
+      })
+
+      it('parses numbers with space separators', () => {
+        const result = parseFormattedNumber('1 234.56')
+        expect(isOk(result)).toBe(true)
+        if (isOk(result)) {
+          expect(result.value).toBe(1234.56)
+        }
+      })
+
+      it('parses European format', () => {
+        const result = parseFormattedNumber('1.234,56')
+        expect(isOk(result)).toBe(true)
+        if (isOk(result)) {
+          expect(result.value).toBeCloseTo(1234.56)
+        }
+      })
+
+      it('parses large numbers', () => {
+        const result = parseFormattedNumber('1,234,567,890.12')
+        expect(isOk(result)).toBe(true)
+        if (isOk(result)) {
+          expect(result.value).toBe(1234567890.12)
+        }
+      })
+
+      it('parses numbers without separators', () => {
+        const result = parseFormattedNumber('1234.56')
+        expect(isOk(result)).toBe(true)
+        if (isOk(result)) {
+          expect(result.value).toBe(1234.56)
+        }
+      })
+    })
+
+    describe('currency symbols', () => {
+      it('parses USD with dollar sign', () => {
+        const result = parseFormattedNumber('$1,234.56')
+        expect(isOk(result)).toBe(true)
+        if (isOk(result)) {
+          expect(result.value).toBe(1234.56)
+        }
+      })
+
+      it('parses GBP with pound sign', () => {
+        const result = parseFormattedNumber('£1,234.56')
+        expect(isOk(result)).toBe(true)
+        if (isOk(result)) {
+          expect(result.value).toBe(1234.56)
+        }
+      })
+
+      it('parses EUR with euro sign', () => {
+        const result = parseFormattedNumber('€1.234,56')
+        expect(isOk(result)).toBe(true)
+        if (isOk(result)) {
+          expect(result.value).toBeCloseTo(1234.56)
+        }
+      })
+
+      it('parses with currency code suffix', () => {
+        const result = parseFormattedNumber('1,234.56 USD')
+        expect(isOk(result)).toBe(true)
+        if (isOk(result)) {
+          expect(result.value).toBe(1234.56)
+        }
+      })
+
+      it('parses with currency code prefix', () => {
+        const result = parseFormattedNumber('USD 1,234.56')
+        expect(isOk(result)).toBe(true)
+        if (isOk(result)) {
+          expect(result.value).toBe(1234.56)
+        }
+      })
+    })
+
+    describe('negative numbers', () => {
+      it('parses negative with minus sign', () => {
+        const result = parseFormattedNumber('-1,234.56')
+        expect(isOk(result)).toBe(true)
+        if (isOk(result)) {
+          expect(result.value).toBe(-1234.56)
+        }
+      })
+
+      it('parses accounting format with parentheses', () => {
+        const result = parseFormattedNumber('(1,234.56)')
+        expect(isOk(result)).toBe(true)
+        if (isOk(result)) {
+          expect(result.value).toBe(-1234.56)
+        }
+      })
+
+      it('parses accounting format with currency', () => {
+        const result = parseFormattedNumber('($1,234.56)')
+        expect(isOk(result)).toBe(true)
+        if (isOk(result)) {
+          expect(result.value).toBe(-1234.56)
+        }
+      })
+    })
+
+    describe('whitespace handling', () => {
+      it('trims leading and trailing whitespace', () => {
+        const result = parseFormattedNumber('  1,234.56  ')
+        expect(isOk(result)).toBe(true)
+        if (isOk(result)) {
+          expect(result.value).toBe(1234.56)
+        }
+      })
+    })
+
+    describe('error cases', () => {
+      it('returns error for empty string', () => {
+        expect(isErr(parseFormattedNumber(''))).toBe(true)
+      })
+
+      it('returns error for invalid characters', () => {
+        expect(isErr(parseFormattedNumber('abc'))).toBe(true)
+        expect(isErr(parseFormattedNumber('12abc34'))).toBe(true)
+      })
+
+      it('includes input in error', () => {
+        const result = parseFormattedNumber('invalid')
+        expect(isErr(result)).toBe(true)
+        if (isErr(result)) {
+          expect(result.error.input).toBe('invalid')
+          expect(result.error.code).toBe('PARSE_ERROR')
+        }
+      })
+    })
+
+    describe('real-world: parsing user input', () => {
+      it('parses various user inputs', () => {
+        const inputs = [
+          ['$1,234.56', 1234.56],
+          ['1234.56', 1234.56],
+          ['1,234', 1234],
+          ['€1.234,56', 1234.56],
+          ['(500)', -500],
+        ] as const
+
+        inputs.forEach(([input, expected]) => {
+          const result = parseFormattedNumber(input)
+          expect(isOk(result)).toBe(true)
+          if (isOk(result)) {
+            expect(result.value).toBeCloseTo(expected)
+          }
+        })
+      })
+    })
+
+    describe('real-world: financial reports', () => {
+      it('parses revenue from report', () => {
+        const revenues = [
+          '$1,234,567.89',
+          '€2.345.678,90',
+          '£987,654.32',
+          '1,000,000.00 USD',
+        ]
+
+        revenues.forEach((revenue) => {
+          const result = parseFormattedNumber(revenue)
+          expect(isOk(result)).toBe(true)
+        })
+      })
+
+      it('parses negative values (losses)', () => {
+        const losses = [
+          '($50,000.00)',
+          '(€25,000.00)',
+          '-100,000',
+        ]
+
+        losses.forEach((loss) => {
+          const result = parseFormattedNumber(loss)
+          expect(isOk(result)).toBe(true)
+          if (isOk(result)) {
+            expect(result.value).toBeLessThan(0)
+          }
+        })
       })
     })
   })
