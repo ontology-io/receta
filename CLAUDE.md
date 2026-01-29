@@ -1067,6 +1067,8 @@ bun run build      # Build must succeed
 
 ## Module Implementation Status
 
+✅ **All Core Modules Complete** — Receta is feature-complete for its intended scope.
+
 | Module | Status | Priority | Notes |
 |--------|--------|----------|-------|
 | result | ✅ Complete | P0 | Full implementation with tests and docs |
@@ -1076,15 +1078,73 @@ bun run build      # Build must succeed
 | validation | ✅ Complete | P1 | Error accumulation, form validation, schema validation |
 | collection | ✅ Complete | P2 | Advanced collection operations (nest, diff, paginate, indexByUnique, set operations) |
 | object | ✅ Complete | P2 | Safe object manipulation (flatten, unflatten, getPath, mask, deepMerge, validateShape) |
-| string | ✅ Complete | P2 | String processing, validation, sanitization (slugify, case conversions, template, HTML escape, validators) |
+| string | ✅ Complete | P2 | String processing, validation, sanitization (slugify, case conversions, template, HTML escape, validators, **pluralize, truncateWords, escapeRegex, normalizeWhitespace, initials, highlight**) |
 | number | ✅ Complete | P2 | Number formatting, validation, calculations, conversions (format, toCurrency, toBytes, round, percentage, etc.) |
 | memo | ✅ Complete | P3 | Memoization strategies (memoize, memoizeBy, memoizeAsync, TTL/LRU/WeakMap caches, deduplication) |
 | lens | ✅ Complete | P3 | Functional lenses for immutable updates (prop, path, index, compose, optional, view/set/over operations) |
 | compare | ✅ Complete | P3 | Comparator builders (ascending, descending, natural, compose, type-specific comparators) |
 | function | ✅ Complete | P3 | Function combinators (ifElse, when, unless, cond, compose, converge, juxt, ap, partial, flip, arity controls, tap, tryCatch, memoize) |
-| fetch | 🔴 Not started | P3 | Fetch wrappers with Result integration |
-| id | 🔴 Not started | P3 | ID generation utilities |
-| date | 🔴 Not started | P3 | Date utilities and formatting |
+
+### Potential Future Additions
+
+High-value functions from the original brainstorming that could be added to existing modules:
+
+#### Async Module
+- `pipeAsync` — Async-aware pipe composition
+- `promiseAllSettled` — Typed wrapper with result extraction helpers
+
+#### Result Module
+- `parseNumber/parseInt/parseFloat` — Safe number parsing to Result
+- `parseJSON` — Safe JSON.parse (already in examples, could be formalized)
+- `parseUrl` — Safe URL parsing
+
+#### Number Module
+- `percentage` — Calculate percentage with zero handling
+- `ratio` — a / b with safe zero handling
+- `roundTo` — Round to nearest step (e.g., 0.25)
+- `interpolate` — Linear interpolation
+- `normalize` — Scale to 0-1 range
+- `parseFormattedNumber` — "1,234.56" → 1234.56
+
+#### String Module
+- ~~`pluralize`~~ — ✅ **IMPLEMENTED** - Count-aware pluralization with smart English rules
+- ~~`truncateWords`~~ — ✅ **IMPLEMENTED** - Truncate by word count preserving boundaries
+- ~~`escapeRegex`~~ — ✅ **IMPLEMENTED** - Escape regex special characters for safe patterns
+- ~~`normalizeWhitespace`~~ — ✅ **IMPLEMENTED** - Normalize whitespace to single spaces
+- ~~`initials`~~ — ✅ **IMPLEMENTED** - Extract initials for avatars ("John Doe" → "JD")
+- ~~`highlight`~~ — ✅ **IMPLEMENTED** - Wrap matches in HTML tags with XSS protection
+
+#### Object Module
+- `transformKeys` — camelCase ↔ snake_case deep transformation
+- `defaults` — Deep defaults (inverse of merge)
+- `stripEmpty` — Remove empty strings/arrays/objects
+- `project` — GraphQL-style field selection
+
+#### Collection Module
+- `flatten` — Tree → flat array with depth/path
+- `batchBy` — Group consecutive items by predicate
+- `windowSliding` — Sliding window over array
+- `cartesianProduct` — All combinations of arrays
+- `moveIndex` — Move item from index to index
+- `insertAt` — Insert at index
+- `updateAt` — Update at index
+- `removeAtIndex` — Remove at index
+
+#### Function Module
+- `unless` — Run unless predicate (complement of `when`)
+- `guard` — Early return pattern helper
+- `switchCase` — Pattern matching (alternative to `cond`)
+
+### Out of Scope
+
+These modules are **intentionally excluded** as they are too opinionated or better handled by existing libraries:
+
+- **fetch** — Too opinionated about HTTP clients and error handling. Users should wrap their chosen HTTP client with `Result.tryCatchAsync()` instead.
+- **id** — Just thin wrappers around existing libraries. Use `crypto.randomUUID()`, `nanoid`, `ulid`, or other ID generation packages directly.
+- **date** — Extremely opinionated territory with many library choices (date-fns, dayjs, luxon, Temporal). Users should choose their preferred date library and use it directly.
+- **Event/Stream patterns** — Better handled by RxJS, xstate, or native EventTarget
+- **JSON Patch (RFC 6902)** — Too specialized, use dedicated libraries like `fast-json-patch`
+- **Advanced combinatorics** — Permutations, combinations are niche use cases
 
 ---
 
