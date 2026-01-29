@@ -15,6 +15,14 @@ import {
   intersect,
   symmetricDiff,
   groupByPath,
+  flatten,
+  batchBy,
+  windowSliding,
+  cartesianProduct,
+  moveIndex,
+  insertAt,
+  updateAt,
+  removeAtIndex,
   type DiffResult,
   type PaginatedResult,
 } from '../src/collection'
@@ -319,5 +327,214 @@ const purchaseAnalysis = R.pipe(
 console.log('Purchase analysis:', purchaseAnalysis)
 console.log('Electronics purchases:', purchaseAnalysis.electronics.length)
 console.log('Books purchases:', purchaseAnalysis.books.length)
+
+// Example 11: Flattening Tree Structures
+console.log('\n--- Example 11: Flattening File System Tree ---')
+
+interface FileNode {
+  name: string
+  type: 'file' | 'folder'
+  children?: FileNode[]
+}
+
+const fileTree: FileNode[] = [
+  {
+    name: 'src',
+    type: 'folder',
+    children: [
+      { name: 'index.ts', type: 'file' },
+      {
+        name: 'utils',
+        type: 'folder',
+        children: [
+          { name: 'helper.ts', type: 'file' },
+          { name: 'types.ts', type: 'file' },
+        ],
+      },
+      {
+        name: 'components',
+        type: 'folder',
+        children: [{ name: 'Button.tsx', type: 'file' }],
+      },
+    ],
+  },
+]
+
+const flatFiles = flatten(fileTree, {
+  getChildren: (node) => node.children,
+})
+console.log('All files and folders:', flatFiles.map((n) => n.name))
+
+// With path tracking
+const flatWithPaths = flatten(fileTree, {
+  getChildren: (node) => node.children,
+  includePath: true,
+})
+console.log(
+  'File with deepest path:',
+  flatWithPaths[flatWithPaths.length - 1]?.item.name,
+  'at depth',
+  flatWithPaths[flatWithPaths.length - 1]?.depth
+)
+
+// Example 12: Grouping Consecutive Items
+console.log('\n--- Example 12: Batch Processing Consecutive Status Changes ---')
+
+interface TaskLog {
+  id: number
+  status: 'running' | 'idle' | 'error'
+  timestamp: string
+}
+
+const taskLogs: TaskLog[] = [
+  { id: 1, status: 'running', timestamp: '10:00' },
+  { id: 2, status: 'running', timestamp: '10:01' },
+  { id: 3, status: 'idle', timestamp: '10:02' },
+  { id: 4, status: 'idle', timestamp: '10:03' },
+  { id: 5, status: 'running', timestamp: '10:04' },
+  { id: 6, status: 'error', timestamp: '10:05' },
+]
+
+const statusBatches = batchBy(taskLogs, (log) => log.status)
+console.log('Status change runs:', statusBatches.map((batch) => `${batch[0]!.status}(${batch.length})`).join(' → '))
+
+// Example 13: Sliding Window Analysis
+console.log('\n--- Example 13: Moving Average Calculation ---')
+
+const stockPrices = [100, 102, 98, 105, 103, 107, 104, 110, 108]
+
+const movingAverage = R.pipe(
+  stockPrices,
+  windowSliding({ size: 3 }),
+  R.map((window) => window.reduce((sum, price) => sum + price, 0) / window.length),
+  R.map((avg) => Math.round(avg * 100) / 100)
+)
+
+console.log('Stock prices:', stockPrices)
+console.log('3-day moving average:', movingAverage)
+
+// N-gram analysis
+const sentence = ['The', 'quick', 'brown', 'fox', 'jumps']
+const bigrams = windowSliding(sentence, { size: 2 })
+console.log('Word bigrams:', bigrams.map((pair) => pair.join(' ')))
+
+// Example 14: Cartesian Product for Test Matrices
+console.log('\n--- Example 14: Generating Test Matrix ---')
+
+const browsers = ['chrome', 'firefox', 'safari']
+const platforms = ['mac', 'windows', 'linux']
+const viewports = ['mobile', 'desktop']
+
+const testMatrix = R.pipe(
+  cartesianProduct(browsers, platforms, viewports),
+  R.map(([browser, platform, viewport]) => ({
+    browser,
+    platform,
+    viewport,
+    config: `${browser}-${platform}-${viewport}`,
+  }))
+)
+
+console.log(`Generated ${testMatrix.length} test configurations`)
+console.log('First config:', testMatrix[0]!.config)
+console.log('Last config:', testMatrix[testMatrix.length - 1]!.config)
+
+// Product variants
+const sizes = ['S', 'M', 'L']
+const colors = ['red', 'blue', 'green']
+
+const productVariants = cartesianProduct(sizes, colors)
+console.log(`Product variants: ${productVariants.length}`)
+console.log('Variants:', productVariants.map(([size, color]) => `${size}-${color}`).join(', '))
+
+// Example 15: Drag and Drop Reordering
+console.log('\n--- Example 15: Todo List Reordering (Drag & Drop) ---')
+
+interface Todo {
+  id: number
+  title: string
+  priority: number
+}
+
+let todos: Todo[] = [
+  { id: 1, title: 'Buy groceries', priority: 1 },
+  { id: 2, title: 'Write report', priority: 2 },
+  { id: 3, title: 'Call client', priority: 3 },
+  { id: 4, title: 'Review PR', priority: 4 },
+]
+
+console.log('Original order:', todos.map((t) => t.title))
+
+// User drags "Call client" from position 2 to position 0
+todos = moveIndex(todos, 2, 0)
+console.log('After moving "Call client" to top:', todos.map((t) => t.title))
+
+// Example 16: Dynamic List Management
+console.log('\n--- Example 16: Managing Todo List (Insert, Update, Remove) ---')
+
+let tasks = [
+  { id: 1, text: 'Task 1', done: false },
+  { id: 3, text: 'Task 3', done: false },
+]
+
+console.log('Initial tasks:', tasks.map((t) => t.text))
+
+// Insert new task at position 1
+tasks = insertAt(tasks, 1, { id: 2, text: 'Task 2', done: false })
+console.log('After inserting Task 2:', tasks.map((t) => t.text))
+
+// Mark task as done
+tasks = updateAt(tasks, 1, { id: 2, text: 'Task 2', done: true })
+console.log('After completing Task 2:', tasks.map((t) => `${t.text} (${t.done ? 'done' : 'pending'})`))
+
+// Remove completed task
+tasks = R.pipe(
+  tasks,
+  removeAtIndex(tasks.findIndex((t) => t.done))
+)
+console.log('After removing completed task:', tasks.map((t) => t.text))
+
+// Example 17: Data Pipeline with New Utilities
+console.log('\n--- Example 17: Complete Analysis Pipeline ---')
+
+interface SensorReading {
+  timestamp: string
+  temperature: number
+  status: 'normal' | 'warning' | 'critical'
+}
+
+const readings: SensorReading[] = [
+  { timestamp: '10:00', temperature: 20, status: 'normal' },
+  { timestamp: '10:01', temperature: 22, status: 'normal' },
+  { timestamp: '10:02', temperature: 25, status: 'normal' },
+  { timestamp: '10:03', temperature: 30, status: 'warning' },
+  { timestamp: '10:04', temperature: 35, status: 'warning' },
+  { timestamp: '10:05', temperature: 28, status: 'normal' },
+  { timestamp: '10:06', temperature: 23, status: 'normal' },
+]
+
+// Analyze temperature trends and status patterns
+const analysis = R.pipe(
+  readings,
+  (data) => ({
+    statusRuns: batchBy(data, (r) => r.status),
+    tempTrend: R.pipe(
+      data,
+      windowSliding({ size: 3 }),
+      R.map((window) => ({
+        time: window[1]!.timestamp,
+        avgTemp: Math.round((window.reduce((sum, r) => sum + r.temperature, 0) / 3) * 10) / 10,
+      }))
+    ),
+  })
+)
+
+console.log('Status change patterns:')
+analysis.statusRuns.forEach((run) => {
+  console.log(`  ${run[0]!.status}: ${run.length} readings`)
+})
+
+console.log('Temperature trend (3-reading average):')
+console.log(analysis.tempTrend.map((t) => `${t.time}:${t.avgTemp}°C`).join(', '))
 
 console.log('\n=== All examples completed successfully! ===')

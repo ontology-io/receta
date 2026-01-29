@@ -36,3 +36,14 @@ export { chunk } from 'remeda'
 // Rate limiting
 export { debounce } from './debounce'
 export { throttle } from './throttle'
+
+// Async composition
+export { pipeAsync } from './pipeAsync'
+
+// Promise utilities
+export {
+  promiseAllSettled,
+  extractFulfilled,
+  extractRejected,
+  toResults,
+} from './promiseAllSettled'

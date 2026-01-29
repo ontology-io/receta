@@ -185,3 +185,50 @@ export class DuplicateKeyError extends Error {
  * @typeParam T - The type of items being compared
  */
 export type Comparator<T> = (a: T, b: T) => boolean
+
+/**
+ * Configuration for flatten operation.
+ *
+ * @typeParam T - The type of tree nodes
+ *
+ * @example
+ * ```typescript
+ * const config: FlattenConfig<FileNode> = {
+ *   getChildren: (node) => node.children,
+ *   maxDepth: 3,
+ *   includePath: true
+ * }
+ * ```
+ */
+export interface FlattenConfig<T> {
+  readonly getChildren: (node: T) => readonly T[] | undefined
+  readonly maxDepth?: number
+  readonly includePath?: boolean
+}
+
+/**
+ * Result item from flatten operation with path information.
+ *
+ * @typeParam T - The type of the item
+ */
+export interface FlattenedItem<T> {
+  readonly item: T
+  readonly path: readonly T[]
+  readonly depth: number
+}
+
+/**
+ * Configuration for sliding window operation.
+ *
+ * @example
+ * ```typescript
+ * const config: WindowSlidingConfig = {
+ *   size: 3,
+ *   step: 1
+ * }
+ * ```
+ */
+export interface WindowSlidingConfig {
+  readonly size: number
+  readonly step?: number
+}

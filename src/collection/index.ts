@@ -23,6 +23,9 @@ export type {
   NestedMap,
   IndexConfig,
   Comparator,
+  FlattenConfig,
+  FlattenedItem,
+  WindowSlidingConfig,
 } from './types'
 
 export { DuplicateKeyError } from './types'
@@ -42,3 +45,17 @@ export { indexByUnique } from './indexByUnique'
 
 // Set operations
 export { union, intersect, symmetricDiff } from './setOps'
+
+// Tree operations
+export { flatten } from './flatten'
+
+// Sequence operations
+export { batchBy } from './batchBy'
+export { windowSliding } from './windowSliding'
+export { cartesianProduct } from './cartesianProduct'
+
+// Array manipulation
+export { moveIndex } from './moveIndex'
+export { insertAt } from './insertAt'
+export { updateAt } from './updateAt'
+export { removeAtIndex } from './removeAtIndex'

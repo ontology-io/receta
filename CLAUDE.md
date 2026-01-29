@@ -1090,8 +1090,8 @@ bun run build      # Build must succeed
 High-value functions from the original brainstorming that could be added to existing modules:
 
 #### Async Module
-- `pipeAsync` — Async-aware pipe composition
-- `promiseAllSettled` — Typed wrapper with result extraction helpers
+- ~~`pipeAsync`~~ — ✅ **IMPLEMENTED** - Async-aware pipe composition (left-to-right, supports 1-10 functions)
+- ~~`promiseAllSettled`~~ — ✅ **IMPLEMENTED** - Typed wrapper with result extraction helpers (extractFulfilled, extractRejected, toResults)
 
 #### Result Module
 - ~~`parseNumber`~~ — ✅ **IMPLEMENTED** - Safe number parsing to Result with finite validation
@@ -1116,25 +1116,25 @@ High-value functions from the original brainstorming that could be added to exis
 - ~~`highlight`~~ — ✅ **IMPLEMENTED** - Wrap matches in HTML tags with XSS protection
 
 #### Object Module
-- `transformKeys` — camelCase ↔ snake_case deep transformation
+- ~~`transformKeys`~~ — ✅ **IMPLEMENTED** - Deep case transformation (camelCase ↔ snake_case ↔ kebab-case ↔ PascalCase)
+- ~~`stripEmpty`~~ — ✅ **IMPLEMENTED** - Remove null/undefined/empty strings/arrays/objects with configurable options
 - `defaults` — Deep defaults (inverse of merge)
-- `stripEmpty` — Remove empty strings/arrays/objects
 - `project` — GraphQL-style field selection
 
 #### Collection Module
-- `flatten` — Tree → flat array with depth/path
-- `batchBy` — Group consecutive items by predicate
-- `windowSliding` — Sliding window over array
-- `cartesianProduct` — All combinations of arrays
-- `moveIndex` — Move item from index to index
-- `insertAt` — Insert at index
-- `updateAt` — Update at index
-- `removeAtIndex` — Remove at index
+- ~~`flatten`~~ — ✅ **IMPLEMENTED** - Tree → flat array with depth/path tracking
+- ~~`batchBy`~~ — ✅ **IMPLEMENTED** - Group consecutive items by predicate
+- ~~`windowSliding`~~ — ✅ **IMPLEMENTED** - Sliding window over array with configurable step
+- ~~`cartesianProduct`~~ — ✅ **IMPLEMENTED** - All combinations of arrays (type-safe for 2-5 arrays)
+- ~~`moveIndex`~~ — ✅ **IMPLEMENTED** - Move item from index to index immutably
+- ~~`insertAt`~~ — ✅ **IMPLEMENTED** - Insert elements at specific index
+- ~~`updateAt`~~ — ✅ **IMPLEMENTED** - Update element at specific index
+- ~~`removeAtIndex`~~ — ✅ **IMPLEMENTED** - Remove element at specific index
 
 #### Function Module
-- `unless` — Run unless predicate (complement of `when`)
-- `guard` — Early return pattern helper
-- `switchCase` — Pattern matching (alternative to `cond`)
+- ~~`unless`~~ — ✅ **IMPLEMENTED** - Run unless predicate (complement of `when`)
+- ~~`guard`~~ — ✅ **IMPLEMENTED** - Early return pattern helper for validation chains
+- ~~`switchCase`~~ — ✅ **IMPLEMENTED** - Pattern matching with required default (alternative to `cond`)
 
 ### Out of Scope
 
