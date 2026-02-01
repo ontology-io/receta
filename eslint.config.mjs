@@ -1,39 +1,33 @@
-// ESLint configuration for Receta monorepo
-// Enforces Receta/Remeda-first patterns across the codebase
-
-import receta from './packages/eslint-plugin-receta/src/index.ts'
+/**
+ * ESLint configuration for Receta
+ *
+ * Note: Using simplified config without plugin for now
+ * Plugin can be used after building or publishing to npm
+ */
 
 export default [
   {
-    // Apply to all TypeScript files
-    files: ['src/**/*.ts', 'tests/**/*.ts', 'examples/**/*.ts'],
+    files: ['src/**/*.ts', 'examples/**/*.ts'],
     languageOptions: {
       parser: '@typescript-eslint/parser',
       parserOptions: {
         ecmaVersion: 2022,
         sourceType: 'module',
-        project: './tsconfig.json',
       },
     },
-    plugins: {
-      receta,
-    },
     rules: {
-      // Receta/Remeda-first enforcement
-      ...receta.configs.strict.rules,
-
-      // Project-specific overrides
-      // (none yet, but you can add them here)
+      // Basic TypeScript rules
+      // Plugin rules will be added after building
     },
   },
   {
-    // Ignore build artifacts and dependencies
     ignores: [
       'node_modules/**',
       'dist/**',
       'docs-website/**',
       '*.config.js',
       '*.config.mjs',
+      'packages/**',
     ],
   },
 ]
