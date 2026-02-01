@@ -1,23 +1,45 @@
 /**
  * ESLint configuration for Receta
  *
- * Note: Using simplified config without plugin for now
- * Plugin can be used after building or publishing to npm
+ * Uses eslint-plugin-receta from source (Bun can execute TypeScript directly)
  */
+
+// Import from source - Bun handles .ts files natively
+const receta = await import('./packages/eslint-plugin-receta/src/index.ts').then(m => m.default)
 
 export default [
   {
-    files: ['src/**/*.ts', 'examples/**/*.ts'],
+    files: ['examples/before-eslint-plugin.ts'],
     languageOptions: {
-      parser: '@typescript-eslint/parser',
+      parser: await import('@typescript-eslint/parser'),
       parserOptions: {
         ecmaVersion: 2022,
         sourceType: 'module',
       },
     },
+    plugins: {
+      receta,
+    },
     rules: {
-      // Basic TypeScript rules
-      // Plugin rules will be added after building
+      // Enable all Receta rules with warnings
+      ...receta.configs.recommended.rules,
+    },
+  },
+  {
+    files: ['src/**/*.ts'],
+    languageOptions: {
+      parser: await import('@typescript-eslint/parser'),
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module',
+      },
+    },
+    plugins: {
+      receta,
+    },
+    rules: {
+      // Strict mode for source code
+      ...receta.configs.strict.rules,
     },
   },
   {
@@ -27,7 +49,7 @@ export default [
       'docs-website/**',
       '*.config.js',
       '*.config.mjs',
-      'packages/**',
+      'packages/eslint-plugin-receta/**',
     ],
   },
 ]
