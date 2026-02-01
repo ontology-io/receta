@@ -1,3 +1,4 @@
+import { Option, fromNullable } from 'receta/option'
 import * as R from 'remeda'
 import type { Option } from '../types'
 import { isSome } from '../guards'
@@ -41,6 +42,6 @@ export function toNullable(...args: unknown[]): unknown {
   return R.purry(toNullableImplementation, args)
 }
 
-function toNullableImplementation<T>(option: Option<T>): T | null {
+function toNullableImplementation<T>(option: Option<T>): Option<T> {
   return isSome(option) ? option.value : null
 }

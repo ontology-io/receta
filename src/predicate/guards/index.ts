@@ -293,7 +293,6 @@ export const isObject: TypePredicate<unknown, Record<string, unknown>> = (
  * @see isObject - for object type guard
  * @see isArray - for array type guard
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
 export const isFunction: TypePredicate<unknown, Function> = (value): value is Function =>
   typeof value === 'function'
 

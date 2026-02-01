@@ -45,7 +45,6 @@
  *
  * @internal
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function purryConfig(impl: any, args: readonly unknown[]): any {
   // Data-first: both config and data provided
   if (args.length === 2) {
@@ -86,7 +85,6 @@ export function purryConfig(impl: any, args: readonly unknown[]): any {
  *
  * @internal
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function purryConfig2(impl: any, args: readonly unknown[]): any {
   // Data-first: all three parameters provided
   if (args.length === 3) {
@@ -135,7 +133,6 @@ export function purryConfig2(impl: any, args: readonly unknown[]): any {
  *
  * @internal
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function purryConfig3(impl: any, args: readonly unknown[]): any {
   // Data-first: all four parameters provided
   if (args.length === 4) {

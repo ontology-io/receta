@@ -1,3 +1,4 @@
+import { Option, fromNullable } from 'receta/option'
 import type { Cache } from '../types'
 
 interface CacheEntry<V> {
@@ -32,7 +33,7 @@ export function ttlCache<K, V>(ttlMs: number): Cache<K, V> {
   const map = new Map<K, CacheEntry<V>>()
 
   return {
-    get(key: K): V | undefined {
+    get(key: K): Option<V> {
       const entry = map.get(key)
       if (!entry) return undefined
 

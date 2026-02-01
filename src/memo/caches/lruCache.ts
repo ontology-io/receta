@@ -1,3 +1,4 @@
+import { Option, fromNullable } from 'receta/option'
 import type { Cache } from '../types'
 
 /**
@@ -34,7 +35,7 @@ export function lruCache<K, V>(maxSize: number): Cache<K, V> {
   const map = new Map<K, V>()
 
   return {
-    get(key: K): V | undefined {
+    get(key: K): Option<V> {
       const value = map.get(key)
       if (value === undefined) return undefined
 

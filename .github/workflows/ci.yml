@@ -52,5 +52,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Lint
+        run: bunx eslint . --max-warnings 0
+
       - name: Type check
         run: bun run typecheck
