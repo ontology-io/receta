@@ -1,3 +1,4 @@
+import * as R from 'remeda'
 import { ok, err, type Result } from '../../result'
 
 /**
@@ -105,9 +106,11 @@ export async function promiseAllSettled<T>(
 export function extractFulfilled<T>(
   results: readonly PromiseSettledResult<T>[]
 ): T[] {
-  return results
-    .filter((r): r is PromiseFulfilledResult<T> => r.status === 'fulfilled')
-    .map((r) => r.value)
+  return R.pipe(
+  results,
+  R.filter((r): r is PromiseFulfilledResult<T> => r.status === 'fulfilled'),
+  R.map((r) => r.value)
+)
 }
 
 /**
@@ -149,9 +152,11 @@ export function extractFulfilled<T>(
 export function extractRejected<T = unknown>(
   results: readonly PromiseSettledResult<any>[]
 ): T[] {
-  return results
-    .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
-    .map((r) => r.reason as T)
+  return R.pipe(
+  results,
+  R.filter((r): r is PromiseRejectedResult => r.status === 'rejected'),
+  R.map((r) => r.reason as T)
+)
 }
 
 /**

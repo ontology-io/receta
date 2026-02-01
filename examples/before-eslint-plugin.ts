@@ -1,3 +1,6 @@
+import * as R from 'remeda'
+import { Option, fromNullable } from 'receta/option'
+import { Result } from 'receta/result'
 /**
  * Demo file showing vanilla code BEFORE eslint-plugin-receta autofix
  *
@@ -9,15 +12,14 @@
 
 // ❌ Anti-pattern 1: try-catch for JSON parsing
 function parseConfig(json: string) {
-  try {
-    return JSON.parse(json)
-  } catch (e) {
-    throw e
-  }
+  const result = Result.tryCatch(
+  () => JSON.parse(json)
+)
+return result
 }
 
 // ❌ Anti-pattern 2: Nullable return type
-function findUserById(id: string): User | undefined {
+function findUserById(id: string): Option<User> {
   const users = [
     { id: '1', name: 'Alice', age: 30 },
     { id: '2', name: 'Bob', age: 25 },
@@ -29,9 +31,11 @@ type User = { id: string; name: string; age: number }
 
 // ❌ Anti-pattern 3: Method chaining
 function processUsers(users: User[]) {
-  return users
-    .filter(u => u.age >= 18)
-    .map(u => u.name.toUpperCase())
+  return R.pipe(
+  users,
+  R.filter(u => u.age >= 18),
+  R.map(u => u.name.toUpperCase())
+)
     .sort()
 }
 
@@ -47,7 +51,7 @@ async function fetchUserData(userId: string) {
 }
 
 // ❌ Anti-pattern 5: Nullable with complex logic
-function getConfigValue(key: string): string | null {
+function getConfigValue(key: string): Option<string> {
   const config: Record<string, string> = {
     apiUrl: 'https://api.example.com',
     timeout: '5000',
@@ -67,9 +71,11 @@ async function processApiData(ids: string[]) {
       const data = await response.json()
 
       if (data && data.items) {
-        const processed = data.items
-          .filter((item: any) => item.active)
-          .map((item: any) => item.value)
+        const processed = R.pipe(
+  data.items,
+  R.filter((item: any) => item.active),
+  R.map((item: any) => item.value)
+)
 
         results.push(...processed)
       }

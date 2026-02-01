@@ -125,7 +125,11 @@ describe('Collection set operations', () => {
         const result = symmetricDiff(planned, actual, (a, b) => a.id === b.id)
 
         expect(result.length).toBe(2)
-        expect(result.map((x) => x.id).sort()).toEqual([1, 3])
+        expect(R.pipe(
+  result,
+  R.map((x) => x.id),
+  R.sort()
+)).toEqual([1, 3])
       })
 
       it('returns all elements when no overlap', () => {
@@ -188,7 +192,11 @@ describe('Collection set operations', () => {
       )
 
       expect(changedFeatures.length).toBe(2)
-      expect(changedFeatures.map((f) => f.name).sort()).toEqual(['analytics', 'auth'])
+      expect(R.pipe(
+  changedFeatures,
+  R.map((f) => f.name),
+  R.sort()
+)).toEqual(['analytics', 'auth'])
     })
 
     it('combines multiple sets of data', () => {
@@ -203,7 +211,11 @@ describe('Collection set operations', () => {
       )
 
       expect(combined.length).toBe(4)
-      expect(combined.map((x) => x.id).sort()).toEqual([1, 2, 3, 4])
+      expect(R.pipe(
+  combined,
+  R.map((x) => x.id),
+  R.sort()
+)).toEqual([1, 2, 3, 4])
     })
 
     it('finds users in both teams', () => {

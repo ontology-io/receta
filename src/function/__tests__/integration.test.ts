@@ -266,7 +266,11 @@ describe('function/integration', () => {
       const extractMetrics = juxt([
         (users: User[]) => users.length,
         (users: User[]) => users.filter((u) => u.age >= 18).length,
-        (users: User[]) => users.map((u) => u.age).reduce((a, b) => a + b, 0) / users.length,
+        (users: User[]) => R.pipe(
+  users,
+  R.map((u) => u.age),
+  R.reduce((a, b) => a + b, 0)
+) / users.length,
         (users: User[]) => Math.max(...users.map((u) => u.age)),
         (users: User[]) => Math.min(...users.map((u) => u.age)),
       ])

@@ -1,3 +1,4 @@
+import * as R from 'remeda'
 import { describe, it, expect } from 'bun:test'
 import {
   mapAsync,
@@ -263,7 +264,11 @@ describe('Async Integration Tests', () => {
       const phase2 = unwrapOr(phase2Result, [])
 
       // Phase 1 tasks should run concurrently
-      expect(events.slice(0, 3).sort()).toEqual([
+      expect(R.pipe(
+  events,
+  R.slice(0, 3),
+  R.sort()
+)).toEqual([
         'fetch-comments',
         'fetch-posts',
         'fetch-users',

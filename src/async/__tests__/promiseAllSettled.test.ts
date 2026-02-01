@@ -1,3 +1,4 @@
+import * as R from 'remeda'
 import { describe, it, expect } from 'bun:test'
 import {
   promiseAllSettled,
@@ -406,9 +407,11 @@ describe('Async.toResults', () => {
         mockFetch(3),
       ])
 
-      const names = toResults(results)
-        .map((r) => map(r, (user) => user.name))
-        .map((r) => unwrapOr(r, 'Unknown'))
+      const names = R.pipe(
+  toResults(results),
+  R.map((r) => map(r, (user) => user.name)),
+  R.map((r) => unwrapOr(r, 'Unknown'))
+)
 
       expect(names).toEqual(['User 1', 'Unknown', 'User 3'])
     })
