@@ -94,7 +94,12 @@
     "clean": "nx run-many --target=clean --all",
     "lint": "nx run receta:lint",
     "generate-llm": "bun run scripts/generate-llm-txt.ts",
-    "prepublishOnly": "bun run clean && bun run build && bun run test && bun run typecheck"
+    "prepublishOnly": "bun run clean && bun run build && bun run test && bun run typecheck",
+    "ci": "act --container-architecture linux/amd64 -P ubuntu-latest=catthehacker/ubuntu:act-latest",
+    "ci:test": "act -j test --container-architecture linux/amd64 -P ubuntu-latest=catthehacker/ubuntu:act-latest",
+    "ci:lint": "act -j lint --container-architecture linux/amd64 -P ubuntu-latest=catthehacker/ubuntu:act-latest",
+    "ci:list": "act -l",
+    "ci:dry-run": "act -n"
   },
   "keywords": [
     "functional-programming",

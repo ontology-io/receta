@@ -1,0 +1,11 @@
+# act configuration file
+# See: https://nektosact.com/usage/index.html#configuration-file
+
+# Use medium-sized Docker image (compatible with most actions)
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+
+# Set container architecture for Apple Silicon compatibility
+--container-architecture linux/amd64
+
+# Bind Docker socket for actions that need Docker
+# --container-daemon-socket -
