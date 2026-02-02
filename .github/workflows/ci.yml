@@ -24,6 +24,12 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Build workspace packages
+        working-directory: packages/eslint-plugin-receta
+        run: |
+          bun install --no-save
+          bun run build
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
@@ -48,6 +54,12 @@ jobs:
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
+
+      - name: Build workspace packages
+        working-directory: packages/eslint-plugin-receta
+        run: |
+          bun install --no-save
+          bun run build
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
