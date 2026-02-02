@@ -1,11 +1,11 @@
 /**
  * ESLint configuration for Receta
  *
- * Uses eslint-plugin-receta from source (Bun can execute TypeScript directly)
+ * Uses eslint-plugin-receta from compiled dist (production-ready)
  */
 
-// Import from source - Bun handles .ts files natively
-const receta = await import('./packages/eslint-plugin-receta/src/index.ts').then(m => m.default)
+// Import from compiled dist
+const receta = await import('./packages/eslint-plugin-receta/dist/index.js').then(m => m.default)
 
 export default [
   {

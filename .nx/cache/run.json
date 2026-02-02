@@ -1,29 +1,29 @@
 {
   "run": {
-    "command": "nx run-many --target=test --all",
-    "startTime": "2026-02-02T15:51:29.277Z",
-    "endTime": "2026-02-02T15:51:48.523Z",
+    "command": "nx run-many --target=typecheck --all",
+    "startTime": "2026-02-02T16:14:30.460Z",
+    "endTime": "2026-02-02T16:14:31.504Z",
     "inner": false
   },
   "tasks": [
     {
-      "taskId": "eslint-plugin-receta:test",
-      "target": "test",
+      "taskId": "eslint-plugin-receta:typecheck",
+      "target": "typecheck",
       "projectName": "eslint-plugin-receta",
-      "hash": "14444901356863411447",
-      "startTime": "2026-02-02T15:51:29.325Z",
-      "endTime": "2026-02-02T15:51:29.977Z",
+      "hash": "7323045408381565096",
+      "startTime": "2026-02-02T16:14:30.503Z",
+      "endTime": "2026-02-02T16:14:31.285Z",
       "params": "",
       "cacheStatus": "cache-miss",
-      "status": 1
+      "status": 0
     },
     {
-      "taskId": "receta:test",
-      "target": "test",
+      "taskId": "receta:typecheck",
+      "target": "typecheck",
       "projectName": "receta",
-      "hash": "8196533166692718307",
-      "startTime": "2026-02-02T15:51:29.325Z",
-      "endTime": "2026-02-02T15:51:48.521Z",
+      "hash": "18001643508864919607",
+      "startTime": "2026-02-02T16:14:30.503Z",
+      "endTime": "2026-02-02T16:14:31.503Z",
       "params": "",
       "cacheStatus": "cache-miss",
       "status": 1

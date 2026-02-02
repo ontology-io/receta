@@ -128,7 +128,7 @@ describe('Collection set operations', () => {
         expect(R.pipe(
   result,
   R.map((x) => x.id),
-  R.sort()
+  R.sort((a, b) => a - b)
 )).toEqual([1, 3])
       })
 
@@ -195,7 +195,7 @@ describe('Collection set operations', () => {
       expect(R.pipe(
   changedFeatures,
   R.map((f) => f.name),
-  R.sort()
+  R.sort((a, b) => a.localeCompare(b))
 )).toEqual(['analytics', 'auth'])
     })
 
@@ -214,7 +214,7 @@ describe('Collection set operations', () => {
       expect(R.pipe(
   combined,
   R.map((x) => x.id),
-  R.sort()
+  R.sort((a, b) => a - b)
 )).toEqual([1, 2, 3, 4])
     })
 

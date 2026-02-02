@@ -1,0 +1,2 @@
+> bunx eslint . --max-warnings 0
+

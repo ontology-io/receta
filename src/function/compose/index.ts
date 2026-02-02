@@ -70,10 +70,6 @@ export function compose<A, B, C, D, E, F>(
 ): (a: A) => F
 export function compose(...fns: Array<(arg: any) => any>): (arg: any) => any {
   return (initialValue: any) => {
-    return R.reduce(R.pipe(
-  fns,
-  R.slice(),
-  R.reverse()
-), (value, fn) => fn(value), initialValue)
+    return R.reduce(R.reverse([...fns]), (value, fn) => fn(value), initialValue)
   }
 }

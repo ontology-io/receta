@@ -1,11 +1,11 @@
-> bun test
+> bun test --filter=receta
 
 [0m[1mbun test [0m[2mv1.3.6 (d530ed99)[0m
 [0m
 tests/rules/prefer-option-over-null.test.ts:
-[0m[32m✓[0m [0mprefer-option-over-null[2m > [0mvalid[2m >[0m[1m Already using Option<T>[0m [0m[2m[[1m23.44ms[0m[2m][0m
-[0m[32m✓[0m [0mprefer-option-over-null[2m > [0mvalid[2m >[0m[1m Non-nullable return type[0m [0m[2m[1.75ms[0m[2m][0m
-[0m[32m✓[0m [0mprefer-option-over-null[2m > [0mvalid[2m >[0m[1m No return type annotation[0m [0m[2m[1.66ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-option-over-null[2m > [0mvalid[2m >[0m[1m Already using Option<T>[0m [0m[2m[[1m22.95ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-option-over-null[2m > [0mvalid[2m >[0m[1m Non-nullable return type[0m [0m[2m[1.79ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-option-over-null[2m > [0mvalid[2m >[0m[1m No return type annotation[0m [0m[2m[1.57ms[0m[2m][0m
 [0m[1m684 |[0m                 node_assert_1.[0m[35mdefault[0m[0m[3m[1m.fail[0m([0m[32m"Invalid cases must have 'error' value greater than 0"[0m)[0m[2m;[0m
 [0m[1m685 |[0m             }
 [0m[1m686 |[0m             node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(messages.length, item.errors, node_util_1.[0m[35mdefault[0m[0m[3m[1m.format[0m([0m[32m'Should have %d error%s but had %d: %s'[0m, item.errors, item.errors === [0m[33m1[0m ? [0m[32m''[0m : [0m[32m's'[0m, messages.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.inspect[0m(messages)))[0m[2m;[0m
@@ -39,7 +39,7 @@ tests/rules/prefer-option-over-null.test.ts:
 [0m      [2mat [0m[0m[1m[3mstrictEqual[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m159[0m[2m:[33m14[0m[2m)[0m
 [0m      [2mat [0m[0m[1m[3m#testInvalidTemplate[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m689[0m[2m:[33m35[0m[2m)[0m
 [0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m431[0m[2m:[33m38[0m[2m)[0m
-[0m[31m✗[0m [0mprefer-option-over-null[2m > [0minvalid[2m >[0m[1m Function returning T | undefined[0m [0m[2m[5.59ms[0m[2m][0m
+[0m[31m✗[0m [0mprefer-option-over-null[2m > [0minvalid[2m >[0m[1m Function returning T | undefined[0m [0m[2m[5.99ms[0m[2m][0m
 [0m[1m684 |[0m                 node_assert_1.[0m[35mdefault[0m[0m[3m[1m.fail[0m([0m[32m"Invalid cases must have 'error' value greater than 0"[0m)[0m[2m;[0m
 [0m[1m685 |[0m             }
 [0m[1m686 |[0m             node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(messages.length, item.errors, node_util_1.[0m[35mdefault[0m[0m[3m[1m.format[0m([0m[32m'Should have %d error%s but had %d: %s'[0m, item.errors, item.errors === [0m[33m1[0m ? [0m[32m''[0m : [0m[32m's'[0m, messages.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.inspect[0m(messages)))[0m[2m;[0m
@@ -73,7 +73,7 @@ tests/rules/prefer-option-over-null.test.ts:
 [0m      [2mat [0m[0m[1m[3mstrictEqual[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m159[0m[2m:[33m14[0m[2m)[0m
 [0m      [2mat [0m[0m[1m[3m#testInvalidTemplate[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m689[0m[2m:[33m35[0m[2m)[0m
 [0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m431[0m[2m:[33m38[0m[2m)[0m
-[0m[31m✗[0m [0mprefer-option-over-null[2m > [0minvalid[2m >[0m[1m Arrow function returning T | null[0m [0m[2m[4.17ms[0m[2m][0m
+[0m[31m✗[0m [0mprefer-option-over-null[2m > [0minvalid[2m >[0m[1m Arrow function returning T | null[0m [0m[2m[4.03ms[0m[2m][0m
 [0m[1m684 |[0m                 node_assert_1.[0m[35mdefault[0m[0m[3m[1m.fail[0m([0m[32m"Invalid cases must have 'error' value greater than 0"[0m)[0m[2m;[0m
 [0m[1m685 |[0m             }
 [0m[1m686 |[0m             node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(messages.length, item.errors, node_util_1.[0m[35mdefault[0m[0m[3m[1m.format[0m([0m[32m'Should have %d error%s but had %d: %s'[0m, item.errors, item.errors === [0m[33m1[0m ? [0m[32m''[0m : [0m[32m's'[0m, messages.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.inspect[0m(messages)))[0m[2m;[0m
@@ -107,12 +107,12 @@ tests/rules/prefer-option-over-null.test.ts:
 [0m      [2mat [0m[0m[1m[3mstrictEqual[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m159[0m[2m:[33m14[0m[2m)[0m
 [0m      [2mat [0m[0m[1m[3m#testInvalidTemplate[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m689[0m[2m:[33m35[0m[2m)[0m
 [0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m431[0m[2m:[33m38[0m[2m)[0m
-[0m[31m✗[0m [0mprefer-option-over-null[2m > [0minvalid[2m >[0m[1m Function returning T | null | undefined[0m [0m[2m[2.15ms[0m[2m][0m
+[0m[31m✗[0m [0mprefer-option-over-null[2m > [0minvalid[2m >[0m[1m Function returning T | null | undefined[0m [0m[2m[2.44ms[0m[2m][0m
 [0m
 tests/rules/prefer-pipe-composition.test.ts:
-[0m[32m✓[0m [0mprefer-pipe-composition[2m > [0mvalid[2m >[0m[1m Already using R.pipe[0m [0m[2m[1.90ms[0m[2m][0m
-[0m[32m✓[0m [0mprefer-pipe-composition[2m > [0mvalid[2m >[0m[1m Single method call[0m [0m[2m[0.62ms[0m[2m][0m
-[0m[32m✓[0m [0mprefer-pipe-composition[2m > [0mvalid[2m >[0m[1m Non-array method[0m [0m[2m[0.51ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-pipe-composition[2m > [0mvalid[2m >[0m[1m Already using R.pipe[0m [0m[2m[2.15ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-pipe-composition[2m > [0mvalid[2m >[0m[1m Single method call[0m [0m[2m[0.64ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-pipe-composition[2m > [0mvalid[2m >[0m[1m Non-array method[0m [0m[2m[0.62ms[0m[2m][0m
 [0m[1m841 |[0m                     node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(result.outputs[[0m[33m0[0m], item.code, [0m[32m'Expected no autofixes to be suggested.'[0m)[0m[2m;[0m
 [0m[1m842 |[0m                 }
 [0m[1m843 |[0m             }
@@ -139,7 +139,7 @@ tests/rules/prefer-pipe-composition.test.ts:
 [0m      [2mat [0m[0m[1m[3mstrictEqual[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m159[0m[2m:[33m14[0m[2m)[0m
 [0m      [2mat [0m[0m[1m[3m#testInvalidTemplate[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m846[0m[2m:[33m39[0m[2m)[0m
 [0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m431[0m[2m:[33m38[0m[2m)[0m
-[0m[31m✗[0m [0mprefer-pipe-composition[2m > [0minvalid[2m >[0m[1m Filter and map chain[0m [0m[2m[2.98ms[0m[2m][0m
+[0m[31m✗[0m [0mprefer-pipe-composition[2m > [0minvalid[2m >[0m[1m Filter and map chain[0m [0m[2m[3.49ms[0m[2m][0m
 [0m[1m684 |[0m                 node_assert_1.[0m[35mdefault[0m[0m[3m[1m.fail[0m([0m[32m"Invalid cases must have 'error' value greater than 0"[0m)[0m[2m;[0m
 [0m[1m685 |[0m             }
 [0m[1m686 |[0m             node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(messages.length, item.errors, node_util_1.[0m[35mdefault[0m[0m[3m[1m.format[0m([0m[32m'Should have %d error%s but had %d: %s'[0m, item.errors, item.errors === [0m[33m1[0m ? [0m[32m''[0m : [0m[32m's'[0m, messages.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.inspect[0m(messages)))[0m[2m;[0m
@@ -199,12 +199,12 @@ tests/rules/prefer-pipe-composition.test.ts:
 [0m      [2mat [0m[0m[1m[3mstrictEqual[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m159[0m[2m:[33m14[0m[2m)[0m
 [0m      [2mat [0m[0m[1m[3m#testInvalidTemplate[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m689[0m[2m:[33m35[0m[2m)[0m
 [0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m431[0m[2m:[33m38[0m[2m)[0m
-[0m[31m✗[0m [0mprefer-pipe-composition[2m > [0minvalid[2m >[0m[1m Multiple chained methods[0m [0m[2m[3.14ms[0m[2m][0m
+[0m[31m✗[0m [0mprefer-pipe-composition[2m > [0minvalid[2m >[0m[1m Multiple chained methods[0m [0m[2m[2.69ms[0m[2m][0m
 [0m
 tests/rules/prefer-result-over-try-catch.test.ts:
-[0m[32m✓[0m [0mprefer-result-over-try-catch[2m > [0mvalid[2m >[0m[1m Already using Result.tryCatch[0m [0m[2m[1.40ms[0m[2m][0m
-[0m[32m✓[0m [0mprefer-result-over-try-catch[2m > [0mvalid[2m >[0m[1m Complex catch clause with logic[0m [0m[2m[1.46ms[0m[2m][0m
-[0m[32m✓[0m [0mprefer-result-over-try-catch[2m > [0mvalid[2m >[0m[1m Try-catch without return[0m [0m[2m[0.68ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-result-over-try-catch[2m > [0mvalid[2m >[0m[1m Already using Result.tryCatch[0m [0m[2m[1.44ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-result-over-try-catch[2m > [0mvalid[2m >[0m[1m Complex catch clause with logic[0m [0m[2m[1.62ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-result-over-try-catch[2m > [0mvalid[2m >[0m[1m Try-catch without return[0m [0m[2m[0.79ms[0m[2m][0m
 [0m[1m841 |[0m                     node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(result.outputs[[0m[33m0[0m], item.code, [0m[32m'Expected no autofixes to be suggested.'[0m)[0m[2m;[0m
 [0m[1m842 |[0m                 }
 [0m[1m843 |[0m             }
@@ -231,7 +231,7 @@ tests/rules/prefer-result-over-try-catch.test.ts:
 [0m      [2mat [0m[0m[1m[3mstrictEqual[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m159[0m[2m:[33m14[0m[2m)[0m
 [0m      [2mat [0m[0m[1m[3m#testInvalidTemplate[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m846[0m[2m:[33m39[0m[2m)[0m
 [0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m431[0m[2m:[33m38[0m[2m)[0m
-[0m[31m✗[0m [0mprefer-result-over-try-catch[2m > [0minvalid[2m >[0m[1m Simple try-catch with return[0m [0m[2m[2.64ms[0m[2m][0m
+[0m[31m✗[0m [0mprefer-result-over-try-catch[2m > [0minvalid[2m >[0m[1m Simple try-catch with return[0m [0m[2m[2.49ms[0m[2m][0m
 [0m[1m841 |[0m                     node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(result.outputs[[0m[33m0[0m], item.code, [0m[32m'Expected no autofixes to be suggested.'[0m)[0m[2m;[0m
 [0m[1m842 |[0m                 }
 [0m[1m843 |[0m             }
@@ -258,8 +258,8 @@ tests/rules/prefer-result-over-try-catch.test.ts:
 [0m      [2mat [0m[0m[1m[3mstrictEqual[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m159[0m[2m:[33m14[0m[2m)[0m
 [0m      [2mat [0m[0m[1m[3m#testInvalidTemplate[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m846[0m[2m:[33m39[0m[2m)[0m
 [0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m431[0m[2m:[33m38[0m[2m)[0m
-[0m[31m✗[0m [0mprefer-result-over-try-catch[2m > [0minvalid[2m >[0m[1m Try-catch with console.error[0m [0m[2m[2.32ms[0m[2m][0m
+[0m[31m✗[0m [0mprefer-result-over-try-catch[2m > [0minvalid[2m >[0m[1m Try-catch with console.error[0m [0m[2m[2.23ms[0m[2m][0m
 
 [0m[32m 9 pass[0m
 [0m[31m 7 fail[0m
-Ran 16 tests across 3 files. [0m[2m[[1m467.00ms[0m[2m][0m
+Ran 16 tests across 3 files. [0m[2m[[1m389.00ms[0m[2m][0m

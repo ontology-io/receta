@@ -266,8 +266,8 @@ describe('Async Integration Tests', () => {
       // Phase 1 tasks should run concurrently
       expect(R.pipe(
   events,
-  R.slice(0, 3),
-  R.sort()
+  R.take(3),
+  R.sort((a, b) => a.localeCompare(b))
 )).toEqual([
         'fetch-comments',
         'fetch-posts',
