@@ -1,0 +1,87 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: Create Release PR
+    runs-on: ubuntu-latest
+
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      receta_release_created: ${{ steps.release.outputs.release_created }}
+      eslint_plugin_release_created: ${{ steps.release.outputs['packages/eslint-plugin-receta--release_created'] }}
+      receta_tag_name: ${{ steps.release.outputs.tag_name }}
+      eslint_plugin_tag_name: ${{ steps.release.outputs['packages/eslint-plugin-receta--tag_name'] }}
+
+    steps:
+      - name: Run Release Please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  publish:
+    name: Publish to npm
+    needs: release-please
+    if: ${{ needs.release-please.outputs.releases_created }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+          no-cache: true
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build all packages
+        run: bunx nx run-many --target=build --all
+
+      - name: Type check
+        run: bunx nx run-many --target=typecheck --all
+
+      - name: Run tests
+        run: bunx nx run-many --target=test --all
+
+      - name: Publish receta to npm
+        if: ${{ needs.release-please.outputs.receta_release_created }}
+        run: bun publish --access public
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish eslint-plugin-receta to npm
+        if: ${{ needs.release-please.outputs.eslint_plugin_release_created }}
+        working-directory: packages/eslint-plugin-receta
+        run: bun publish --access public
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Published Packages" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.release-please.outputs.receta_release_created }}" == "true" ]; then
+            echo "- ✅ receta@${{ needs.release-please.outputs.receta_tag_name }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ needs.release-please.outputs.eslint_plugin_release_created }}" == "true" ]; then
+            echo "- ✅ eslint-plugin-receta@${{ needs.release-please.outputs.eslint_plugin_tag_name }}" >> $GITHUB_STEP_SUMMARY
+          fi
