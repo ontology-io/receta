@@ -1,7 +1,7 @@
-import { Option, fromNullable } from 'receta/option'
+import { none } from 'receta/option'
 import * as R from 'remeda'
-import type { Option } from '../types'
 import { isSome } from '../guards'
+import type { Option } from '../types'
 
 /**
  * Converts an Option to a nullable value.
@@ -42,6 +42,7 @@ export function toNullable(...args: unknown[]): unknown {
   return R.purry(toNullableImplementation, args)
 }
 
-function toNullableImplementation<T>(option: Option<T>): Option<T> {
+// eslint-disable-next-line receta/prefer-option-over-null -- Intentional escape hatch for external API interop
+function toNullableImplementation<T>(option: Option<T>): T | null {
   return isSome(option) ? option.value : null
 }

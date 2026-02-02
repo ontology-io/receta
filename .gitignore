@@ -29,3 +29,7 @@ coverage/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Nx
+.nx/cache/
+.nx/workspace-data/

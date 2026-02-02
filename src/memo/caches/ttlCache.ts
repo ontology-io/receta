@@ -1,4 +1,4 @@
-import { Option, fromNullable } from 'receta/option'
+import { type Option, fromNullable, some, none } from '../../option'
 import type { Cache } from '../types'
 
 interface CacheEntry<V> {
@@ -35,15 +35,15 @@ export function ttlCache<K, V>(ttlMs: number): Cache<K, V> {
   return {
     get(key: K): Option<V> {
       const entry = map.get(key)
-      if (!entry) return undefined
+      if (!entry) return none()
 
       // Check if expired
       if (Date.now() > entry.expiresAt) {
         map.delete(key)
-        return undefined
+        return none()
       }
 
-      return entry.value
+      return some(entry.value)
     },
 
     set(key: K, value: V): void {

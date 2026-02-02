@@ -1,3 +1,4 @@
+import { unwrap, fromNullable, some, none } from '../../option'
 import type { Cache, MemoizeOptions, MemoizedFunction } from '../types'
 
 /**
@@ -32,24 +33,41 @@ export function memoize<Args extends readonly [unknown, ...unknown[]], R>(
   fn: (...args: Args) => R,
   options: MemoizeOptions = {}
 ): MemoizedFunction<Args, R> {
-  const cache: Cache<unknown, R> = (options.cache as Cache<unknown, R>) ?? new Map()
+  // Wrap Map to return Option values
+  const defaultCache = (): Cache<unknown, R> & { forEach?: Map<unknown, R>['forEach'] } => {
+    const map = new Map<unknown, R>()
+    return {
+      get: (key) => (map.has(key) ? some(map.get(key) as R) : none()),
+      set: (key, value) => {
+        map.set(key, value)
+        // Handle maxSize eviction
+        if (options.maxSize && map.size > options.maxSize) {
+          const firstKey = map.keys().next().value
+          if (firstKey !== undefined) {
+            map.delete(firstKey)
+          }
+        }
+      },
+      has: (key) => map.has(key),
+      delete: (key) => map.delete(key),
+      clear: () => map.clear(),
+      // Add forEach for invalidateWhere support
+      forEach: map.forEach.bind(map) as any,
+    }
+  }
+
+  const cache: Cache<unknown, R> = (options.cache as Cache<unknown, R>) ?? defaultCache()
 
   const memoized = (...args: Args): R => {
     // Use first argument as cache key
     const key = args[0]
 
     if (cache.has(key)) {
-      return cache.get(key)!
+      return unwrap(cache.get(key))
     }
 
     const result = fn(...args)
     cache.set(key, result)
-
-    // Handle maxSize eviction (only for Map cache)
-    if (options.maxSize && cache instanceof Map && cache.size > options.maxSize) {
-      const firstKey = cache.keys().next().value
-      cache.delete(firstKey)
-    }
 
     return result
   }

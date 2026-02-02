@@ -1,4 +1,4 @@
-import { Option, fromNullable } from 'receta/option'
+import { type Option, fromNullable } from '../../option'
 import type { Cache } from '../types'
 
 /**
@@ -40,7 +40,7 @@ export function weakCache<K extends object, V>(): Cache<K, V> {
 
   return {
     get(key: K): Option<V> {
-      return weak.get(key)
+      return fromNullable(weak.get(key))
     },
 
     set(key: K, value: V): void {

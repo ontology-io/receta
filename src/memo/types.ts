@@ -1,9 +1,11 @@
+import type { Option } from '../option/types'
+
 /**
  * Cache interface that memoization functions can use.
  * Allows custom cache implementations (Map, LRU, TTL, WeakMap, etc.).
  */
 export interface Cache<K, V> {
-  get(key: K): V | undefined
+  get(key: K): Option<V>
   set(key: K, value: V): void
   has(key: K): boolean
   delete(key: K): boolean

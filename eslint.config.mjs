@@ -50,6 +50,7 @@ export default [
       '*.config.js',
       '*.config.mjs',
       'packages/eslint-plugin-receta/**',
+      '.nx/**',
     ],
   },
 ]

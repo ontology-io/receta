@@ -1,3 +1,4 @@
+import { isSome, unwrap } from '../../option'
 import type { MemoizedFunction, MemoizedAsyncFunction } from '../types'
 
 /**
@@ -64,10 +65,10 @@ export function invalidateWhere<K = unknown, V = unknown>(
   memoized: AnyMemoized,
   predicate: (key: K, value?: V) => boolean
 ): void {
-  const cache = memoized.cache
+  const cache = memoized.cache as any
 
-  // Only Map caches support iteration
-  if (!(cache instanceof Map)) {
+  // Only Map-based caches support iteration
+  if (typeof cache.forEach !== 'function') {
     throw new Error(
       'invalidateWhere only works with Map-based caches (default, ttlCache, lruCache). WeakMap does not support iteration.'
     )
@@ -76,7 +77,8 @@ export function invalidateWhere<K = unknown, V = unknown>(
   const keysToDelete: K[] = []
 
   // Collect keys to delete (can't delete during iteration)
-  cache.forEach((value, key) => {
+  // Note: forEach provides raw values (not wrapped in Option)
+  cache.forEach((value: any, key: K) => {
     if (predicate(key as K, value as V)) {
       keysToDelete.push(key as K)
     }

@@ -3,6 +3,7 @@ import { memoize } from '../memoize'
 import { ttlCache } from '../caches/ttlCache'
 import { lruCache } from '../caches/lruCache'
 import { weakCache } from '../caches/weakCache'
+import { isSome, isNone, unwrap, some, none } from '../../option'
 
 describe('Cache Strategies', () => {
   describe('ttlCache', () => {
@@ -60,14 +61,14 @@ describe('Cache Strategies', () => {
       expect(cache.has(1)).toBe(false)
     })
 
-    it('get() returns undefined for expired entries', async () => {
+    it('get() returns None for expired entries', async () => {
       const cache = ttlCache<number, number>(50)
 
       cache.set(1, 10)
-      expect(cache.get(1)).toBe(10)
+      expect(cache.get(1)).toEqual(some(10))
 
       await new Promise((resolve) => setTimeout(resolve, 60))
-      expect(cache.get(1)).toBeUndefined()
+      expect(cache.get(1)).toEqual(none())
     })
 
     it('clears all entries', () => {
@@ -140,7 +141,7 @@ describe('Cache Strategies', () => {
       expect(cache.has(2)).toBe(false)
       expect(cache.has(3)).toBe(true)
       expect(cache.has(4)).toBe(true)
-      expect(cache.get(1)).toBe(11)
+      expect(cache.get(1)).toEqual(some(11))
     })
 
     it('throws on invalid max size', () => {
@@ -190,17 +191,17 @@ describe('Cache Strategies', () => {
       cache.set(node1, fn(node1))
       cache.set(node2, fn(node2))
 
-      expect(cache.get(node1)).toBe(10)
-      expect(cache.get(node2)).toBe(20)
+      expect(cache.get(node1)).toEqual(some(10))
+      expect(cache.get(node2)).toEqual(some(20))
       expect(cache.has(node1)).toBe(true)
       expect(cache.has(node2)).toBe(true)
     })
 
-    it('returns undefined for non-existent keys', () => {
+    it('returns None for non-existent keys', () => {
       const cache = weakCache<object, number>()
       const obj = {}
 
-      expect(cache.get(obj)).toBeUndefined()
+      expect(cache.get(obj)).toEqual(none())
       expect(cache.has(obj)).toBe(false)
     })
 
@@ -248,7 +249,7 @@ describe('Cache Strategies', () => {
       const cache = ttlCache<string, number>(5000)
 
       cache.set('key', 42)
-      expect(cache.get('key')).toBe(42)
+      expect(cache.get('key')).toEqual(some(42))
       expect(cache.has('key')).toBe(true)
       expect(cache.delete('key')).toBe(true)
       expect(cache.has('key')).toBe(false)
@@ -258,7 +259,7 @@ describe('Cache Strategies', () => {
       const cache = lruCache<string, number>(10)
 
       cache.set('key', 42)
-      expect(cache.get('key')).toBe(42)
+      expect(cache.get('key')).toEqual(some(42))
       expect(cache.has('key')).toBe(true)
       expect(cache.delete('key')).toBe(true)
       expect(cache.has('key')).toBe(false)
@@ -269,7 +270,7 @@ describe('Cache Strategies', () => {
       const key = {}
 
       cache.set(key, 42)
-      expect(cache.get(key)).toBe(42)
+      expect(cache.get(key)).toEqual(some(42))
       expect(cache.has(key)).toBe(true)
       expect(cache.delete(key)).toBe(true)
       expect(cache.has(key)).toBe(false)

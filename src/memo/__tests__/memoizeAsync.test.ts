@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { memoizeAsync } from '../memoizeAsync'
+import { isSome, unwrap } from '../../option'
 
 describe('memoizeAsync', () => {
   describe('basic caching', () => {
@@ -124,7 +125,9 @@ describe('memoizeAsync', () => {
       await memoized(5)
 
       expect(memoized.cache.has(5)).toBe(true)
-      const cached = memoized.cache.get(5)
+      const cachedOption = memoized.cache.get(5)
+      expect(isSome(cachedOption)).toBe(true)
+      const cached = unwrap(cachedOption)
       expect(cached).toBeInstanceOf(Promise)
       await expect(cached).resolves.toBe(10)
     })

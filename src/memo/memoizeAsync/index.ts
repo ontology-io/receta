@@ -1,3 +1,4 @@
+import { unwrap, some, none } from '../../option'
 import type { Cache, KeyFn, MemoizeOptions, MemoizedAsyncFunction } from '../types'
 
 /**
@@ -44,8 +45,33 @@ export function memoizeAsync<Args extends readonly unknown[], R>(
   fn: (...args: Args) => Promise<R>,
   options: MemoizeOptions & { keyFn?: KeyFn<Args, unknown> } = {}
 ): MemoizedAsyncFunction<Args, R> {
+  // Wrap Map to return Option values
+  const defaultCache = (): Cache<unknown, Promise<R>> & {
+    forEach?: Map<unknown, Promise<R>>['forEach']
+  } => {
+    const map = new Map<unknown, Promise<R>>()
+    return {
+      get: (key) => (map.has(key) ? some(map.get(key) as Promise<R>) : none()),
+      set: (key, value) => {
+        map.set(key, value)
+        // Handle maxSize eviction
+        if (options.maxSize && map.size > options.maxSize) {
+          const firstKey = map.keys().next().value
+          if (firstKey !== undefined) {
+            map.delete(firstKey)
+          }
+        }
+      },
+      has: (key) => map.has(key),
+      delete: (key) => map.delete(key),
+      clear: () => map.clear(),
+      // Add forEach for invalidateWhere support
+      forEach: map.forEach.bind(map) as any,
+    }
+  }
+
   const cache: Cache<unknown, Promise<R>> =
-    (options.cache as Cache<unknown, Promise<R>>) ?? new Map()
+    (options.cache as Cache<unknown, Promise<R>>) ?? defaultCache()
   const keyFn = options.keyFn ?? (((...args: Args) => args[0]) as KeyFn<Args, unknown>)
 
   const memoized = async (...args: Args): Promise<R> => {
@@ -53,7 +79,7 @@ export function memoizeAsync<Args extends readonly unknown[], R>(
 
     // Return cached promise if exists
     if (cache.has(key)) {
-      return cache.get(key)!
+      return unwrap(cache.get(key))
     }
 
     // Create new promise and cache it immediately (for deduplication)
@@ -69,12 +95,6 @@ export function memoizeAsync<Args extends readonly unknown[], R>(
       })
 
     cache.set(key, promise)
-
-    // Handle maxSize eviction (only for Map cache)
-    if (options.maxSize && cache instanceof Map && cache.size > options.maxSize) {
-      const firstKey = cache.keys().next().value
-      cache.delete(firstKey)
-    }
 
     return promise
   }

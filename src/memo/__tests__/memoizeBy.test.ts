@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { memoizeBy } from '../memoizeBy'
+import { some } from '../../option'
 
 describe('memoizeBy', () => {
   describe('custom key extraction', () => {
@@ -108,7 +109,7 @@ describe('memoizeBy', () => {
       memoized(5)
 
       expect(memoized.cache.has('5')).toBe(true)
-      expect(memoized.cache.get('5')).toBe(10)
+      expect(memoized.cache.get('5')).toEqual(some(10))
     })
 
     it('exposes clear method', () => {

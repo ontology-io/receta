@@ -85,6 +85,7 @@
     }
   },
   "scripts": {
+    "postinstall": "test -d packages/eslint-plugin-receta/dist || (cd packages/eslint-plugin-receta && bun run build)",
     "build": "nx run-many --target=build --all",
     "build:receta": "nx run receta:build",
     "test": "nx run-many --target=test --all",
