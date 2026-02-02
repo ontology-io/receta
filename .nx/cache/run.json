@@ -1,0 +1,32 @@
+{
+  "run": {
+    "command": "nx run-many --target=test --all",
+    "startTime": "2026-02-02T15:51:29.277Z",
+    "endTime": "2026-02-02T15:51:48.523Z",
+    "inner": false
+  },
+  "tasks": [
+    {
+      "taskId": "eslint-plugin-receta:test",
+      "target": "test",
+      "projectName": "eslint-plugin-receta",
+      "hash": "14444901356863411447",
+      "startTime": "2026-02-02T15:51:29.325Z",
+      "endTime": "2026-02-02T15:51:29.977Z",
+      "params": "",
+      "cacheStatus": "cache-miss",
+      "status": 1
+    },
+    {
+      "taskId": "receta:test",
+      "target": "test",
+      "projectName": "receta",
+      "hash": "8196533166692718307",
+      "startTime": "2026-02-02T15:51:29.325Z",
+      "endTime": "2026-02-02T15:51:48.521Z",
+      "params": "",
+      "cacheStatus": "cache-miss",
+      "status": 1
+    }
+  ]
+}

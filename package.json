@@ -85,11 +85,13 @@
     }
   },
   "scripts": {
-    "build": "tsc",
-    "test": "bun test",
+    "build": "nx run-many --target=build --all",
+    "build:receta": "nx run receta:build",
+    "test": "nx run-many --target=test --all",
     "test:watch": "bun test --watch",
-    "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist",
+    "typecheck": "nx run-many --target=typecheck --all",
+    "clean": "nx run-many --target=clean --all",
+    "lint": "nx run receta:lint",
     "generate-llm": "bun run scripts/generate-llm-txt.ts",
     "prepublishOnly": "bun run clean && bun run build && bun run test && bun run typecheck"
   },
@@ -115,11 +117,13 @@
     "remeda": "^2.19.1"
   },
   "devDependencies": {
+    "@nx/js": "^22.4.4",
     "@types/bun": "latest",
-    "typescript": "^5.7.3",
-    "eslint-plugin-receta": "workspace:*",
     "@typescript-eslint/parser": "^8.20.0",
-    "eslint": "^9.18.0"
+    "eslint": "^9.18.0",
+    "eslint-plugin-receta": "workspace:*",
+    "nx": "^22.4.4",
+    "typescript": "^5.7.3"
   },
   "peerDependencies": {
     "typescript": ">=5.0.0"

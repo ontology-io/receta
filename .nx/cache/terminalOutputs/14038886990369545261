@@ -1,0 +1,63 @@
+> tsc
+
+src/function/compose/index.ts(75,5): error TS2551: Property 'slice' does not exist on type 'typeof import("/Users/khaledmaher/repos/ontology/receta/node_modules/remeda/dist/index")'. Did you mean 'splice'?
+src/function/compose/index.ts(77,19): error TS18046: 'fn' is of type 'unknown'.
+src/memo/caches/lruCache.ts(38,5): error TS2322: Type '(key: K) => Option<V>' is not assignable to type '(key: K) => V | undefined'.
+  Type 'Option<V>' is not assignable to type 'V | undefined'.
+    Type 'None' is not assignable to type 'V'.
+      'V' could be instantiated with an arbitrary type which could be unrelated to 'None'.
+src/memo/caches/lruCache.ts(40,32): error TS2322: Type 'undefined' is not assignable to type 'Option<V>'.
+src/memo/caches/lruCache.ts(46,7): error TS2322: Type 'V & ({} | null)' is not assignable to type 'Option<V>'.
+  Type 'V & null' is not assignable to type 'Option<V>'.
+    Type 'V & null' is not assignable to type 'Some<V>'.
+src/memo/caches/ttlCache.ts(36,5): error TS2322: Type '(key: K) => Option<V>' is not assignable to type '(key: K) => V | undefined'.
+  Type 'Option<V>' is not assignable to type 'V | undefined'.
+    Type 'None' is not assignable to type 'V'.
+      'V' could be instantiated with an arbitrary type which could be unrelated to 'None'.
+src/memo/caches/ttlCache.ts(38,19): error TS2322: Type 'undefined' is not assignable to type 'Option<V>'.
+src/memo/caches/ttlCache.ts(43,9): error TS2322: Type 'undefined' is not assignable to type 'Option<V>'.
+src/memo/caches/ttlCache.ts(46,7): error TS2322: Type 'V' is not assignable to type 'Option<V>'.
+  Type 'V' is not assignable to type 'Some<V>'.
+src/memo/caches/weakCache.ts(42,5): error TS2322: Type '(key: K) => Option<V>' is not assignable to type '(key: K) => V | undefined'.
+  Type 'Option<V>' is not assignable to type 'V | undefined'.
+    Type 'None' is not assignable to type 'V'.
+      'V' could be instantiated with an arbitrary type which could be unrelated to 'None'.
+src/memo/caches/weakCache.ts(43,7): error TS2322: Type 'V | undefined' is not assignable to type 'Option<V>'.
+  Type 'undefined' is not assignable to type 'Option<V>'.
+src/option/toNullable/index.ts(1,10): error TS2300: Duplicate identifier 'Option'.
+src/option/toNullable/index.ts(3,15): error TS2300: Duplicate identifier 'Option'.
+src/option/toNullable/index.ts(46,27): error TS2322: Type 'T' is not assignable to type 'Option<T>'.
+  Type 'T' is not assignable to type 'Some<T>'.
+src/option/toNullable/index.ts(46,42): error TS2322: Type 'null' is not assignable to type 'Option<T>'.
+> tsc
+
+src/function/compose/index.ts(75,5): error TS2551: Property 'slice' does not exist on type 'typeof import("/Users/khaledmaher/repos/ontology/receta/node_modules/remeda/dist/index")'. Did you mean 'splice'?
+src/function/compose/index.ts(77,19): error TS18046: 'fn' is of type 'unknown'.
+src/memo/caches/lruCache.ts(38,5): error TS2322: Type '(key: K) => Option<V>' is not assignable to type '(key: K) => V | undefined'.
+  Type 'Option<V>' is not assignable to type 'V | undefined'.
+    Type 'None' is not assignable to type 'V'.
+      'V' could be instantiated with an arbitrary type which could be unrelated to 'None'.
+src/memo/caches/lruCache.ts(40,32): error TS2322: Type 'undefined' is not assignable to type 'Option<V>'.
+src/memo/caches/lruCache.ts(46,7): error TS2322: Type 'V & ({} | null)' is not assignable to type 'Option<V>'.
+  Type 'V & null' is not assignable to type 'Option<V>'.
+    Type 'V & null' is not assignable to type 'Some<V>'.
+src/memo/caches/ttlCache.ts(36,5): error TS2322: Type '(key: K) => Option<V>' is not assignable to type '(key: K) => V | undefined'.
+  Type 'Option<V>' is not assignable to type 'V | undefined'.
+    Type 'None' is not assignable to type 'V'.
+      'V' could be instantiated with an arbitrary type which could be unrelated to 'None'.
+src/memo/caches/ttlCache.ts(38,19): error TS2322: Type 'undefined' is not assignable to type 'Option<V>'.
+src/memo/caches/ttlCache.ts(43,9): error TS2322: Type 'undefined' is not assignable to type 'Option<V>'.
+src/memo/caches/ttlCache.ts(46,7): error TS2322: Type 'V' is not assignable to type 'Option<V>'.
+  Type 'V' is not assignable to type 'Some<V>'.
+src/memo/caches/weakCache.ts(42,5): error TS2322: Type '(key: K) => Option<V>' is not assignable to type '(key: K) => V | undefined'.
+  Type 'Option<V>' is not assignable to type 'V | undefined'.
+    Type 'None' is not assignable to type 'V'.
+      'V' could be instantiated with an arbitrary type which could be unrelated to 'None'.
+src/memo/caches/weakCache.ts(43,7): error TS2322: Type 'V | undefined' is not assignable to type 'Option<V>'.
+  Type 'undefined' is not assignable to type 'Option<V>'.
+src/option/toNullable/index.ts(1,10): error TS2300: Duplicate identifier 'Option'.
+src/option/toNullable/index.ts(3,15): error TS2300: Duplicate identifier 'Option'.
+src/option/toNullable/index.ts(46,27): error TS2322: Type 'T' is not assignable to type 'Option<T>'.
+  Type 'T' is not assignable to type 'Some<T>'.
+src/option/toNullable/index.ts(46,42): error TS2322: Type 'null' is not assignable to type 'Option<T>'.
+Warning: command "tsc" exited with non-zero status code

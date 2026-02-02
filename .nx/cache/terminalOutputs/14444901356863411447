@@ -1,0 +1,265 @@
+> bun test
+
+[0m[1mbun test [0m[2mv1.3.6 (d530ed99)[0m
+[0m
+tests/rules/prefer-option-over-null.test.ts:
+[0m[32m✓[0m [0mprefer-option-over-null[2m > [0mvalid[2m >[0m[1m Already using Option<T>[0m [0m[2m[[1m22.89ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-option-over-null[2m > [0mvalid[2m >[0m[1m Non-nullable return type[0m [0m[2m[2.12ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-option-over-null[2m > [0mvalid[2m >[0m[1m No return type annotation[0m [0m[2m[1.32ms[0m[2m][0m
+[0m[1m684 |[0m                 node_assert_1.[0m[35mdefault[0m[0m[3m[1m.fail[0m([0m[32m"Invalid cases must have 'error' value greater than 0"[0m)[0m[2m;[0m
+[0m[1m685 |[0m             }
+[0m[1m686 |[0m             node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(messages.length, item.errors, node_util_1.[0m[35mdefault[0m[0m[3m[1m.format[0m([0m[32m'Should have %d error%s but had %d: %s'[0m, item.errors, item.errors === [0m[33m1[0m ? [0m[32m''[0m : [0m[32m's'[0m, messages.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.inspect[0m(messages)))[0m[2m;[0m
+[0m[1m687 |[0m         }
+[0m[1m688 |[0m         [0m[35melse[0m {
+[0m[1m689 |[0m             node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(messages.length, item.errors.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.format[0m([0m[32m'Should have %d error%s but had %d: %s'[0m, item.errors.length, item.errors.length === [0m[33m1[0m ? [0m[32m''[0m : [0m[32m's'[0m, messages.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.inspect[0m(messages)))[0m[2m;[0m
+                                        [31m[1m^[0m
+[0m[31mAssertionError[0m[2m:[0m [1mShould have 2 errors but had 1: [
+  {
+    ruleId: 'prefer-option-over-null',
+    severity: 2,
+    message: 'Use Option<T> instead of T | null | undefined',
+    line: 2,
+    column: 38,
+    nodeType: 'TSTypeAnnotation',
+    messageId: 'preferOption',
+    endLine: 2,
+    endColumn: 56,
+    fix: {
+      range: [Array],
+      text: "import { Option, fromNullable } from 'receta/option'\n" +
+        '\n' +
+        '        function findUser(id: string): Option<User>'
+    }
+  }
+]
+
+1 !== 2
+[0m
+[0m      [2mat [0m[0m[1m[3minnerFail[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m36[0m[2m:[33m32[0m[2m)[0m
+[0m      [2mat [0m[0m[1m[3mstrictEqual[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m159[0m[2m:[33m14[0m[2m)[0m
+[0m      [2mat [0m[0m[1m[3m#testInvalidTemplate[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m689[0m[2m:[33m35[0m[2m)[0m
+[0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m431[0m[2m:[33m38[0m[2m)[0m
+[0m[31m✗[0m [0mprefer-option-over-null[2m > [0minvalid[2m >[0m[1m Function returning T | undefined[0m [0m[2m[5.56ms[0m[2m][0m
+[0m[1m684 |[0m                 node_assert_1.[0m[35mdefault[0m[0m[3m[1m.fail[0m([0m[32m"Invalid cases must have 'error' value greater than 0"[0m)[0m[2m;[0m
+[0m[1m685 |[0m             }
+[0m[1m686 |[0m             node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(messages.length, item.errors, node_util_1.[0m[35mdefault[0m[0m[3m[1m.format[0m([0m[32m'Should have %d error%s but had %d: %s'[0m, item.errors, item.errors === [0m[33m1[0m ? [0m[32m''[0m : [0m[32m's'[0m, messages.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.inspect[0m(messages)))[0m[2m;[0m
+[0m[1m687 |[0m         }
+[0m[1m688 |[0m         [0m[35melse[0m {
+[0m[1m689 |[0m             node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(messages.length, item.errors.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.format[0m([0m[32m'Should have %d error%s but had %d: %s'[0m, item.errors.length, item.errors.length === [0m[33m1[0m ? [0m[32m''[0m : [0m[32m's'[0m, messages.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.inspect[0m(messages)))[0m[2m;[0m
+                                        [31m[1m^[0m
+[0m[31mAssertionError[0m[2m:[0m [1mShould have 2 errors but had 1: [
+  {
+    ruleId: 'prefer-option-over-null',
+    severity: 2,
+    message: 'Use Option<T> instead of T | null | undefined',
+    line: 2,
+    column: 40,
+    nodeType: 'TSTypeAnnotation',
+    messageId: 'preferOption',
+    endLine: 2,
+    endColumn: 55,
+    fix: {
+      range: [Array],
+      text: "import { Option, fromNullable } from 'receta/option'\n" +
+        '\n' +
+        '        const getConfig = (key: string): Option<Config>'
+    }
+  }
+]
+
+1 !== 2
+[0m
+[0m      [2mat [0m[0m[1m[3minnerFail[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m36[0m[2m:[33m32[0m[2m)[0m
+[0m      [2mat [0m[0m[1m[3mstrictEqual[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m159[0m[2m:[33m14[0m[2m)[0m
+[0m      [2mat [0m[0m[1m[3m#testInvalidTemplate[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m689[0m[2m:[33m35[0m[2m)[0m
+[0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m431[0m[2m:[33m38[0m[2m)[0m
+[0m[31m✗[0m [0mprefer-option-over-null[2m > [0minvalid[2m >[0m[1m Arrow function returning T | null[0m [0m[2m[4.42ms[0m[2m][0m
+[0m[1m684 |[0m                 node_assert_1.[0m[35mdefault[0m[0m[3m[1m.fail[0m([0m[32m"Invalid cases must have 'error' value greater than 0"[0m)[0m[2m;[0m
+[0m[1m685 |[0m             }
+[0m[1m686 |[0m             node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(messages.length, item.errors, node_util_1.[0m[35mdefault[0m[0m[3m[1m.format[0m([0m[32m'Should have %d error%s but had %d: %s'[0m, item.errors, item.errors === [0m[33m1[0m ? [0m[32m''[0m : [0m[32m's'[0m, messages.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.inspect[0m(messages)))[0m[2m;[0m
+[0m[1m687 |[0m         }
+[0m[1m688 |[0m         [0m[35melse[0m {
+[0m[1m689 |[0m             node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(messages.length, item.errors.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.format[0m([0m[32m'Should have %d error%s but had %d: %s'[0m, item.errors.length, item.errors.length === [0m[33m1[0m ? [0m[32m''[0m : [0m[32m's'[0m, messages.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.inspect[0m(messages)))[0m[2m;[0m
+                                        [31m[1m^[0m
+[0m[31mAssertionError[0m[2m:[0m [1mShould have 2 errors but had 1: [
+  {
+    ruleId: 'prefer-option-over-null',
+    severity: 2,
+    message: 'Use Option<T> instead of T | null | undefined',
+    line: 2,
+    column: 30,
+    nodeType: 'TSTypeAnnotation',
+    messageId: 'preferOption',
+    endLine: 2,
+    endColumn: 57,
+    fix: {
+      range: [Array],
+      text: "import { Option, fromNullable } from 'receta/option'\n" +
+        '\n' +
+        '        function maybeValue(): Option<string>'
+    }
+  }
+]
+
+1 !== 2
+[0m
+[0m      [2mat [0m[0m[1m[3minnerFail[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m36[0m[2m:[33m32[0m[2m)[0m
+[0m      [2mat [0m[0m[1m[3mstrictEqual[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m159[0m[2m:[33m14[0m[2m)[0m
+[0m      [2mat [0m[0m[1m[3m#testInvalidTemplate[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m689[0m[2m:[33m35[0m[2m)[0m
+[0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m431[0m[2m:[33m38[0m[2m)[0m
+[0m[31m✗[0m [0mprefer-option-over-null[2m > [0minvalid[2m >[0m[1m Function returning T | null | undefined[0m [0m[2m[2.68ms[0m[2m][0m
+[0m
+tests/rules/prefer-pipe-composition.test.ts:
+[0m[32m✓[0m [0mprefer-pipe-composition[2m > [0mvalid[2m >[0m[1m Already using R.pipe[0m [0m[2m[2.05ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-pipe-composition[2m > [0mvalid[2m >[0m[1m Single method call[0m [0m[2m[0.78ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-pipe-composition[2m > [0mvalid[2m >[0m[1m Non-array method[0m [0m[2m[0.58ms[0m[2m][0m
+[0m[1m841 |[0m                     node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(result.outputs[[0m[33m0[0m], item.code, [0m[32m'Expected no autofixes to be suggested.'[0m)[0m[2m;[0m
+[0m[1m842 |[0m                 }
+[0m[1m843 |[0m             }
+[0m[1m844 |[0m             [0m[35melse[0m [0m[35mif[0m ([0m[35mtypeof[0m item.output === [0m[32m'string'[0m) {
+[0m[1m845 |[0m                 ([0m[33m0[0m, node_assert_1.[0m[35mdefault[0m)(result.outputs.length > [0m[33m0[0m, [0m[32m'Expected autofix to be suggested.'[0m)[0m[2m;[0m
+[0m[1m846 |[0m                 node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(result.outputs[[0m[33m0[0m], item.output, [0m[32m'Output is incorrect.'[0m)[0m[2m;[0m
+                                            [31m[1m^[0m
+[0m[31mAssertionError[0m[2m:[0m [1mOutput is incorrect.
+[32m+ actual[39m [31m- expected[39m
+
+[32m+[39m "import * as R from 'remeda'\n" +
+[32m+[39m   '\n' +
+[32m+[39m   '        const result = R.pipe(\n' +
+[31m-[39m '\n' +
+[31m-[39m   "        import * as R from 'remeda'\n" +
+[31m-[39m   'const result = R.pipe(\n' +
+[39m    '  arr,\n' +
+[39m    '  R.filter(x => x > 0),\n' +
+[39m    '  R.map(x => x * 2)\n' +
+[39m    ')\n' +
+[39m    '      '
+[0m
+[0m      [2mat [0m[0m[1m[3minnerFail[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m36[0m[2m:[33m32[0m[2m)[0m
+[0m      [2mat [0m[0m[1m[3mstrictEqual[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m159[0m[2m:[33m14[0m[2m)[0m
+[0m      [2mat [0m[0m[1m[3m#testInvalidTemplate[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m846[0m[2m:[33m39[0m[2m)[0m
+[0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m431[0m[2m:[33m38[0m[2m)[0m
+[0m[31m✗[0m [0mprefer-pipe-composition[2m > [0minvalid[2m >[0m[1m Filter and map chain[0m [0m[2m[3.08ms[0m[2m][0m
+[0m[1m684 |[0m                 node_assert_1.[0m[35mdefault[0m[0m[3m[1m.fail[0m([0m[32m"Invalid cases must have 'error' value greater than 0"[0m)[0m[2m;[0m
+[0m[1m685 |[0m             }
+[0m[1m686 |[0m             node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(messages.length, item.errors, node_util_1.[0m[35mdefault[0m[0m[3m[1m.format[0m([0m[32m'Should have %d error%s but had %d: %s'[0m, item.errors, item.errors === [0m[33m1[0m ? [0m[32m''[0m : [0m[32m's'[0m, messages.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.inspect[0m(messages)))[0m[2m;[0m
+[0m[1m687 |[0m         }
+[0m[1m688 |[0m         [0m[35melse[0m {
+[0m[1m689 |[0m             node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(messages.length, item.errors.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.format[0m([0m[32m'Should have %d error%s but had %d: %s'[0m, item.errors.length, item.errors.length === [0m[33m1[0m ? [0m[32m''[0m : [0m[32m's'[0m, messages.length, node_util_1.[0m[35mdefault[0m[0m[3m[1m.inspect[0m(messages)))[0m[2m;[0m
+                                        [31m[1m^[0m
+[0m[31mAssertionError[0m[2m:[0m [1mShould have 1 error but had 2: [
+  {
+    ruleId: 'prefer-pipe-composition',
+    severity: 2,
+    message: 'Use R.pipe() instead of method chaining for better composition',
+    line: 2,
+    column: 23,
+    nodeType: 'CallExpression',
+    messageId: 'preferPipe',
+    endLine: 5,
+    endColumn: 18,
+    fix: {
+      range: [Array],
+      text: "import * as R from 'remeda'\n" +
+        '\n' +
+        '        const users = R.pipe(\n' +
+        '  data,\n' +
+        '  R.filter(u => u.active),\n' +
+        '  R.map(u => u.name),\n' +
+        '  R.sort()\n' +
+        ')'
+    }
+  },
+  {
+    ruleId: 'prefer-pipe-composition',
+    severity: 2,
+    message: 'Use R.pipe() instead of method chaining for better composition',
+    line: 2,
+    column: 23,
+    nodeType: 'CallExpression',
+    messageId: 'preferPipe',
+    endLine: 4,
+    endColumn: 28,
+    fix: {
+      range: [Array],
+      text: "import * as R from 'remeda'\n" +
+        '\n' +
+        '        const users = R.pipe(\n' +
+        '  data,\n' +
+        '  R.filter(u => u.active),\n' +
+        '  R.map(u => u.name)\n' +
+        ')'
+    }
+  }
+]
+
+2 !== 1
+[0m
+[0m      [2mat [0m[0m[1m[3minnerFail[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m36[0m[2m:[33m32[0m[2m)[0m
+[0m      [2mat [0m[0m[1m[3mstrictEqual[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m159[0m[2m:[33m14[0m[2m)[0m
+[0m      [2mat [0m[0m[1m[3m#testInvalidTemplate[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m689[0m[2m:[33m35[0m[2m)[0m
+[0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m431[0m[2m:[33m38[0m[2m)[0m
+[0m[31m✗[0m [0mprefer-pipe-composition[2m > [0minvalid[2m >[0m[1m Multiple chained methods[0m [0m[2m[2.76ms[0m[2m][0m
+[0m
+tests/rules/prefer-result-over-try-catch.test.ts:
+[0m[32m✓[0m [0mprefer-result-over-try-catch[2m > [0mvalid[2m >[0m[1m Already using Result.tryCatch[0m [0m[2m[1.45ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-result-over-try-catch[2m > [0mvalid[2m >[0m[1m Complex catch clause with logic[0m [0m[2m[1.32ms[0m[2m][0m
+[0m[32m✓[0m [0mprefer-result-over-try-catch[2m > [0mvalid[2m >[0m[1m Try-catch without return[0m [0m[2m[1.03ms[0m[2m][0m
+[0m[1m841 |[0m                     node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(result.outputs[[0m[33m0[0m], item.code, [0m[32m'Expected no autofixes to be suggested.'[0m)[0m[2m;[0m
+[0m[1m842 |[0m                 }
+[0m[1m843 |[0m             }
+[0m[1m844 |[0m             [0m[35melse[0m [0m[35mif[0m ([0m[35mtypeof[0m item.output === [0m[32m'string'[0m) {
+[0m[1m845 |[0m                 ([0m[33m0[0m, node_assert_1.[0m[35mdefault[0m)(result.outputs.length > [0m[33m0[0m, [0m[32m'Expected autofix to be suggested.'[0m)[0m[2m;[0m
+[0m[1m846 |[0m                 node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(result.outputs[[0m[33m0[0m], item.output, [0m[32m'Output is incorrect.'[0m)[0m[2m;[0m
+                                            [31m[1m^[0m
+[0m[31mAssertionError[0m[2m:[0m [1mOutput is incorrect.
+[32m+ actual[39m [31m- expected[39m
+
+[32m+[39m "import { Result } from 'receta/result'\n" +
+[32m+[39m   '\n' +
+[32m+[39m   '        function parseJSON(str: string) {\n' +
+[31m-[39m '\n' +
+[31m-[39m   "        import { Result } from 'receta/result'\n" +
+[31m-[39m   'function parseJSON(str: string) {\n' +
+[39m    '          const result = Result.tryCatch(\n' +
+[39m    '  () => JSON.parse(str)\n' +
+[39m    ')\n' +
+[39m    'return result\n' +
+[39m    '        }\n' +
+[0m
+[0m      [2mat [0m[0m[1m[3minnerFail[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m36[0m[2m:[33m32[0m[2m)[0m
+[0m      [2mat [0m[0m[1m[3mstrictEqual[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m159[0m[2m:[33m14[0m[2m)[0m
+[0m      [2mat [0m[0m[1m[3m#testInvalidTemplate[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m846[0m[2m:[33m39[0m[2m)[0m
+[0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m431[0m[2m:[33m38[0m[2m)[0m
+[0m[31m✗[0m [0mprefer-result-over-try-catch[2m > [0minvalid[2m >[0m[1m Simple try-catch with return[0m [0m[2m[2.77ms[0m[2m][0m
+[0m[1m841 |[0m                     node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(result.outputs[[0m[33m0[0m], item.code, [0m[32m'Expected no autofixes to be suggested.'[0m)[0m[2m;[0m
+[0m[1m842 |[0m                 }
+[0m[1m843 |[0m             }
+[0m[1m844 |[0m             [0m[35melse[0m [0m[35mif[0m ([0m[35mtypeof[0m item.output === [0m[32m'string'[0m) {
+[0m[1m845 |[0m                 ([0m[33m0[0m, node_assert_1.[0m[35mdefault[0m)(result.outputs.length > [0m[33m0[0m, [0m[32m'Expected autofix to be suggested.'[0m)[0m[2m;[0m
+[0m[1m846 |[0m                 node_assert_1.[0m[35mdefault[0m[0m[3m[1m.strictEqual[0m(result.outputs[[0m[33m0[0m], item.output, [0m[32m'Output is incorrect.'[0m)[0m[2m;[0m
+                                            [31m[1m^[0m
+[0m[31mAssertionError[0m[2m:[0m [1mOutput is incorrect.
+[32m+ actual[39m [31m- expected[39m
+
+[32m+[39m "import { Result } from 'receta/result'\n" +
+[32m+[39m   '\n' +
+[32m+[39m   '        function fetchData() {\n' +
+[31m-[39m '\n' +
+[31m-[39m   "        import { Result } from 'receta/result'\n" +
+[31m-[39m   'function fetchData() {\n' +
+[39m    '          const result = Result.tryCatch(\n' +
+[39m    "  () => fetch('/api/data')\n" +
+[39m    ')\n' +
+[39m    'return result\n' +
+[39m    '        }\n' +
+[0m
+[0m      [2mat [0m[0m[1m[3minnerFail[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m36[0m[2m:[33m32[0m[2m)[0m
+[0m      [2mat [0m[0m[1m[3mstrictEqual[0m[2m ([0m[0m[36mnode:assert[0m[2m:[0m[33m159[0m[2m:[33m14[0m[2m)[0m
+[0m      [2mat [0m[0m[1m[3m#testInvalidTemplate[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m846[0m[2m:[33m39[0m[2m)[0m
+[0m      [2mat [0m[0m[2m<anonymous>[0m[2m ([0m[0m[36m/Users/khaledmaher/repos/ontology/receta/node_modules/@typescript-eslint/rule-tester/dist/RuleTester.js[0m[2m:[0m[33m431[0m[2m:[33m38[0m[2m)[0m
+[0m[31m✗[0m [0mprefer-result-over-try-catch[2m > [0minvalid[2m >[0m[1m Try-catch with console.error[0m [0m[2m[2.52ms[0m[2m][0m
+
+[0m[32m 9 pass[0m
+[0m[31m 7 fail[0m
+Ran 16 tests across 3 files. [0m[2m[[1m621.00ms[0m[2m][0m

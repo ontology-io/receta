@@ -1,0 +1,133 @@
+> tsc --noEmit
+
+[96msrc/function/compose/index.ts[0m:[93m75[0m:[93m5[0m - [91merror[0m[90m TS2551: [0mProperty 'slice' does not exist on type 'typeof import("/Users/khaledmaher/repos/ontology/receta/node_modules/remeda/dist/index")'. Did you mean 'splice'?
+
+[7m75[0m   R.slice(),
+[7m  [0m [91m    ~~~~~[0m
+
+[96msrc/function/compose/index.ts[0m:[93m77[0m:[93m19[0m - [91merror[0m[90m TS18046: [0m'fn' is of type 'unknown'.
+
+[7m77[0m ), (value, fn) => fn(value), initialValue)
+[7m  [0m [91m                  ~~[0m
+
+[96msrc/memo/caches/lruCache.ts[0m:[93m38[0m:[93m5[0m - [91merror[0m[90m TS2322: [0mType '(key: K) => Option<V>' is not assignable to type '(key: K) => V | undefined'.
+  Type 'Option<V>' is not assignable to type 'V | undefined'.
+    Type 'None' is not assignable to type 'V'.
+      'V' could be instantiated with an arbitrary type which could be unrelated to 'None'.
+
+[7m38[0m     get(key: K): Option<V> {
+[7m  [0m [91m    ~~~[0m
+
+  [96msrc/memo/types.ts[0m:[93m6[0m:[93m3[0m
+    [7m6[0m   get(key: K): V | undefined
+    [7m [0m [96m  ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+    The expected type comes from property 'get' which is declared here on type 'Cache<K, V>'
+
+[96msrc/memo/caches/lruCache.ts[0m:[93m40[0m:[93m32[0m - [91merror[0m[90m TS2322: [0mType 'undefined' is not assignable to type 'Option<V>'.
+
+[7m40[0m       if (value === undefined) return undefined
+[7m  [0m [91m                               ~~~~~~[0m
+
+[96msrc/memo/caches/lruCache.ts[0m:[93m46[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'V & ({} | null)' is not assignable to type 'Option<V>'.
+  Type 'V & null' is not assignable to type 'Option<V>'.
+    Type 'V & null' is not assignable to type 'Some<V>'.
+
+[7m46[0m       return value
+[7m  [0m [91m      ~~~~~~[0m
+
+[96msrc/memo/caches/ttlCache.ts[0m:[93m36[0m:[93m5[0m - [91merror[0m[90m TS2322: [0mType '(key: K) => Option<V>' is not assignable to type '(key: K) => V | undefined'.
+  Type 'Option<V>' is not assignable to type 'V | undefined'.
+    Type 'None' is not assignable to type 'V'.
+      'V' could be instantiated with an arbitrary type which could be unrelated to 'None'.
+
+[7m36[0m     get(key: K): Option<V> {
+[7m  [0m [91m    ~~~[0m
+
+  [96msrc/memo/types.ts[0m:[93m6[0m:[93m3[0m
+    [7m6[0m   get(key: K): V | undefined
+    [7m [0m [96m  ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+    The expected type comes from property 'get' which is declared here on type 'Cache<K, V>'
+
+[96msrc/memo/caches/ttlCache.ts[0m:[93m38[0m:[93m19[0m - [91merror[0m[90m TS2322: [0mType 'undefined' is not assignable to type 'Option<V>'.
+
+[7m38[0m       if (!entry) return undefined
+[7m  [0m [91m                  ~~~~~~[0m
+
+[96msrc/memo/caches/ttlCache.ts[0m:[93m43[0m:[93m9[0m - [91merror[0m[90m TS2322: [0mType 'undefined' is not assignable to type 'Option<V>'.
+
+[7m43[0m         return undefined
+[7m  [0m [91m        ~~~~~~[0m
+
+[96msrc/memo/caches/ttlCache.ts[0m:[93m46[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'V' is not assignable to type 'Option<V>'.
+  Type 'V' is not assignable to type 'Some<V>'.
+
+[7m46[0m       return entry.value
+[7m  [0m [91m      ~~~~~~[0m
+
+  [96msrc/memo/caches/ttlCache.ts[0m:[93m32[0m:[93m29[0m
+    [7m32[0m export function ttlCache<K, V>(ttlMs: number): Cache<K, V> {
+    [7m  [0m [96m                            ~[0m
+    This type parameter might need an `extends Some<V>` constraint.
+  [96msrc/memo/caches/ttlCache.ts[0m:[93m32[0m:[93m29[0m
+    [7m32[0m export function ttlCache<K, V>(ttlMs: number): Cache<K, V> {
+    [7m  [0m [96m                            ~[0m
+    This type parameter might need an `extends Option<V>` constraint.
+
+[96msrc/memo/caches/weakCache.ts[0m:[93m42[0m:[93m5[0m - [91merror[0m[90m TS2322: [0mType '(key: K) => Option<V>' is not assignable to type '(key: K) => V | undefined'.
+  Type 'Option<V>' is not assignable to type 'V | undefined'.
+    Type 'None' is not assignable to type 'V'.
+      'V' could be instantiated with an arbitrary type which could be unrelated to 'None'.
+
+[7m42[0m     get(key: K): Option<V> {
+[7m  [0m [91m    ~~~[0m
+
+  [96msrc/memo/types.ts[0m:[93m6[0m:[93m3[0m
+    [7m6[0m   get(key: K): V | undefined
+    [7m [0m [96m  ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+    The expected type comes from property 'get' which is declared here on type 'Cache<K, V>'
+
+[96msrc/memo/caches/weakCache.ts[0m:[93m43[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'V | undefined' is not assignable to type 'Option<V>'.
+  Type 'undefined' is not assignable to type 'Option<V>'.
+
+[7m43[0m       return weak.get(key)
+[7m  [0m [91m      ~~~~~~[0m
+
+[96msrc/option/toNullable/index.ts[0m:[93m1[0m:[93m10[0m - [91merror[0m[90m TS2300: [0mDuplicate identifier 'Option'.
+
+[7m1[0m import { Option, fromNullable } from 'receta/option'
+[7m [0m [91m         ~~~~~~[0m
+
+[96msrc/option/toNullable/index.ts[0m:[93m3[0m:[93m15[0m - [91merror[0m[90m TS2300: [0mDuplicate identifier 'Option'.
+
+[7m3[0m import type { Option } from '../types'
+[7m [0m [91m              ~~~~~~[0m
+
+[96msrc/option/toNullable/index.ts[0m:[93m46[0m:[93m27[0m - [91merror[0m[90m TS2322: [0mType 'T' is not assignable to type 'Option<T>'.
+  Type 'T' is not assignable to type 'Some<T>'.
+
+[7m46[0m   return isSome(option) ? option.value : null
+[7m  [0m [91m                          ~~~~~~~~~~~~[0m
+
+  [96msrc/option/toNullable/index.ts[0m:[93m45[0m:[93m35[0m
+    [7m45[0m function toNullableImplementation<T>(option: Option<T>): Option<T> {
+    [7m  [0m [96m                                  ~[0m
+    This type parameter might need an `extends Some<T>` constraint.
+  [96msrc/option/toNullable/index.ts[0m:[93m45[0m:[93m35[0m
+    [7m45[0m function toNullableImplementation<T>(option: Option<T>): Option<T> {
+    [7m  [0m [96m                                  ~[0m
+    This type parameter might need an `extends Option<T>` constraint.
+
+[96msrc/option/toNullable/index.ts[0m:[93m46[0m:[93m42[0m - [91merror[0m[90m TS2322: [0mType 'null' is not assignable to type 'Option<T>'.
+
+[7m46[0m   return isSome(option) ? option.value : null
+[7m  [0m [91m                                         ~~~~[0m
+
+
+Found 15 errors in 5 files.
+
+Errors  Files
+     2  src/function/compose/index.ts[90m:75[0m
+     3  src/memo/caches/lruCache.ts[90m:38[0m
+     4  src/memo/caches/ttlCache.ts[90m:36[0m
+     2  src/memo/caches/weakCache.ts[90m:42[0m
+     4  src/option/toNullable/index.ts[90m:1[0m

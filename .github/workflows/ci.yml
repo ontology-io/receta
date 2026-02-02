@@ -24,23 +24,17 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Build workspace packages
-        working-directory: packages/eslint-plugin-receta
-        run: |
-          bun install --no-save
-          bun run build
-
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Build all packages
+        run: bunx nx run-many --target=build --all
+
       - name: Type check
-        run: bun run typecheck
+        run: bunx nx run-many --target=typecheck --all
 
       - name: Run tests
-        run: bun test
-
-      - name: Build
-        run: bun run build
+        run: bunx nx run-many --target=test --all
 
   lint:
     name: Lint
@@ -55,17 +49,11 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Build workspace packages
-        working-directory: packages/eslint-plugin-receta
-        run: |
-          bun install --no-save
-          bun run build
-
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Lint
-        run: bunx eslint . --max-warnings 0
+      - name: Build all packages
+        run: bunx nx run-many --target=build --all
 
-      - name: Type check
-        run: bun run typecheck
+      - name: Lint
+        run: bunx nx run receta:lint
