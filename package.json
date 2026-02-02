@@ -1,6 +1,6 @@
 {
   "name": "receta",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Practical FP recipes built on Remeda — higher-level patterns for real-world TypeScript applications",
   "author": "Khaled Maher",
   "license": "MIT",

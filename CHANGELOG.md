@@ -5,6 +5,55 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/ontology-io/receta/compare/v0.1.0...v0.2.0) (2026-02-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* **async:** All async error-handling functions now return Result<T, E> by default
+
+### Features
+
+* add act (local CI runner) support with npm scripts ([50008b7](https://github.com/ontology-io/receta/commit/50008b7af7fd25a9f9f908c9c76c3be53de39a68))
+* add automated publishing ([9324444](https://github.com/ontology-io/receta/commit/93244440476e9f60f2dae72f01f8e9f0fdf2fdba))
+* add cache invalidation utilities to Memo module ([f0fa412](https://github.com/ontology-io/receta/commit/f0fa412eb4695db32181431889c84834f3c2ae04))
+* **eslint-plugin:** successfully integrate and test eslint-plugin-receta ([b3ad5f0](https://github.com/ontology-io/receta/commit/b3ad5f0325cbca08738f28a737f95abd31426b3a))
+* **eslint:** add eslint-plugin-receta with autofix support ([2dfac77](https://github.com/ontology-io/receta/commit/2dfac77b67968824bb223af9363624b3acb14369))
+* implement Async module with comprehensive test suite ([afeb0e3](https://github.com/ontology-io/receta/commit/afeb0e343f25880f85d21fa523586291358ea63a))
+* implement Collection module with comprehensive test suite ([466991f](https://github.com/ontology-io/receta/commit/466991f3739e00a46e1d88c5317f1d9a3fbde807))
+* implement Compare module with comprehensive test suite and examples ([f017802](https://github.com/ontology-io/receta/commit/f017802f7752f2feaff85d8a3ce38f72e4a71f7c))
+* implement Function module with comprehensive test suite ([a087ca7](https://github.com/ontology-io/receta/commit/a087ca75b5a8bb71b5f97c4e092980c53e6e2dd7))
+* implement Lens module with comprehensive test suite ([8318871](https://github.com/ontology-io/receta/commit/831887124a6d54e333599c356c01c017f7e2ce8a))
+* implement Memo module with comprehensive memoization strategies ([f084587](https://github.com/ontology-io/receta/commit/f08458722b98398bfb584a21635962304add3e04))
+* implement Number module with comprehensive test suite ([4c99e53](https://github.com/ontology-io/receta/commit/4c99e53b2b6e928823134edb12af1732c463197c))
+* implement Object module with comprehensive test suite ([9028341](https://github.com/ontology-io/receta/commit/9028341906f02a8d14ffd63722be591f0eef89ec))
+* implement Option module with comprehensive test suite ([aaf2c6a](https://github.com/ontology-io/receta/commit/aaf2c6a1cda480fe831bec4b31c82e656c961e5e))
+* implement Predicate module with comprehensive test suite ([dcd1bc3](https://github.com/ontology-io/receta/commit/dcd1bc335cda9c8fe77d37e01eec6c5c5895cc0d))
+* implement Result module with comprehensive test suite ([2df1a48](https://github.com/ontology-io/receta/commit/2df1a48a3d30ce8bf2e1d3aa7c25c2fd2a83646e))
+* implement String module with comprehensive test suite ([0cb7d9c](https://github.com/ontology-io/receta/commit/0cb7d9cc090236604ef040dcfa7be0ae280c2880))
+* implement Validation module with comprehensive error accumulation ([a8e69a2](https://github.com/ontology-io/receta/commit/a8e69a24af437d2abf18bc779388400c570ffb74))
+* integrate Result pattern with async utilities ([38d32bb](https://github.com/ontology-io/receta/commit/38d32bb0c5594aee54744e33452bfa3b1acba0de))
+* **number:** add roundTo, normalize, and parseFormattedNumber utilities ([701393e](https://github.com/ontology-io/receta/commit/701393ecd71a203a3abd24f9019afabb248df812))
+* **object:** add transformKeys and stripEmpty utilities ([d20e570](https://github.com/ontology-io/receta/commit/d20e57034d1c873e3c7420d84a87bec472e21dfd))
+* **result:** add safe parsing utilities (parseJSON, parseNumber, parseInt) ([2ebbd82](https://github.com/ontology-io/receta/commit/2ebbd82e9a50563a461a2bacb4d47e04f4e8035d))
+* **string:** add 6 high-value string utility functions ([7fc49c0](https://github.com/ontology-io/receta/commit/7fc49c07f6f694172caf0bb02ad8e0d26dc3b6b7))
+* **workspace:** setup Bun workspace with eslint-plugin-receta ([1eca104](https://github.com/ontology-io/receta/commit/1eca1047fe7f5473f5da6835084c654915d23915))
+
+
+### Bug Fixes
+
+* build eslint-plugin-receta before frozen-lockfile install ([726377c](https://github.com/ontology-io/receta/commit/726377cf7a1d0122a0921134b088d431d7cb9815))
+* disable setup-bun cache to prevent stale lockfile issues ([4018cb9](https://github.com/ontology-io/receta/commit/4018cb96f847a15b2626fb376cc2c5c35b3d3fdc))
+* eslint plugin in Ci workspace ([e6feaef](https://github.com/ontology-io/receta/commit/e6feaefd5090c7e6e8de6f3bcf87150c2ed36628))
+* remove workspace dependency to resolve CI install issue ([dad382a](https://github.com/ontology-io/receta/commit/dad382a84b3dcee3b3d91941b309a181652810df))
+* test cases ([6bce556](https://github.com/ontology-io/receta/commit/6bce556d91b2b647067d896fbf5edac88a87e381))
+* use --ignore-scripts to break workspace dependency cycle ([12e06a8](https://github.com/ontology-io/receta/commit/12e06a84166f7b230e45dee6247fc925e4a69d5d))
+
+
+### Code Refactoring
+
+* **async:** make Result the default pattern ([f04d055](https://github.com/ontology-io/receta/commit/f04d055d7a43255e8621b6e591c2c9a16bd1b40c))
+
 ## [0.1.0] - 2026-01-31
 
 ### Added
