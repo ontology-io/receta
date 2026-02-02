@@ -24,11 +24,14 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Build eslint-plugin-receta (pre-install)
-        working-directory: packages/eslint-plugin-receta
-        run: bun install && bun run build
+      - name: Install dependencies (skip postinstall)
+        run: bun install --ignore-scripts
 
-      - name: Install dependencies
+      - name: Build eslint-plugin-receta
+        working-directory: packages/eslint-plugin-receta
+        run: bun run build
+
+      - name: Install dependencies (frozen)
         run: bun install --frozen-lockfile
 
       - name: Build all packages
@@ -53,11 +56,14 @@ jobs:
         with:
           bun-version: latest
 
-      - name: Build eslint-plugin-receta (pre-install)
-        working-directory: packages/eslint-plugin-receta
-        run: bun install && bun run build
+      - name: Install dependencies (skip postinstall)
+        run: bun install --ignore-scripts
 
-      - name: Install dependencies
+      - name: Build eslint-plugin-receta
+        working-directory: packages/eslint-plugin-receta
+        run: bun run build
+
+      - name: Install dependencies (frozen)
         run: bun install --frozen-lockfile
 
       - name: Build all packages
