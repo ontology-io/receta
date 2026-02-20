@@ -1,0 +1,80 @@
+{
+  "name": "receta-test",
+  "version": "0.1.0",
+  "description": "Test utilities for Receta — ontologically-sound matchers, law testing, and property-based testing",
+  "author": "Khaled Maher",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/khaledmaher/receta.git",
+    "directory": "packages/receta-test"
+  },
+  "bugs": {
+    "url": "https://github.com/khaledmaher/receta/issues"
+  },
+  "homepage": "https://github.com/khaledmaher/receta/tree/main/packages/receta-test#readme",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./matchers": {
+      "import": "./dist/matchers/index.js",
+      "types": "./dist/matchers/index.d.ts"
+    },
+    "./laws": {
+      "import": "./dist/laws/index.js",
+      "types": "./dist/laws/index.d.ts"
+    },
+    "./arbitraries": {
+      "import": "./dist/arbitraries/index.js",
+      "types": "./dist/arbitraries/index.d.ts"
+    },
+    "./builders": {
+      "import": "./dist/builders/index.js",
+      "types": "./dist/builders/index.d.ts"
+    }
+  },
+  "keywords": [
+    "test",
+    "testing",
+    "vitest",
+    "matchers",
+    "assertions",
+    "receta",
+    "functional-programming",
+    "fp",
+    "result",
+    "option",
+    "property-based-testing",
+    "fast-check",
+    "typescript"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.7.3"
+  },
+  "peerDependencies": {
+    "vitest": "^1.0.0 || ^2.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
