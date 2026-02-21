@@ -1,4 +1,3 @@
-import { none } from 'receta/option'
 import * as R from 'remeda'
 import { isSome } from '../guards'
 import type { Option } from '../types'
