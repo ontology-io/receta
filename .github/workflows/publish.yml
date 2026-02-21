@@ -35,7 +35,7 @@ jobs:
           no-cache: true
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
 
       - name: Build all packages
         run: bunx nx run-many --target=build --all
