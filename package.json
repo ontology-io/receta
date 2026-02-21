@@ -81,6 +81,22 @@
     "./function": {
       "import": "./dist/function/index.js",
       "types": "./dist/function/index.d.ts"
+    },
+    "./testing": {
+      "import": "./dist/testing/index.js",
+      "types": "./dist/testing/index.d.ts"
+    },
+    "./testing/matchers": {
+      "import": "./dist/testing/matchers/index.js",
+      "types": "./dist/testing/matchers/index.d.ts"
+    },
+    "./testing/laws": {
+      "import": "./dist/testing/laws/index.js",
+      "types": "./dist/testing/laws/index.d.ts"
+    },
+    "./testing/arbitraries": {
+      "import": "./dist/testing/arbitraries/index.js",
+      "types": "./dist/testing/arbitraries/index.d.ts"
     }
   },
   "scripts": {
@@ -120,16 +136,28 @@
   "dependencies": {
     "remeda": "^2.19.1"
   },
+  "peerDependencies": {
+    "typescript": ">=5.0.0",
+    "vitest": "^1.0.0 || ^2.0.0",
+    "fast-check": "^4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vitest": {
+      "optional": true
+    },
+    "fast-check": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@nx/js": "^22.4.4",
     "@types/bun": "latest",
     "@typescript-eslint/parser": "^8.20.0",
     "eslint": "^9.18.0",
+    "fast-check": "^4.5.3",
     "nx": "^22.4.4",
-    "typescript": "^5.7.3"
-  },
-  "peerDependencies": {
-    "typescript": ">=5.0.0"
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.9"
   },
   "engines": {
     "node": ">=18.0.0"
