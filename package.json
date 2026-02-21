@@ -1,9 +1,12 @@
 {
-  "name": "receta",
+  "name": "@ontology-io/receta",
   "version": "0.2.0",
   "description": "Practical FP recipes built on Remeda — higher-level patterns for real-world TypeScript applications",
   "author": "Khaled Maher",
   "license": "MIT",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/khaledmaher/receta.git"
