@@ -337,13 +337,14 @@ src/
 ├── object/          # Object manipulation (flatten, rename, mask)
 ├── string/          # String utilities (template, slugify, etc.)
 ├── number/          # Number formatting and math helpers
-├── date/            # Date utilities (relative, ranges, etc.)
 ├── memo/            # Memoization strategies
 ├── lens/            # Lens/optics for immutable updates
 ├── compare/         # Comparator builders
-├── id/              # ID generation (uuid, nanoid)
 ├── function/        # Function combinators (ifElse, converge)
-├── fetch/           # Fetch wrappers with Result pattern
+├── testing/         # Testing utilities (matchers, laws, arbitraries)
+│   ├── matchers/    # Vitest matchers for Result/Option
+│   ├── laws/        # Functor/Monad law testing
+│   └── arbitraries/ # Fast-check arbitraries for property testing
 └── types/           # Shared type utilities
 ```
 
@@ -1183,6 +1184,21 @@ const isValidUser = where({
 })
 
 R.filter(users, isValidUser)
+
+// Testing utilities
+import { recetaMatchers } from 'receta/testing'
+import { testFunctorLaws } from 'receta/testing/laws'
+import { result, option } from 'receta/testing/arbitraries'
+import * as fc from 'fast-check'
+
+expect.extend(recetaMatchers)
+expect(ok(5)).toBeOk(5)
+
+testFunctorLaws({ type: 'Result', of: ok, map: Result.map })
+
+fc.assert(fc.property(result(fc.integer(), fc.string()), (r) => {
+  expect(Result.map(r, x => x)).toEqualResult(r)
+}))
 ```
 
 ---
