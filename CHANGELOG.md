@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/ontology-io/receta/compare/v0.2.0...v0.3.0) (2026-02-21)
+
+
+### ⚠ BREAKING CHANGES
+
+* **testing:** Testing utilities moved from receta-test to receta/testing
+
+### Features
+
+* **testing:** merge testing utilities into root package ([3c73d56](https://github.com/ontology-io/receta/commit/3c73d566b7b354038b71ca06524201f316c87037))
+
+
+### Bug Fixes
+
+* remove unused import causing build failure ([cc60b38](https://github.com/ontology-io/receta/commit/cc60b386f67b185c095dab8e7dc7a371fe636c2d))
+
 ## [0.2.0](https://github.com/ontology-io/receta/compare/v0.1.0...v0.2.0) (2026-02-02)
 
 
