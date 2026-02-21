@@ -7,23 +7,39 @@
  * @example
  * ```typescript
  * import { expect } from 'vitest'
- * import { recetaMatchers } from 'receta-test'
+ * import { recetaMatchers, testFunctorLaws, testMonadLaws } from 'receta-test'
+ * import { ok } from 'receta/result'
+ * import * as Result from 'receta/result'
  *
  * // Extend Vitest with Receta matchers
  * expect.extend(recetaMatchers)
  *
- * // Use in tests
- * import { ok, err } from 'receta/result'
- *
+ * // Use matchers in tests
  * test('Result matchers', () => {
  *   expect(ok(5)).toBeOk(5)
- *   expect(err('fail')).toBeErr('fail')
+ * })
+ *
+ * // Test functor laws
+ * testFunctorLaws({
+ *   type: 'Result',
+ *   of: ok,
+ *   map: Result.map
+ * })
+ *
+ * // Test monad laws
+ * testMonadLaws({
+ *   type: 'Result',
+ *   of: ok,
+ *   flatMap: Result.flatMap
  * })
  * ```
  */
 
 // Re-export everything from matchers
 export * from './matchers'
+
+// Re-export everything from laws
+export * from './laws'
 
 // Re-export types
 export type { ResultMatchers, OptionMatchers, RecetaMatchers } from './types'
