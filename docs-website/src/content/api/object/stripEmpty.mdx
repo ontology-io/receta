@@ -1,0 +1,288 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# object/stripEmpty
+
+Removes empty values (null, undefined, empty strings, arrays, objects) from an object.
+
+## Interfaces
+
+### StripEmptyOptions
+
+Defined in: [object/stripEmpty/index.ts:13](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/object/stripEmpty/index.ts#L13)
+
+Options for stripEmpty operation.
+
+#### Properties
+
+##### deep?
+ `>` `readonly` `optional` **deep**: `boolean`
+
+Defined in: [object/stripEmpty/index.ts:32](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/object/stripEmpty/index.ts#L32)
+
+Whether to strip recursively in nested objects (default: true).
+
+##### stripEmptyArrays?
+ `>` `readonly` `optional` **stripEmptyArrays**: `boolean`
+
+Defined in: [object/stripEmpty/index.ts:22](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/object/stripEmpty/index.ts#L22)
+
+Whether to remove empty arrays (default: true).
+
+##### stripEmptyObjects?
+ `>` `readonly` `optional` **stripEmptyObjects**: `boolean`
+
+Defined in: [object/stripEmpty/index.ts:27](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/object/stripEmpty/index.ts#L27)
+
+Whether to remove empty objects (default: true).
+
+##### stripEmptyStrings?
+ `>` `readonly` `optional` **stripEmptyStrings**: `boolean`
+
+Defined in: [object/stripEmpty/index.ts:17](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/object/stripEmpty/index.ts#L17)
+
+Whether to remove empty strings (default: true).
+
+## Functions
+
+### stripEmpty()
+
+#### Call Signature
+ `>` **stripEmpty**(`obj`, `options?`): [`PlainObject`](types.md#plainobject)
+
+Defined in: [object/stripEmpty/index.ts:163](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/object/stripEmpty/index.ts#L163)
+
+Removes all empty values from an object.
+
+By default, removes:
+- null and undefined
+- Empty strings ('')
+- Empty arrays ([])
+- Empty objects ({})
+
+This is useful for cleaning API payloads, removing optional fields before
+sending data, and normalizing objects for comparison or storage.
+
+##### Parameters
+
+###### obj
+
+[`PlainObject`](types.md#plainobject)
+
+The object to strip empty values from
+
+###### options?
+
+[`StripEmptyOptions`](#stripemptyoptions)
+
+Options controlling what is considered "empty"
+
+##### Returns
+
+[`PlainObject`](types.md#plainobject)
+
+A new object with empty values removed
+
+##### Example
+
+```typescript
+// Basic usage
+const input = {
+  name: 'Alice',
+  email: '',
+  tags: [],
+  metadata: {},
+  age: null,
+  verified: false
+}
+
+stripEmpty(input)
+// => { name: 'Alice', verified: false }
+
+// Keeps non-empty values (0, false are not empty)
+stripEmpty({ count: 0, active: false, name: '' })
+// => { count: 0, active: false }
+
+// Deep cleaning of nested objects
+const nested = {
+  user: {
+    name: 'Alice',
+    bio: '',
+    settings: {
+      theme: null,
+      notifications: []
+    }
+  },
+  metadata: {}
+}
+
+stripEmpty(nested)
+// => { user: { name: 'Alice', settings: {} } }
+// Note: settings is empty but kept because stripEmptyObjects applies to top-level
+
+// Customize what to strip
+stripEmpty(
+  { name: '', tags: [], count: 0 },
+  { stripEmptyStrings: false, stripEmptyArrays: true }
+)
+// => { name: '', count: 0 }
+
+// Preparing API request payload
+const formData = {
+  title: 'New Post',
+  body: 'Content here',
+  tags: [],
+  draft: false,
+  publishedAt: null
+}
+
+pipe(
+  formData,
+  stripEmpty,
+  (clean) => fetch('/api/posts', { method: 'POST', body: JSON.stringify(clean) })
+)
+// Sends: { title: 'New Post', body: 'Content here', draft: false }
+
+// Shallow stripping (not recursive)
+stripEmpty(
+  {
+    name: 'Alice',
+    nested: { bio: '', age: null }
+  },
+  { deep: false }
+)
+// => { name: 'Alice', nested: { bio: '', age: null } }
+
+// Data-last (in pipe)
+pipe(
+  apiPayload,
+  stripEmpty()
+)
+```
+
+##### See
+
+ - compact - for removing only null/undefined (keeps empty strings/arrays)
+ - stripUndefined - for removing only undefined values
+
+#### Call Signature
+ `>` **stripEmpty**(`options?`): (`obj`) => [`PlainObject`](types.md#plainobject)
+
+Defined in: [object/stripEmpty/index.ts:164](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/object/stripEmpty/index.ts#L164)
+
+Removes all empty values from an object.
+
+By default, removes:
+- null and undefined
+- Empty strings ('')
+- Empty arrays ([])
+- Empty objects ({})
+
+This is useful for cleaning API payloads, removing optional fields before
+sending data, and normalizing objects for comparison or storage.
+
+##### Parameters
+
+###### options?
+
+[`StripEmptyOptions`](#stripemptyoptions)
+
+Options controlling what is considered "empty"
+
+##### Returns
+
+A new object with empty values removed
+ `>` (`obj`): [`PlainObject`](types.md#plainobject)
+
+###### Parameters
+
+###### obj
+
+[`PlainObject`](types.md#plainobject)
+
+###### Returns
+
+[`PlainObject`](types.md#plainobject)
+
+##### Example
+
+```typescript
+// Basic usage
+const input = {
+  name: 'Alice',
+  email: '',
+  tags: [],
+  metadata: {},
+  age: null,
+  verified: false
+}
+
+stripEmpty(input)
+// => { name: 'Alice', verified: false }
+
+// Keeps non-empty values (0, false are not empty)
+stripEmpty({ count: 0, active: false, name: '' })
+// => { count: 0, active: false }
+
+// Deep cleaning of nested objects
+const nested = {
+  user: {
+    name: 'Alice',
+    bio: '',
+    settings: {
+      theme: null,
+      notifications: []
+    }
+  },
+  metadata: {}
+}
+
+stripEmpty(nested)
+// => { user: { name: 'Alice', settings: {} } }
+// Note: settings is empty but kept because stripEmptyObjects applies to top-level
+
+// Customize what to strip
+stripEmpty(
+  { name: '', tags: [], count: 0 },
+  { stripEmptyStrings: false, stripEmptyArrays: true }
+)
+// => { name: '', count: 0 }
+
+// Preparing API request payload
+const formData = {
+  title: 'New Post',
+  body: 'Content here',
+  tags: [],
+  draft: false,
+  publishedAt: null
+}
+
+pipe(
+  formData,
+  stripEmpty,
+  (clean) => fetch('/api/posts', { method: 'POST', body: JSON.stringify(clean) })
+)
+// Sends: { title: 'New Post', body: 'Content here', draft: false }
+
+// Shallow stripping (not recursive)
+stripEmpty(
+  {
+    name: 'Alice',
+    nested: { bio: '', age: null }
+  },
+  { deep: false }
+)
+// => { name: 'Alice', nested: { bio: '', age: null } }
+
+// Data-last (in pipe)
+pipe(
+  apiPayload,
+  stripEmpty()
+)
+```
+
+##### See
+
+ - compact - for removing only null/undefined (keeps empty strings/arrays)
+ - stripUndefined - for removing only undefined values

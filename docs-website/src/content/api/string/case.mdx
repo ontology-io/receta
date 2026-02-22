@@ -1,0 +1,253 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# string/case
+
+## Functions
+
+### camelCase()
+ `>` **camelCase**(`str`): `string`
+
+Defined in: [string/case/index.ts:86](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/string/case/index.ts#L86)
+
+Converts a string to camelCase.
+
+#### Parameters
+
+##### str
+
+`string`
+
+The string to convert
+
+#### Returns
+
+`string`
+
+The string in camelCase
+
+#### Example
+
+```typescript
+camelCase('hello-world')
+// => 'helloWorld'
+
+camelCase('user_profile_page')
+// => 'userProfilePage'
+
+camelCase('API KEY VALUE')
+// => 'apiKeyValue'
+```
+
+#### See
+
+ - pascalCase - for PascalCase conversion
+ - snakeCase - for snake_case conversion
+
+### capitalize()
+ `>` **capitalize**(`str`, `options?`): `string`
+
+Defined in: [string/case/index.ts:142](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/string/case/index.ts#L142)
+
+Capitalizes the first character of a string.
+
+#### Parameters
+
+##### str
+
+`string`
+
+The string to capitalize
+
+##### options?
+
+[`CaseOptions`](types.md#caseoptions)
+
+Case conversion options
+
+#### Returns
+
+`string`
+
+The string with first character capitalized
+
+#### Example
+
+```typescript
+capitalize('hello world')
+// => 'Hello world'
+
+capitalize('HELLO')
+// => 'HELLO' (only capitalizes first char, doesn't lowercase rest)
+
+capitalize('')
+// => ''
+```
+
+#### See
+
+titleCase - to capitalize all words
+
+### kebabCase()
+ `>` **kebabCase**(`str`): `string`
+
+Defined in: [string/case/index.ts:24](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/string/case/index.ts#L24)
+
+Converts a string to kebab-case.
+
+#### Parameters
+
+##### str
+
+`string`
+
+The string to convert
+
+#### Returns
+
+`string`
+
+The string in kebab-case
+
+#### Example
+
+```typescript
+kebabCase('helloWorld')
+// => 'hello-world'
+
+kebabCase('UserProfilePage')
+// => 'user-profile-page'
+
+kebabCase('API_KEY_VALUE')
+// => 'api-key-value'
+```
+
+#### See
+
+ - slugify - for URL-safe slugs with additional normalization
+ - snakeCase - for snake_case conversion
+
+### pascalCase()
+ `>` **pascalCase**(`str`): `string`
+
+Defined in: [string/case/index.ts:114](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/string/case/index.ts#L114)
+
+Converts a string to PascalCase.
+
+#### Parameters
+
+##### str
+
+`string`
+
+The string to convert
+
+#### Returns
+
+`string`
+
+The string in PascalCase
+
+#### Example
+
+```typescript
+pascalCase('hello-world')
+// => 'HelloWorld'
+
+pascalCase('user_profile_page')
+// => 'UserProfilePage'
+
+pascalCase('api key value')
+// => 'ApiKeyValue'
+```
+
+#### See
+
+ - camelCase - for camelCase conversion
+ - kebabCase - for kebab-case conversion
+
+### snakeCase()
+ `>` **snakeCase**(`str`): `string`
+
+Defined in: [string/case/index.ts:55](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/string/case/index.ts#L55)
+
+Converts a string to snake_case.
+
+#### Parameters
+
+##### str
+
+`string`
+
+The string to convert
+
+#### Returns
+
+`string`
+
+The string in snake_case
+
+#### Example
+
+```typescript
+snakeCase('helloWorld')
+// => 'hello_world'
+
+snakeCase('UserProfilePage')
+// => 'user_profile_page'
+
+snakeCase('API-KEY-VALUE')
+// => 'api_key_value'
+```
+
+#### See
+
+ - kebabCase - for kebab-case conversion
+ - camelCase - for camelCase conversion
+
+### titleCase()
+ `>` **titleCase**(`str`, `options?`): `string`
+
+Defined in: [string/case/index.ts:171](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/string/case/index.ts#L171)
+
+Converts a string to Title Case.
+
+Capitalizes the first letter of each word. Words are separated by spaces.
+
+#### Parameters
+
+##### str
+
+`string`
+
+The string to convert
+
+##### options?
+
+[`CaseOptions`](types.md#caseoptions)
+
+Case conversion options
+
+#### Returns
+
+`string`
+
+The string in Title Case
+
+#### Example
+
+```typescript
+titleCase('hello world')
+// => 'Hello World'
+
+titleCase('the quick brown fox')
+// => 'The Quick Brown Fox'
+
+titleCase('user-profile-page')
+// => 'User-profile-page' (only capitalizes after spaces)
+```
+
+#### See
+
+capitalize - to capitalize only the first character

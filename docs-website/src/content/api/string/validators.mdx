@@ -1,0 +1,281 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# string/validators
+
+## Functions
+
+### isAlphanumeric()
+ `>` **isAlphanumeric**(`str`): `boolean`
+
+Defined in: [string/validators/index.ts:149](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/string/validators/index.ts#L149)
+
+Validates if a string contains only alphanumeric characters.
+
+#### Parameters
+
+##### str
+
+`string`
+
+The string to check
+
+#### Returns
+
+`boolean`
+
+True if the string contains only letters and numbers
+
+#### Example
+
+```typescript
+isAlphanumeric('hello123')
+// => true
+
+isAlphanumeric('hello-world')
+// => false
+
+isAlphanumeric('123')
+// => true
+```
+
+### isBlank()
+ `>` **isBlank**(`str`): `boolean`
+
+Defined in: [string/validators/index.ts:40](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/string/validators/index.ts#L40)
+
+Checks if a string is blank (empty or whitespace-only).
+
+Alias for isEmpty.
+
+#### Parameters
+
+##### str
+
+`string`
+
+The string to check
+
+#### Returns
+
+`boolean`
+
+True if the string is blank
+
+#### See
+
+isEmpty - the base function
+
+### isEmail()
+ `>` **isEmail**(`str`): [`Option`](../option/types.md#option)\<`string`\>
+
+Defined in: [string/validators/index.ts:74](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/string/validators/index.ts#L74)
+
+Validates if a string is a valid email address.
+
+Returns Some with the email if valid, None otherwise.
+Uses a practical regex that covers most common email formats.
+
+#### Parameters
+
+##### str
+
+`string`
+
+The string to validate
+
+#### Returns
+
+[`Option`](../option/types.md#option)\<`string`\>
+
+Option containing the email if valid
+
+#### Example
+
+```typescript
+isEmail('user@example.com')
+// => Some('user@example.com')
+
+isEmail('invalid.email')
+// => None
+
+isEmail('user+tag@domain.co.uk')
+// => Some('user+tag@domain.co.uk')
+
+// Use in forms
+const email = pipe(
+  formData.email,
+  isEmail,
+  unwrapOr('Invalid email')
+)
+```
+
+#### See
+
+isUrl - for URL validation
+
+### isEmpty()
+ `>` **isEmpty**(`str`): `boolean`
+
+Defined in: [string/validators/index.ts:26](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/string/validators/index.ts#L26)
+
+Checks if a string is empty or contains only whitespace.
+
+#### Parameters
+
+##### str
+
+`string`
+
+The string to check
+
+#### Returns
+
+`boolean`
+
+True if the string is empty or whitespace-only
+
+#### Example
+
+```typescript
+isEmpty('')
+// => true
+
+isEmpty('   ')
+// => true
+
+isEmpty('hello')
+// => false
+
+isEmpty('  hello  ')
+// => false
+```
+
+#### See
+
+isBlank - alias for isEmpty
+
+### isHexColor()
+ `>` **isHexColor**(`str`): [`Option`](../option/types.md#option)\<`string`\>
+
+Defined in: [string/validators/index.ts:198](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/string/validators/index.ts#L198)
+
+Validates if a string is a valid hexadecimal color.
+
+Supports 3, 6, and 8 character hex colors with optional # prefix.
+
+#### Parameters
+
+##### str
+
+`string`
+
+The string to validate
+
+#### Returns
+
+[`Option`](../option/types.md#option)\<`string`\>
+
+Option containing the hex color if valid
+
+#### Example
+
+```typescript
+isHexColor('#ff0000')
+// => Some('#ff0000')
+
+isHexColor('fff')
+// => Some('fff')
+
+isHexColor('#ff00ff80')
+// => Some('#ff00ff80') (with alpha)
+
+isHexColor('not-a-color')
+// => None
+```
+
+### isNumeric()
+ `>` **isNumeric**(`str`): `boolean`
+
+Defined in: [string/validators/index.ts:171](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/string/validators/index.ts#L171)
+
+Validates if a string contains only numeric characters.
+
+#### Parameters
+
+##### str
+
+`string`
+
+The string to check
+
+#### Returns
+
+`boolean`
+
+True if the string contains only digits
+
+#### Example
+
+```typescript
+isNumeric('12345')
+// => true
+
+isNumeric('123.45')
+// => false
+
+isNumeric('12a34')
+// => false
+```
+
+### isUrl()
+ `>` **isUrl**(`str`): [`Option`](../option/types.md#option)\<`string`\>
+
+Defined in: [string/validators/index.ts:118](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/string/validators/index.ts#L118)
+
+Validates if a string is a valid URL.
+
+Returns Some with the URL if valid, None otherwise.
+Supports http, https, and protocol-relative URLs.
+
+#### Parameters
+
+##### str
+
+`string`
+
+The string to validate
+
+#### Returns
+
+[`Option`](../option/types.md#option)\<`string`\>
+
+Option containing the URL if valid
+
+#### Example
+
+```typescript
+isUrl('https://example.com')
+// => Some('https://example.com')
+
+isUrl('not a url')
+// => None
+
+isUrl('http://localhost:3000/path')
+// => Some('http://localhost:3000/path')
+
+// Use in validation
+const website = pipe(
+  formData.website,
+  isUrl,
+  match({
+    onSome: (url) => url,
+    onNone: () => 'Invalid URL'
+  })
+)
+```
+
+#### See
+
+isEmail - for email validation

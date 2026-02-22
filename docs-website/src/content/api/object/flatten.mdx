@@ -1,0 +1,130 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# object/flatten
+
+Flattens a nested object into a single-level object with dot-notation keys.
+
+## Functions
+
+### flatten()
+
+#### Call Signature
+ `>` **flatten**(`obj`, `options?`): [`FlatObject`](types.md#flatobject)
+
+Defined in: [object/flatten/index.ts:45](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/object/flatten/index.ts#L45)
+
+Flattens a nested object into a single-level object with dot-notation keys.
+
+Converts nested structures like `{ user: { name: 'Alice' } }` into
+`{ 'user.name': 'Alice' }`. Useful for form data, query parameters,
+and database operations.
+
+##### Parameters
+
+###### obj
+
+[`PlainObject`](types.md#plainobject)
+
+The object to flatten
+
+###### options?
+
+[`FlattenOptions`](types.md#flattenoptions)
+
+Flattening options (separator, maxDepth, flattenArrays)
+
+##### Returns
+
+[`FlatObject`](types.md#flatobject)
+
+A flattened object with dot-notation keys
+
+##### Example
+
+```typescript
+// Data-first
+const nested = { user: { name: 'Alice', age: 30 } }
+flatten(nested)
+// => { 'user.name': 'Alice', 'user.age': 30 }
+
+// Custom separator
+flatten(nested, { separator: '_' })
+// => { 'user_name': 'Alice', 'user_age': 30 }
+
+// Max depth
+flatten({ a: { b: { c: 1 } } }, { maxDepth: 1 })
+// => { 'a.b': { c: 1 } }
+
+// Data-last (in pipe)
+pipe(
+  nested,
+  flatten({ separator: '_' })
+)
+```
+
+##### See
+
+unflatten - for reversing the flattening
+
+#### Call Signature
+ `>` **flatten**(`options?`): (`obj`) => [`FlatObject`](types.md#flatobject)
+
+Defined in: [object/flatten/index.ts:46](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/object/flatten/index.ts#L46)
+
+Flattens a nested object into a single-level object with dot-notation keys.
+
+Converts nested structures like `{ user: { name: 'Alice' } }` into
+`{ 'user.name': 'Alice' }`. Useful for form data, query parameters,
+and database operations.
+
+##### Parameters
+
+###### options?
+
+[`FlattenOptions`](types.md#flattenoptions)
+
+Flattening options (separator, maxDepth, flattenArrays)
+
+##### Returns
+
+A flattened object with dot-notation keys
+ `>` (`obj`): [`FlatObject`](types.md#flatobject)
+
+###### Parameters
+
+###### obj
+
+[`PlainObject`](types.md#plainobject)
+
+###### Returns
+
+[`FlatObject`](types.md#flatobject)
+
+##### Example
+
+```typescript
+// Data-first
+const nested = { user: { name: 'Alice', age: 30 } }
+flatten(nested)
+// => { 'user.name': 'Alice', 'user.age': 30 }
+
+// Custom separator
+flatten(nested, { separator: '_' })
+// => { 'user_name': 'Alice', 'user_age': 30 }
+
+// Max depth
+flatten({ a: { b: { c: 1 } } }, { maxDepth: 1 })
+// => { 'a.b': { c: 1 } }
+
+// Data-last (in pipe)
+pipe(
+  nested,
+  flatten({ separator: '_' })
+)
+```
+
+##### See
+
+unflatten - for reversing the flattening

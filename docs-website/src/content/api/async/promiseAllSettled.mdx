@@ -1,0 +1,285 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# async/promiseAllSettled
+
+## Functions
+
+### extractFulfilled()
+ `>` **extractFulfilled**\<`T`\>(`results`): `T`[]
+
+Defined in: [async/promiseAllSettled/index.ts:106](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/promiseAllSettled/index.ts#L106)
+
+Extracts all fulfilled values from settled results.
+
+Filters out rejected promises and returns only successful values.
+Useful when you want to process partial results even if some promises failed.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### results
+
+readonly `PromiseSettledResult`\<`T`\>[]
+
+Array of settled promise results
+
+#### Returns
+
+`T`[]
+
+Array of fulfilled values only
+
+#### Examples
+
+```typescript
+const results = await promiseAllSettled([
+  Promise.resolve(1),
+  Promise.reject('error'),
+  Promise.resolve(3),
+])
+
+const values = extractFulfilled(results)
+// => [1, 3]
+```
+
+```typescript
+// Process partial API results
+const results = await promiseAllSettled(
+  userIds.map((id) => fetchUser(id))
+)
+
+const successfulUsers = extractFulfilled(results)
+console.log(`Fetched ${successfulUsers.length} of ${userIds.length} users`)
+```
+
+### extractRejected()
+ `>` **extractRejected**\<`T`\>(`results`): `T`[]
+
+Defined in: [async/promiseAllSettled/index.ts:152](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/promiseAllSettled/index.ts#L152)
+
+Extracts all rejection reasons from settled results.
+
+Filters out fulfilled promises and returns only error reasons.
+Useful for logging or analyzing failures.
+
+#### Type Parameters
+
+##### T
+
+`T` `=` `unknown`
+
+#### Parameters
+
+##### results
+
+readonly `PromiseSettledResult`\<`any`\>[]
+
+Array of settled promise results
+
+#### Returns
+
+`T`[]
+
+Array of rejection reasons only
+
+#### Examples
+
+```typescript
+const results = await promiseAllSettled([
+  Promise.resolve(1),
+  Promise.reject(new Error('Network error')),
+  Promise.reject(new Error('Timeout')),
+])
+
+const errors = extractRejected(results)
+// => [Error('Network error'), Error('Timeout')]
+
+errors.forEach((err) => console.error('Failed:', err.message))
+```
+
+```typescript
+// Track failed operations
+const results = await promiseAllSettled(
+  userIds.map((id) => deleteUser(id))
+)
+
+const failures = extractRejected(results)
+if (failures.length > 0) {
+  console.warn(`${failures.length} deletions failed:`, failures)
+}
+```
+
+### promiseAllSettled()
+ `>` **promiseAllSettled**\<`T`\>(`promises`): `Promise`\<`PromiseSettledResult`\<`T`\>[]\>
+
+Defined in: [async/promiseAllSettled/index.ts:68](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/promiseAllSettled/index.ts#L68)
+
+Typed wrapper around Promise.allSettled with better type inference.
+
+Unlike Promise.all (which fails fast on first rejection), this waits for
+all promises to settle (fulfill or reject) before returning results.
+Provides helper functions to extract fulfilled/rejected values.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### promises
+
+readonly `Promise`\<`T`\>[]
+
+Array of promises to settle
+
+#### Returns
+
+`Promise`\<`PromiseSettledResult`\<`T`\>[]\>
+
+Promise resolving to array of settled results
+
+#### Examples
+
+```typescript
+// Basic usage
+const results = await promiseAllSettled([
+  fetch('/api/users/1'),
+  fetch('/api/users/2'),
+  fetch('/api/users/999'), // might fail
+])
+
+results.forEach((result) => {
+  if (result.status === 'fulfilled') {
+    console.log('Success:', result.value)
+  } else {
+    console.log('Error:', result.reason)
+  }
+})
+```
+
+```typescript
+// Extract only successful results
+const results = await promiseAllSettled([
+  fetchUser(1),
+  fetchUser(2),
+  fetchUser(999), // fails
+])
+
+const users = extractFulfilled(results)
+// => [User1, User2] (failed one excluded)
+```
+
+```typescript
+// Convert to Result pattern for composability
+import * as R from 'remeda'
+import { map, unwrapOr } from 'receta/result'
+
+const results = await promiseAllSettled([
+  fetchUser(1),
+  fetchUser(2),
+  fetchUser(3),
+])
+
+const resultArray = toResults(results)
+const usernames = R.pipe(
+  resultArray,
+  R.map((r) => map(r, (user) => user.name)),
+  R.map((r) => unwrapOr(r, 'Unknown'))
+)
+// => ['John', 'Jane', 'Unknown']
+```
+
+#### See
+
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled
+
+### toResults()
+ `>` **toResults**\<`T`, `E`\>(`results`): [`Result`](../result/types.md#result)\<`T`, `E`\>[]
+
+Defined in: [async/promiseAllSettled/index.ts:220](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/promiseAllSettled/index.ts#L220)
+
+Converts settled results to Result array for composability.
+
+Transforms native PromiseSettledResult into Receta's Result type,
+enabling composition with Result utilities (map, flatMap, etc.).
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+##### E
+
+`E` `=` `unknown`
+
+#### Parameters
+
+##### results
+
+readonly `PromiseSettledResult`\<`T`\>[]
+
+Array of settled promise results
+
+#### Returns
+
+[`Result`](../result/types.md#result)\<`T`, `E`\>[]
+
+Array of Result values
+
+#### Examples
+
+```typescript
+import * as R from 'remeda'
+import { map, unwrapOr } from 'receta/result'
+
+const results = await promiseAllSettled([
+  fetchUser(1),
+  fetchUser(999), // fails
+])
+
+const userResults = toResults(results)
+const names = R.pipe(
+  userResults,
+  R.map((r) => map(r, (user) => user.name)),
+  R.map((r) => unwrapOr(r, 'Unknown'))
+)
+// => ['John', 'Unknown']
+```
+
+```typescript
+import { partition } from 'receta/result'
+
+const results = await promiseAllSettled([
+  fetchUser(1),
+  fetchUser(2),
+  fetchUser(999),
+])
+
+const [successes, failures] = partition(toResults(results))
+console.log(`${successes.length} succeeded, ${failures.length} failed`)
+```
+
+```typescript
+// Compose with validation
+import { flatMap } from 'receta/result'
+import { validate } from 'receta/validation'
+
+const results = await promiseAllSettled(
+  urls.map((url) => fetch(url).then(r => r.json()))
+)
+
+const validated = R.pipe(
+  toResults(results),
+  R.map((r) => flatMap(r, (data) => validateSchema(userSchema, data)))
+)
+```

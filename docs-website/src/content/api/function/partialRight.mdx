@@ -1,0 +1,167 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# function/partialRight
+
+## Functions
+
+### partialRight()
+
+#### Call Signature
+ `>` **partialRight**\<`Args`, `R`\>(`fn`): (...`args`) => `R`
+
+Defined in: [function/partialRight/index.ts:44](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/function/partialRight/index.ts#L44)
+
+Creates a partially applied function by pre-filling arguments from the right.
+
+Returns a new function that, when called, invokes the original function with
+any new arguments followed by the pre-filled arguments.
+
+This is the mirror of `partial`, filling arguments from the end instead of the start.
+
+##### Type Parameters
+
+###### Args
+
+`Args` *extends* readonly `any`[]
+
+###### R
+
+`R`
+
+##### Parameters
+
+###### fn
+
+(...`args`) => `R`
+
+##### Returns
+ `>` (...`args`): `R`
+
+###### Parameters
+
+###### args
+
+...`Args`
+
+###### Returns
+
+`R`
+
+##### Examples
+
+```typescript
+const divide = (a: number, b: number) => a / b
+
+const divideBy10 = partialRight(divide, 10)
+divideBy10(100)  // => 10  (100 / 10)
+divideBy10(50)   // => 5   (50 / 10)
+```
+
+```typescript
+// Useful when the data comes last
+const formatDate = (format: string, locale: string, date: Date) =>
+  date.toLocaleDateString(locale, { dateStyle: format as any })
+
+const formatInUS = partialRight(formatDate, 'en-US')
+const formatInFR = partialRight(formatDate, 'fr-FR')
+
+const today = new Date()
+formatInUS('short', today)   // => '1/22/26'
+formatInFR('short', today)   // => '22/01/2026'
+```
+
+```typescript
+// Multiple arguments from the right
+const log = (message: string, level: string, timestamp: string) =>
+  `${timestamp} [${level}] ${message}`
+
+const logNow = partialRight(log, 'INFO', new Date().toISOString())
+logNow('Application started')  // => '2026-01-22T... [INFO] Application started'
+```
+
+##### See
+
+partial - for left-to-right partial application
+
+#### Call Signature
+ `>` **partialRight**\<`Args`, `R`\>(`fn`, ...`prefilledArgs`): (...`args`) => `R`
+
+Defined in: [function/partialRight/index.ts:47](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/function/partialRight/index.ts#L47)
+
+Creates a partially applied function by pre-filling arguments from the right.
+
+Returns a new function that, when called, invokes the original function with
+any new arguments followed by the pre-filled arguments.
+
+This is the mirror of `partial`, filling arguments from the end instead of the start.
+
+##### Type Parameters
+
+###### Args
+
+`Args` *extends* readonly `any`[]
+
+###### R
+
+`R`
+
+##### Parameters
+
+###### fn
+
+(...`args`) => `R`
+
+###### prefilledArgs
+
+...`any`[]
+
+##### Returns
+ `>` (...`args`): `R`
+
+###### Parameters
+
+###### args
+
+...`any`[]
+
+###### Returns
+
+`R`
+
+##### Examples
+
+```typescript
+const divide = (a: number, b: number) => a / b
+
+const divideBy10 = partialRight(divide, 10)
+divideBy10(100)  // => 10  (100 / 10)
+divideBy10(50)   // => 5   (50 / 10)
+```
+
+```typescript
+// Useful when the data comes last
+const formatDate = (format: string, locale: string, date: Date) =>
+  date.toLocaleDateString(locale, { dateStyle: format as any })
+
+const formatInUS = partialRight(formatDate, 'en-US')
+const formatInFR = partialRight(formatDate, 'fr-FR')
+
+const today = new Date()
+formatInUS('short', today)   // => '1/22/26'
+formatInFR('short', today)   // => '22/01/2026'
+```
+
+```typescript
+// Multiple arguments from the right
+const log = (message: string, level: string, timestamp: string) =>
+  `${timestamp} [${level}] ${message}`
+
+const logNow = partialRight(log, 'INFO', new Date().toISOString())
+logNow('Application started')  // => '2026-01-22T... [INFO] Application started'
+```
+
+##### See
+
+partial - for left-to-right partial application

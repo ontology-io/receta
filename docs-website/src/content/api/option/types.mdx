@@ -1,0 +1,70 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# option/types
+
+## Interfaces
+
+### None
+
+Defined in: [option/types.ts:12](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/types.ts#L12)
+
+Represents the absence of a value.
+
+#### Properties
+
+##### \_tag
+ `>` `readonly` **\_tag**: `"None"`
+
+Defined in: [option/types.ts:13](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/types.ts#L13)
+
+### Some
+
+Defined in: [option/types.ts:4](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/types.ts#L4)
+
+Represents a value that exists.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Properties
+
+##### \_tag
+ `>` `readonly` **\_tag**: `"Some"`
+
+Defined in: [option/types.ts:5](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/types.ts#L5)
+
+##### value
+ `>` `readonly` **value**: `T`
+
+Defined in: [option/types.ts:6](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/types.ts#L6)
+
+## Type Aliases
+
+### Option
+ `>` **Option**\<`T`\> `=` [`Some`](#some)\<`T`\> \| [`None`](#none)
+
+Defined in: [option/types.ts:29](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/types.ts#L29)
+
+Option type representing either a value (Some) or no value (None).
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+The type of the value when present
+
+#### Example
+
+```typescript
+type MaybeUser = Option<User>
+
+const present: MaybeUser = { _tag: 'Some', value: { name: 'John' } }
+const absent: MaybeUser = { _tag: 'None' }
+```

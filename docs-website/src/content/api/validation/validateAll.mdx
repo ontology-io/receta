@@ -1,0 +1,202 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# validation/validateAll
+
+Validates an array of values with a single validator.
+
+## Functions
+
+### validateAll()
+
+#### Call Signature
+ `>` **validateAll**\<`T`, `U`, `E`\>(`values`, `validator`): [`Validation`](types.md#validation)\<`U`[], `E`\>
+
+Defined in: [validation/validateAll/index.ts:68](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validateAll/index.ts#L68)
+
+Applies a validator to each element in an array, accumulating all errors.
+
+If all elements are valid, returns Valid with the array of values.
+If any element is invalid, returns Invalid with all accumulated errors.
+
+This is useful for bulk validation operations like CSV imports or
+batch API requests.
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+###### U
+
+`U`
+
+###### E
+
+`E`
+
+##### Parameters
+
+###### values
+
+readonly `T`[]
+
+Array of values to validate
+
+###### validator
+
+[`Validator`](types.md#validator)\<`T`, `U`, `E`\>
+
+Validator to apply to each value
+
+##### Returns
+
+[`Validation`](types.md#validation)\<`U`[], `E`\>
+
+Validation with array of values, or all accumulated errors
+
+##### Example
+
+```typescript
+// Validate array of numbers
+const isPositive: Validator<number, number, string> =
+  (n) => n > 0 ? valid(n) : invalid(`${n} is not positive`)
+
+validateAll([1, 2, 3], isPositive)
+// => Valid([1, 2, 3])
+
+validateAll([1, -2, 3, -4], isPositive)
+// => Invalid(['-2 is not positive', '-4 is not positive'])
+
+// Real-world: Validate CSV import rows
+const validateRow = (row: unknown): Validation<User, string> =>
+  // ... validation logic
+
+const validateCSV = (rows: unknown[]) =>
+  validateAll(rows, validateRow)
+// Returns all invalid rows with their errors
+
+// Real-world: Validate batch API request
+interface CreateUserRequest {
+  email: string
+  name: string
+}
+
+const validateCreateUser = (req: unknown): Validation<CreateUserRequest, string> =>
+  // ... validation logic
+
+const validateBatchCreate = (requests: unknown[]) =>
+  validateAll(requests, validateCreateUser)
+
+// Get detailed error report for failed validations
+const result = validateBatchCreate(userRequests)
+if (isInvalid(result)) {
+  result.errors.forEach((error, idx) => {
+    console.error(`Request ${idx}: ${error}`)
+  })
+}
+```
+
+##### See
+
+ - validate - for applying multiple validators to a single value
+ - collectErrors - for combining independent validations
+
+#### Call Signature
+ `>` **validateAll**\<`T`, `U`, `E`\>(`validator`): (`values`) => [`Validation`](types.md#validation)\<`U`[], `E`\>
+
+Defined in: [validation/validateAll/index.ts:72](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validateAll/index.ts#L72)
+
+Applies a validator to each element in an array, accumulating all errors.
+
+If all elements are valid, returns Valid with the array of values.
+If any element is invalid, returns Invalid with all accumulated errors.
+
+This is useful for bulk validation operations like CSV imports or
+batch API requests.
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+###### U
+
+`U`
+
+###### E
+
+`E`
+
+##### Parameters
+
+###### validator
+
+[`Validator`](types.md#validator)\<`T`, `U`, `E`\>
+
+Validator to apply to each value
+
+##### Returns
+
+Validation with array of values, or all accumulated errors
+ `>` (`values`): [`Validation`](types.md#validation)\<`U`[], `E`\>
+
+###### Parameters
+
+###### values
+
+readonly `T`[]
+
+###### Returns
+
+[`Validation`](types.md#validation)\<`U`[], `E`\>
+
+##### Example
+
+```typescript
+// Validate array of numbers
+const isPositive: Validator<number, number, string> =
+  (n) => n > 0 ? valid(n) : invalid(`${n} is not positive`)
+
+validateAll([1, 2, 3], isPositive)
+// => Valid([1, 2, 3])
+
+validateAll([1, -2, 3, -4], isPositive)
+// => Invalid(['-2 is not positive', '-4 is not positive'])
+
+// Real-world: Validate CSV import rows
+const validateRow = (row: unknown): Validation<User, string> =>
+  // ... validation logic
+
+const validateCSV = (rows: unknown[]) =>
+  validateAll(rows, validateRow)
+// Returns all invalid rows with their errors
+
+// Real-world: Validate batch API request
+interface CreateUserRequest {
+  email: string
+  name: string
+}
+
+const validateCreateUser = (req: unknown): Validation<CreateUserRequest, string> =>
+  // ... validation logic
+
+const validateBatchCreate = (requests: unknown[]) =>
+  validateAll(requests, validateCreateUser)
+
+// Get detailed error report for failed validations
+const result = validateBatchCreate(userRequests)
+if (isInvalid(result)) {
+  result.errors.forEach((error, idx) => {
+    console.error(`Request ${idx}: ${error}`)
+  })
+}
+```
+
+##### See
+
+ - validate - for applying multiple validators to a single value
+ - collectErrors - for combining independent validations

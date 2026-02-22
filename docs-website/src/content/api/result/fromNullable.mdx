@@ -1,0 +1,138 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# result/fromNullable
+
+## Functions
+
+### fromNullable()
+
+#### Call Signature
+ `>` **fromNullable**\<`T`, `E`\>(`value`, `error`): [`Result`](types.md#result)\<`T`, `E`\>
+
+Defined in: [result/fromNullable/index.ts:36](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/result/fromNullable/index.ts#L36)
+
+Converts a nullable value to a Result.
+
+If the value is not null or undefined, returns Ok with the value.
+Otherwise, returns Err with the provided error.
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+###### E
+
+`E`
+
+##### Parameters
+
+###### value
+
+The nullable value
+
+`T` | `null` | `undefined`
+
+###### error
+
+`E`
+
+Error to use if value is null/undefined
+
+##### Returns
+
+[`Result`](types.md#result)\<`T`, `E`\>
+
+Result containing the value or error
+
+##### Example
+
+```typescript
+// Data-first
+fromNullable(42, 'No value') // => Ok(42)
+fromNullable(null, 'No value') // => Err('No value')
+fromNullable(undefined, 'No value') // => Err('No value')
+
+// Data-last (in pipe)
+pipe(
+  users.find(u => u.id === id),
+  fromNullable('User not found'),
+  map(user => user.name)
+)
+
+// With error function
+pipe(
+  config.get('apiKey'),
+  fromNullable('Missing API key in config')
+)
+```
+
+#### Call Signature
+ `>` **fromNullable**\<`E`\>(`error`): \<`T`\>(`value`) => [`Result`](types.md#result)\<`T`, `E`\>
+
+Defined in: [result/fromNullable/index.ts:37](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/result/fromNullable/index.ts#L37)
+
+Converts a nullable value to a Result.
+
+If the value is not null or undefined, returns Ok with the value.
+Otherwise, returns Err with the provided error.
+
+##### Type Parameters
+
+###### E
+
+`E`
+
+##### Parameters
+
+###### error
+
+`E`
+
+Error to use if value is null/undefined
+
+##### Returns
+
+Result containing the value or error
+ `>` \<`T`\>(`value`): [`Result`](types.md#result)\<`T`, `E`\>
+
+###### Type Parameters
+
+###### T
+
+`T`
+
+###### Parameters
+
+###### value
+
+`T` | `null` | `undefined`
+
+###### Returns
+
+[`Result`](types.md#result)\<`T`, `E`\>
+
+##### Example
+
+```typescript
+// Data-first
+fromNullable(42, 'No value') // => Ok(42)
+fromNullable(null, 'No value') // => Err('No value')
+fromNullable(undefined, 'No value') // => Err('No value')
+
+// Data-last (in pipe)
+pipe(
+  users.find(u => u.id === id),
+  fromNullable('User not found'),
+  map(user => user.name)
+)
+
+// With error function
+pipe(
+  config.get('apiKey'),
+  fromNullable('Missing API key in config')
+)
+```

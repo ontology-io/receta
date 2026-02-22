@@ -1,0 +1,230 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# lens/over
+
+## Functions
+
+### over()
+
+#### Call Signature
+ `>` **over**\<`S`, `A`\>(`l`, `fn`, `source`): `S`
+
+Defined in: [lens/over/index.ts:79](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/lens/over/index.ts#L79)
+
+Applies a transformation function to the value focused by a Lens.
+
+This is the most powerful lens operation. It reads the current value,
+applies a transformation, and sets the result - all immutably.
+
+Supports both data-first and data-last (for use in pipes).
+
+##### Type Parameters
+
+###### S
+
+`S`
+
+###### A
+
+`A`
+
+##### Parameters
+
+###### l
+
+[`Lens`](types.md#lens)\<`S`, `A`\>
+
+The Lens to transform through
+
+###### fn
+
+(`a`) => `A`
+
+Function to transform the focused value
+
+###### source
+
+`S`
+
+The source object to update
+
+##### Returns
+
+`S`
+
+A new source object with the transformed value
+
+##### Examples
+
+```typescript
+// Data-first
+const ageLens = prop<User>('age')
+const user = { name: 'Alice', age: 30 }
+
+over(ageLens, age => age + 1, user)
+// => { name: 'Alice', age: 31 }
+```
+
+```typescript
+// Data-last (in pipe)
+import * as R from 'remeda'
+
+const updated = R.pipe(
+  user,
+  over(prop<User>('age'), age => age + 1)
+) // { name: 'Alice', age: 31 }
+```
+
+```typescript
+// String manipulation
+const nameLens = prop<User>('name')
+const user = { name: 'alice', age: 30 }
+
+over(nameLens, name => name.toUpperCase(), user)
+// => { name: 'ALICE', age: 30 }
+```
+
+```typescript
+// Complex transformations with nested lenses
+interface State {
+  cart: {
+    items: Array<{ id: string; quantity: number }>
+  }
+}
+
+const itemsLens = path<State, any>('cart.items')
+
+over(
+  itemsLens,
+  items => items.map(item =>
+    item.id === 'abc' ? { ...item, quantity: item.quantity + 1 } : item
+  ),
+  state
+)
+```
+
+```typescript
+// Incrementing a counter (React state pattern)
+const countLens = prop<State>('count')
+setState(over(countLens, n => n + 1))
+```
+
+##### See
+
+ - view - To read through a lens
+ - set - To directly set a value through a lens
+ - prop - To create a property lens
+
+#### Call Signature
+ `>` **over**\<`S`, `A`\>(`l`, `fn`): (`source`) => `S`
+
+Defined in: [lens/over/index.ts:80](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/lens/over/index.ts#L80)
+
+Applies a transformation function to the value focused by a Lens.
+
+This is the most powerful lens operation. It reads the current value,
+applies a transformation, and sets the result - all immutably.
+
+Supports both data-first and data-last (for use in pipes).
+
+##### Type Parameters
+
+###### S
+
+`S`
+
+###### A
+
+`A`
+
+##### Parameters
+
+###### l
+
+[`Lens`](types.md#lens)\<`S`, `A`\>
+
+The Lens to transform through
+
+###### fn
+
+(`a`) => `A`
+
+Function to transform the focused value
+
+##### Returns
+
+A new source object with the transformed value
+ `>` (`source`): `S`
+
+###### Parameters
+
+###### source
+
+`S`
+
+###### Returns
+
+`S`
+
+##### Examples
+
+```typescript
+// Data-first
+const ageLens = prop<User>('age')
+const user = { name: 'Alice', age: 30 }
+
+over(ageLens, age => age + 1, user)
+// => { name: 'Alice', age: 31 }
+```
+
+```typescript
+// Data-last (in pipe)
+import * as R from 'remeda'
+
+const updated = R.pipe(
+  user,
+  over(prop<User>('age'), age => age + 1)
+) // { name: 'Alice', age: 31 }
+```
+
+```typescript
+// String manipulation
+const nameLens = prop<User>('name')
+const user = { name: 'alice', age: 30 }
+
+over(nameLens, name => name.toUpperCase(), user)
+// => { name: 'ALICE', age: 30 }
+```
+
+```typescript
+// Complex transformations with nested lenses
+interface State {
+  cart: {
+    items: Array<{ id: string; quantity: number }>
+  }
+}
+
+const itemsLens = path<State, any>('cart.items')
+
+over(
+  itemsLens,
+  items => items.map(item =>
+    item.id === 'abc' ? { ...item, quantity: item.quantity + 1 } : item
+  ),
+  state
+)
+```
+
+```typescript
+// Incrementing a counter (React state pattern)
+const countLens = prop<State>('count')
+setState(over(countLens, n => n + 1))
+```
+
+##### See
+
+ - view - To read through a lens
+ - set - To directly set a value through a lens
+ - prop - To create a property lens

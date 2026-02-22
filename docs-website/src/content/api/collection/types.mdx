@@ -1,0 +1,524 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# collection/types
+
+Collection module types.
+
+## Classes
+
+### DuplicateKeyError
+
+Defined in: [collection/types.ts:172](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L172)
+
+Error thrown when a duplicate key is found during indexing.
+
+#### Extends
+
+- `Error`
+
+#### Constructors
+
+##### Constructor
+ `>` **new DuplicateKeyError**(`key`, `message?`): [`DuplicateKeyError`](#duplicatekeyerror)
+
+Defined in: [collection/types.ts:173](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L173)
+
+###### Parameters
+
+###### key
+
+`string` | `number`
+
+###### message?
+
+`string` `=` `...`
+
+###### Returns
+
+[`DuplicateKeyError`](#duplicatekeyerror)
+
+###### Overrides
+
+`Error.constructor`
+
+#### Properties
+
+##### key
+ `>` `readonly` **key**: `string` \| `number`
+
+Defined in: [collection/types.ts:174](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L174)
+
+## Interfaces
+
+### CursorPaginatedResult
+
+Defined in: [collection/types.ts:112](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L112)
+
+Result of a cursor-based pagination operation.
+
+#### Example
+
+```typescript
+const page: CursorPaginatedResult<User, string> = {
+  items: users,
+  nextCursor: 'user_456',
+  hasMore: true
+}
+```
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+The type of items in the page
+
+##### TCursor
+
+`TCursor`
+
+The type of the cursor
+
+#### Properties
+
+##### hasMore
+ `>` `readonly` **hasMore**: `boolean`
+
+Defined in: [collection/types.ts:115](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L115)
+
+##### items
+ `>` `readonly` **items**: readonly `T`[]
+
+Defined in: [collection/types.ts:113](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L113)
+
+##### nextCursor?
+ `>` `readonly` `optional` **nextCursor**: `TCursor`
+
+Defined in: [collection/types.ts:114](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L114)
+
+### CursorPaginationConfig
+
+Defined in: [collection/types.ts:66](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L66)
+
+Cursor-based pagination configuration.
+
+#### Example
+
+```typescript
+const config: CursorPaginationConfig<string> = {
+  cursor: 'user_123',
+  limit: 20
+}
+```
+
+#### Type Parameters
+
+##### TCursor
+
+`TCursor`
+
+#### Properties
+
+##### cursor?
+ `>` `readonly` `optional` **cursor**: `TCursor`
+
+Defined in: [collection/types.ts:67](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L67)
+
+##### limit
+ `>` `readonly` **limit**: `number`
+
+Defined in: [collection/types.ts:68](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L68)
+
+### DiffResult
+
+Defined in: [collection/types.ts:22](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L22)
+
+Result of a diff operation showing added, updated, and removed items.
+
+#### Example
+
+```typescript
+const result: DiffResult<User> = {
+  added: [newUser],
+  updated: [{ old: oldUser, new: updatedUser }],
+  removed: [deletedUser],
+  unchanged: [sameUser]
+}
+```
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+The type of items in the collection
+
+#### Properties
+
+##### added
+ `>` `readonly` **added**: readonly `T`[]
+
+Defined in: [collection/types.ts:23](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L23)
+
+##### removed
+ `>` `readonly` **removed**: readonly `T`[]
+
+Defined in: [collection/types.ts:25](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L25)
+
+##### unchanged
+ `>` `readonly` **unchanged**: readonly `T`[]
+
+Defined in: [collection/types.ts:26](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L26)
+
+##### updated
+ `>` `readonly` **updated**: readonly [`UpdatedItem`](#updateditem)\<`T`\>[]
+
+Defined in: [collection/types.ts:24](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L24)
+
+### FlattenConfig
+
+Defined in: [collection/types.ts:203](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L203)
+
+Configuration for flatten operation.
+
+#### Example
+
+```typescript
+const config: FlattenConfig<FileNode> = {
+  getChildren: (node) => node.children,
+  maxDepth: 3,
+  includePath: true
+}
+```
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+The type of tree nodes
+
+#### Properties
+
+##### getChildren()
+ `>` `readonly` **getChildren**: (`node`) => readonly `T`[] \| `undefined`
+
+Defined in: [collection/types.ts:204](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L204)
+
+###### Parameters
+
+###### node
+
+`T`
+
+###### Returns
+
+readonly `T`[] \| `undefined`
+
+##### includePath?
+ `>` `readonly` `optional` **includePath**: `boolean`
+
+Defined in: [collection/types.ts:206](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L206)
+
+##### maxDepth?
+ `>` `readonly` `optional` **maxDepth**: `number`
+
+Defined in: [collection/types.ts:205](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L205)
+
+### FlattenedItem
+
+Defined in: [collection/types.ts:214](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L214)
+
+Result item from flatten operation with path information.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+The type of the item
+
+#### Properties
+
+##### depth
+ `>` `readonly` **depth**: `number`
+
+Defined in: [collection/types.ts:217](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L217)
+
+##### item
+ `>` `readonly` **item**: `T`
+
+Defined in: [collection/types.ts:215](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L215)
+
+##### path
+ `>` `readonly` **path**: readonly `T`[]
+
+Defined in: [collection/types.ts:216](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L216)
+
+### IndexConfig
+
+Defined in: [collection/types.ts:165](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L165)
+
+Configuration for index operations with collision handling.
+
+#### Type Param
+
+The type of items being indexed
+
+#### Example
+
+```typescript
+const config: IndexConfig<User> = {
+  onCollision: 'error' // or 'first' | 'last'
+}
+```
+
+#### Properties
+
+##### onCollision?
+ `>` `readonly` `optional` **onCollision**: `"error"` \| `"first"` \| `"last"`
+
+Defined in: [collection/types.ts:166](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L166)
+
+### NestConfig
+
+Defined in: [collection/types.ts:131](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L131)
+
+Configuration for nested grouping operations.
+
+#### Example
+
+```typescript
+const config: NestConfig<Comment> = {
+  by: ['userId', 'postId'],
+  createEmpty: () => []
+}
+```
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+The type of items being grouped
+
+#### Properties
+
+##### by
+ `>` `readonly` **by**: readonly (keyof `T` \| (`item`) => `string` \| `number`)[]
+
+Defined in: [collection/types.ts:132](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L132)
+
+##### createEmpty()?
+ `>` `readonly` `optional` **createEmpty**: () => `unknown`
+
+Defined in: [collection/types.ts:133](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L133)
+
+###### Returns
+
+`unknown`
+
+### PaginatedResult
+
+Defined in: [collection/types.ts:88](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L88)
+
+Result of a pagination operation.
+
+#### Example
+
+```typescript
+const page: PaginatedResult<User> = {
+  items: users,
+  page: 1,
+  pageSize: 20,
+  total: 100,
+  hasNext: true,
+  hasPrevious: false
+}
+```
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+The type of items in the page
+
+#### Properties
+
+##### hasNext
+ `>` `readonly` **hasNext**: `boolean`
+
+Defined in: [collection/types.ts:93](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L93)
+
+##### hasPrevious
+ `>` `readonly` **hasPrevious**: `boolean`
+
+Defined in: [collection/types.ts:94](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L94)
+
+##### items
+ `>` `readonly` **items**: readonly `T`[]
+
+Defined in: [collection/types.ts:89](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L89)
+
+##### page
+ `>` `readonly` **page**: `number`
+
+Defined in: [collection/types.ts:90](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L90)
+
+##### pageSize
+ `>` `readonly` **pageSize**: `number`
+
+Defined in: [collection/types.ts:91](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L91)
+
+##### total
+ `>` `readonly` **total**: `number`
+
+Defined in: [collection/types.ts:92](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L92)
+
+### PaginationConfig
+
+Defined in: [collection/types.ts:50](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L50)
+
+Configuration for pagination operations.
+
+#### Example
+
+```typescript
+const config: PaginationConfig = {
+  page: 1,
+  pageSize: 20
+}
+```
+
+#### Properties
+
+##### page
+ `>` `readonly` **page**: `number`
+
+Defined in: [collection/types.ts:51](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L51)
+
+##### pageSize
+ `>` `readonly` **pageSize**: `number`
+
+Defined in: [collection/types.ts:52](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L52)
+
+### UpdatedItem
+
+Defined in: [collection/types.ts:34](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L34)
+
+Represents an item that was updated in a diff operation.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+The type of the item
+
+#### Properties
+
+##### new
+ `>` `readonly` **new**: `T`
+
+Defined in: [collection/types.ts:36](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L36)
+
+##### old
+ `>` `readonly` **old**: `T`
+
+Defined in: [collection/types.ts:35](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L35)
+
+### WindowSlidingConfig
+
+Defined in: [collection/types.ts:231](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L231)
+
+Configuration for sliding window operation.
+
+#### Example
+
+```typescript
+const config: WindowSlidingConfig = {
+  size: 3,
+  step: 1
+}
+```
+
+#### Properties
+
+##### size
+ `>` `readonly` **size**: `number`
+
+Defined in: [collection/types.ts:232](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L232)
+
+##### step?
+ `>` `readonly` `optional` **step**: `number`
+
+Defined in: [collection/types.ts:233](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L233)
+
+## Type Aliases
+
+### Comparator()
+ `>` **Comparator**\<`T`\> `=` (`a`, `b`) => `boolean`
+
+Defined in: [collection/types.ts:187](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L187)
+
+Comparator function for custom equality checks.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+The type of items being compared
+
+#### Parameters
+
+##### a
+
+`T`
+
+##### b
+
+`T`
+
+#### Returns
+
+`boolean`
+
+### NestedMap
+ `>` **NestedMap**\<`T`\> `=` `object`
+
+Defined in: [collection/types.ts:149](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/collection/types.ts#L149)
+
+A nested map structure for hierarchical grouping.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Index Signature
+
+\[`key`: `string` \| `number`\]: `T` \| [`NestedMap`](#nestedmap)\<`T`\> \| readonly `T`[]
+
+#### Example
+
+```typescript
+const nested: NestedMap<Comment> = {
+  'user_1': {
+    'post_1': [comment1, comment2],
+    'post_2': [comment3]
+  }
+}
+```

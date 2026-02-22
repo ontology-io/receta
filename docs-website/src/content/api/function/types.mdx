@@ -1,0 +1,106 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# function/types
+
+Type definitions for function combinators and utilities.
+
+## Type Aliases
+
+### CondPair
+ `>` **CondPair**\<`T`, `U`\> `=` readonly \[[`Predicate`](#predicate)\<`T`\>, [`Mapper`](#mapper)\<`T`, `U`\>\]
+
+Defined in: [function/types.ts:19](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/function/types.ts#L19)
+
+A pair of predicate and corresponding function for conditional execution.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+##### U
+
+`U`
+
+### FunctionTuple
+ `>` **FunctionTuple**\<`T`, `Args`\> `=` `{ readonly [K in keyof Args]: Mapper<T, Args[K]> }`
+
+Defined in: [function/types.ts:24](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/function/types.ts#L24)
+
+Represents a tuple of functions that take the same input type.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+##### Args
+
+`Args` *extends* readonly `unknown`[]
+
+### Mapper()
+ `>` **Mapper**\<`T`, `U`\> `=` (`value`) => `U`
+
+Defined in: [function/types.ts:14](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/function/types.ts#L14)
+
+A function that transforms a value of type T to type U.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+##### U
+
+`U`
+
+#### Parameters
+
+##### value
+
+`T`
+
+#### Returns
+
+`U`
+
+### Predicate()
+ `>` **Predicate**\<`T`\> `=` (`value`) => `boolean`
+
+Defined in: [function/types.ts:9](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/function/types.ts#L9)
+
+A function that takes a value and returns a boolean.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### value
+
+`T`
+
+#### Returns
+
+`boolean`
+
+### ReturnTypes
+ `>` **ReturnTypes**\<`Fns`\> `=` `{ readonly [K in keyof Fns]: Fns[K] extends (args: any[]) => infer R ? R : never }`
+
+Defined in: [function/types.ts:31](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/function/types.ts#L31)
+
+Extracts the return types of a tuple of functions.
+
+#### Type Parameters
+
+##### Fns
+
+`Fns` *extends* readonly (...`args`) => `any`[]

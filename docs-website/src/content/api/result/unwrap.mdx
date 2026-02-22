@@ -1,0 +1,307 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# result/unwrap
+
+## Functions
+
+### unwrap()
+ `>` **unwrap**\<`T`, `E`\>(`result`): `T`
+
+Defined in: [result/unwrap/index.ts:24](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/result/unwrap/index.ts#L24)
+
+Extracts the value from an Ok Result or throws the error.
+
+**Warning**: This function throws if the Result is Err.
+Use `unwrapOr` or `unwrapOrElse` for safer alternatives.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+##### E
+
+`E`
+
+#### Parameters
+
+##### result
+
+[`Result`](types.md#result)\<`T`, `E`\>
+
+The Result to unwrap
+
+#### Returns
+
+`T`
+
+The value from Ok
+
+#### Throws
+
+The error if Result is Err
+
+#### Example
+
+```typescript
+unwrap(ok(42)) // => 42
+unwrap(err('fail')) // throws 'fail'
+```
+
+#### See
+
+ - unwrapOr - for providing a default value
+ - unwrapOrElse - for computing a fallback value
+
+### unwrapOr()
+
+#### Call Signature
+ `>` **unwrapOr**\<`T`, `E`\>(`result`, `defaultValue`): `T`
+
+Defined in: [result/unwrap/index.ts:53](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/result/unwrap/index.ts#L53)
+
+Extracts the value from an Ok Result or returns a default.
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+###### E
+
+`E`
+
+##### Parameters
+
+###### result
+
+[`Result`](types.md#result)\<`T`, `E`\>
+
+The Result to unwrap
+
+###### defaultValue
+
+`T`
+
+Value to return if Result is Err
+
+##### Returns
+
+`T`
+
+The value from Ok or the default
+
+##### Example
+
+```typescript
+// Data-first
+unwrapOr(ok(42), 0) // => 42
+unwrapOr(err('fail'), 0) // => 0
+
+// Data-last (in pipe)
+pipe(
+  parseNumber('abc'),
+  unwrapOr(0)
+) // => 0
+```
+
+##### See
+
+unwrapOrElse - for lazy default computation
+
+#### Call Signature
+ `>` **unwrapOr**\<`T`\>(`defaultValue`): \<`E`\>(`result`) => `T`
+
+Defined in: [result/unwrap/index.ts:54](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/result/unwrap/index.ts#L54)
+
+Extracts the value from an Ok Result or returns a default.
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+##### Parameters
+
+###### defaultValue
+
+`T`
+
+Value to return if Result is Err
+
+##### Returns
+
+The value from Ok or the default
+ `>` \<`E`\>(`result`): `T`
+
+###### Type Parameters
+
+###### E
+
+`E`
+
+###### Parameters
+
+###### result
+
+[`Result`](types.md#result)\<`T`, `E`\>
+
+###### Returns
+
+`T`
+
+##### Example
+
+```typescript
+// Data-first
+unwrapOr(ok(42), 0) // => 42
+unwrapOr(err('fail'), 0) // => 0
+
+// Data-last (in pipe)
+pipe(
+  parseNumber('abc'),
+  unwrapOr(0)
+) // => 0
+```
+
+##### See
+
+unwrapOrElse - for lazy default computation
+
+### unwrapOrElse()
+
+#### Call Signature
+ `>` **unwrapOrElse**\<`T`, `E`\>(`result`, `fn`): `T`
+
+Defined in: [result/unwrap/index.ts:94](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/result/unwrap/index.ts#L94)
+
+Extracts the value from an Ok Result or computes a fallback from the error.
+
+Unlike `unwrapOr`, this allows you to compute the default value lazily
+and access the error for decision-making.
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+###### E
+
+`E`
+
+##### Parameters
+
+###### result
+
+[`Result`](types.md#result)\<`T`, `E`\>
+
+The Result to unwrap
+
+###### fn
+
+(`error`) => `T`
+
+Function to compute fallback from error
+
+##### Returns
+
+`T`
+
+The value from Ok or the computed fallback
+
+##### Example
+
+```typescript
+// Data-first
+unwrapOrElse(ok(42), () => 0) // => 42
+unwrapOrElse(err('fail'), e => {
+  console.error(e)
+  return 0
+}) // logs 'fail', returns 0
+
+// Data-last (in pipe)
+pipe(
+  fetchUser(id),
+  unwrapOrElse(error => {
+    logError(error)
+    return guestUser
+  })
+)
+```
+
+##### See
+
+unwrapOr - for static default values
+
+#### Call Signature
+ `>` **unwrapOrElse**\<`T`, `E`\>(`fn`): (`result`) => `T`
+
+Defined in: [result/unwrap/index.ts:95](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/result/unwrap/index.ts#L95)
+
+Extracts the value from an Ok Result or computes a fallback from the error.
+
+Unlike `unwrapOr`, this allows you to compute the default value lazily
+and access the error for decision-making.
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+###### E
+
+`E`
+
+##### Parameters
+
+###### fn
+
+(`error`) => `T`
+
+Function to compute fallback from error
+
+##### Returns
+
+The value from Ok or the computed fallback
+ `>` (`result`): `T`
+
+###### Parameters
+
+###### result
+
+[`Result`](types.md#result)\<`T`, `E`\>
+
+###### Returns
+
+`T`
+
+##### Example
+
+```typescript
+// Data-first
+unwrapOrElse(ok(42), () => 0) // => 42
+unwrapOrElse(err('fail'), e => {
+  console.error(e)
+  return 0
+}) // logs 'fail', returns 0
+
+// Data-last (in pipe)
+pipe(
+  fetchUser(id),
+  unwrapOrElse(error => {
+    logError(error)
+    return guestUser
+  })
+)
+```
+
+##### See
+
+unwrapOr - for static default values

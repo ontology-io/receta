@@ -1,0 +1,143 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# compare/advanced
+
+## Functions
+
+### caseInsensitive()
+ `>` **caseInsensitive**\<`T`\>(`fn`): [`Comparator`](types.md#comparator)\<`T`\>
+
+Defined in: [compare/advanced/index.ts:37](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/compare/advanced/index.ts#L37)
+
+Creates a case-insensitive string comparator.
+
+Convenience wrapper for `byString` with `caseSensitive: false`.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### fn
+
+[`ComparableExtractor`](types.md#comparableextractor)\<`T`, `string`\>
+
+Function to extract the string value
+
+#### Returns
+
+[`Comparator`](types.md#comparator)\<`T`\>
+
+A case-insensitive comparator
+
+#### Example
+
+```typescript
+interface File {
+  name: string
+  extension: string
+}
+
+const files = [
+  { name: 'README.md', extension: 'md' },
+  { name: 'index.ts', extension: 'ts' },
+  { name: 'App.tsx', extension: 'tsx' },
+  { name: 'package.json', extension: 'json' }
+]
+
+// Case-sensitive (default) - uppercase comes first
+files.sort(byString(f => f.name))
+// => [App.tsx, README.md, index.ts, package.json]
+
+// Case-insensitive - alphabetical regardless of case
+files.sort(caseInsensitive(f => f.name))
+// => [App.tsx, index.ts, package.json, README.md]
+```
+
+#### See
+
+ - byString - for more string comparison options
+ - natural - for natural string sorting (handles numbers)
+
+### localeCompare()
+ `>` **localeCompare**\<`T`\>(`fn`, `locale`): [`Comparator`](types.md#comparator)\<`T`\>
+
+Defined in: [compare/advanced/index.ts:95](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/compare/advanced/index.ts#L95)
+
+Creates a locale-aware string comparator.
+
+Uses the browser/Node.js locale system for culturally appropriate sorting.
+Handles accented characters, special characters, and language-specific rules.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### fn
+
+[`ComparableExtractor`](types.md#comparableextractor)\<`T`, `string`\>
+
+Function to extract the string value
+
+##### locale
+
+`string`
+
+BCP 47 language tag (e.g., 'en-US', 'de-DE', 'fr-FR')
+
+#### Returns
+
+[`Comparator`](types.md#comparator)\<`T`\>
+
+A locale-aware comparator
+
+#### Example
+
+```typescript
+interface City {
+  name: string
+  country: string
+}
+
+const cities = [
+  { name: 'Zürich', country: 'Switzerland' },
+  { name: 'Berlin', country: 'Germany' },
+  { name: 'München', country: 'Germany' },
+  { name: 'Åarhus', country: 'Denmark' }
+]
+
+// German locale (handles umlauts correctly)
+cities.sort(localeCompare(c => c.name, 'de-DE'))
+// => [Åarhus, Berlin, München, Zürich]
+
+// French locale
+const names = [
+  { name: 'Étienne' },
+  { name: 'Eric' },
+  { name: 'Émile' }
+]
+names.sort(localeCompare(n => n.name, 'fr-FR'))
+// => [Émile, Eric, Étienne]
+
+// English locale
+const words = [
+  { word: 'résumé' },
+  { word: 'resume' },
+  { word: 'result' }
+]
+words.sort(localeCompare(w => w.word, 'en-US'))
+```
+
+#### See
+
+ - byString - for more string comparison options
+ - caseInsensitive - for simple case-insensitive sorting

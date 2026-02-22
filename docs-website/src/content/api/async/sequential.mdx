@@ -1,0 +1,161 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# async/sequential
+
+## Interfaces
+
+### SequentialError
+
+Defined in: [async/sequential/index.ts:7](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/sequential/index.ts#L7)
+
+Error type for sequential task execution failures.
+
+#### Properties
+
+##### completedTasks
+ `>` `readonly` **completedTasks**: `number`
+
+Defined in: [async/sequential/index.ts:10](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/sequential/index.ts#L10)
+
+##### error
+ `>` `readonly` **error**: `unknown`
+
+Defined in: [async/sequential/index.ts:11](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/sequential/index.ts#L11)
+
+##### taskIndex
+ `>` `readonly` **taskIndex**: `number`
+
+Defined in: [async/sequential/index.ts:9](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/sequential/index.ts#L9)
+
+##### type
+ `>` `readonly` **type**: `"sequential_error"`
+
+Defined in: [async/sequential/index.ts:8](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/sequential/index.ts#L8)
+
+## Variables
+
+### sequentialOrThrow()
+ `>` `const` **sequentialOrThrow**: (...`args`) => `Promise`\<`unknown`[]\>
+
+Defined in: [async/sequential/index.ts:115](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/sequential/index.ts#L115)
+
+Throwing variant of sequential for backward compatibility.
+
+Use this when you want exceptions instead of Result pattern.
+Prefer the Result-returning sequential for better error handling.
+
+#### Parameters
+
+##### args
+
+...\[readonly () => `Promise`\<`unknown`\>[]\]
+
+#### Returns
+
+`Promise`\<`unknown`[]\>
+
+Promise resolving to array of results
+
+#### Throws
+
+SequentialError if any task fails
+
+#### Example
+
+```typescript
+// Throws on error
+try {
+  const results = await sequentialOrThrow([
+    () => createUser({ name: 'Alice' }),
+    () => createPost({ title: 'Hello' }),
+    () => publishPost({ id: 1 }),
+  ])
+} catch (error) {
+  console.error('Task failed:', error)
+}
+```
+
+#### See
+
+ - sequential - Result-returning variant (recommended)
+ - orThrow - utility for creating throwing variants
+
+## Functions
+
+### sequential()
+ `>` **sequential**\<`T`\>(`tasks`): `Promise`\<[`Result`](../result/types.md#result)\<`T`[], [`SequentialError`](#sequentialerror)\>\>
+
+Defined in: [async/sequential/index.ts:66](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/sequential/index.ts#L66)
+
+Executes an array of async tasks sequentially (one at a time).
+
+Returns a Result to handle errors explicitly. If any task fails,
+execution stops and returns an Err with details about which task failed.
+
+Each task waits for the previous one to complete before starting.
+Useful when tasks have dependencies or when you need strict ordering.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### tasks
+
+readonly () => `Promise`\<`T`\>[]
+
+Array of async functions to execute
+
+#### Returns
+
+`Promise`\<[`Result`](../result/types.md#result)\<`T`[], [`SequentialError`](#sequentialerror)\>\>
+
+Promise resolving to Result containing array of results or error
+
+#### Example
+
+```typescript
+import * as R from 'remeda'
+import { unwrapOr, mapErr } from 'receta/result'
+
+// Execute tasks one at a time in order
+const result = await sequential([
+  () => createUser({ name: 'Alice' }),
+  () => createPost({ title: 'Hello' }),
+  () => publishPost({ id: 1 }),
+])
+
+// Handle with Result pattern
+const results = R.pipe(
+  result,
+  mapErr(error => console.error('Task failed at index:', error.taskIndex)),
+  unwrapOr([])
+)
+
+// Database migrations that must run in order
+const migrationResult = await sequential([
+  () => runMigration('001_create_users'),
+  () => runMigration('002_add_email_index'),
+  () => runMigration('003_create_posts'),
+])
+
+if (isErr(migrationResult)) {
+  console.error('Migration failed:', migrationResult.error)
+  // Can rollback completed migrations using completedTasks count
+}
+
+// Process items with side effects in order
+const logs = await sequential(
+  events.map(event => () => processEvent(event))
+)
+```
+
+#### See
+
+ - parallel - for running tasks in parallel with concurrency limit
+ - sequentialOrThrow - throwing variant for backward compatibility

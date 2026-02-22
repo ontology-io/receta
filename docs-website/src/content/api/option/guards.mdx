@@ -1,0 +1,85 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# option/guards
+
+## Functions
+
+### isNone()
+ `>` **isNone**\<`T`\>(`option`): `option is None`
+
+Defined in: [option/guards/index.ts:41](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/guards/index.ts#L41)
+
+Type guard to check if an Option is None.
+
+Narrows the type to None.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### option
+
+[`Option`](types.md#option)\<`T`\>
+
+The Option to check
+
+#### Returns
+
+`option is None`
+
+True if the Option is None
+
+#### Example
+
+```typescript
+const opt = none()
+
+if (isNone(opt)) {
+  console.log('No value present')
+}
+```
+
+### isSome()
+ `>` **isSome**\<`T`\>(`option`): `option is Some<T>`
+
+Defined in: [option/guards/index.ts:20](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/guards/index.ts#L20)
+
+Type guard to check if an Option is Some.
+
+Narrows the type to `Some<T>`.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### option
+
+[`Option`](types.md#option)\<`T`\>
+
+The Option to check
+
+#### Returns
+
+`option is Some<T>`
+
+True if the Option is Some
+
+#### Example
+
+```typescript
+const opt = some(42)
+
+if (isSome(opt)) {
+  console.log(opt.value) // TypeScript knows this is safe
+}
+```

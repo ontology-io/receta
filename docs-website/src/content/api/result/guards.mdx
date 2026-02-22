@@ -1,0 +1,93 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# result/guards
+
+## Functions
+
+### isErr()
+ `>` **isErr**\<`T`, `E`\>(`result`): `result is Err<E>`
+
+Defined in: [result/guards/index.ts:41](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/result/guards/index.ts#L41)
+
+Type guard to check if a Result is Err.
+
+Narrows the type to `Err<E>`, allowing safe access to the error property.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+##### E
+
+`E`
+
+#### Parameters
+
+##### result
+
+[`Result`](types.md#result)\<`T`, `E`\>
+
+The Result to check
+
+#### Returns
+
+`result is Err<E>`
+
+True if the Result is Err, false otherwise
+
+#### Example
+
+```typescript
+const result: Result<number, string> = err('Failed')
+
+if (isErr(result)) {
+  console.log(result.error) // TypeScript knows this is safe
+}
+```
+
+### isOk()
+ `>` **isOk**\<`T`, `E`\>(`result`): `result is Ok<T>`
+
+Defined in: [result/guards/index.ts:20](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/result/guards/index.ts#L20)
+
+Type guard to check if a Result is Ok.
+
+Narrows the type to `Ok<T>`, allowing safe access to the value property.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+##### E
+
+`E`
+
+#### Parameters
+
+##### result
+
+[`Result`](types.md#result)\<`T`, `E`\>
+
+The Result to check
+
+#### Returns
+
+`result is Ok<T>`
+
+True if the Result is Ok, false otherwise
+
+#### Example
+
+```typescript
+const result: Result<number, string> = ok(42)
+
+if (isOk(result)) {
+  console.log(result.value) // TypeScript knows this is safe
+}
+```

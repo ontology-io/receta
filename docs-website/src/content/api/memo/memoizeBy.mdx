@@ -1,0 +1,84 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# memo/memoizeBy
+
+## Functions
+
+### memoizeBy()
+ `>` **memoizeBy**\<`Args`, `R`, `K`\>(`fn`, `keyFn`, `options?`): [`MemoizedFunction`](types.md#memoizedfunction)\<`Args`, `R`\>
+
+Defined in: [memo/memoizeBy/index.ts:42](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/memoizeBy/index.ts#L42)
+
+Creates a memoized function with custom key extraction.
+
+Use this when:
+- Function takes multiple arguments
+- Function takes complex objects as arguments
+- You need custom cache key logic
+
+#### Type Parameters
+
+##### Args
+
+`Args` *extends* readonly `unknown`[]
+
+##### R
+
+`R`
+
+##### K
+
+`K`
+
+#### Parameters
+
+##### fn
+
+(...`args`) => `R`
+
+##### keyFn
+
+[`KeyFn`](types.md#keyfn)\<`Args`, `K`\>
+
+##### options?
+
+[`MemoizeOptions`](types.md#memoizeoptions)\<`K`\> `=` `{}`
+
+#### Returns
+
+[`MemoizedFunction`](types.md#memoizedfunction)\<`Args`, `R`\>
+
+#### Example
+
+```typescript
+// Multi-argument function
+const add = (a: number, b: number) => a + b
+const memoAdd = memoizeBy(add, (a, b) => `${a},${b}`)
+
+memoAdd(2, 3) // computed
+memoAdd(2, 3) // cached
+
+// Complex object arguments
+interface FetchOptions {
+  id: string
+  include?: string[]
+}
+
+const fetchUser = memoizeBy(
+  (opts: FetchOptions) => api.fetch(opts),
+  (opts) => JSON.stringify(opts)
+)
+
+// Object key (use with WeakMap cache)
+const processNode = memoizeBy(
+  (node: Node) => expensiveOperation(node),
+  (node) => node // object as key
+)
+```
+
+#### See
+
+ - memoize - for single-argument functions
+ - memoizeAsync - for async functions

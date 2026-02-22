@@ -1,0 +1,342 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# async/types
+
+## Interfaces
+
+### BatchOptions
+
+Defined in: [async/types.ts:90](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L90)
+
+Options for batch operations.
+
+#### Properties
+
+##### batchSize?
+ `>` `readonly` `optional` **batchSize**: `number`
+
+Defined in: [async/types.ts:95](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L95)
+
+Number of items to process per batch.
+
+###### Default
+
+```ts
+10
+```
+
+##### concurrency?
+ `>` `readonly` `optional` **concurrency**: `number`
+
+Defined in: [async/types.ts:107](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L107)
+
+Maximum number of concurrent batches.
+
+###### Default
+
+```ts
+1
+```
+
+##### delayBetweenBatches?
+ `>` `readonly` `optional` **delayBetweenBatches**: `number`
+
+Defined in: [async/types.ts:101](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L101)
+
+Delay in milliseconds between batches.
+
+###### Default
+
+```ts
+0
+```
+
+### ConcurrencyOptions
+
+Defined in: [async/types.ts:45](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L45)
+
+Options for concurrent operations.
+
+#### Properties
+
+##### concurrency?
+ `>` `readonly` `optional` **concurrency**: `number`
+
+Defined in: [async/types.ts:51](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L51)
+
+Maximum number of concurrent operations.
+Set to Infinity for unlimited concurrency.
+
+###### Default
+
+```ts
+Infinity
+```
+
+### DebounceOptions
+
+Defined in: [async/types.ts:113](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L113)
+
+Options for debounce operations.
+
+#### Properties
+
+##### delay
+ `>` `readonly` **delay**: `number`
+
+Defined in: [async/types.ts:117](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L117)
+
+Delay in milliseconds to wait before invoking the function.
+
+##### leading?
+ `>` `readonly` `optional` **leading**: `boolean`
+
+Defined in: [async/types.ts:123](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L123)
+
+Whether to invoke the function on the leading edge.
+
+###### Default
+
+```ts
+false
+```
+
+##### trailing?
+ `>` `readonly` `optional` **trailing**: `boolean`
+
+Defined in: [async/types.ts:129](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L129)
+
+Whether to invoke the function on the trailing edge.
+
+###### Default
+
+```ts
+true
+```
+
+### PollOptions
+
+Defined in: [async/types.ts:57](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L57)
+
+Options for polling operations.
+
+#### Properties
+
+##### interval?
+ `>` `readonly` `optional` **interval**: `number`
+
+Defined in: [async/types.ts:62](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L62)
+
+Interval between poll attempts in milliseconds.
+
+###### Default
+
+```ts
+1000
+```
+
+##### maxAttempts?
+ `>` `readonly` `optional` **maxAttempts**: `number`
+
+Defined in: [async/types.ts:68](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L68)
+
+Maximum number of poll attempts.
+
+###### Default
+
+```ts
+10
+```
+
+##### onPoll()?
+ `>` `readonly` `optional` **onPoll**: (`attempt`) => `void`
+
+Defined in: [async/types.ts:84](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L84)
+
+Callback invoked on each poll attempt.
+
+###### Parameters
+
+###### attempt
+
+`number`
+
+###### Returns
+
+`void`
+
+##### shouldContinue()?
+ `>` `readonly` `optional` **shouldContinue**: (`attempt`) => `boolean`
+
+Defined in: [async/types.ts:79](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L79)
+
+Predicate to determine if polling should stop.
+Return true to continue polling, false to stop.
+
+###### Parameters
+
+###### attempt
+
+`number`
+
+###### Returns
+
+`boolean`
+
+##### timeout?
+ `>` `readonly` `optional` **timeout**: `number`
+
+Defined in: [async/types.ts:73](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L73)
+
+Timeout in milliseconds for the entire polling operation.
+
+### RetryOptions
+
+Defined in: [async/types.ts:4](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L4)
+
+Options for retry operations.
+
+#### Properties
+
+##### backoff?
+ `>` `readonly` `optional` **backoff**: `number`
+
+Defined in: [async/types.ts:22](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L22)
+
+Backoff multiplier for exponential backoff.
+Set to 1 for constant delay.
+
+###### Default
+
+```ts
+2
+```
+
+##### delay?
+ `>` `readonly` `optional` **delay**: `number`
+
+Defined in: [async/types.ts:15](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L15)
+
+Initial delay in milliseconds before the first retry.
+
+###### Default
+
+```ts
+1000
+```
+
+##### maxAttempts?
+ `>` `readonly` `optional` **maxAttempts**: `number`
+
+Defined in: [async/types.ts:9](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L9)
+
+Maximum number of retry attempts.
+
+###### Default
+
+```ts
+3
+```
+
+##### maxDelay?
+ `>` `readonly` `optional` **maxDelay**: `number`
+
+Defined in: [async/types.ts:28](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L28)
+
+Maximum delay in milliseconds between retries.
+
+###### Default
+
+```ts
+30000
+```
+
+##### onRetry()?
+ `>` `readonly` `optional` **onRetry**: (`error`, `attempt`, `delay`) => `void`
+
+Defined in: [async/types.ts:39](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L39)
+
+Callback invoked on each retry attempt.
+
+###### Parameters
+
+###### error
+
+`unknown`
+
+###### attempt
+
+`number`
+
+###### delay
+
+`number`
+
+###### Returns
+
+`void`
+
+##### shouldRetry()?
+ `>` `readonly` `optional` **shouldRetry**: (`error`, `attempt`) => `boolean`
+
+Defined in: [async/types.ts:34](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L34)
+
+Function to determine if an error should be retried.
+Return true to retry, false to fail immediately.
+
+###### Parameters
+
+###### error
+
+`unknown`
+
+###### attempt
+
+`number`
+
+###### Returns
+
+`boolean`
+
+### ThrottleOptions
+
+Defined in: [async/types.ts:135](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L135)
+
+Options for throttle operations.
+
+#### Properties
+
+##### delay
+ `>` `readonly` **delay**: `number`
+
+Defined in: [async/types.ts:139](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L139)
+
+Delay in milliseconds between function invocations.
+
+##### leading?
+ `>` `readonly` `optional` **leading**: `boolean`
+
+Defined in: [async/types.ts:145](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L145)
+
+Whether to invoke the function on the leading edge.
+
+###### Default
+
+```ts
+true
+```
+
+##### trailing?
+ `>` `readonly` `optional` **trailing**: `boolean`
+
+Defined in: [async/types.ts:151](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/async/types.ts#L151)
+
+Whether to invoke the function on the trailing edge.
+
+###### Default
+
+```ts
+true
+```

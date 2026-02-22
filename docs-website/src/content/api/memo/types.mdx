@@ -1,0 +1,260 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# memo/types
+
+## Interfaces
+
+### Cache
+
+Defined in: [memo/types.ts:7](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L7)
+
+Cache interface that memoization functions can use.
+Allows custom cache implementations (Map, LRU, TTL, WeakMap, etc.).
+
+#### Type Parameters
+
+##### K
+
+`K`
+
+##### V
+
+`V`
+
+#### Methods
+
+##### clear()
+ `>` **clear**(): `void`
+
+Defined in: [memo/types.ts:12](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L12)
+
+###### Returns
+
+`void`
+
+##### delete()
+ `>` **delete**(`key`): `boolean`
+
+Defined in: [memo/types.ts:11](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L11)
+
+###### Parameters
+
+###### key
+
+`K`
+
+###### Returns
+
+`boolean`
+
+##### get()
+ `>` **get**(`key`): [`Option`](../option/types.md#option)\<`V`\>
+
+Defined in: [memo/types.ts:8](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L8)
+
+###### Parameters
+
+###### key
+
+`K`
+
+###### Returns
+
+[`Option`](../option/types.md#option)\<`V`\>
+
+##### has()
+ `>` **has**(`key`): `boolean`
+
+Defined in: [memo/types.ts:10](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L10)
+
+###### Parameters
+
+###### key
+
+`K`
+
+###### Returns
+
+`boolean`
+
+##### set()
+ `>` **set**(`key`, `value`): `void`
+
+Defined in: [memo/types.ts:9](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L9)
+
+###### Parameters
+
+###### key
+
+`K`
+
+###### value
+
+`V`
+
+###### Returns
+
+`void`
+
+### MemoizedAsyncFunction()
+
+Defined in: [memo/types.ts:55](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L55)
+
+A memoized async function with cache access and deduplication.
+
+#### Type Parameters
+
+##### Args
+
+`Args` *extends* readonly `unknown`[]
+
+##### R
+
+`R`
+ `>` **MemoizedAsyncFunction**(...`args`): `Promise`\<`R`\>
+
+Defined in: [memo/types.ts:56](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L56)
+
+A memoized async function with cache access and deduplication.
+
+#### Parameters
+
+##### args
+
+...`Args`
+
+#### Returns
+
+`Promise`\<`R`\>
+
+#### Properties
+
+##### cache
+ `>` **cache**: [`Cache`](#cache)\<`unknown`, `Promise`\<`R`\>\>
+
+Defined in: [memo/types.ts:57](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L57)
+
+##### clear()
+ `>` **clear**: () => `void`
+
+Defined in: [memo/types.ts:58](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L58)
+
+###### Returns
+
+`void`
+
+### MemoizedFunction()
+
+Defined in: [memo/types.ts:46](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L46)
+
+A memoized function with cache access.
+
+#### Type Parameters
+
+##### Args
+
+`Args` *extends* readonly `unknown`[]
+
+##### R
+
+`R`
+ `>` **MemoizedFunction**(...`args`): `R`
+
+Defined in: [memo/types.ts:47](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L47)
+
+A memoized function with cache access.
+
+#### Parameters
+
+##### args
+
+...`Args`
+
+#### Returns
+
+`R`
+
+#### Properties
+
+##### cache
+ `>` **cache**: [`Cache`](#cache)\<`unknown`, `R`\>
+
+Defined in: [memo/types.ts:48](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L48)
+
+##### clear()
+ `>` **clear**: () => `void`
+
+Defined in: [memo/types.ts:49](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L49)
+
+###### Returns
+
+`void`
+
+### MemoizeOptions
+
+Defined in: [memo/types.ts:23](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L23)
+
+Options for memoization functions.
+
+#### Type Parameters
+
+##### K
+
+`K` `=` `string`
+
+#### Properties
+
+##### cache?
+ `>` `optional` **cache**: [`Cache`](#cache)\<`K`, `unknown`\>
+
+Defined in: [memo/types.ts:28](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L28)
+
+Custom cache implementation.
+Defaults to a simple Map.
+
+##### maxSize?
+ `>` `optional` **maxSize**: `number`
+
+Defined in: [memo/types.ts:34](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L34)
+
+Maximum number of cached entries (for built-in Map cache).
+When exceeded, oldest entries are removed.
+
+##### ttl?
+ `>` `optional` **ttl**: `number`
+
+Defined in: [memo/types.ts:40](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L40)
+
+Time-to-live for cached entries in milliseconds.
+Entries are removed after this duration.
+
+## Type Aliases
+
+### KeyFn()
+ `>` **KeyFn**\<`Args`, `K`\> `=` (...`args`) => `K`
+
+Defined in: [memo/types.ts:18](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/memo/types.ts#L18)
+
+Function that extracts a cache key from function arguments.
+
+#### Type Parameters
+
+##### Args
+
+`Args` *extends* readonly `unknown`[]
+
+##### K
+
+`K`
+
+#### Parameters
+
+##### args
+
+...`Args`
+
+#### Returns
+
+`K`

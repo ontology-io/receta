@@ -1,0 +1,72 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# lens/lens
+
+## Functions
+
+### lens()
+ `>` **lens**\<`S`, `A`\>(`get`, `set`): [`Lens`](types.md#lens)\<`S`, `A`\>
+
+Defined in: [lens/lens/index.ts:35](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/lens/lens/index.ts#L35)
+
+Creates a Lens from a getter and setter function.
+
+A lens is a composable abstraction for focusing on a specific part of a
+data structure. It consists of:
+- `get`: Extracts the focused value from the source
+- `set`: Returns a new source with the focused value updated
+
+#### Type Parameters
+
+##### S
+
+`S`
+
+##### A
+
+`A`
+
+#### Parameters
+
+##### get
+
+(`source`) => `A`
+
+Function to extract the focused value
+
+##### set
+
+(`value`) => (`source`) => `S`
+
+Function to update the focused value (returns updater)
+
+#### Returns
+
+[`Lens`](types.md#lens)\<`S`, `A`\>
+
+A Lens for the specified get/set operations
+
+#### Example
+
+```typescript
+interface User {
+  name: string
+  age: number
+}
+
+const nameLens = lens<User, string>(
+  (user) => user.name,
+  (name) => (user) => ({ ...user, name })
+)
+
+const user = { name: 'Alice', age: 30 }
+const newName = nameLens.get(user) // 'Alice'
+const updated = nameLens.set('Bob')(user) // { name: 'Bob', age: 30 }
+```
+
+#### See
+
+ - prop - For simple property access
+ - path - For nested property access

@@ -1,0 +1,761 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# validation/validators
+
+Built-in validators for common use cases.
+
+## Functions
+
+### alphanumeric()
+ `>` **alphanumeric**(`errorMessage?`): [`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Defined in: [validation/validators/index.ts:173](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L173)
+
+Validates string contains only alphanumeric characters.
+
+#### Parameters
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Validator that checks alphanumeric characters
+
+#### Example
+
+```typescript
+alphanumeric()('John123') // => Valid('John123')
+alphanumeric()('John@123') // => Invalid(['Must contain only letters and numbers'])
+```
+
+### between()
+ `>` **between**(`minimum`, `maximum`, `errorMessage?`): [`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Defined in: [validation/validators/index.ts:231](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L231)
+
+Validates number is within a range.
+
+#### Parameters
+
+##### minimum
+
+`number`
+
+Minimum value (inclusive)
+
+##### maximum
+
+`number`
+
+Maximum value (inclusive)
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Validator that checks range
+
+#### Example
+
+```typescript
+between(0, 100)(50) // => Valid(50)
+between(0, 100)(-1) // => Invalid(['Must be between 0 and 100'])
+between(0, 100)(150) // => Invalid(['Must be between 0 and 100'])
+```
+
+### defined()
+ `>` **defined**\<`T`\>(`errorMessage`): [`Validator`](types.md#validator)\<`T` \| `null` \| `undefined`, `T`, `string`\>
+
+Defined in: [validation/validators/index.ts:438](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L438)
+
+Validates value is not null or undefined.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### errorMessage
+
+`string`
+
+Custom error message
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`T` \| `null` \| `undefined`, `T`, `string`\>
+
+Validator that checks for defined value
+
+#### Example
+
+```typescript
+defined('Value required')(42) // => Valid(42)
+defined('Value required')(null) // => Invalid(['Value required'])
+defined('Value required')(undefined) // => Invalid(['Value required'])
+```
+
+### email()
+ `>` **email**(`errorMessage?`): [`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Defined in: [validation/validators/index.ts:130](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L130)
+
+Validates email address format.
+
+Uses a simple but effective regex pattern for email validation.
+
+#### Parameters
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Validator that checks email format
+
+#### Example
+
+```typescript
+email()('john@example.com') // => Valid('john@example.com')
+email()('invalid-email') // => Invalid(['Invalid email address'])
+email('Bad email')('invalid') // => Invalid(['Bad email'])
+```
+
+### equals()
+ `>` **equals**\<`T`\>(`expected`, `errorMessage?`): [`Validator`](types.md#validator)\<`T`, `T`, `string`\>
+
+Defined in: [validation/validators/index.ts:422](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L422)
+
+Validates value equals expected value.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### expected
+
+`T`
+
+Expected value
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`T`, `T`, `string`\>
+
+Validator that checks equality
+
+#### Example
+
+```typescript
+equals('yes')('yes') // => Valid('yes')
+equals('yes')('no') // => Invalid(['Must equal: yes'])
+
+// Useful for checkbox confirmations
+equals(true, 'You must agree')
+```
+
+### finite()
+ `>` **finite**(`errorMessage?`): [`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Defined in: [validation/validators/index.ts:316](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L316)
+
+Validates number is finite (not Infinity or -Infinity).
+
+#### Parameters
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Validator that checks for finite number
+
+#### Example
+
+```typescript
+finite()(42) // => Valid(42)
+finite()(Infinity) // => Invalid(['Must be a finite number'])
+finite()(-Infinity) // => Invalid(['Must be a finite number'])
+```
+
+### integer()
+ `>` **integer**(`errorMessage?`): [`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Defined in: [validation/validators/index.ts:285](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L285)
+
+Validates number is an integer.
+
+#### Parameters
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Validator that checks integer value
+
+#### Example
+
+```typescript
+integer()(42) // => Valid(42)
+integer()(42.5) // => Invalid(['Must be an integer'])
+```
+
+### lengthBetween()
+ `>` **lengthBetween**(`min`, `max`, `errorMessage?`): [`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Defined in: [validation/validators/index.ts:84](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L84)
+
+Validates string length within a range.
+
+#### Parameters
+
+##### min
+
+`number`
+
+Minimum length
+
+##### max
+
+`number`
+
+Maximum length
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Validator that checks length range
+
+#### Example
+
+```typescript
+lengthBetween(3, 10)('John') // => Valid('John')
+lengthBetween(3, 10)('Jo') // => Invalid(['Must be between 3 and 10 characters'])
+lengthBetween(3, 10)('Very long name') // => Invalid(['Must be between 3 and 10 characters'])
+```
+
+### matches()
+ `>` **matches**(`pattern`, `errorMessage`): [`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Defined in: [validation/validators/index.ts:110](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L110)
+
+Validates string matches a regex pattern.
+
+#### Parameters
+
+##### pattern
+
+`RegExp`
+
+Regex pattern to match
+
+##### errorMessage
+
+`string`
+
+Custom error message
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Validator that checks regex match
+
+#### Example
+
+```typescript
+matches(/^[A-Z]/, 'Must start with uppercase')('John') // => Valid('John')
+matches(/^[A-Z]/, 'Must start with uppercase')('john') // => Invalid(['Must start with uppercase'])
+
+// Username validation
+matches(/^[a-zA-Z0-9_]+$/, 'Only letters, numbers, and underscores')
+```
+
+### max()
+ `>` **max**(`maximum`, `errorMessage?`): [`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Defined in: [validation/validators/index.ts:213](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L213)
+
+Validates number is less than or equal to maximum.
+
+#### Parameters
+
+##### maximum
+
+`number`
+
+Maximum value (inclusive)
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Validator that checks maximum value
+
+#### Example
+
+```typescript
+max(100)(50) // => Valid(50)
+max(100)(150) // => Invalid(['Must be at most 100'])
+```
+
+### maxItems()
+ `>` **maxItems**\<`T`\>(`maxCount`, `errorMessage?`): [`Validator`](types.md#validator)\<`T`[], `T`[], `string`\>
+
+Defined in: [validation/validators/index.ts:370](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L370)
+
+Validates array has maximum length.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### maxCount
+
+`number`
+
+Maximum number of elements
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`T`[], `T`[], `string`\>
+
+Validator that checks maximum array length
+
+#### Example
+
+```typescript
+maxItems(5)([1, 2, 3]) // => Valid([1, 2, 3])
+maxItems(2)([1, 2, 3]) // => Invalid(['Must have at most 2 items'])
+```
+
+### maxLength()
+ `>` **maxLength**(`max`, `errorMessage?`): [`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Defined in: [validation/validators/index.ts:63](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L63)
+
+Validates maximum string length.
+
+#### Parameters
+
+##### max
+
+`number`
+
+Maximum length
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Validator that checks maximum length
+
+#### Example
+
+```typescript
+maxLength(10)('John') // => Valid('John')
+maxLength(10)('Very long name') // => Invalid(['Must be at most 10 characters'])
+```
+
+### min()
+ `>` **min**(`minimum`, `errorMessage?`): [`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Defined in: [validation/validators/index.ts:197](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L197)
+
+Validates number is greater than or equal to minimum.
+
+#### Parameters
+
+##### minimum
+
+`number`
+
+Minimum value (inclusive)
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Validator that checks minimum value
+
+#### Example
+
+```typescript
+min(0)(5) // => Valid(5)
+min(0)(-1) // => Invalid(['Must be at least 0'])
+min(18, 'Must be adult')(17) // => Invalid(['Must be adult'])
+```
+
+### minItems()
+ `>` **minItems**\<`T`\>(`minCount`, `errorMessage?`): [`Validator`](types.md#validator)\<`T`[], `T`[], `string`\>
+
+Defined in: [validation/validators/index.ts:351](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L351)
+
+Validates array has minimum length.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### minCount
+
+`number`
+
+Minimum number of elements
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`T`[], `T`[], `string`\>
+
+Validator that checks minimum array length
+
+#### Example
+
+```typescript
+minItems(2)([1, 2, 3]) // => Valid([1, 2, 3])
+minItems(2)([1]) // => Invalid(['Must have at least 2 items'])
+```
+
+### minLength()
+ `>` **minLength**(`min`, `errorMessage?`): [`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Defined in: [validation/validators/index.ts:44](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L44)
+
+Validates minimum string length.
+
+#### Parameters
+
+##### min
+
+`number`
+
+Minimum length
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Validator that checks minimum length
+
+#### Example
+
+```typescript
+minLength(3)('John') // => Valid('John')
+minLength(3)('Jo') // => Invalid(['Must be at least 3 characters'])
+minLength(3, 'Too short')('Jo') // => Invalid(['Too short'])
+```
+
+### negative()
+ `>` **negative**(`errorMessage?`): [`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Defined in: [validation/validators/index.ts:270](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L270)
+
+Validates number is negative (< 0).
+
+#### Parameters
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Validator that checks negative value
+
+#### Example
+
+```typescript
+negative()(-5) // => Valid(-5)
+negative()(0) // => Invalid(['Must be negative'])
+negative()(1) // => Invalid(['Must be negative'])
+```
+
+### nonEmpty()
+ `>` **nonEmpty**\<`T`\>(`errorMessage`): [`Validator`](types.md#validator)\<`T`[], `T`[], `string`\>
+
+Defined in: [validation/validators/index.ts:335](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L335)
+
+Validates array is not empty.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### errorMessage
+
+`string`
+
+Custom error message
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`T`[], `T`[], `string`\>
+
+Validator that checks non-empty array
+
+#### Example
+
+```typescript
+nonEmpty('List cannot be empty')([1, 2, 3]) // => Valid([1, 2, 3])
+nonEmpty('List cannot be empty')([]) // => Invalid(['List cannot be empty'])
+```
+
+### notNaN()
+ `>` **notNaN**(`errorMessage?`): [`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Defined in: [validation/validators/index.ts:300](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L300)
+
+Validates number is not NaN.
+
+#### Parameters
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Validator that checks for valid number
+
+#### Example
+
+```typescript
+notNaN()(42) // => Valid(42)
+notNaN()(NaN) // => Invalid(['Must be a valid number'])
+```
+
+### oneOf()
+ `>` **oneOf**\<`T`\>(`allowed`, `errorMessage?`): [`Validator`](types.md#validator)\<`T`, `T`, `string`\>
+
+Defined in: [validation/validators/index.ts:397](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L397)
+
+Validates value is one of the allowed values.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### allowed
+
+readonly `T`[]
+
+Array of allowed values
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`T`, `T`, `string`\>
+
+Validator that checks value is in allowed list
+
+#### Example
+
+```typescript
+oneOf(['admin', 'user', 'guest'])('admin') // => Valid('admin')
+oneOf(['admin', 'user', 'guest'])('superadmin') // => Invalid(['Must be one of: admin, user, guest'])
+
+// With custom error
+oneOf([1, 2, 3], 'Invalid option')(2) // => Valid(2)
+oneOf([1, 2, 3], 'Invalid option')(4) // => Invalid(['Invalid option'])
+```
+
+### positive()
+ `>` **positive**(`errorMessage?`): [`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Defined in: [validation/validators/index.ts:254](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L254)
+
+Validates number is positive (> 0).
+
+#### Parameters
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`number`, `number`, `string`\>
+
+Validator that checks positive value
+
+#### Example
+
+```typescript
+positive()(5) // => Valid(5)
+positive()(0) // => Invalid(['Must be positive'])
+positive()(-1) // => Invalid(['Must be positive'])
+```
+
+### required()
+ `>` **required**(`errorMessage`): [`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Defined in: [validation/validators/index.ts:27](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L27)
+
+Validates that a string is not empty.
+
+#### Parameters
+
+##### errorMessage
+
+`string`
+
+Custom error message
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Validator that checks for non-empty strings
+
+#### Example
+
+```typescript
+required('Name is required')('John') // => Valid('John')
+required('Name is required')('') // => Invalid(['Name is required'])
+required('Name is required')('  ') // => Invalid(['Name is required']) (whitespace only)
+```
+
+### url()
+ `>` **url**(`errorMessage?`): [`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Defined in: [validation/validators/index.ts:148](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/validators/index.ts#L148)
+
+Validates URL format.
+
+#### Parameters
+
+##### errorMessage?
+
+`string`
+
+Custom error message (optional)
+
+#### Returns
+
+[`Validator`](types.md#validator)\<`string`, `string`, `string`\>
+
+Validator that checks URL format
+
+#### Example
+
+```typescript
+url()('https://example.com') // => Valid('https://example.com')
+url()('not-a-url') // => Invalid(['Invalid URL'])
+```

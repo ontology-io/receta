@@ -1,0 +1,128 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# lens/types
+
+## Interfaces
+
+### Lens
+
+Defined in: [lens/types.ts:19](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/lens/types.ts#L19)
+
+A Lens is a composable getter/setter pair for immutable updates.
+
+A lens focuses on a specific part of a data structure, allowing you to
+read and update that part without mutating the original structure.
+
+#### Example
+
+```typescript
+// Lens focusing on a user's name
+const nameLens: Lens<User, string> = {
+  get: (user) => user.name,
+  set: (name) => (user) => ({ ...user, name })
+}
+```
+
+#### Type Parameters
+
+##### S
+
+`S`
+
+The source type (the whole data structure)
+
+##### A
+
+`A`
+
+The focus type (the part being accessed)
+
+#### Properties
+
+##### get()
+ `>` `readonly` **get**: (`source`) => `A`
+
+Defined in: [lens/types.ts:23](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/lens/types.ts#L23)
+
+Gets the focused value from the source.
+
+###### Parameters
+
+###### source
+
+`S`
+
+###### Returns
+
+`A`
+
+##### set()
+ `>` `readonly` **set**: (`value`) => (`source`) => `S`
+
+Defined in: [lens/types.ts:28](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/lens/types.ts#L28)
+
+Sets the focused value in the source, returning a new source.
+
+###### Parameters
+
+###### value
+
+`A`
+
+###### Returns
+ `>` (`source`): `S`
+
+###### Parameters
+
+###### source
+
+`S`
+
+###### Returns
+
+`S`
+
+## Type Aliases
+
+### Path
+ `>` **Path**\<`T`\> `=` `string`
+
+Defined in: [lens/types.ts:42](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/lens/types.ts#L42)
+
+A path type that can be used to access nested properties.
+
+Supports dot notation for nested object access.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Example
+
+```typescript
+type UserPath = Path<User>
+// Can be: 'name' | 'email' | 'address.street' | 'address.city'
+```
+
+### PathValue
+ `>` **PathValue**\<`T`, `P`\> `=` `P` *extends* keyof `T` ? `T`\[`P`\] : `P` *extends* `` `${infer K}.${infer Rest}` `` ? `K` *extends* keyof `T` ? [`PathValue`](#pathvalue)\<`T`\[`K`\], `Rest`\> : `never` : `never`
+
+Defined in: [lens/types.ts:49](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/lens/types.ts#L49)
+
+**`Internal`**
+
+Type helper to extract the type at a given path.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+##### P
+
+`P` *extends* `string`

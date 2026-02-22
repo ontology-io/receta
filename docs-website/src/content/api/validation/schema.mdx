@@ -1,0 +1,379 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# validation/schema
+
+Object validation with schema-based field validation.
+
+## Functions
+
+### partial()
+
+#### Call Signature
+ `>` **partial**\<`T`, `E`\>(`schemaObj`, `value`): [`Validation`](types.md#validation)\<`Partial`\<`T`\>, [`FieldError`](types.md#fielderror)\<`E`\>\>
+
+Defined in: [validation/schema/index.ts:161](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/schema/index.ts#L161)
+
+Creates a schema validator for partial objects.
+
+Like schema, but only validates fields that are present in the value.
+Missing fields are not validated.
+
+##### Type Parameters
+
+###### T
+
+`T` *extends* `Record`\<`string`, `unknown`\>
+
+###### E
+
+`E`
+
+##### Parameters
+
+###### schemaObj
+
+[`ValidationSchema`](types.md#validationschema)\<`T`, `E`\>
+
+Schema mapping keys to validators
+
+###### value
+
+`Partial`\<`T`\>
+
+Partial object to validate
+
+##### Returns
+
+[`Validation`](types.md#validation)\<`Partial`\<`T`\>, [`FieldError`](types.md#fielderror)\<`E`\>\>
+
+Validation with the partial object, or field-level errors
+
+##### Example
+
+```typescript
+const userSchema: ValidationSchema<User, string> = {
+  name: (n) => n.length > 0 ? valid(n) : invalid('Name required'),
+  email: (e) => e.includes('@') ? valid(e) : invalid('Invalid email'),
+  age: (a) => a >= 18 ? valid(a) : invalid('Must be 18+')
+}
+
+// Only validates present fields
+partial(userSchema, { name: 'John' })
+// => Valid({ name: 'John' })
+
+partial(userSchema, { name: '', email: 'invalid' })
+// => Invalid([
+//   { field: 'name', errors: ['Name required'] },
+//   { field: 'email', errors: ['Invalid email'] }
+// ])
+
+// Real-world: PATCH request validation
+app.patch('/api/users/:id', (req, res) => {
+  const validation = partial(userSchema, req.body)
+  if (isInvalid(validation)) {
+    return res.status(400).json({ errors: validation.errors })
+  }
+  updateUser(req.params.id, validation.value)
+})
+```
+
+##### See
+
+schema - for validating complete objects
+
+#### Call Signature
+ `>` **partial**\<`T`, `E`\>(`schemaObj`): (`value`) => [`Validation`](types.md#validation)\<`Partial`\<`T`\>, [`FieldError`](types.md#fielderror)\<`E`\>\>
+
+Defined in: [validation/schema/index.ts:165](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/schema/index.ts#L165)
+
+Creates a schema validator for partial objects.
+
+Like schema, but only validates fields that are present in the value.
+Missing fields are not validated.
+
+##### Type Parameters
+
+###### T
+
+`T` *extends* `Record`\<`string`, `unknown`\>
+
+###### E
+
+`E`
+
+##### Parameters
+
+###### schemaObj
+
+[`ValidationSchema`](types.md#validationschema)\<`T`, `E`\>
+
+Schema mapping keys to validators
+
+##### Returns
+
+Validation with the partial object, or field-level errors
+ `>` (`value`): [`Validation`](types.md#validation)\<`Partial`\<`T`\>, [`FieldError`](types.md#fielderror)\<`E`\>\>
+
+###### Parameters
+
+###### value
+
+`Partial`\<`T`\>
+
+###### Returns
+
+[`Validation`](types.md#validation)\<`Partial`\<`T`\>, [`FieldError`](types.md#fielderror)\<`E`\>\>
+
+##### Example
+
+```typescript
+const userSchema: ValidationSchema<User, string> = {
+  name: (n) => n.length > 0 ? valid(n) : invalid('Name required'),
+  email: (e) => e.includes('@') ? valid(e) : invalid('Invalid email'),
+  age: (a) => a >= 18 ? valid(a) : invalid('Must be 18+')
+}
+
+// Only validates present fields
+partial(userSchema, { name: 'John' })
+// => Valid({ name: 'John' })
+
+partial(userSchema, { name: '', email: 'invalid' })
+// => Invalid([
+//   { field: 'name', errors: ['Name required'] },
+//   { field: 'email', errors: ['Invalid email'] }
+// ])
+
+// Real-world: PATCH request validation
+app.patch('/api/users/:id', (req, res) => {
+  const validation = partial(userSchema, req.body)
+  if (isInvalid(validation)) {
+    return res.status(400).json({ errors: validation.errors })
+  }
+  updateUser(req.params.id, validation.value)
+})
+```
+
+##### See
+
+schema - for validating complete objects
+
+### schema()
+
+#### Call Signature
+ `>` **schema**\<`T`, `E`\>(`schemaObj`, `value`): [`Validation`](types.md#validation)\<`T`, [`FieldError`](types.md#fielderror)\<`E`\>\>
+
+Defined in: [validation/schema/index.ts:86](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/schema/index.ts#L86)
+
+Validates an object against a schema, accumulating field-level errors.
+
+Each field is validated independently using its validator from the schema.
+If all fields are valid, returns Valid with the object.
+If any field is invalid, returns Invalid with FieldError objects for each failed field.
+
+##### Type Parameters
+
+###### T
+
+`T` *extends* `Record`\<`string`, `unknown`\>
+
+###### E
+
+`E`
+
+##### Parameters
+
+###### schemaObj
+
+[`ValidationSchema`](types.md#validationschema)\<`T`, `E`\>
+
+Schema mapping keys to validators
+
+###### value
+
+`T`
+
+Object to validate
+
+##### Returns
+
+[`Validation`](types.md#validation)\<`T`, [`FieldError`](types.md#fielderror)\<`E`\>\>
+
+Validation with the object, or field-level errors
+
+##### Example
+
+```typescript
+interface User {
+  name: string
+  email: string
+  age: number
+}
+
+const userSchema: ValidationSchema<User, string> = {
+  name: (n) => n.length > 0 ? valid(n) : invalid('Name required'),
+  email: (e) => e.includes('@') ? valid(e) : invalid('Invalid email'),
+  age: (a) => a >= 18 ? valid(a) : invalid('Must be 18+')
+}
+
+// Valid object
+schema(userSchema, { name: 'John', email: 'john@example.com', age: 25 })
+// => Valid({ name: 'John', email: 'john@example.com', age: 25 })
+
+// Invalid object - accumulates all field errors
+schema(userSchema, { name: '', email: 'invalid', age: 17 })
+// => Invalid([
+//   { field: 'name', errors: ['Name required'] },
+//   { field: 'email', errors: ['Invalid email'] },
+//   { field: 'age', errors: ['Must be 18+'] }
+// ])
+
+// Real-world: Form validation
+const validateRegistration = (formData: unknown) =>
+  schema(userSchema, formData)
+
+const result = validateRegistration(formData)
+if (isInvalid(result)) {
+  // Display all field errors at once
+  result.errors.forEach(({ field, errors }) => {
+    showFieldError(field, errors)
+  })
+}
+
+// Real-world: API request validation
+const createUserSchema: ValidationSchema<CreateUserRequest, string> = {
+  email: pipe(
+    fromPredicate(s => s.length > 0, 'Email required'),
+    flatMap(fromPredicate(s => s.includes('@'), 'Invalid email'))
+  ),
+  password: pipe(
+    fromPredicate(s => s.length >= 8, 'Min 8 characters'),
+    flatMap(fromPredicate(s => /[A-Z]/.test(s), 'Need uppercase'))
+  )
+}
+
+app.post('/api/users', (req, res) => {
+  const validation = schema(createUserSchema, req.body)
+  if (isInvalid(validation)) {
+    return res.status(400).json({ errors: validation.errors })
+  }
+  // Process valid user data
+  createUser(validation.value)
+})
+```
+
+##### See
+
+ - validate - for applying multiple validators to a single value
+ - collectErrors - for combining independent validations
+
+#### Call Signature
+ `>` **schema**\<`T`, `E`\>(`schemaObj`): (`value`) => [`Validation`](types.md#validation)\<`T`, [`FieldError`](types.md#fielderror)\<`E`\>\>
+
+Defined in: [validation/schema/index.ts:90](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/schema/index.ts#L90)
+
+Validates an object against a schema, accumulating field-level errors.
+
+Each field is validated independently using its validator from the schema.
+If all fields are valid, returns Valid with the object.
+If any field is invalid, returns Invalid with FieldError objects for each failed field.
+
+##### Type Parameters
+
+###### T
+
+`T` *extends* `Record`\<`string`, `unknown`\>
+
+###### E
+
+`E`
+
+##### Parameters
+
+###### schemaObj
+
+[`ValidationSchema`](types.md#validationschema)\<`T`, `E`\>
+
+Schema mapping keys to validators
+
+##### Returns
+
+Validation with the object, or field-level errors
+ `>` (`value`): [`Validation`](types.md#validation)\<`T`, [`FieldError`](types.md#fielderror)\<`E`\>\>
+
+###### Parameters
+
+###### value
+
+`T`
+
+###### Returns
+
+[`Validation`](types.md#validation)\<`T`, [`FieldError`](types.md#fielderror)\<`E`\>\>
+
+##### Example
+
+```typescript
+interface User {
+  name: string
+  email: string
+  age: number
+}
+
+const userSchema: ValidationSchema<User, string> = {
+  name: (n) => n.length > 0 ? valid(n) : invalid('Name required'),
+  email: (e) => e.includes('@') ? valid(e) : invalid('Invalid email'),
+  age: (a) => a >= 18 ? valid(a) : invalid('Must be 18+')
+}
+
+// Valid object
+schema(userSchema, { name: 'John', email: 'john@example.com', age: 25 })
+// => Valid({ name: 'John', email: 'john@example.com', age: 25 })
+
+// Invalid object - accumulates all field errors
+schema(userSchema, { name: '', email: 'invalid', age: 17 })
+// => Invalid([
+//   { field: 'name', errors: ['Name required'] },
+//   { field: 'email', errors: ['Invalid email'] },
+//   { field: 'age', errors: ['Must be 18+'] }
+// ])
+
+// Real-world: Form validation
+const validateRegistration = (formData: unknown) =>
+  schema(userSchema, formData)
+
+const result = validateRegistration(formData)
+if (isInvalid(result)) {
+  // Display all field errors at once
+  result.errors.forEach(({ field, errors }) => {
+    showFieldError(field, errors)
+  })
+}
+
+// Real-world: API request validation
+const createUserSchema: ValidationSchema<CreateUserRequest, string> = {
+  email: pipe(
+    fromPredicate(s => s.length > 0, 'Email required'),
+    flatMap(fromPredicate(s => s.includes('@'), 'Invalid email'))
+  ),
+  password: pipe(
+    fromPredicate(s => s.length >= 8, 'Min 8 characters'),
+    flatMap(fromPredicate(s => /[A-Z]/.test(s), 'Need uppercase'))
+  )
+}
+
+app.post('/api/users', (req, res) => {
+  const validation = schema(createUserSchema, req.body)
+  if (isInvalid(validation)) {
+    return res.status(400).json({ errors: validation.errors })
+  }
+  // Process valid user data
+  createUser(validation.value)
+})
+```
+
+##### See
+
+ - validate - for applying multiple validators to a single value
+ - collectErrors - for combining independent validations

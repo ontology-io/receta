@@ -1,0 +1,221 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# validation/types
+
+## Interfaces
+
+### FieldError
+
+Defined in: [validation/types.ts:104](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/types.ts#L104)
+
+Represents a validation error for a specific field.
+
+Used when validating objects to track which field(s) failed validation.
+
+#### Example
+
+```typescript
+const fieldError: FieldError<string> = {
+  field: 'email',
+  errors: ['Invalid email format', 'Email already exists']
+}
+```
+
+#### Type Parameters
+
+##### E
+
+`E`
+
+The type of individual error messages
+
+#### Properties
+
+##### errors
+ `>` `readonly` **errors**: readonly `E`[]
+
+Defined in: [validation/types.ts:106](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/types.ts#L106)
+
+##### field
+ `>` `readonly` **field**: `string`
+
+Defined in: [validation/types.ts:105](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/types.ts#L105)
+
+### Invalid
+
+Defined in: [validation/types.ts:15](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/types.ts#L15)
+
+Represents a failed validation containing accumulated errors.
+
+Unlike Result's Err which contains a single error, Invalid contains
+an array of errors to support error accumulation across multiple validations.
+
+#### Type Parameters
+
+##### E
+
+`E`
+
+#### Properties
+
+##### \_tag
+ `>` `readonly` **\_tag**: `"Invalid"`
+
+Defined in: [validation/types.ts:16](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/types.ts#L16)
+
+##### errors
+ `>` `readonly` **errors**: readonly `E`[]
+
+Defined in: [validation/types.ts:17](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/types.ts#L17)
+
+### Valid
+
+Defined in: [validation/types.ts:4](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/types.ts#L4)
+
+Represents a successful validation containing a value.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Properties
+
+##### \_tag
+ `>` `readonly` **\_tag**: `"Valid"`
+
+Defined in: [validation/types.ts:5](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/types.ts#L5)
+
+##### value
+ `>` `readonly` **value**: `T`
+
+Defined in: [validation/types.ts:6](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/types.ts#L6)
+
+## Type Aliases
+
+### Validation
+ `>` **Validation**\<`T`, `E`\> `=` [`Valid`](#valid)\<`T`\> \| [`Invalid`](#invalid)\<`E`\>
+
+Defined in: [validation/types.ts:39](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/types.ts#L39)
+
+Validation type representing either success (Valid) or failure (Invalid).
+
+Validation is similar to Result but optimized for error accumulation.
+While Result short-circuits on the first error (fail-fast), Validation
+accumulates all errors (fail-slow), making it ideal for form validation
+and multi-field data validation.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+The type of the success value
+
+##### E
+
+`E`
+
+The type of error values (stored as array)
+
+#### Example
+
+```typescript
+type FormValidation = Validation<User, string>
+
+const success: FormValidation = { _tag: 'Valid', value: { name: 'John', email: 'john@example.com' } }
+const failure: FormValidation = { _tag: 'Invalid', errors: ['Name too short', 'Invalid email'] }
+```
+
+### ValidationSchema
+ `>` **ValidationSchema**\<`T`, `E`\> `=` `{ [K in keyof T]: Validator<T[K], T[K], E> }`
+
+Defined in: [validation/types.ts:85](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/types.ts#L85)
+
+A schema definition for object validation.
+
+Maps object keys to validators that test the corresponding values.
+Used with the `schema` combinator for validating entire objects.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+The object type to validate
+
+##### E
+
+`E`
+
+The error type
+
+#### Example
+
+```typescript
+interface User {
+  name: string
+  email: string
+  age: number
+}
+
+const userSchema: ValidationSchema<User, string> = {
+  name: (n) => n.length > 0 ? valid(n) : invalid('Name required'),
+  email: (e) => e.includes('@') ? valid(e) : invalid('Invalid email'),
+  age: (a) => a >= 18 ? valid(a) : invalid('Must be 18+')
+}
+```
+
+### Validator()
+ `>` **Validator**\<`T`, `U`, `E`\> `=` (`value`) => [`Validation`](#validation)\<`U`, `E`\>
+
+Defined in: [validation/types.ts:59](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/validation/types.ts#L59)
+
+A function that validates a value and returns a Validation.
+
+Validators can be composed using flatMap, validate, and other combinators
+to build complex validation logic from simple validators.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+The input type to validate
+
+##### U
+
+`U`
+
+The output type after validation (often same as T)
+
+##### E
+
+`E`
+
+The error type
+
+#### Parameters
+
+##### value
+
+`T`
+
+#### Returns
+
+[`Validation`](#validation)\<`U`, `E`\>
+
+#### Example
+
+```typescript
+const minLength = (min: number): Validator<string, string, string> =>
+  (value) => value.length >= min
+    ? valid(value)
+    : invalid(`Must be at least ${min} characters`)
+```

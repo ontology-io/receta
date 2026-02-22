@@ -1,0 +1,274 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# function/switchCase
+
+## Functions
+
+### switchCase()
+
+#### Call Signature
+ `>` **switchCase**\<`T`, `U`\>(`pairs`, `defaultValue`): (`value`) => `U`
+
+Defined in: [function/switchCase/index.ts:102](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/function/switchCase/index.ts#L102)
+
+Creates a function that applies the first matching predicate-function pair, with a required default.
+
+Similar to `cond`, but returns a value directly (not wrapped in Option) by requiring
+a default value. This guarantees that a value is always returned, making it useful
+for exhaustive pattern matching scenarios.
+
+The key difference from `cond`:
+- `cond` returns `Option<U>` (can return None if no match)
+- `switchCase` returns `U` (always returns a value via default)
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+###### U
+
+`U`
+
+##### Parameters
+
+###### pairs
+
+readonly [`CondPair`](types.md#condpair)\<`T`, `U`\>[]
+
+###### defaultValue
+
+`U`
+
+##### Returns
+
+U - The result of the first matching pair's function, or the default value
+ `>` (`value`): `U`
+
+###### Parameters
+
+###### value
+
+`T`
+
+###### Returns
+
+`U`
+
+##### Examples
+
+```typescript
+// Priority assignment with default
+const getPriority = switchCase<string, number>(
+  [
+    [(s) => s === 'critical', () => 1],
+    [(s) => s === 'high', () => 2],
+    [(s) => s === 'medium', () => 3],
+    [(s) => s === 'low', () => 4]
+  ],
+  5 // default priority for unknown levels
+)
+
+getPriority('critical')  // => 1
+getPriority('high')      // => 2
+getPriority('unknown')   // => 5 (default)
+```
+
+```typescript
+// HTTP status handling with default error message
+const getStatusMessage = switchCase<number, string>(
+  [
+    [(s) => s >= 200 && s < 300, () => 'Success'],
+    [(s) => s >= 300 && s < 400, () => 'Redirect'],
+    [(s) => s === 404, () => 'Not Found'],
+    [(s) => s >= 400 && s < 500, () => 'Client Error'],
+    [(s) => s >= 500, () => 'Server Error']
+  ],
+  'Unknown Status'
+)
+
+getStatusMessage(200)  // => 'Success'
+getStatusMessage(404)  // => 'Not Found'
+getStatusMessage(999)  // => 'Unknown Status'
+```
+
+```typescript
+// Data-first
+const result = switchCase<string, number>(
+  [
+    [(s) => s === 'small', () => 10],
+    [(s) => s === 'medium', () => 20],
+    [(s) => s === 'large', () => 30]
+  ],
+  15, // default value
+  'medium'
+)
+// => 20
+```
+
+```typescript
+// In a pipe
+pipe(
+  getUserRole(),
+  switchCase<Role, Permissions>(
+    [
+      [(r) => r === 'admin', () => allPermissions],
+      [(r) => r === 'editor', () => editorPermissions],
+      [(r) => r === 'viewer', () => viewPermissions]
+    ],
+    noPermissions // default for unknown roles
+  )
+)
+```
+
+```typescript
+// File extension to MIME type mapping
+const getMimeType = switchCase<string, string>(
+  [
+    [(ext) => ext === 'jpg' || ext === 'jpeg', () => 'image/jpeg'],
+    [(ext) => ext === 'png', () => 'image/png'],
+    [(ext) => ext === 'gif', () => 'image/gif'],
+    [(ext) => ext === 'pdf', () => 'application/pdf'],
+    [(ext) => ext === 'json', () => 'application/json']
+  ],
+  'application/octet-stream' // default MIME type
+)
+```
+
+##### See
+
+ - cond - for pattern matching that returns `Option<U>`
+ - ifElse - for simple binary conditions
+
+#### Call Signature
+ `>` **switchCase**\<`T`, `U`\>(`pairs`, `defaultValue`, `value`): `U`
+
+Defined in: [function/switchCase/index.ts:106](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/function/switchCase/index.ts#L106)
+
+Creates a function that applies the first matching predicate-function pair, with a required default.
+
+Similar to `cond`, but returns a value directly (not wrapped in Option) by requiring
+a default value. This guarantees that a value is always returned, making it useful
+for exhaustive pattern matching scenarios.
+
+The key difference from `cond`:
+- `cond` returns `Option<U>` (can return None if no match)
+- `switchCase` returns `U` (always returns a value via default)
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+###### U
+
+`U`
+
+##### Parameters
+
+###### pairs
+
+readonly [`CondPair`](types.md#condpair)\<`T`, `U`\>[]
+
+###### defaultValue
+
+`U`
+
+###### value
+
+`T`
+
+##### Returns
+
+`U`
+
+U - The result of the first matching pair's function, or the default value
+
+##### Examples
+
+```typescript
+// Priority assignment with default
+const getPriority = switchCase<string, number>(
+  [
+    [(s) => s === 'critical', () => 1],
+    [(s) => s === 'high', () => 2],
+    [(s) => s === 'medium', () => 3],
+    [(s) => s === 'low', () => 4]
+  ],
+  5 // default priority for unknown levels
+)
+
+getPriority('critical')  // => 1
+getPriority('high')      // => 2
+getPriority('unknown')   // => 5 (default)
+```
+
+```typescript
+// HTTP status handling with default error message
+const getStatusMessage = switchCase<number, string>(
+  [
+    [(s) => s >= 200 && s < 300, () => 'Success'],
+    [(s) => s >= 300 && s < 400, () => 'Redirect'],
+    [(s) => s === 404, () => 'Not Found'],
+    [(s) => s >= 400 && s < 500, () => 'Client Error'],
+    [(s) => s >= 500, () => 'Server Error']
+  ],
+  'Unknown Status'
+)
+
+getStatusMessage(200)  // => 'Success'
+getStatusMessage(404)  // => 'Not Found'
+getStatusMessage(999)  // => 'Unknown Status'
+```
+
+```typescript
+// Data-first
+const result = switchCase<string, number>(
+  [
+    [(s) => s === 'small', () => 10],
+    [(s) => s === 'medium', () => 20],
+    [(s) => s === 'large', () => 30]
+  ],
+  15, // default value
+  'medium'
+)
+// => 20
+```
+
+```typescript
+// In a pipe
+pipe(
+  getUserRole(),
+  switchCase<Role, Permissions>(
+    [
+      [(r) => r === 'admin', () => allPermissions],
+      [(r) => r === 'editor', () => editorPermissions],
+      [(r) => r === 'viewer', () => viewPermissions]
+    ],
+    noPermissions // default for unknown roles
+  )
+)
+```
+
+```typescript
+// File extension to MIME type mapping
+const getMimeType = switchCase<string, string>(
+  [
+    [(ext) => ext === 'jpg' || ext === 'jpeg', () => 'image/jpeg'],
+    [(ext) => ext === 'png', () => 'image/png'],
+    [(ext) => ext === 'gif', () => 'image/gif'],
+    [(ext) => ext === 'pdf', () => 'application/pdf'],
+    [(ext) => ext === 'json', () => 'application/json']
+  ],
+  'application/octet-stream' // default MIME type
+)
+```
+
+##### See
+
+ - cond - for pattern matching that returns `Option<U>`
+ - ifElse - for simple binary conditions

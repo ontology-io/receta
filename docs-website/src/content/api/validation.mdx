@@ -1,0 +1,264 @@
+---
+title: Validation
+---
+
+{/* AUTO-GENERATED from source code - Last updated: 2026-02-22 */}
+{/* To update: modify JSDoc in src/validation/ and run: bun run docs:generate */}
+
+[**@ontology-io/receta**](README.md)
+
+
+
+# validation
+
+Validation module - Data validation with error accumulation.
+
+The Validation type is similar to Result but optimized for error accumulation.
+While Result short-circuits on the first error (fail-fast), Validation accumulates
+all errors (fail-slow), making it ideal for form validation and multi-field data validation.
+
+## Example
+
+```typescript
+import { valid, invalid, validate, schema } from 'receta/validation'
+
+// Single field validation with multiple rules
+const validatePassword = (password: string) =>
+  validate(password, [
+    fromPredicate(s => s.length >= 8, 'At least 8 characters'),
+    fromPredicate(s => /[A-Z]/.test(s), 'At least one uppercase'),
+    fromPredicate(s => /[0-9]/.test(s), 'At least one number')
+  ])
+
+// Multi-field validation (accumulates all errors)
+const userSchema = schema({
+  name: pipe(required, minLength(3)),
+  email: pipe(required, email),
+  age: pipe(required, min(18))
+})
+
+// Returns all field errors at once, not just the first one
+validateForm(formData) // => Invalid([...all errors...])
+```
+
+## References
+
+### alphanumeric
+
+Re-exports [alphanumeric](validation/validators.md#alphanumeric)
+
+### between
+
+Re-exports [between](validation/validators.md#between)
+
+### collectErrors
+
+Re-exports [collectErrors](validation/collectErrors.md#collecterrors)
+
+### defined
+
+Re-exports [defined](validation/validators.md#defined)
+
+### email
+
+Re-exports [email](validation/validators.md#email)
+
+### equals
+
+Re-exports [equals](validation/validators.md#equals)
+
+### FieldError
+
+Re-exports [FieldError](validation/types.md#fielderror)
+
+### finite
+
+Re-exports [finite](validation/validators.md#finite)
+
+### flatMap
+
+Re-exports [flatMap](validation/flatMap.md#flatmap)
+
+### flatten
+
+Re-exports [flatten](validation/flatten.md#flatten)
+
+### fromPredicate
+
+Re-exports [fromPredicate](validation/constructors.md#frompredicate)
+
+### fromPredicateWithError
+
+Re-exports [fromPredicateWithError](validation/constructors.md#frompredicatewitherror)
+
+### fromResult
+
+Re-exports [fromResult](validation/constructors.md#fromresult)
+
+### integer
+
+Re-exports [integer](validation/validators.md#integer)
+
+### invalid
+
+Re-exports [invalid](validation/constructors.md#invalid)
+
+### Invalid
+
+Re-exports [Invalid](validation/types.md#invalid)
+
+### isInvalid
+
+Re-exports [isInvalid](validation/guards.md#isinvalid)
+
+### isValid
+
+Re-exports [isValid](validation/guards.md#isvalid)
+
+### lengthBetween
+
+Re-exports [lengthBetween](validation/validators.md#lengthbetween)
+
+### map
+
+Re-exports [map](validation/map.md#map)
+
+### mapInvalid
+
+Re-exports [mapInvalid](validation/mapInvalid.md#mapinvalid)
+
+### match
+
+Re-exports [match](validation/match.md#match)
+
+### matches
+
+Re-exports [matches](validation/validators.md#matches)
+
+### max
+
+Re-exports [max](validation/validators.md#max)
+
+### maxItems
+
+Re-exports [maxItems](validation/validators.md#maxitems)
+
+### maxLength
+
+Re-exports [maxLength](validation/validators.md#maxlength)
+
+### min
+
+Re-exports [min](validation/validators.md#min)
+
+### minItems
+
+Re-exports [minItems](validation/validators.md#minitems)
+
+### minLength
+
+Re-exports [minLength](validation/validators.md#minlength)
+
+### negative
+
+Re-exports [negative](validation/validators.md#negative)
+
+### nonEmpty
+
+Re-exports [nonEmpty](validation/validators.md#nonempty)
+
+### notNaN
+
+Re-exports [notNaN](validation/validators.md#notnan)
+
+### oneOf
+
+Re-exports [oneOf](validation/validators.md#oneof)
+
+### partial
+
+Re-exports [partial](validation/schema.md#partial)
+
+### positive
+
+Re-exports [positive](validation/validators.md#positive)
+
+### required
+
+Re-exports [required](validation/validators.md#required)
+
+### schema
+
+Re-exports [schema](validation/schema.md#schema)
+
+### tap
+
+Re-exports [tap](validation/tap.md#tap)
+
+### tapInvalid
+
+Re-exports [tapInvalid](validation/tap.md#tapinvalid)
+
+### toResult
+
+Re-exports [toResult](validation/toResult.md#toresult)
+
+### toResultWith
+
+Re-exports [toResultWith](validation/toResult.md#toresultwith)
+
+### tryCatch
+
+Re-exports [tryCatch](validation/constructors.md#trycatch)
+
+### tryCatchAsync
+
+Re-exports [tryCatchAsync](validation/constructors.md#trycatchasync)
+
+### unwrap
+
+Re-exports [unwrap](validation/unwrap.md#unwrap)
+
+### unwrapOr
+
+Re-exports [unwrapOr](validation/unwrap.md#unwrapor)
+
+### unwrapOrElse
+
+Re-exports [unwrapOrElse](validation/unwrap.md#unwraporelse)
+
+### url
+
+Re-exports [url](validation/validators.md#url)
+
+### valid
+
+Re-exports [valid](validation/constructors.md#valid)
+
+### Valid
+
+Re-exports [Valid](validation/types.md#valid)
+
+### validate
+
+Re-exports [validate](validation/validate.md#validate)
+
+### validateAll
+
+Re-exports [validateAll](validation/validateAll.md#validateall)
+
+### Validation
+
+Re-exports [Validation](validation/types.md#validation)
+
+### ValidationMatcher
+
+Re-exports [ValidationMatcher](validation/match.md#validationmatcher)
+
+### ValidationSchema
+
+Re-exports [ValidationSchema](validation/types.md#validationschema)
+
+### Validator
+
+Re-exports [Validator](validation/types.md#validator)

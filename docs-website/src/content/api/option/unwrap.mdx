@@ -1,0 +1,292 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# option/unwrap
+
+## Functions
+
+### unwrap()
+ `>` **unwrap**\<`T`\>(`option`): `T`
+
+Defined in: [option/unwrap/index.ts:27](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/unwrap/index.ts#L27)
+
+Extracts the value from a Some Option or throws an error.
+
+If the Option is Some, returns the value.
+If the Option is None, throws an error.
+
+Use this when you're certain the value exists. Prefer unwrapOr or unwrapOrElse
+for safer alternatives.
+
+#### Type Parameters
+
+##### T
+
+`T`
+
+#### Parameters
+
+##### option
+
+[`Option`](types.md#option)\<`T`\>
+
+The Option to unwrap
+
+#### Returns
+
+`T`
+
+The value if Some
+
+#### Throws
+
+Error if None
+
+#### Example
+
+```typescript
+unwrap(some(42)) // => 42
+unwrap(none()) // throws Error: Cannot unwrap None
+```
+
+#### See
+
+ - unwrapOr - for providing a default value
+ - unwrapOrElse - for computing a default value
+
+### unwrapOr()
+
+#### Call Signature
+ `>` **unwrapOr**\<`T`\>(`option`, `defaultValue`): `T`
+
+Defined in: [option/unwrap/index.ts:61](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/unwrap/index.ts#L61)
+
+Extracts the value from an Option or returns a default.
+
+If the Option is Some, returns the value.
+If the Option is None, returns the default value.
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+##### Parameters
+
+###### option
+
+[`Option`](types.md#option)\<`T`\>
+
+The Option to unwrap
+
+###### defaultValue
+
+`T`
+
+Value to return if None
+
+##### Returns
+
+`T`
+
+The value or default
+
+##### Example
+
+```typescript
+// Data-first
+unwrapOr(some(42), 0) // => 42
+unwrapOr(none(), 0) // => 0
+
+// Data-last (in pipe)
+pipe(
+  findUser(id),
+  map(u => u.name),
+  unwrapOr('Guest')
+) // => 'John' or 'Guest'
+```
+
+##### See
+
+ - unwrapOrElse - for computing the default value lazily
+ - unwrap - for throwing on None
+
+#### Call Signature
+ `>` **unwrapOr**\<`T`\>(`defaultValue`): (`option`) => `T`
+
+Defined in: [option/unwrap/index.ts:62](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/unwrap/index.ts#L62)
+
+Extracts the value from an Option or returns a default.
+
+If the Option is Some, returns the value.
+If the Option is None, returns the default value.
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+##### Parameters
+
+###### defaultValue
+
+`T`
+
+Value to return if None
+
+##### Returns
+
+The value or default
+ `>` (`option`): `T`
+
+###### Parameters
+
+###### option
+
+[`Option`](types.md#option)\<`T`\>
+
+###### Returns
+
+`T`
+
+##### Example
+
+```typescript
+// Data-first
+unwrapOr(some(42), 0) // => 42
+unwrapOr(none(), 0) // => 0
+
+// Data-last (in pipe)
+pipe(
+  findUser(id),
+  map(u => u.name),
+  unwrapOr('Guest')
+) // => 'John' or 'Guest'
+```
+
+##### See
+
+ - unwrapOrElse - for computing the default value lazily
+ - unwrap - for throwing on None
+
+### unwrapOrElse()
+
+#### Call Signature
+ `>` **unwrapOrElse**\<`T`\>(`option`, `fn`): `T`
+
+Defined in: [option/unwrap/index.ts:99](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/unwrap/index.ts#L99)
+
+Extracts the value from an Option or computes a default.
+
+If the Option is Some, returns the value.
+If the Option is None, calls the function to compute a default.
+
+Use this when the default value is expensive to compute.
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+##### Parameters
+
+###### option
+
+[`Option`](types.md#option)\<`T`\>
+
+The Option to unwrap
+
+###### fn
+
+() => `T`
+
+Function to compute default value
+
+##### Returns
+
+`T`
+
+The value or computed default
+
+##### Example
+
+```typescript
+// Data-first
+unwrapOrElse(some(42), () => expensiveComputation()) // => 42
+unwrapOrElse(none(), () => expensiveComputation()) // => computed value
+
+// Data-last (in pipe)
+pipe(
+  config.get('timeout'),
+  unwrapOrElse(() => DEFAULT_TIMEOUT)
+)
+```
+
+##### See
+
+ - unwrapOr - for simple default values
+ - unwrap - for throwing on None
+
+#### Call Signature
+ `>` **unwrapOrElse**\<`T`\>(`fn`): (`option`) => `T`
+
+Defined in: [option/unwrap/index.ts:100](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/unwrap/index.ts#L100)
+
+Extracts the value from an Option or computes a default.
+
+If the Option is Some, returns the value.
+If the Option is None, calls the function to compute a default.
+
+Use this when the default value is expensive to compute.
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+##### Parameters
+
+###### fn
+
+() => `T`
+
+Function to compute default value
+
+##### Returns
+
+The value or computed default
+ `>` (`option`): `T`
+
+###### Parameters
+
+###### option
+
+[`Option`](types.md#option)\<`T`\>
+
+###### Returns
+
+`T`
+
+##### Example
+
+```typescript
+// Data-first
+unwrapOrElse(some(42), () => expensiveComputation()) // => 42
+unwrapOrElse(none(), () => expensiveComputation()) // => computed value
+
+// Data-last (in pipe)
+pipe(
+  config.get('timeout'),
+  unwrapOrElse(() => DEFAULT_TIMEOUT)
+)
+```
+
+##### See
+
+ - unwrapOr - for simple default values
+ - unwrap - for throwing on None

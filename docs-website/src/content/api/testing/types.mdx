@@ -1,0 +1,435 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# testing/types
+
+## Interfaces
+
+### OptionMatchers
+
+Defined in: [testing/types.ts:48](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L48)
+
+Extended Vitest matcher interface for Option types.
+
+#### Extended by
+
+- [`RecetaMatchers`](#recetamatchers)
+
+#### Type Parameters
+
+##### R
+
+`R` `=` `unknown`
+
+#### Methods
+
+##### toBeNone()
+ `>` **toBeNone**(): `R`
+
+Defined in: [testing/types.ts:70](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L70)
+
+Assert that an Option is None.
+
+###### Returns
+
+`R`
+
+###### Example
+
+```typescript
+expect(none()).toBeNone()
+expect(some(5)).not.toBeNone()
+```
+
+##### toBeSome()
+ `>` **toBeSome**\<`T`\>(`expectedValue?`): `R`
+
+Defined in: [testing/types.ts:59](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L59)
+
+Assert that an Option is Some, optionally checking the value.
+
+###### Type Parameters
+
+###### T
+
+`T`
+
+###### Parameters
+
+###### expectedValue?
+
+`T`
+
+###### Returns
+
+`R`
+
+###### Example
+
+```typescript
+expect(some(5)).toBeSome()
+expect(some(5)).toBeSome(5)
+expect(none()).not.toBeSome()
+```
+
+##### toEqualOption()
+ `>` **toEqualOption**\<`T`\>(`expected`): `R`
+
+Defined in: [testing/types.ts:81](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L81)
+
+Deep equality check for Option types.
+
+###### Type Parameters
+
+###### T
+
+`T`
+
+###### Parameters
+
+###### expected
+
+`unknown`
+
+###### Returns
+
+`R`
+
+###### Example
+
+```typescript
+expect(some(5)).toEqualOption(some(5))
+expect(none()).toEqualOption(none())
+```
+
+### RecetaMatchers
+
+Defined in: [testing/types.ts:87](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L87)
+
+Combined matcher interface for all Receta types.
+
+#### Extends
+
+- [`ResultMatchers`](#resultmatchers)\<`R`\>.[`OptionMatchers`](#optionmatchers)\<`R`\>
+
+#### Type Parameters
+
+##### R
+
+`R` `=` `unknown`
+
+#### Methods
+
+##### toBeErr()
+ `>` **toBeErr**\<`E`\>(`expectedError?`): `R`
+
+Defined in: [testing/types.ts:31](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L31)
+
+Assert that a Result is Err, optionally checking the error.
+
+###### Type Parameters
+
+###### E
+
+`E`
+
+###### Parameters
+
+###### expectedError?
+
+`E`
+
+###### Returns
+
+`R`
+
+###### Example
+
+```typescript
+expect(err('fail')).toBeErr()
+expect(err('fail')).toBeErr('fail')
+expect(ok(5)).not.toBeErr()
+```
+
+###### Inherited from
+
+[`ResultMatchers`](#resultmatchers).[`toBeErr`](#tobeerr-1)
+
+##### toBeNone()
+ `>` **toBeNone**(): `R`
+
+Defined in: [testing/types.ts:70](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L70)
+
+Assert that an Option is None.
+
+###### Returns
+
+`R`
+
+###### Example
+
+```typescript
+expect(none()).toBeNone()
+expect(some(5)).not.toBeNone()
+```
+
+###### Inherited from
+
+[`OptionMatchers`](#optionmatchers).[`toBeNone`](#tobenone)
+
+##### toBeOk()
+ `>` **toBeOk**\<`T`\>(`expectedValue?`): `R`
+
+Defined in: [testing/types.ts:19](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L19)
+
+Assert that a Result is Ok, optionally checking the value.
+
+###### Type Parameters
+
+###### T
+
+`T`
+
+###### Parameters
+
+###### expectedValue?
+
+`T`
+
+###### Returns
+
+`R`
+
+###### Example
+
+```typescript
+expect(ok(5)).toBeOk()
+expect(ok(5)).toBeOk(5)
+expect(err('fail')).not.toBeOk()
+```
+
+###### Inherited from
+
+[`ResultMatchers`](#resultmatchers).[`toBeOk`](#tobeok-1)
+
+##### toBeSome()
+ `>` **toBeSome**\<`T`\>(`expectedValue?`): `R`
+
+Defined in: [testing/types.ts:59](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L59)
+
+Assert that an Option is Some, optionally checking the value.
+
+###### Type Parameters
+
+###### T
+
+`T`
+
+###### Parameters
+
+###### expectedValue?
+
+`T`
+
+###### Returns
+
+`R`
+
+###### Example
+
+```typescript
+expect(some(5)).toBeSome()
+expect(some(5)).toBeSome(5)
+expect(none()).not.toBeSome()
+```
+
+###### Inherited from
+
+[`OptionMatchers`](#optionmatchers).[`toBeSome`](#tobesome)
+
+##### toEqualOption()
+ `>` **toEqualOption**\<`T`\>(`expected`): `R`
+
+Defined in: [testing/types.ts:81](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L81)
+
+Deep equality check for Option types.
+
+###### Type Parameters
+
+###### T
+
+`T`
+
+###### Parameters
+
+###### expected
+
+`unknown`
+
+###### Returns
+
+`R`
+
+###### Example
+
+```typescript
+expect(some(5)).toEqualOption(some(5))
+expect(none()).toEqualOption(none())
+```
+
+###### Inherited from
+
+[`OptionMatchers`](#optionmatchers).[`toEqualOption`](#toequaloption)
+
+##### toEqualResult()
+ `>` **toEqualResult**\<`T`, `E`\>(`expected`): `R`
+
+Defined in: [testing/types.ts:42](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L42)
+
+Deep equality check for Result types.
+
+###### Type Parameters
+
+###### T
+
+`T`
+
+###### E
+
+`E`
+
+###### Parameters
+
+###### expected
+
+`unknown`
+
+###### Returns
+
+`R`
+
+###### Example
+
+```typescript
+expect(ok(5)).toEqualResult(ok(5))
+expect(err('fail')).toEqualResult(err('fail'))
+```
+
+###### Inherited from
+
+[`ResultMatchers`](#resultmatchers).[`toEqualResult`](#toequalresult-1)
+
+### ResultMatchers
+
+Defined in: [testing/types.ts:8](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L8)
+
+Extended Vitest matcher interface for Result types.
+
+#### Extended by
+
+- [`RecetaMatchers`](#recetamatchers)
+
+#### Type Parameters
+
+##### R
+
+`R` `=` `unknown`
+
+#### Methods
+
+##### toBeErr()
+ `>` **toBeErr**\<`E`\>(`expectedError?`): `R`
+
+Defined in: [testing/types.ts:31](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L31)
+
+Assert that a Result is Err, optionally checking the error.
+
+###### Type Parameters
+
+###### E
+
+`E`
+
+###### Parameters
+
+###### expectedError?
+
+`E`
+
+###### Returns
+
+`R`
+
+###### Example
+
+```typescript
+expect(err('fail')).toBeErr()
+expect(err('fail')).toBeErr('fail')
+expect(ok(5)).not.toBeErr()
+```
+
+##### toBeOk()
+ `>` **toBeOk**\<`T`\>(`expectedValue?`): `R`
+
+Defined in: [testing/types.ts:19](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L19)
+
+Assert that a Result is Ok, optionally checking the value.
+
+###### Type Parameters
+
+###### T
+
+`T`
+
+###### Parameters
+
+###### expectedValue?
+
+`T`
+
+###### Returns
+
+`R`
+
+###### Example
+
+```typescript
+expect(ok(5)).toBeOk()
+expect(ok(5)).toBeOk(5)
+expect(err('fail')).not.toBeOk()
+```
+
+##### toEqualResult()
+ `>` **toEqualResult**\<`T`, `E`\>(`expected`): `R`
+
+Defined in: [testing/types.ts:42](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/testing/types.ts#L42)
+
+Deep equality check for Result types.
+
+###### Type Parameters
+
+###### T
+
+`T`
+
+###### E
+
+`E`
+
+###### Parameters
+
+###### expected
+
+`unknown`
+
+###### Returns
+
+`R`
+
+###### Example
+
+```typescript
+expect(ok(5)).toEqualResult(ok(5))
+expect(err('fail')).toEqualResult(err('fail'))
+```

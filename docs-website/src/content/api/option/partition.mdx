@@ -1,0 +1,116 @@
+[**@ontology-io/receta**](../README.md)
+
+
+
+# option/partition
+
+## Functions
+
+### partition()
+
+#### Call Signature
+ `>` **partition**\<`T`\>(`options`): \[`T`[], `number`\]
+
+Defined in: [option/partition/index.ts:34](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/partition/index.ts#L34)
+
+Partitions an array of Options into Some values and count of Nones.
+
+Returns a tuple of [Some values[], None count].
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+##### Parameters
+
+###### options
+
+readonly [`Option`](types.md#option)\<`T`\>[]
+
+Array of Options to partition
+
+##### Returns
+
+\[`T`[], `number`\]
+
+Tuple of [values from Some, count of None]
+
+##### Example
+
+```typescript
+const results = [some(1), none(), some(2), none(), some(3)]
+
+partition(results)
+// => [[1, 2, 3], 2]
+
+// Real-world: processing batch operations
+const processUsers = async (ids: string[]) => {
+  const results = await Promise.all(
+    ids.map(id => fetchUser(id))
+  )
+
+  const [users, failedCount] = partition(results)
+  console.log(`Processed ${users.length}, failed ${failedCount}`)
+  return users
+}
+```
+
+##### See
+
+collect - for requiring all to be Some
+
+#### Call Signature
+ `>` **partition**\<`T`\>(): (`options`) => \[`T`[], `number`\]
+
+Defined in: [option/partition/index.ts:35](https://github.com/maxios/receta/blob/cc60b386f67b185c095dab8e7dc7a371fe636c2d/src/option/partition/index.ts#L35)
+
+Partitions an array of Options into Some values and count of Nones.
+
+Returns a tuple of [Some values[], None count].
+
+##### Type Parameters
+
+###### T
+
+`T`
+
+##### Returns
+
+Tuple of [values from Some, count of None]
+ `>` (`options`): \[`T`[], `number`\]
+
+###### Parameters
+
+###### options
+
+readonly [`Option`](types.md#option)\<`T`\>[]
+
+###### Returns
+
+\[`T`[], `number`\]
+
+##### Example
+
+```typescript
+const results = [some(1), none(), some(2), none(), some(3)]
+
+partition(results)
+// => [[1, 2, 3], 2]
+
+// Real-world: processing batch operations
+const processUsers = async (ids: string[]) => {
+  const results = await Promise.all(
+    ids.map(id => fetchUser(id))
+  )
+
+  const [users, failedCount] = partition(results)
+  console.log(`Processed ${users.length}, failed ${failedCount}`)
+  return users
+}
+```
+
+##### See
+
+collect - for requiring all to be Some
