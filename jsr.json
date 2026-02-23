@@ -1,0 +1,42 @@
+{
+  "name": "@receta/receta",
+  "version": "0.3.0",
+  "exports": {
+    ".": "./src/index.ts",
+    "./result": "./src/result/index.ts",
+    "./option": "./src/option/index.ts",
+    "./async": "./src/async/index.ts",
+    "./predicate": "./src/predicate/index.ts",
+    "./validation": "./src/validation/index.ts",
+    "./collection": "./src/collection/index.ts",
+    "./object": "./src/object/index.ts",
+    "./string": "./src/string/index.ts",
+    "./number": "./src/number/index.ts",
+    "./memo": "./src/memo/index.ts",
+    "./lens": "./src/lens/index.ts",
+    "./compare": "./src/compare/index.ts",
+    "./function": "./src/function/index.ts",
+    "./testing": "./src/testing/index.ts",
+    "./testing/matchers": "./src/testing/matchers/index.ts",
+    "./testing/laws": "./src/testing/laws/index.ts",
+    "./testing/arbitraries": "./src/testing/arbitraries/index.ts"
+  },
+  "publish": {
+    "exclude": [
+      "node_modules",
+      "dist",
+      "**/*.test.ts",
+      "**/__tests__",
+      ".github",
+      "docs-site",
+      "scripts",
+      "examples",
+      ".nx",
+      "nx.json",
+      "package.json",
+      "bun.lockb",
+      "*.config.js",
+      "*.config.ts"
+    ]
+  }
+}

@@ -1,11 +1,12 @@
 {
-  "name": "@ontology-io/receta",
+  "name": "receta",
   "version": "0.3.0",
   "description": "Practical FP recipes built on Remeda — higher-level patterns for real-world TypeScript applications",
   "author": "Khaled Maher",
   "license": "MIT",
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   },
   "repository": {
     "type": "git",
@@ -116,6 +117,7 @@
     "docs:build": "cd docs-site && bun install && bun run build",
     "docs:deploy": "bash scripts/deploy-docs.sh",
     "prepublishOnly": "bun run clean && bun run build && bun run test && bun run typecheck",
+    "publish:jsr": "npx jsr publish",
     "ci": "act --container-architecture linux/amd64 -P ubuntu-latest=catthehacker/ubuntu:act-latest",
     "ci:test": "act -j test --container-architecture linux/amd64 -P ubuntu-latest=catthehacker/ubuntu:act-latest",
     "ci:lint": "act -j lint --container-architecture linux/amd64 -P ubuntu-latest=catthehacker/ubuntu:act-latest",

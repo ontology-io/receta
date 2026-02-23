@@ -1006,6 +1006,70 @@ const parseConfig = (json: string): Result<Config, ParseError> =>
 
 ---
 
+## Publishing
+
+Receta is published to multiple registries for maximum compatibility:
+
+### Registries
+
+1. **npm** (primary) - `receta`
+   - Works with npm, Yarn, pnpm, and Bun
+   - https://www.npmjs.com/package/receta
+
+2. **JSR** (Deno) - `@receta/receta`
+   - Native TypeScript support for Deno
+   - https://jsr.io/@receta/receta
+
+3. **GitHub Packages** (secondary) - `@ontology-io/receta`
+   - Backup registry
+   - https://github.com/ontology-io/receta/packages
+
+### Installation
+
+```bash
+# npm / Node.js
+npm install receta
+
+# Bun (uses npm registry)
+bun add receta
+
+# Deno / JSR
+deno add @receta/receta
+
+# GitHub Packages (requires authentication)
+npm install @ontology-io/receta --registry=https://npm.pkg.github.com
+```
+
+### Publishing Workflow
+
+1. **Automated Publishing**: Merge to `main` triggers Release Please
+2. **Release PR Created**: Merge the Release Please PR to publish
+3. **Multi-Registry Deploy**: Automatically publishes to:
+   - ✅ npm (primary)
+   - ✅ JSR (Deno)
+   - ✅ GitHub Packages (backup)
+
+### Manual Publishing
+
+```bash
+# Publish to npm
+npm publish --access public
+
+# Publish to JSR (Deno)
+bun run publish:jsr
+
+# Publish to GitHub Packages
+npm publish --registry=https://npm.pkg.github.com
+```
+
+### Required Secrets
+
+GitHub Actions requires these secrets:
+- `NPM_TOKEN` - npm authentication token
+- `GITHUB_TOKEN` - Automatically provided by GitHub
+
+---
+
 ## Remeda Reference
 
 Receta uses Remeda extensively. Key functions:
