@@ -33,3 +33,6 @@ yarn-error.log*
 # Nx
 .nx/cache/
 .nx/workspace-data/
+
+# TypeDoc temporary output
+docs-temp/

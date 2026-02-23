@@ -1,0 +1,149 @@
+# Function: map()
+
+## Call Signature
+
+> **map**\<`T`, `U`, `E`\>(`validation`, `fn`): [`Validation`](../../types/type-aliases/Validation.md)\<`U`, `E`\>
+
+Defined in: [validation/map/index.ts:45](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/map/index.ts#L45)
+
+Maps over the Valid value of a Validation.
+
+If the validation is Valid, applies the function to the value.
+If the validation is Invalid, returns it unchanged.
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### U
+
+`U`
+
+#### E
+
+`E`
+
+### Parameters
+
+#### validation
+
+[`Validation`](../../types/type-aliases/Validation.md)\<`T`, `E`\>
+
+The validation to map over
+
+#### fn
+
+(`value`) => `U`
+
+Function to transform the valid value
+
+### Returns
+
+[`Validation`](../../types/type-aliases/Validation.md)\<`U`, `E`\>
+
+A new validation with the transformed value
+
+### Example
+
+```typescript
+// Data-first
+map(valid(5), x => x * 2) // => Valid(10)
+map(invalid(['error']), x => x * 2) // => Invalid(['error'])
+
+// Data-last (in pipe)
+pipe(
+  valid(5),
+  map(x => x * 2)
+) // => Valid(10)
+
+// Real-world: Transform validated data
+const validateAndFormat = (email: string) =>
+  pipe(
+    validateEmail(email),
+    map(e => e.toLowerCase().trim())
+  )
+```
+
+### See
+
+ - mapInvalid - for transforming errors
+ - flatMap - for chaining validations
+
+## Call Signature
+
+> **map**\<`T`, `U`\>(`fn`): \<`E`\>(`validation`) => [`Validation`](../../types/type-aliases/Validation.md)\<`U`, `E`\>
+
+Defined in: [validation/map/index.ts:46](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/map/index.ts#L46)
+
+Maps over the Valid value of a Validation.
+
+If the validation is Valid, applies the function to the value.
+If the validation is Invalid, returns it unchanged.
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### U
+
+`U`
+
+### Parameters
+
+#### fn
+
+(`value`) => `U`
+
+Function to transform the valid value
+
+### Returns
+
+A new validation with the transformed value
+
+> \<`E`\>(`validation`): [`Validation`](../../types/type-aliases/Validation.md)\<`U`, `E`\>
+
+#### Type Parameters
+
+##### E
+
+`E`
+
+#### Parameters
+
+##### validation
+
+[`Validation`](../../types/type-aliases/Validation.md)\<`T`, `E`\>
+
+#### Returns
+
+[`Validation`](../../types/type-aliases/Validation.md)\<`U`, `E`\>
+
+### Example
+
+```typescript
+// Data-first
+map(valid(5), x => x * 2) // => Valid(10)
+map(invalid(['error']), x => x * 2) // => Invalid(['error'])
+
+// Data-last (in pipe)
+pipe(
+  valid(5),
+  map(x => x * 2)
+) // => Valid(10)
+
+// Real-world: Transform validated data
+const validateAndFormat = (email: string) =>
+  pipe(
+    validateEmail(email),
+    map(e => e.toLowerCase().trim())
+  )
+```
+
+### See
+
+ - mapInvalid - for transforming errors
+ - flatMap - for chaining validations

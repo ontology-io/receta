@@ -1,0 +1,175 @@
+# Function: diff()
+
+## Call Signature
+
+> **diff**\<`T`, `TId`\>(`oldItems`, `newItems`, `getId`, `isEqual?`): [`DiffResult`](../../types/interfaces/DiffResult.md)\<`T`\>
+
+Defined in: [collection/diff/index.ts:45](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/diff/index.ts#L45)
+
+Compares two collections and returns added, updated, removed, and unchanged items.
+
+Useful for syncing data, detecting changes, and implementing optimistic updates.
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### TId
+
+`TId` *extends* `string` \| `number`
+
+### Parameters
+
+#### oldItems
+
+readonly `T`[]
+
+The original collection
+
+#### newItems
+
+readonly `T`[]
+
+The updated collection
+
+#### getId
+
+(`item`) => `TId`
+
+Function to extract unique identifier
+
+#### isEqual?
+
+[`Comparator`](../../types/type-aliases/Comparator.md)\<`T`\>
+
+Optional custom equality checker (defaults to deep equality)
+
+### Returns
+
+[`DiffResult`](../../types/interfaces/DiffResult.md)\<`T`\>
+
+A DiffResult containing categorized changes
+
+### Example
+
+```typescript
+// Data-first
+const oldUsers = [
+  { id: 1, name: 'Alice' },
+  { id: 2, name: 'Bob' }
+]
+const newUsers = [
+  { id: 1, name: 'Alicia' }, // updated
+  { id: 3, name: 'Charlie' }  // added
+]
+
+diff(oldUsers, newUsers, (u) => u.id)
+// => {
+//   added: [{ id: 3, name: 'Charlie' }],
+//   updated: [{ old: { id: 1, name: 'Alice' }, new: { id: 1, name: 'Alicia' } }],
+//   removed: [{ id: 2, name: 'Bob' }],
+//   unchanged: []
+// }
+
+// Data-last (in pipe)
+pipe(
+  oldUsers,
+  diff(newUsers, (u) => u.id)
+)
+```
+
+### See
+
+ - union - for merging collections
+ - intersect - for finding common elements
+
+## Call Signature
+
+> **diff**\<`T`, `TId`\>(`newItems`, `getId`, `isEqual?`): (`oldItems`) => [`DiffResult`](../../types/interfaces/DiffResult.md)\<`T`\>
+
+Defined in: [collection/diff/index.ts:51](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/diff/index.ts#L51)
+
+Compares two collections and returns added, updated, removed, and unchanged items.
+
+Useful for syncing data, detecting changes, and implementing optimistic updates.
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### TId
+
+`TId` *extends* `string` \| `number`
+
+### Parameters
+
+#### newItems
+
+readonly `T`[]
+
+The updated collection
+
+#### getId
+
+(`item`) => `TId`
+
+Function to extract unique identifier
+
+#### isEqual?
+
+[`Comparator`](../../types/type-aliases/Comparator.md)\<`T`\>
+
+Optional custom equality checker (defaults to deep equality)
+
+### Returns
+
+A DiffResult containing categorized changes
+
+> (`oldItems`): [`DiffResult`](../../types/interfaces/DiffResult.md)\<`T`\>
+
+#### Parameters
+
+##### oldItems
+
+readonly `T`[]
+
+#### Returns
+
+[`DiffResult`](../../types/interfaces/DiffResult.md)\<`T`\>
+
+### Example
+
+```typescript
+// Data-first
+const oldUsers = [
+  { id: 1, name: 'Alice' },
+  { id: 2, name: 'Bob' }
+]
+const newUsers = [
+  { id: 1, name: 'Alicia' }, // updated
+  { id: 3, name: 'Charlie' }  // added
+]
+
+diff(oldUsers, newUsers, (u) => u.id)
+// => {
+//   added: [{ id: 3, name: 'Charlie' }],
+//   updated: [{ old: { id: 1, name: 'Alice' }, new: { id: 1, name: 'Alicia' } }],
+//   removed: [{ id: 2, name: 'Bob' }],
+//   unchanged: []
+// }
+
+// Data-last (in pipe)
+pipe(
+  oldUsers,
+  diff(newUsers, (u) => u.id)
+)
+```
+
+### See
+
+ - union - for merging collections
+ - intersect - for finding common elements

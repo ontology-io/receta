@@ -1,0 +1,165 @@
+# Function: validateShape()
+
+## Call Signature
+
+> **validateShape**\<`T`\>(`obj`, `schema`): [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, [`ObjectError`](../../types/interfaces/ObjectError.md)\>
+
+Defined in: [object/validateShape/index.ts:74](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/validateShape/index.ts#L74)
+
+Validates an object against a schema, returning Result.
+
+Checks that an object matches a given shape/schema. Returns Ok if valid,
+Err with details if invalid. Useful for runtime type checking, API
+validation, and form validation.
+
+### Type Parameters
+
+#### T
+
+`T` *extends* [`PlainObject`](../../types/type-aliases/PlainObject.md)
+
+### Parameters
+
+#### obj
+
+`unknown`
+
+The object to validate
+
+#### schema
+
+[`ObjectSchema`](../type-aliases/ObjectSchema.md)\<`T`\>
+
+Schema defining expected shape and validators
+
+### Returns
+
+[`Result`](../../../result/types/type-aliases/Result.md)\<`T`, [`ObjectError`](../../types/interfaces/ObjectError.md)\>
+
+Result<T, ObjectError> - Ok if valid, Err with details if not
+
+### Example
+
+```typescript
+// Define schema with predicates
+const userSchema = {
+  id: (v: unknown): v is number => typeof v === 'number',
+  name: (v: unknown): v is string => typeof v === 'string',
+  email: (v: unknown): v is string =>
+    typeof v === 'string' && v.includes('@')
+}
+
+// Data-first
+const input = { id: 1, name: 'Alice', email: 'alice@example.com' }
+validateShape(input, userSchema)
+// => Ok({ id: 1, name: 'Alice', email: 'alice@example.com' })
+
+const invalid = { id: '1', name: 'Alice', email: 'invalid' }
+validateShape(invalid, userSchema)
+// => Err({ code: 'VALIDATION_ERROR', message: '...', path: ['id'] })
+
+// Data-last (in pipe)
+pipe(
+  apiResponse,
+  stripUndefined,
+  (obj) => validateShape(obj, schema),
+  map(user => processUser(user))
+)
+
+// With Predicate module
+import { isString, isNumber, where } from 'receta/predicate'
+
+const schema = {
+  id: isNumber,
+  name: isString,
+  age: where({ min: 0, max: 150 })
+}
+```
+
+### See
+
+Validation module - for more complex validation with error accumulation
+
+## Call Signature
+
+> **validateShape**\<`T`\>(`schema`): (`obj`) => [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, [`ObjectError`](../../types/interfaces/ObjectError.md)\>
+
+Defined in: [object/validateShape/index.ts:78](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/validateShape/index.ts#L78)
+
+Validates an object against a schema, returning Result.
+
+Checks that an object matches a given shape/schema. Returns Ok if valid,
+Err with details if invalid. Useful for runtime type checking, API
+validation, and form validation.
+
+### Type Parameters
+
+#### T
+
+`T` *extends* [`PlainObject`](../../types/type-aliases/PlainObject.md)
+
+### Parameters
+
+#### schema
+
+[`ObjectSchema`](../type-aliases/ObjectSchema.md)\<`T`\>
+
+Schema defining expected shape and validators
+
+### Returns
+
+Result<T, ObjectError> - Ok if valid, Err with details if not
+
+> (`obj`): [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, [`ObjectError`](../../types/interfaces/ObjectError.md)\>
+
+#### Parameters
+
+##### obj
+
+`unknown`
+
+#### Returns
+
+[`Result`](../../../result/types/type-aliases/Result.md)\<`T`, [`ObjectError`](../../types/interfaces/ObjectError.md)\>
+
+### Example
+
+```typescript
+// Define schema with predicates
+const userSchema = {
+  id: (v: unknown): v is number => typeof v === 'number',
+  name: (v: unknown): v is string => typeof v === 'string',
+  email: (v: unknown): v is string =>
+    typeof v === 'string' && v.includes('@')
+}
+
+// Data-first
+const input = { id: 1, name: 'Alice', email: 'alice@example.com' }
+validateShape(input, userSchema)
+// => Ok({ id: 1, name: 'Alice', email: 'alice@example.com' })
+
+const invalid = { id: '1', name: 'Alice', email: 'invalid' }
+validateShape(invalid, userSchema)
+// => Err({ code: 'VALIDATION_ERROR', message: '...', path: ['id'] })
+
+// Data-last (in pipe)
+pipe(
+  apiResponse,
+  stripUndefined,
+  (obj) => validateShape(obj, schema),
+  map(user => processUser(user))
+)
+
+// With Predicate module
+import { isString, isNumber, where } from 'receta/predicate'
+
+const schema = {
+  id: isNumber,
+  name: isString,
+  age: where({ min: 0, max: 150 })
+}
+```
+
+### See
+
+Validation module - for more complex validation with error accumulation

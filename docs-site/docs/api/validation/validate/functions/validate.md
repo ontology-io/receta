@@ -1,0 +1,201 @@
+# Function: validate()
+
+## Call Signature
+
+> **validate**\<`T`, `E`\>(`value`, `validators`): [`Validation`](../../types/type-aliases/Validation.md)\<`T`, `E`\>
+
+Defined in: [validation/validate/index.ts:76](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/validate/index.ts#L76)
+
+Applies multiple validators to a single value, accumulating all errors.
+
+All validators are run against the value. If any fail, all errors are accumulated.
+If all succeed, returns Valid with the original value.
+
+This is useful when a single value must satisfy multiple independent constraints.
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### E
+
+`E`
+
+### Parameters
+
+#### value
+
+`T`
+
+The value to validate
+
+#### validators
+
+readonly [`Validator`](../../types/type-aliases/Validator.md)\<`T`, `T`, `E`\>[]
+
+Array of validators to apply
+
+### Returns
+
+[`Validation`](../../types/type-aliases/Validation.md)\<`T`, `E`\>
+
+Validation with the value if all pass, or all accumulated errors
+
+### Example
+
+```typescript
+// Define validators
+const minLength = (min: number): Validator<string, string, string> =>
+  (s) => s.length >= min ? valid(s) : invalid(`Min ${min} chars`)
+
+const maxLength = (max: number): Validator<string, string, string> =>
+  (s) => s.length <= max ? valid(s) : invalid(`Max ${max} chars`)
+
+const noSpaces: Validator<string, string, string> =
+  (s) => /^\S+$/.test(s) ? valid(s) : invalid('No spaces allowed')
+
+// Apply all validators
+validate('hi', [minLength(5), maxLength(10), noSpaces])
+// => Invalid(['Min 5 chars'])
+
+validate('hello world', [minLength(5), maxLength(10), noSpaces])
+// => Invalid(['No spaces allowed'])
+
+validate('hello', [minLength(5), maxLength(10), noSpaces])
+// => Valid('hello')
+
+// Real-world: Password validation with multiple rules
+const validatePassword = (password: string) =>
+  validate(password, [
+    fromPredicate(s => s.length >= 8, 'At least 8 characters'),
+    fromPredicate(s => /[A-Z]/.test(s), 'At least one uppercase'),
+    fromPredicate(s => /[0-9]/.test(s), 'At least one number'),
+    fromPredicate(s => /[^A-Za-z0-9]/.test(s), 'At least one special char')
+  ])
+
+validatePassword('weak')
+// => Invalid([
+//   'At least 8 characters',
+//   'At least one uppercase',
+//   'At least one number',
+//   'At least one special char'
+// ])
+
+// Real-world: Email validation with multiple checks
+const validateEmail = (email: string) =>
+  validate(email, [
+    fromPredicate(s => s.length > 0, 'Email required'),
+    fromPredicate(s => s.includes('@'), 'Must contain @'),
+    fromPredicate(s => s.length <= 254, 'Email too long'),
+    fromPredicate(s => !/\s/.test(s), 'No whitespace allowed')
+  ])
+```
+
+### See
+
+ - collectErrors - for combining independent validations
+ - validateAll - for validating an array with a single validator
+
+## Call Signature
+
+> **validate**\<`T`, `E`\>(`validators`): (`value`) => [`Validation`](../../types/type-aliases/Validation.md)\<`T`, `E`\>
+
+Defined in: [validation/validate/index.ts:80](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/validate/index.ts#L80)
+
+Applies multiple validators to a single value, accumulating all errors.
+
+All validators are run against the value. If any fail, all errors are accumulated.
+If all succeed, returns Valid with the original value.
+
+This is useful when a single value must satisfy multiple independent constraints.
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### E
+
+`E`
+
+### Parameters
+
+#### validators
+
+readonly [`Validator`](../../types/type-aliases/Validator.md)\<`T`, `T`, `E`\>[]
+
+Array of validators to apply
+
+### Returns
+
+Validation with the value if all pass, or all accumulated errors
+
+> (`value`): [`Validation`](../../types/type-aliases/Validation.md)\<`T`, `E`\>
+
+#### Parameters
+
+##### value
+
+`T`
+
+#### Returns
+
+[`Validation`](../../types/type-aliases/Validation.md)\<`T`, `E`\>
+
+### Example
+
+```typescript
+// Define validators
+const minLength = (min: number): Validator<string, string, string> =>
+  (s) => s.length >= min ? valid(s) : invalid(`Min ${min} chars`)
+
+const maxLength = (max: number): Validator<string, string, string> =>
+  (s) => s.length <= max ? valid(s) : invalid(`Max ${max} chars`)
+
+const noSpaces: Validator<string, string, string> =
+  (s) => /^\S+$/.test(s) ? valid(s) : invalid('No spaces allowed')
+
+// Apply all validators
+validate('hi', [minLength(5), maxLength(10), noSpaces])
+// => Invalid(['Min 5 chars'])
+
+validate('hello world', [minLength(5), maxLength(10), noSpaces])
+// => Invalid(['No spaces allowed'])
+
+validate('hello', [minLength(5), maxLength(10), noSpaces])
+// => Valid('hello')
+
+// Real-world: Password validation with multiple rules
+const validatePassword = (password: string) =>
+  validate(password, [
+    fromPredicate(s => s.length >= 8, 'At least 8 characters'),
+    fromPredicate(s => /[A-Z]/.test(s), 'At least one uppercase'),
+    fromPredicate(s => /[0-9]/.test(s), 'At least one number'),
+    fromPredicate(s => /[^A-Za-z0-9]/.test(s), 'At least one special char')
+  ])
+
+validatePassword('weak')
+// => Invalid([
+//   'At least 8 characters',
+//   'At least one uppercase',
+//   'At least one number',
+//   'At least one special char'
+// ])
+
+// Real-world: Email validation with multiple checks
+const validateEmail = (email: string) =>
+  validate(email, [
+    fromPredicate(s => s.length > 0, 'Email required'),
+    fromPredicate(s => s.includes('@'), 'Must contain @'),
+    fromPredicate(s => s.length <= 254, 'Email too long'),
+    fromPredicate(s => !/\s/.test(s), 'No whitespace allowed')
+  ])
+```
+
+### See
+
+ - collectErrors - for combining independent validations
+ - validateAll - for validating an array with a single validator

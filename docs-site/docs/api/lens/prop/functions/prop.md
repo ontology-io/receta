@@ -1,0 +1,59 @@
+# Function: prop()
+
+> **prop**\<`S`, `K`\>(`key`): [`Lens`](../../types/interfaces/Lens.md)\<`S`, `S`\[`K`\]\>
+
+Defined in: [lens/prop/index.ts:35](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/lens/prop/index.ts#L35)
+
+Creates a Lens focusing on a specific property of an object.
+
+This is a convenience function for creating lenses that access a single
+property. It's type-safe and ensures the property exists on the object.
+
+## Type Parameters
+
+### S
+
+`S`
+
+### K
+
+`K` *extends* `string` \| `number` \| `symbol`
+
+## Parameters
+
+### key
+
+`K`
+
+The property key to focus on
+
+## Returns
+
+[`Lens`](../../types/interfaces/Lens.md)\<`S`, `S`\[`K`\]\>
+
+A Lens focusing on the specified property
+
+## Example
+
+```typescript
+interface User {
+  name: string
+  email: string
+  age: number
+}
+
+const nameLens = prop<User>('name')
+const emailLens = prop<User>('email')
+
+const user = { name: 'Alice', email: 'alice@example.com', age: 30 }
+
+nameLens.get(user) // 'Alice'
+nameLens.set('Bob')(user) // { name: 'Bob', email: 'alice@example.com', age: 30 }
+```
+
+## See
+
+ - lens - For custom get/set logic
+ - path - For nested property access
+ - view - To read through the lens
+ - set - To write through the lens
