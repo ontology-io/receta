@@ -1,0 +1,141 @@
+# Function: mask()
+
+## Call Signature
+
+> **mask**\<`T`\>(`obj`, `allowedKeys`): `Partial`\<`T`\>
+
+Defined in: [object/mask/index.ts:48](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/mask/index.ts#L48)
+
+Masks an object by keeping only specified keys (allowlist-based filtering).
+
+Security-focused alternative to Remeda's `pick`. Creates a new object
+containing only the allowed keys. Useful for sanitizing data before
+sending to clients, logging, or storing.
+
+The key difference from `pick` is the semantic intent: `mask` emphasizes
+security and data protection, making it clearer when filtering sensitive data.
+
+### Type Parameters
+
+#### T
+
+`T` *extends* [`PlainObject`](../../types/type-aliases/PlainObject.md)
+
+### Parameters
+
+#### obj
+
+`T`
+
+The object to mask
+
+#### allowedKeys
+
+readonly `string`[]
+
+Array of keys to keep
+
+### Returns
+
+`Partial`\<`T`\>
+
+A new object with only the allowed keys
+
+### Example
+
+```typescript
+// Data-first
+const user = {
+  id: 1,
+  email: 'alice@example.com',
+  passwordHash: 'secret',
+  creditCard: '4111-1111-1111-1111'
+}
+mask(user, ['id', 'email'])
+// => { id: 1, email: 'alice@example.com' }
+
+// API response sanitization
+const safeUser = mask(dbUser, ['id', 'name', 'email', 'role'])
+
+// Data-last (in pipe)
+pipe(
+  user,
+  mask(['id', 'email', 'name'])
+)
+```
+
+### See
+
+Remeda.pick - for similar functionality with different semantics
+
+## Call Signature
+
+> **mask**(`allowedKeys`): \<`T`\>(`obj`) => `Partial`\<`T`\>
+
+Defined in: [object/mask/index.ts:49](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/mask/index.ts#L49)
+
+Masks an object by keeping only specified keys (allowlist-based filtering).
+
+Security-focused alternative to Remeda's `pick`. Creates a new object
+containing only the allowed keys. Useful for sanitizing data before
+sending to clients, logging, or storing.
+
+The key difference from `pick` is the semantic intent: `mask` emphasizes
+security and data protection, making it clearer when filtering sensitive data.
+
+### Parameters
+
+#### allowedKeys
+
+readonly `string`[]
+
+Array of keys to keep
+
+### Returns
+
+A new object with only the allowed keys
+
+> \<`T`\>(`obj`): `Partial`\<`T`\>
+
+#### Type Parameters
+
+##### T
+
+`T` *extends* [`PlainObject`](../../types/type-aliases/PlainObject.md)
+
+#### Parameters
+
+##### obj
+
+`T`
+
+#### Returns
+
+`Partial`\<`T`\>
+
+### Example
+
+```typescript
+// Data-first
+const user = {
+  id: 1,
+  email: 'alice@example.com',
+  passwordHash: 'secret',
+  creditCard: '4111-1111-1111-1111'
+}
+mask(user, ['id', 'email'])
+// => { id: 1, email: 'alice@example.com' }
+
+// API response sanitization
+const safeUser = mask(dbUser, ['id', 'name', 'email', 'role'])
+
+// Data-last (in pipe)
+pipe(
+  user,
+  mask(['id', 'email', 'name'])
+)
+```
+
+### See
+
+Remeda.pick - for similar functionality with different semantics

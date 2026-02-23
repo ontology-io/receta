@@ -1,0 +1,163 @@
+# Function: match()
+
+## Call Signature
+
+> **match**\<`T`, `E`, `U`\>(`result`, `handlers`): `U`
+
+Defined in: [result/match/index.ts:42](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/match/index.ts#L42)
+
+Pattern matches on a Result, providing handlers for both cases.
+
+This is a more functional alternative to if/else or switch statements.
+Both handlers must return the same type.
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### E
+
+`E`
+
+#### U
+
+`U`
+
+### Parameters
+
+#### result
+
+[`Result`](../../types/type-aliases/Result.md)\<`T`, `E`\>
+
+The Result to match on
+
+#### handlers
+
+Object with onOk and onErr handlers
+
+##### onErr
+
+(`error`) => `U`
+
+##### onOk
+
+(`value`) => `U`
+
+### Returns
+
+`U`
+
+The result of calling the appropriate handler
+
+### Example
+
+```typescript
+// Data-first
+match(
+  parseNumber('42'),
+  {
+    onOk: n => `Success: ${n}`,
+    onErr: e => `Error: ${e}`
+  }
+) // => 'Success: 42'
+
+// Data-last (in pipe)
+pipe(
+  fetchUser(id),
+  match({
+    onOk: user => renderUser(user),
+    onErr: error => renderError(error)
+  })
+)
+
+// With different handler types
+const getStatus = match({
+  onOk: () => 'success' as const,
+  onErr: () => 'error' as const
+})
+```
+
+## Call Signature
+
+> **match**\<`T`, `E`, `U`\>(`handlers`): (`result`) => `U`
+
+Defined in: [result/match/index.ts:49](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/match/index.ts#L49)
+
+Pattern matches on a Result, providing handlers for both cases.
+
+This is a more functional alternative to if/else or switch statements.
+Both handlers must return the same type.
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### E
+
+`E`
+
+#### U
+
+`U`
+
+### Parameters
+
+#### handlers
+
+Object with onOk and onErr handlers
+
+##### onErr
+
+(`error`) => `U`
+
+##### onOk
+
+(`value`) => `U`
+
+### Returns
+
+The result of calling the appropriate handler
+
+> (`result`): `U`
+
+#### Parameters
+
+##### result
+
+[`Result`](../../types/type-aliases/Result.md)\<`T`, `E`\>
+
+#### Returns
+
+`U`
+
+### Example
+
+```typescript
+// Data-first
+match(
+  parseNumber('42'),
+  {
+    onOk: n => `Success: ${n}`,
+    onErr: e => `Error: ${e}`
+  }
+) // => 'Success: 42'
+
+// Data-last (in pipe)
+pipe(
+  fetchUser(id),
+  match({
+    onOk: user => renderUser(user),
+    onErr: error => renderError(error)
+  })
+)
+
+// With different handler types
+const getStatus = match({
+  onOk: () => 'success' as const,
+  onErr: () => 'error' as const
+})
+```

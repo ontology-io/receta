@@ -1,0 +1,81 @@
+# Function: optional()
+
+> **optional**\<`S`, `A`\>(`baseLens`): [`Lens`](../../types/interfaces/Lens.md)\<`S`, [`Option`](../../../option/types/type-aliases/Option.md)\<`A`\>\>
+
+Defined in: [lens/optional/index.ts:61](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/lens/optional/index.ts#L61)
+
+Creates a lens that handles potentially undefined values using Option.
+
+This is useful when you have nullable fields and want to work with them
+safely using the Option pattern. The lens will return Some(value) if the
+value exists, or None if it's undefined/null.
+
+## Type Parameters
+
+### S
+
+`S`
+
+### A
+
+`A`
+
+## Parameters
+
+### baseLens
+
+[`Lens`](../../types/interfaces/Lens.md)\<`S`, `A` \| `undefined`\>
+
+The underlying lens that may return undefined
+
+## Returns
+
+[`Lens`](../../types/interfaces/Lens.md)\<`S`, [`Option`](../../../option/types/type-aliases/Option.md)\<`A`\>\>
+
+A lens that wraps the value in Option
+
+## Examples
+
+```typescript
+interface User {
+  name: string
+  email?: string
+  phone?: string
+}
+
+const emailLens = prop<User>('email')
+const optionalEmailLens = optional(emailLens)
+
+const user1 = { name: 'Alice', email: 'alice@example.com' }
+const user2 = { name: 'Bob' }
+
+view(optionalEmailLens, user1) // Some('alice@example.com')
+view(optionalEmailLens, user2) // None
+```
+
+```typescript
+// Setting through optional lens
+import { some, none } from 'receta/option'
+
+const user = { name: 'Alice' }
+
+set(optionalEmailLens, some('alice@example.com'), user)
+// => { name: 'Alice', email: 'alice@example.com' }
+
+set(optionalEmailLens, none, user)
+// => { name: 'Alice', email: undefined }
+```
+
+```typescript
+// Transforming optional values
+over(
+  optionalEmailLens,
+  emailOpt => map(emailOpt, email => email.toLowerCase()),
+  user
+)
+```
+
+## See
+
+ - prop - To create the base lens
+ - path - For nested optional paths

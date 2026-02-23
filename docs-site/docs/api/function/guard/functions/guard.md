@@ -1,0 +1,229 @@
+# Function: guard()
+
+## Call Signature
+
+> **guard**\<`T`, `E`\>(`pairs`): (`value`) => [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, `E`\>
+
+Defined in: [function/guard/index.ts:92](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/guard/index.ts#L92)
+
+Validates a value through a series of guard clauses (early return pattern).
+
+Tests the input against each predicate in order. If a predicate returns false,
+immediately returns Err with the corresponding error. If all predicates pass,
+returns Ok with the original value.
+
+This implements the guard clause / early return pattern common in validation chains,
+allowing you to declaratively express a series of validation rules.
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### E
+
+`E`
+
+### Parameters
+
+#### pairs
+
+readonly [`GuardPair`](../type-aliases/GuardPair.md)\<`T`, `E`\>[]
+
+### Returns
+
+Result<T, E> - Ok with original value if all guards pass, Err with first failing guard's error
+
+> (`value`): [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, `E`\>
+
+#### Parameters
+
+##### value
+
+`T`
+
+#### Returns
+
+[`Result`](../../../result/types/type-aliases/Result.md)\<`T`, `E`\>
+
+### Examples
+
+```typescript
+// User validation
+const validateUser = guard<User, string>([
+  [(u) => u.age >= 18, 'Must be 18 or older'],
+  [(u) => u.email.includes('@'), 'Invalid email format'],
+  [(u) => u.name.trim().length > 0, 'Name is required']
+])
+
+validateUser({ age: 25, email: 'test@example.com', name: 'Alice' })
+// => Ok({ age: 25, email: 'test@example.com', name: 'Alice' })
+
+validateUser({ age: 16, email: 'test@example.com', name: 'Bob' })
+// => Err('Must be 18 or older')
+
+validateUser({ age: 25, email: 'invalid', name: 'Charlie' })
+// => Err('Invalid email format')
+```
+
+```typescript
+// Data-first
+const result = guard<number, string>(
+  [
+    [(n) => n > 0, 'Must be positive'],
+    [(n) => n < 100, 'Must be less than 100'],
+    [(n) => Number.isInteger(n), 'Must be an integer']
+  ],
+  42
+)
+// => Ok(42)
+```
+
+```typescript
+// In a pipe for validation chains
+pipe(
+  parseFormData(),
+  guard([
+    [(data) => 'username' in data, 'Username is required'],
+    [(data) => data.username.length >= 3, 'Username too short']
+  ]),
+  Result.map(createUser)
+)
+```
+
+```typescript
+// With structured errors
+type ValidationError = { field: string; message: string }
+
+const validatePassword = guard<string, ValidationError>([
+  [
+    (pwd) => pwd.length >= 8,
+    { field: 'password', message: 'Password must be at least 8 characters' }
+  ],
+  [
+    (pwd) => /[A-Z]/.test(pwd),
+    { field: 'password', message: 'Password must contain uppercase letter' }
+  ],
+  [
+    (pwd) => /[0-9]/.test(pwd),
+    { field: 'password', message: 'Password must contain a number' }
+  ]
+])
+```
+
+### See
+
+ - when - for conditional transformations
+ - cond - for multi-way branching with Option
+
+## Call Signature
+
+> **guard**\<`T`, `E`\>(`pairs`, `value`): [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, `E`\>
+
+Defined in: [function/guard/index.ts:93](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/guard/index.ts#L93)
+
+Validates a value through a series of guard clauses (early return pattern).
+
+Tests the input against each predicate in order. If a predicate returns false,
+immediately returns Err with the corresponding error. If all predicates pass,
+returns Ok with the original value.
+
+This implements the guard clause / early return pattern common in validation chains,
+allowing you to declaratively express a series of validation rules.
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### E
+
+`E`
+
+### Parameters
+
+#### pairs
+
+readonly [`GuardPair`](../type-aliases/GuardPair.md)\<`T`, `E`\>[]
+
+#### value
+
+`T`
+
+### Returns
+
+[`Result`](../../../result/types/type-aliases/Result.md)\<`T`, `E`\>
+
+Result<T, E> - Ok with original value if all guards pass, Err with first failing guard's error
+
+### Examples
+
+```typescript
+// User validation
+const validateUser = guard<User, string>([
+  [(u) => u.age >= 18, 'Must be 18 or older'],
+  [(u) => u.email.includes('@'), 'Invalid email format'],
+  [(u) => u.name.trim().length > 0, 'Name is required']
+])
+
+validateUser({ age: 25, email: 'test@example.com', name: 'Alice' })
+// => Ok({ age: 25, email: 'test@example.com', name: 'Alice' })
+
+validateUser({ age: 16, email: 'test@example.com', name: 'Bob' })
+// => Err('Must be 18 or older')
+
+validateUser({ age: 25, email: 'invalid', name: 'Charlie' })
+// => Err('Invalid email format')
+```
+
+```typescript
+// Data-first
+const result = guard<number, string>(
+  [
+    [(n) => n > 0, 'Must be positive'],
+    [(n) => n < 100, 'Must be less than 100'],
+    [(n) => Number.isInteger(n), 'Must be an integer']
+  ],
+  42
+)
+// => Ok(42)
+```
+
+```typescript
+// In a pipe for validation chains
+pipe(
+  parseFormData(),
+  guard([
+    [(data) => 'username' in data, 'Username is required'],
+    [(data) => data.username.length >= 3, 'Username too short']
+  ]),
+  Result.map(createUser)
+)
+```
+
+```typescript
+// With structured errors
+type ValidationError = { field: string; message: string }
+
+const validatePassword = guard<string, ValidationError>([
+  [
+    (pwd) => pwd.length >= 8,
+    { field: 'password', message: 'Password must be at least 8 characters' }
+  ],
+  [
+    (pwd) => /[A-Z]/.test(pwd),
+    { field: 'password', message: 'Password must contain uppercase letter' }
+  ],
+  [
+    (pwd) => /[0-9]/.test(pwd),
+    { field: 'password', message: 'Password must contain a number' }
+  ]
+])
+```
+
+### See
+
+ - when - for conditional transformations
+ - cond - for multi-way branching with Option

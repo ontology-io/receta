@@ -1,0 +1,161 @@
+# Function: flatMap()
+
+## Call Signature
+
+> **flatMap**\<`T`, `U`, `E`, `F`\>(`result`, `fn`): [`Result`](../../types/type-aliases/Result.md)\<`U`, `E` \| `F`\>
+
+Defined in: [result/flatMap/index.ts:40](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/flatMap/index.ts#L40)
+
+Chains Result-returning operations (monadic bind).
+
+If the Result is Ok, applies the function to its value and returns the resulting Result.
+If the Result is Err, returns the Err unchanged.
+
+Use this when you have a sequence of operations that each return a Result.
+This prevents nesting Results (Result<Result<T, E>, E>).
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### U
+
+`U`
+
+#### E
+
+`E`
+
+#### F
+
+`F`
+
+### Parameters
+
+#### result
+
+[`Result`](../../types/type-aliases/Result.md)\<`T`, `E`\>
+
+The Result to flatMap over
+
+#### fn
+
+(`value`) => [`Result`](../../types/type-aliases/Result.md)\<`U`, `F`\>
+
+Function that returns a Result
+
+### Returns
+
+[`Result`](../../types/type-aliases/Result.md)\<`U`, `E` \| `F`\>
+
+The Result from the function, or the original Err
+
+### Example
+
+```typescript
+// Data-first
+const parseNumber = (str: string): Result<number, string> =>
+  str === '' ? err('Empty string') : ok(Number(str))
+
+flatMap(ok('42'), parseNumber) // => Ok(42)
+flatMap(ok(''), parseNumber) // => Err('Empty string')
+flatMap(err('fail'), parseNumber) // => Err('fail')
+
+// Data-last (in pipe) - chaining operations
+pipe(
+  tryCatch(() => readFile('config.json')),
+  flatMap(str => tryCatch(() => JSON.parse(str))),
+  flatMap(config => validateConfig(config)),
+  map(config => config.port)
+)
+```
+
+### See
+
+ - map - for transforming values without nesting
+ - flatten - for flattening nested Results
+
+## Call Signature
+
+> **flatMap**\<`T`, `U`, `F`\>(`fn`): \<`E`\>(`result`) => [`Result`](../../types/type-aliases/Result.md)\<`U`, `F` \| `E`\>
+
+Defined in: [result/flatMap/index.ts:44](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/flatMap/index.ts#L44)
+
+Chains Result-returning operations (monadic bind).
+
+If the Result is Ok, applies the function to its value and returns the resulting Result.
+If the Result is Err, returns the Err unchanged.
+
+Use this when you have a sequence of operations that each return a Result.
+This prevents nesting Results (Result<Result<T, E>, E>).
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### U
+
+`U`
+
+#### F
+
+`F`
+
+### Parameters
+
+#### fn
+
+(`value`) => [`Result`](../../types/type-aliases/Result.md)\<`U`, `F`\>
+
+Function that returns a Result
+
+### Returns
+
+The Result from the function, or the original Err
+
+> \<`E`\>(`result`): [`Result`](../../types/type-aliases/Result.md)\<`U`, `F` \| `E`\>
+
+#### Type Parameters
+
+##### E
+
+`E`
+
+#### Parameters
+
+##### result
+
+[`Result`](../../types/type-aliases/Result.md)\<`T`, `E`\>
+
+#### Returns
+
+[`Result`](../../types/type-aliases/Result.md)\<`U`, `F` \| `E`\>
+
+### Example
+
+```typescript
+// Data-first
+const parseNumber = (str: string): Result<number, string> =>
+  str === '' ? err('Empty string') : ok(Number(str))
+
+flatMap(ok('42'), parseNumber) // => Ok(42)
+flatMap(ok(''), parseNumber) // => Err('Empty string')
+flatMap(err('fail'), parseNumber) // => Err('fail')
+
+// Data-last (in pipe) - chaining operations
+pipe(
+  tryCatch(() => readFile('config.json')),
+  flatMap(str => tryCatch(() => JSON.parse(str))),
+  flatMap(config => validateConfig(config)),
+  map(config => config.port)
+)
+```
+
+### See
+
+ - map - for transforming values without nesting
+ - flatten - for flattening nested Results

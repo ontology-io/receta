@@ -1,0 +1,60 @@
+# Function: compact()
+
+> **compact**\<`T`\>(`obj`): `Partial`\<`T`\>
+
+Defined in: [object/compact/index.ts:46](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/compact/index.ts#L46)
+
+Removes all nullish (null or undefined) values from an object (shallow).
+
+Creates a new object without properties that have null or undefined values.
+Useful for cleaning data, preparing payloads, and removing empty fields.
+
+Note: This is a shallow operation. Nested objects are not compacted.
+
+## Type Parameters
+
+### T
+
+`T` *extends* [`PlainObject`](../../types/type-aliases/PlainObject.md)
+
+## Parameters
+
+### obj
+
+`T`
+
+The object to compact
+
+## Returns
+
+`Partial`\<`T`\>
+
+A new object without nullish values
+
+## Example
+
+```typescript
+const input = {
+  name: 'Alice',
+  age: null,
+  email: 'alice@example.com',
+  phone: undefined
+}
+compact(input)
+// => { name: 'Alice', email: 'alice@example.com' }
+
+// Cleaning API response
+pipe(
+  apiResponse,
+  compact,
+  validateShape(schema)
+)
+
+// Note: Keeps falsy values like 0, false, ''
+compact({ count: 0, active: false, name: '' })
+// => { count: 0, active: false, name: '' }
+```
+
+## See
+
+stripUndefined - for removing only undefined values

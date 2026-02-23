@@ -1,0 +1,189 @@
+# Function: batchBy()
+
+## Call Signature
+
+> **batchBy**\<`T`, `K`\>(`items`, `fn`): readonly readonly `T`[][]
+
+Defined in: [collection/batchBy/index.ts:61](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/batchBy/index.ts#L61)
+
+Groups consecutive items in an array based on a predicate or grouping function.
+
+Unlike `groupBy` which groups ALL matching items together, `batchBy` only groups
+consecutive items that produce the same grouping key. Useful for identifying runs,
+sequences, or consecutive states in time-series data.
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### K
+
+`K` *extends* `string` \| `number`
+
+### Parameters
+
+#### items
+
+readonly `T`[]
+
+The array to group
+
+#### fn
+
+(`item`) => `K`
+
+Function that returns a grouping key for each item
+
+### Returns
+
+readonly readonly `T`[][]
+
+Array of batches (sub-arrays of consecutive matching items)
+
+### Example
+
+```typescript
+// Data-first: Group consecutive same values
+batchBy([1, 1, 2, 2, 2, 3, 1, 1], x => x)
+// => [[1, 1], [2, 2, 2], [3], [1, 1]]
+
+// Group consecutive dates by day
+const events = [
+  { timestamp: '2024-01-01T10:00:00Z', event: 'login' },
+  { timestamp: '2024-01-01T11:00:00Z', event: 'click' },
+  { timestamp: '2024-01-02T09:00:00Z', event: 'login' },
+  { timestamp: '2024-01-02T10:00:00Z', event: 'logout' },
+]
+
+batchBy(events, e => e.timestamp.split('T')[0])
+// => [
+//   [{ timestamp: '2024-01-01T10:00:00Z', ... }, { timestamp: '2024-01-01T11:00:00Z', ... }],
+//   [{ timestamp: '2024-01-02T09:00:00Z', ... }, { timestamp: '2024-01-02T10:00:00Z', ... }]
+// ]
+
+// Group consecutive status changes
+const tasks = [
+  { id: 1, status: 'pending' },
+  { id: 2, status: 'pending' },
+  { id: 3, status: 'done' },
+  { id: 4, status: 'done' },
+  { id: 5, status: 'pending' },
+]
+
+batchBy(tasks, t => t.status)
+// => [
+//   [{ id: 1, status: 'pending' }, { id: 2, status: 'pending' }],
+//   [{ id: 3, status: 'done' }, { id: 4, status: 'done' }],
+//   [{ id: 5, status: 'pending' }]
+// ]
+
+// Data-last (in pipe)
+pipe(
+  [1, 1, 2, 2, 2, 3, 1, 1],
+  batchBy(x => x)
+)
+// => [[1, 1], [2, 2, 2], [3], [1, 1]]
+```
+
+### See
+
+ - groupBy - for grouping all matching items (not just consecutive)
+ - chunk - for fixed-size batches
+
+## Call Signature
+
+> **batchBy**\<`T`, `K`\>(`fn`): (`items`) => readonly readonly `T`[][]
+
+Defined in: [collection/batchBy/index.ts:65](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/batchBy/index.ts#L65)
+
+Groups consecutive items in an array based on a predicate or grouping function.
+
+Unlike `groupBy` which groups ALL matching items together, `batchBy` only groups
+consecutive items that produce the same grouping key. Useful for identifying runs,
+sequences, or consecutive states in time-series data.
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### K
+
+`K` *extends* `string` \| `number`
+
+### Parameters
+
+#### fn
+
+(`item`) => `K`
+
+Function that returns a grouping key for each item
+
+### Returns
+
+Array of batches (sub-arrays of consecutive matching items)
+
+> (`items`): readonly readonly `T`[][]
+
+#### Parameters
+
+##### items
+
+readonly `T`[]
+
+#### Returns
+
+readonly readonly `T`[][]
+
+### Example
+
+```typescript
+// Data-first: Group consecutive same values
+batchBy([1, 1, 2, 2, 2, 3, 1, 1], x => x)
+// => [[1, 1], [2, 2, 2], [3], [1, 1]]
+
+// Group consecutive dates by day
+const events = [
+  { timestamp: '2024-01-01T10:00:00Z', event: 'login' },
+  { timestamp: '2024-01-01T11:00:00Z', event: 'click' },
+  { timestamp: '2024-01-02T09:00:00Z', event: 'login' },
+  { timestamp: '2024-01-02T10:00:00Z', event: 'logout' },
+]
+
+batchBy(events, e => e.timestamp.split('T')[0])
+// => [
+//   [{ timestamp: '2024-01-01T10:00:00Z', ... }, { timestamp: '2024-01-01T11:00:00Z', ... }],
+//   [{ timestamp: '2024-01-02T09:00:00Z', ... }, { timestamp: '2024-01-02T10:00:00Z', ... }]
+// ]
+
+// Group consecutive status changes
+const tasks = [
+  { id: 1, status: 'pending' },
+  { id: 2, status: 'pending' },
+  { id: 3, status: 'done' },
+  { id: 4, status: 'done' },
+  { id: 5, status: 'pending' },
+]
+
+batchBy(tasks, t => t.status)
+// => [
+//   [{ id: 1, status: 'pending' }, { id: 2, status: 'pending' }],
+//   [{ id: 3, status: 'done' }, { id: 4, status: 'done' }],
+//   [{ id: 5, status: 'pending' }]
+// ]
+
+// Data-last (in pipe)
+pipe(
+  [1, 1, 2, 2, 2, 3, 1, 1],
+  batchBy(x => x)
+)
+// => [[1, 1], [2, 2, 2], [3], [1, 1]]
+```
+
+### See
+
+ - groupBy - for grouping all matching items (not just consecutive)
+ - chunk - for fixed-size batches

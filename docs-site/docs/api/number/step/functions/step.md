@@ -1,0 +1,123 @@
+# Function: step()
+
+## Call Signature
+
+> **step**(`value`, `stepSize`): `number`
+
+Defined in: [number/step/index.ts:38](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/step/index.ts#L38)
+
+Rounds a number to the nearest step value.
+
+Useful for pricing, UI sliders, or any value that should snap to specific increments.
+
+### Parameters
+
+#### value
+
+`number`
+
+The number to round
+
+#### stepSize
+
+`number`
+
+The step increment
+
+### Returns
+
+`number`
+
+The value rounded to the nearest step
+
+### Example
+
+```typescript
+// Data-first
+step(7, 5) // => 5
+step(8, 5) // => 10
+step(1.23, 0.25) // => 1.25
+step(1.22, 0.25) // => 1.25
+
+// Data-last (in pipe)
+pipe(
+  sliderValue,
+  step(5)
+)
+
+// Real-world: Price rounding to .99
+const roundToNinetyNine = (price: number) =>
+  Math.ceil(price) - 0.01
+
+// Step pricing (e.g., $5 increments)
+const roundToFiveDollars = (price: number) =>
+  step(price, 5)
+```
+
+### See
+
+ - round - for decimal place rounding
+ - clamp - for constraining to a range
+
+## Call Signature
+
+> **step**(`stepSize`): (`value`) => `number`
+
+Defined in: [number/step/index.ts:39](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/step/index.ts#L39)
+
+Rounds a number to the nearest step value.
+
+Useful for pricing, UI sliders, or any value that should snap to specific increments.
+
+### Parameters
+
+#### stepSize
+
+`number`
+
+The step increment
+
+### Returns
+
+The value rounded to the nearest step
+
+> (`value`): `number`
+
+#### Parameters
+
+##### value
+
+`number`
+
+#### Returns
+
+`number`
+
+### Example
+
+```typescript
+// Data-first
+step(7, 5) // => 5
+step(8, 5) // => 10
+step(1.23, 0.25) // => 1.25
+step(1.22, 0.25) // => 1.25
+
+// Data-last (in pipe)
+pipe(
+  sliderValue,
+  step(5)
+)
+
+// Real-world: Price rounding to .99
+const roundToNinetyNine = (price: number) =>
+  Math.ceil(price) - 0.01
+
+// Step pricing (e.g., $5 increments)
+const roundToFiveDollars = (price: number) =>
+  step(price, 5)
+```
+
+### See
+
+ - round - for decimal place rounding
+ - clamp - for constraining to a range

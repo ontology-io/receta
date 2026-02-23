@@ -248,12 +248,17 @@ function escapeGenericTypesInText(text: string): string {
   // This catches Result<T>, Some<T>, Err<E>, Ok<T>, etc.
   result = result.replace(/\b([A-Z][a-zA-Z0-9]*)<([^>]+)>/g, '`$1<$2>`')
 
-  // 2. Escape comparison operators in prose (===, ==, =, !=, !==, <=, >=, <, >)
-  // These can be misinterpreted by MDX as JSX attributes or tags
-  result = result.replace(/\s(===|!==|==|!=|<=|>=)\s/g, ' `$1` ')
+  // 2. Escape comparison operators in parentheses: (===), (>), (<=), etc.
+  // Common in descriptions like "Uses strict equality (===)"
+  result = result.replace(/\((===|!==|==|!=|<=|>=|<|>|=)\)/g, '(`$1`)')
 
-  // 3. Escape individual comparison operators that might be standalone
-  result = result.replace(/\s(<|>|=)\s/g, ' `$1` ')
+  // 3. Escape multi-character comparison operators in prose
+  result = result.replace(/(\s)(===|!==|==|!=|<=|>=)(\s)/g, '$1`$2`$3')
+
+  // 4. Escape single comparison operators in specific contexts:
+  // - "if value > threshold" type descriptions
+  result = result.replace(/(\bvalue\s*)(>|<|=)(\s*\w+)/g, '$1`$2`$3')
+  result = result.replace(/(\bmin\s*)<=(\s*value\s*)<=(\s*max)/g, '$1`<=`$2`<=`$3')
 
   return result
 }

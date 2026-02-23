@@ -1,0 +1,169 @@
+# Function: cond()
+
+## Call Signature
+
+> **cond**\<`T`, `U`\>(`pairs`): (`value`) => [`Option`](../../../option/types/type-aliases/Option.md)\<`U`\>
+
+Defined in: [function/cond/index.ts:59](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/cond/index.ts#L59)
+
+Creates a function that applies the first matching predicate-function pair.
+
+Returns a function that tests its input against each predicate in order,
+applying the corresponding function when a match is found. Returns None
+if no predicates match.
+
+This is like a functional switch statement or if-else chain, useful for
+multi-way conditional logic with clean, declarative syntax.
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### U
+
+`U`
+
+### Parameters
+
+#### pairs
+
+readonly [`CondPair`](../../types/type-aliases/CondPair.md)\<`T`, `U`\>[]
+
+### Returns
+
+Option<U> - Some with result if a predicate matched, None otherwise
+
+> (`value`): [`Option`](../../../option/types/type-aliases/Option.md)\<`U`\>
+
+#### Parameters
+
+##### value
+
+`T`
+
+#### Returns
+
+[`Option`](../../../option/types/type-aliases/Option.md)\<`U`\>
+
+### Examples
+
+```typescript
+const classifyNumber = cond<number, string>([
+  [(n) => n < 0, (n) => 'negative'],
+  [(n) => n === 0, () => 'zero'],
+  [(n) => n > 0 && n < 10, (n) => 'small positive'],
+  [(n) => n >= 10, (n) => 'large positive']
+])
+
+classifyNumber(-5)   // => Some('negative')
+classifyNumber(0)    // => Some('zero')
+classifyNumber(3)    // => Some('small positive')
+classifyNumber(100)  // => Some('large positive')
+```
+
+```typescript
+// HTTP status code handling
+const handleStatus = cond<number, string>([
+  [(s) => s >= 200 && s < 300, () => 'success'],
+  [(s) => s >= 300 && s < 400, () => 'redirect'],
+  [(s) => s >= 400 && s < 500, () => 'client error'],
+  [(s) => s >= 500, () => 'server error']
+])
+
+handleStatus(200)  // => Some('success')
+handleStatus(404)  // => Some('client error')
+handleStatus(500)  // => Some('server error')
+```
+
+```typescript
+// Data-first
+const result = cond<string, number>([
+  [(s) => s === 'low', () => 1],
+  [(s) => s === 'medium', () => 5],
+  [(s) => s === 'high', () => 10]
+], 'medium')
+// => Some(5)
+```
+
+## Call Signature
+
+> **cond**\<`T`, `U`\>(`pairs`, `value`): [`Option`](../../../option/types/type-aliases/Option.md)\<`U`\>
+
+Defined in: [function/cond/index.ts:60](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/cond/index.ts#L60)
+
+Creates a function that applies the first matching predicate-function pair.
+
+Returns a function that tests its input against each predicate in order,
+applying the corresponding function when a match is found. Returns None
+if no predicates match.
+
+This is like a functional switch statement or if-else chain, useful for
+multi-way conditional logic with clean, declarative syntax.
+
+### Type Parameters
+
+#### T
+
+`T`
+
+#### U
+
+`U`
+
+### Parameters
+
+#### pairs
+
+readonly [`CondPair`](../../types/type-aliases/CondPair.md)\<`T`, `U`\>[]
+
+#### value
+
+`T`
+
+### Returns
+
+[`Option`](../../../option/types/type-aliases/Option.md)\<`U`\>
+
+Option<U> - Some with result if a predicate matched, None otherwise
+
+### Examples
+
+```typescript
+const classifyNumber = cond<number, string>([
+  [(n) => n < 0, (n) => 'negative'],
+  [(n) => n === 0, () => 'zero'],
+  [(n) => n > 0 && n < 10, (n) => 'small positive'],
+  [(n) => n >= 10, (n) => 'large positive']
+])
+
+classifyNumber(-5)   // => Some('negative')
+classifyNumber(0)    // => Some('zero')
+classifyNumber(3)    // => Some('small positive')
+classifyNumber(100)  // => Some('large positive')
+```
+
+```typescript
+// HTTP status code handling
+const handleStatus = cond<number, string>([
+  [(s) => s >= 200 && s < 300, () => 'success'],
+  [(s) => s >= 300 && s < 400, () => 'redirect'],
+  [(s) => s >= 400 && s < 500, () => 'client error'],
+  [(s) => s >= 500, () => 'server error']
+])
+
+handleStatus(200)  // => Some('success')
+handleStatus(404)  // => Some('client error')
+handleStatus(500)  // => Some('server error')
+```
+
+```typescript
+// Data-first
+const result = cond<string, number>([
+  [(s) => s === 'low', () => 1],
+  [(s) => s === 'medium', () => 5],
+  [(s) => s === 'high', () => 10]
+], 'medium')
+// => Some(5)
+```
