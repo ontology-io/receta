@@ -4,7 +4,7 @@
 
 > **toCurrency**(`value`, `options`): `string`
 
-Defined in: [number/toCurrency/index.ts:38](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/toCurrency/index.ts#L38)
+Defined in: [number/toCurrency/index.ts:38](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/toCurrency/index.ts#L38)
 
 Formats a number as currency with the specified currency code and locale.
 
@@ -62,7 +62,7 @@ format - for general number formatting
 
 > **toCurrency**(`options`): (`value`) => `string`
 
-Defined in: [number/toCurrency/index.ts:39](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/toCurrency/index.ts#L39)
+Defined in: [number/toCurrency/index.ts:39](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/toCurrency/index.ts#L39)
 
 Formats a number as currency with the specified currency code and locale.
 

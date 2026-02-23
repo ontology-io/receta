@@ -2,7 +2,7 @@
 
 > **compose**\<`S`, `A`, `B`\>(`outer`, `inner`): [`Lens`](../../types/interfaces/Lens.md)\<`S`, `B`\>
 
-Defined in: [lens/compose/index.ts:77](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/lens/compose/index.ts#L77)
+Defined in: [lens/compose/index.ts:77](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/lens/compose/index.ts#L77)
 
 Composes two lenses to create a lens that focuses deeper into a structure.
 

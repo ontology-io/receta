@@ -2,7 +2,7 @@
 
 > **poll**\<`T`\>(`fn`, `options?`): `Promise`\<[`Result`](../../../result/types/type-aliases/Result.md)\<`T`, [`PollError`](../type-aliases/PollError.md)\>\>
 
-Defined in: [async/poll/index.ts:78](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/poll/index.ts#L78)
+Defined in: [async/poll/index.ts:78](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/poll/index.ts#L78)
 
 Polls an async function until it returns a truthy value or reaches max attempts.
 

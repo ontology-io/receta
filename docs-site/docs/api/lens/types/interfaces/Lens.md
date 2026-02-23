@@ -1,6 +1,6 @@
 # Interface: Lens\<S, A\>
 
-Defined in: [lens/types.ts:19](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/lens/types.ts#L19)
+Defined in: [lens/types.ts:19](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/lens/types.ts#L19)
 
 A Lens is a composable getter/setter pair for immutable updates.
 
@@ -37,7 +37,7 @@ The focus type (the part being accessed)
 
 > `readonly` **get**: (`source`) => `A`
 
-Defined in: [lens/types.ts:23](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/lens/types.ts#L23)
+Defined in: [lens/types.ts:23](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/lens/types.ts#L23)
 
 Gets the focused value from the source.
 
@@ -57,7 +57,7 @@ Gets the focused value from the source.
 
 > `readonly` **set**: (`value`) => (`source`) => `S`
 
-Defined in: [lens/types.ts:28](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/lens/types.ts#L28)
+Defined in: [lens/types.ts:28](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/lens/types.ts#L28)
 
 Sets the focused value in the source, returning a new source.
 

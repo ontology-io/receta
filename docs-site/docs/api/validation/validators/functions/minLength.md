@@ -2,7 +2,7 @@
 
 > **minLength**(`min`, `errorMessage?`): [`Validator`](../../types/type-aliases/Validator.md)\<`string`, `string`, `string`\>
 
-Defined in: [validation/validators/index.ts:44](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/validators/index.ts#L44)
+Defined in: [validation/validators/index.ts:44](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/validators/index.ts#L44)
 
 Validates minimum string length.
 

@@ -4,7 +4,7 @@
 
 > **validate**\<`T`, `E`\>(`value`, `validators`): [`Validation`](../../types/type-aliases/Validation.md)\<`T`, `E`\>
 
-Defined in: [validation/validate/index.ts:76](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/validate/index.ts#L76)
+Defined in: [validation/validate/index.ts:76](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/validate/index.ts#L76)
 
 Applies multiple validators to a single value, accumulating all errors.
 
@@ -102,7 +102,7 @@ const validateEmail = (email: string) =>
 
 > **validate**\<`T`, `E`\>(`validators`): (`value`) => [`Validation`](../../types/type-aliases/Validation.md)\<`T`, `E`\>
 
-Defined in: [validation/validate/index.ts:80](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/validate/index.ts#L80)
+Defined in: [validation/validate/index.ts:80](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/validate/index.ts#L80)
 
 Applies multiple validators to a single value, accumulating all errors.
 

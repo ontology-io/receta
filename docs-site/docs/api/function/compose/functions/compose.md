@@ -4,7 +4,7 @@
 
 > **compose**\<`A`, `B`\>(`fn1`): (`a`) => `B`
 
-Defined in: [function/compose/index.ts:51](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/compose/index.ts#L51)
+Defined in: [function/compose/index.ts:51](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/compose/index.ts#L51)
 
 Composes functions from right to left.
 
@@ -88,7 +88,7 @@ https://remedajs.com/docs#pipe - For left-to-right composition
 
 > **compose**\<`A`, `B`, `C`\>(`fn2`, `fn1`): (`a`) => `C`
 
-Defined in: [function/compose/index.ts:52](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/compose/index.ts#L52)
+Defined in: [function/compose/index.ts:52](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/compose/index.ts#L52)
 
 Composes functions from right to left.
 
@@ -180,7 +180,7 @@ https://remedajs.com/docs#pipe - For left-to-right composition
 
 > **compose**\<`A`, `B`, `C`, `D`\>(`fn3`, `fn2`, `fn1`): (`a`) => `D`
 
-Defined in: [function/compose/index.ts:53](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/compose/index.ts#L53)
+Defined in: [function/compose/index.ts:53](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/compose/index.ts#L53)
 
 Composes functions from right to left.
 
@@ -280,7 +280,7 @@ https://remedajs.com/docs#pipe - For left-to-right composition
 
 > **compose**\<`A`, `B`, `C`, `D`, `E`\>(`fn4`, `fn3`, `fn2`, `fn1`): (`a`) => `E`
 
-Defined in: [function/compose/index.ts:58](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/compose/index.ts#L58)
+Defined in: [function/compose/index.ts:58](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/compose/index.ts#L58)
 
 Composes functions from right to left.
 
@@ -388,7 +388,7 @@ https://remedajs.com/docs#pipe - For left-to-right composition
 
 > **compose**\<`A`, `B`, `C`, `D`, `E`, `F`\>(`fn5`, `fn4`, `fn3`, `fn2`, `fn1`): (`a`) => `F`
 
-Defined in: [function/compose/index.ts:64](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/compose/index.ts#L64)
+Defined in: [function/compose/index.ts:64](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/compose/index.ts#L64)
 
 Composes functions from right to left.
 

@@ -1,6 +1,6 @@
 # Interface: ParseNumberError
 
-Defined in: [result/parsing/types.ts:4](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/parsing/types.ts#L4)
+Defined in: [result/parsing/types.ts:4](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/parsing/types.ts#L4)
 
 Error returned when number parsing fails.
 
@@ -10,7 +10,7 @@ Error returned when number parsing fails.
 
 > `readonly` **\_tag**: `"ParseNumberError"`
 
-Defined in: [result/parsing/types.ts:5](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/parsing/types.ts#L5)
+Defined in: [result/parsing/types.ts:5](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/parsing/types.ts#L5)
 
 ***
 
@@ -18,7 +18,7 @@ Defined in: [result/parsing/types.ts:5](https://github.com/maxios/receta/blob/2e
 
 > `readonly` **input**: `string`
 
-Defined in: [result/parsing/types.ts:6](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/parsing/types.ts#L6)
+Defined in: [result/parsing/types.ts:6](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/parsing/types.ts#L6)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [result/parsing/types.ts:6](https://github.com/maxios/receta/blob/2e
 
 > `readonly` **message**: `string`
 
-Defined in: [result/parsing/types.ts:8](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/parsing/types.ts#L8)
+Defined in: [result/parsing/types.ts:8](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/parsing/types.ts#L8)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [result/parsing/types.ts:8](https://github.com/maxios/receta/blob/2e
 
 > `readonly` **reason**: `"not_a_number"` \| `"infinite"` \| `"invalid_integer"` \| `"out_of_radix_range"`
 
-Defined in: [result/parsing/types.ts:7](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/parsing/types.ts#L7)
+Defined in: [result/parsing/types.ts:7](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/parsing/types.ts#L7)

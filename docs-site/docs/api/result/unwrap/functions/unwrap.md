@@ -2,7 +2,7 @@
 
 > **unwrap**\<`T`, `E`\>(`result`): `T`
 
-Defined in: [result/unwrap/index.ts:24](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/unwrap/index.ts#L24)
+Defined in: [result/unwrap/index.ts:24](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/unwrap/index.ts#L24)
 
 Extracts the value from an Ok Result or throws the error.
 

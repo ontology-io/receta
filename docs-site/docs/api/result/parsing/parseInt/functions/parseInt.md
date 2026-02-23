@@ -2,7 +2,7 @@
 
 > **parseInt**(`str`, `radix?`): [`Result`](../../../types/type-aliases/Result.md)\<`number`, [`ParseNumberError`](../../types/interfaces/ParseNumberError.md)\>
 
-Defined in: [result/parsing/parseInt.ts:77](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/parsing/parseInt.ts#L77)
+Defined in: [result/parsing/parseInt.ts:77](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/parsing/parseInt.ts#L77)
 
 Safely parses a string into an integer with optional radix.
 

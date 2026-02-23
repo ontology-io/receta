@@ -4,7 +4,7 @@
 
 > **groupByPath**\<`T`\>(`items`, `path`): `Record`\<`string`, `T`[]\>
 
-Defined in: [collection/groupByPath/index.ts:44](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/groupByPath/index.ts#L44)
+Defined in: [collection/groupByPath/index.ts:44](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/groupByPath/index.ts#L44)
 
 Groups items by a nested object path.
 
@@ -73,7 +73,7 @@ nest - for multi-level hierarchical grouping
 
 > **groupByPath**\<`T`\>(`path`): (`items`) => `Record`\<`string`, `T`[]\>
 
-Defined in: [collection/groupByPath/index.ts:48](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/groupByPath/index.ts#L48)
+Defined in: [collection/groupByPath/index.ts:48](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/groupByPath/index.ts#L48)
 
 Groups items by a nested object path.
 

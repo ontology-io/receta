@@ -4,7 +4,7 @@
 
 > **inRange**(`value`, `min`, `max`): `boolean`
 
-Defined in: [number/inRange/index.ts:29](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/inRange/index.ts#L29)
+Defined in: [number/inRange/index.ts:29](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/inRange/index.ts#L29)
 
 Checks if a number is within a specified range (inclusive).
 
@@ -59,7 +59,7 @@ clamp - for constraining a value to a range
 
 > **inRange**(`min`, `max`): (`value`) => `boolean`
 
-Defined in: [number/inRange/index.ts:30](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/inRange/index.ts#L30)
+Defined in: [number/inRange/index.ts:30](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/inRange/index.ts#L30)
 
 Checks if a number is within a specified range (inclusive).
 

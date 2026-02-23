@@ -1,6 +1,6 @@
 # Interface: UnflattenOptions
 
-Defined in: [object/types.ts:62](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/types.ts#L62)
+Defined in: [object/types.ts:62](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/types.ts#L62)
 
 Options for unflattening objects.
 
@@ -10,6 +10,6 @@ Options for unflattening objects.
 
 > `readonly` `optional` **separator**: `string`
 
-Defined in: [object/types.ts:66](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/types.ts#L66)
+Defined in: [object/types.ts:66](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/types.ts#L66)
 
 Separator used between keys (default: '.').

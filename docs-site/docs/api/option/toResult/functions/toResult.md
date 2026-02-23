@@ -4,7 +4,7 @@
 
 > **toResult**\<`T`, `E`\>(`option`, `error`): [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, `E`\>
 
-Defined in: [option/toResult/index.ts:39](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/option/toResult/index.ts#L39)
+Defined in: [option/toResult/index.ts:39](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/option/toResult/index.ts#L39)
 
 Converts an Option to a Result.
 
@@ -70,7 +70,7 @@ fromResult - for converting Result to Option
 
 > **toResult**\<`E`\>(`error`): \<`T`\>(`option`) => [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, `E`\>
 
-Defined in: [option/toResult/index.ts:40](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/option/toResult/index.ts#L40)
+Defined in: [option/toResult/index.ts:40](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/option/toResult/index.ts#L40)
 
 Converts an Option to a Result.
 

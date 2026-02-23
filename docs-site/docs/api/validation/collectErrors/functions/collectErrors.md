@@ -4,7 +4,7 @@
 
 > **collectErrors**\<`T`, `E`\>(`validations`): [`Validation`](../../types/type-aliases/Validation.md)\<`T`[], `E`\>
 
-Defined in: [validation/collectErrors/index.ts:66](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/collectErrors/index.ts#L66)
+Defined in: [validation/collectErrors/index.ts:66](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/collectErrors/index.ts#L66)
 
 Collects an array of Validations into a single Validation, accumulating all errors.
 
@@ -87,7 +87,7 @@ const validateUsers = (users: unknown[]) =>
 
 > **collectErrors**\<`T`\>(): \<`E`\>(`validations`) => [`Validation`](../../types/type-aliases/Validation.md)\<`T`[], `E`\>
 
-Defined in: [validation/collectErrors/index.ts:69](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/collectErrors/index.ts#L69)
+Defined in: [validation/collectErrors/index.ts:69](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/collectErrors/index.ts#L69)
 
 Collects an array of Validations into a single Validation, accumulating all errors.
 

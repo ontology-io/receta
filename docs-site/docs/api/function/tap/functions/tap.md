@@ -4,7 +4,7 @@
 
 > **tap**\<`T`\>(`fn`): (`value`) => `T`
 
-Defined in: [function/tap/index.ts:60](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/tap/index.ts#L60)
+Defined in: [function/tap/index.ts:60](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/tap/index.ts#L60)
 
 Executes a side effect function and returns the original value unchanged.
 
@@ -90,7 +90,7 @@ pipe(
 
 > **tap**\<`T`\>(`fn`, `value`): `T`
 
-Defined in: [function/tap/index.ts:61](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/tap/index.ts#L61)
+Defined in: [function/tap/index.ts:61](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/tap/index.ts#L61)
 
 Executes a side effect function and returns the original value unchanged.
 

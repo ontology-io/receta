@@ -2,7 +2,7 @@
 
 > **sequential**\<`T`\>(`tasks`): `Promise`\<[`Result`](../../../result/types/type-aliases/Result.md)\<`T`[], [`SequentialError`](../interfaces/SequentialError.md)\>\>
 
-Defined in: [async/sequential/index.ts:66](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/sequential/index.ts#L66)
+Defined in: [async/sequential/index.ts:66](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/sequential/index.ts#L66)
 
 Executes an array of async tasks sequentially (one at a time).
 

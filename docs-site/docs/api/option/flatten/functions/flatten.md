@@ -4,7 +4,7 @@
 
 > **flatten**\<`T`\>(`option`): [`Option`](../../types/type-aliases/Option.md)\<`T`\>
 
-Defined in: [option/flatten/index.ts:30](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/option/flatten/index.ts#L30)
+Defined in: [option/flatten/index.ts:30](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/option/flatten/index.ts#L30)
 
 Flattens a nested Option.
 
@@ -54,7 +54,7 @@ flatMap - for mapping and flattening in one step
 
 > **flatten**\<`T`\>(): (`option`) => [`Option`](../../types/type-aliases/Option.md)\<`T`\>
 
-Defined in: [option/flatten/index.ts:31](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/option/flatten/index.ts#L31)
+Defined in: [option/flatten/index.ts:31](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/option/flatten/index.ts#L31)
 
 Flattens a nested Option.
 

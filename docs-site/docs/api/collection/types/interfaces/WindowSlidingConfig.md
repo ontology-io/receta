@@ -1,6 +1,6 @@
 # Interface: WindowSlidingConfig
 
-Defined in: [collection/types.ts:231](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L231)
+Defined in: [collection/types.ts:231](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L231)
 
 Configuration for sliding window operation.
 
@@ -19,7 +19,7 @@ const config: WindowSlidingConfig = {
 
 > `readonly` **size**: `number`
 
-Defined in: [collection/types.ts:232](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L232)
+Defined in: [collection/types.ts:232](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L232)
 
 ***
 
@@ -27,4 +27,4 @@ Defined in: [collection/types.ts:232](https://github.com/maxios/receta/blob/2efc
 
 > `readonly` `optional` **step**: `number`
 
-Defined in: [collection/types.ts:233](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L233)
+Defined in: [collection/types.ts:233](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L233)

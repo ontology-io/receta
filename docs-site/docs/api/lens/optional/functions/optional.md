@@ -2,7 +2,7 @@
 
 > **optional**\<`S`, `A`\>(`baseLens`): [`Lens`](../../types/interfaces/Lens.md)\<`S`, [`Option`](../../../option/types/type-aliases/Option.md)\<`A`\>\>
 
-Defined in: [lens/optional/index.ts:61](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/lens/optional/index.ts#L61)
+Defined in: [lens/optional/index.ts:61](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/lens/optional/index.ts#L61)
 
 Creates a lens that handles potentially undefined values using Option.
 

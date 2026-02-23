@@ -1,6 +1,6 @@
 # Interface: PollOptions
 
-Defined in: [async/types.ts:57](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L57)
+Defined in: [async/types.ts:57](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L57)
 
 Options for polling operations.
 
@@ -10,7 +10,7 @@ Options for polling operations.
 
 > `readonly` `optional` **interval**: `number`
 
-Defined in: [async/types.ts:62](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L62)
+Defined in: [async/types.ts:62](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L62)
 
 Interval between poll attempts in milliseconds.
 
@@ -26,7 +26,7 @@ Interval between poll attempts in milliseconds.
 
 > `readonly` `optional` **maxAttempts**: `number`
 
-Defined in: [async/types.ts:68](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L68)
+Defined in: [async/types.ts:68](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L68)
 
 Maximum number of poll attempts.
 
@@ -42,7 +42,7 @@ Maximum number of poll attempts.
 
 > `readonly` `optional` **onPoll**: (`attempt`) => `void`
 
-Defined in: [async/types.ts:84](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L84)
+Defined in: [async/types.ts:84](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L84)
 
 Callback invoked on each poll attempt.
 
@@ -62,7 +62,7 @@ Callback invoked on each poll attempt.
 
 > `readonly` `optional` **shouldContinue**: (`attempt`) => `boolean`
 
-Defined in: [async/types.ts:79](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L79)
+Defined in: [async/types.ts:79](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L79)
 
 Predicate to determine if polling should stop.
 Return true to continue polling, false to stop.
@@ -83,6 +83,6 @@ Return true to continue polling, false to stop.
 
 > `readonly` `optional` **timeout**: `number`
 
-Defined in: [async/types.ts:73](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L73)
+Defined in: [async/types.ts:73](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L73)
 
 Timeout in milliseconds for the entire polling operation.

@@ -4,7 +4,7 @@
 
 > **collect**\<`T`, `E`\>(`results`): [`Result`](../../types/type-aliases/Result.md)\<`T`[], `E`\>
 
-Defined in: [result/collect/index.ts:42](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/collect/index.ts#L42)
+Defined in: [result/collect/index.ts:42](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/collect/index.ts#L42)
 
 Collects an array of Results into a single Result of an array.
 
@@ -69,7 +69,7 @@ partition - for separating Ok and Err values
 
 > **collect**\<`T`\>(): \<`E`\>(`results`) => [`Result`](../../types/type-aliases/Result.md)\<`T`[], `E`\>
 
-Defined in: [result/collect/index.ts:43](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/collect/index.ts#L43)
+Defined in: [result/collect/index.ts:43](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/collect/index.ts#L43)
 
 Collects an array of Results into a single Result of an array.
 

@@ -2,7 +2,7 @@
 
 > **batch**\<`T`, `U`\>(`items`, `fn`, `options?`): `Promise`\<[`Result`](../../../result/types/type-aliases/Result.md)\<`U`[], [`BatchError`](../interfaces/BatchError.md)\>\>
 
-Defined in: [async/batch/index.ts:81](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/batch/index.ts#L81)
+Defined in: [async/batch/index.ts:81](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/batch/index.ts#L81)
 
 Processes items in batches with optional delay between batches.
 

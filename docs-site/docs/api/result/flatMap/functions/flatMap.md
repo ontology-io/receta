@@ -4,7 +4,7 @@
 
 > **flatMap**\<`T`, `U`, `E`, `F`\>(`result`, `fn`): [`Result`](../../types/type-aliases/Result.md)\<`U`, `E` \| `F`\>
 
-Defined in: [result/flatMap/index.ts:40](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/flatMap/index.ts#L40)
+Defined in: [result/flatMap/index.ts:40](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/flatMap/index.ts#L40)
 
 Chains Result-returning operations (monadic bind).
 
@@ -81,7 +81,7 @@ pipe(
 
 > **flatMap**\<`T`, `U`, `F`\>(`fn`): \<`E`\>(`result`) => [`Result`](../../types/type-aliases/Result.md)\<`U`, `F` \| `E`\>
 
-Defined in: [result/flatMap/index.ts:44](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/flatMap/index.ts#L44)
+Defined in: [result/flatMap/index.ts:44](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/flatMap/index.ts#L44)
 
 Chains Result-returning operations (monadic bind).
 

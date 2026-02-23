@@ -1,6 +1,6 @@
 # Interface: FlattenOptions
 
-Defined in: [object/types.ts:42](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/types.ts#L42)
+Defined in: [object/types.ts:42](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/types.ts#L42)
 
 Options for flattening objects.
 
@@ -10,7 +10,7 @@ Options for flattening objects.
 
 > `readonly` `optional` **flattenArrays**: `boolean`
 
-Defined in: [object/types.ts:56](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/types.ts#L56)
+Defined in: [object/types.ts:56](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/types.ts#L56)
 
 Whether to flatten arrays (default: false).
 
@@ -20,7 +20,7 @@ Whether to flatten arrays (default: false).
 
 > `readonly` `optional` **maxDepth**: `number`
 
-Defined in: [object/types.ts:51](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/types.ts#L51)
+Defined in: [object/types.ts:51](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/types.ts#L51)
 
 Maximum depth to flatten (default: Infinity).
 
@@ -30,6 +30,6 @@ Maximum depth to flatten (default: Infinity).
 
 > `readonly` `optional` **separator**: `string`
 
-Defined in: [object/types.ts:46](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/types.ts#L46)
+Defined in: [object/types.ts:46](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/types.ts#L46)
 
 Separator to use between keys (default: '.').

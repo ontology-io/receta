@@ -2,7 +2,7 @@
 
 > **retry**\<`T`\>(`fn`, `options?`): `Promise`\<[`Result`](../../../result/types/type-aliases/Result.md)\<`T`, [`RetryError`](../interfaces/RetryError.md)\>\>
 
-Defined in: [async/retry/index.ts:72](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/retry/index.ts#L72)
+Defined in: [async/retry/index.ts:72](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/retry/index.ts#L72)
 
 Retries an async function with exponential backoff, returning a Result.
 

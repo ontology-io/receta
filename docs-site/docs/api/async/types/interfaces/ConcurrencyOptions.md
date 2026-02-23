@@ -1,6 +1,6 @@
 # Interface: ConcurrencyOptions
 
-Defined in: [async/types.ts:45](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L45)
+Defined in: [async/types.ts:45](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L45)
 
 Options for concurrent operations.
 
@@ -10,7 +10,7 @@ Options for concurrent operations.
 
 > `readonly` `optional` **concurrency**: `number`
 
-Defined in: [async/types.ts:51](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L51)
+Defined in: [async/types.ts:51](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L51)
 
 Maximum number of concurrent operations.
 Set to Infinity for unlimited concurrency.

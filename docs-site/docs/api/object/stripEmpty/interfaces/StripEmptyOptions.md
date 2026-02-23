@@ -1,6 +1,6 @@
 # Interface: StripEmptyOptions
 
-Defined in: [object/stripEmpty/index.ts:13](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/stripEmpty/index.ts#L13)
+Defined in: [object/stripEmpty/index.ts:13](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/stripEmpty/index.ts#L13)
 
 Options for stripEmpty operation.
 
@@ -10,7 +10,7 @@ Options for stripEmpty operation.
 
 > `readonly` `optional` **deep**: `boolean`
 
-Defined in: [object/stripEmpty/index.ts:32](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/stripEmpty/index.ts#L32)
+Defined in: [object/stripEmpty/index.ts:32](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/stripEmpty/index.ts#L32)
 
 Whether to strip recursively in nested objects (default: true).
 
@@ -20,7 +20,7 @@ Whether to strip recursively in nested objects (default: true).
 
 > `readonly` `optional` **stripEmptyArrays**: `boolean`
 
-Defined in: [object/stripEmpty/index.ts:22](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/stripEmpty/index.ts#L22)
+Defined in: [object/stripEmpty/index.ts:22](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/stripEmpty/index.ts#L22)
 
 Whether to remove empty arrays (default: true).
 
@@ -30,7 +30,7 @@ Whether to remove empty arrays (default: true).
 
 > `readonly` `optional` **stripEmptyObjects**: `boolean`
 
-Defined in: [object/stripEmpty/index.ts:27](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/stripEmpty/index.ts#L27)
+Defined in: [object/stripEmpty/index.ts:27](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/stripEmpty/index.ts#L27)
 
 Whether to remove empty objects (default: true).
 
@@ -40,6 +40,6 @@ Whether to remove empty objects (default: true).
 
 > `readonly` `optional` **stripEmptyStrings**: `boolean`
 
-Defined in: [object/stripEmpty/index.ts:17](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/stripEmpty/index.ts#L17)
+Defined in: [object/stripEmpty/index.ts:17](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/stripEmpty/index.ts#L17)
 
 Whether to remove empty strings (default: true).

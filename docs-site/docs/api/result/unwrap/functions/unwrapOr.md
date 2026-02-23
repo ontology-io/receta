@@ -4,7 +4,7 @@
 
 > **unwrapOr**\<`T`, `E`\>(`result`, `defaultValue`): `T`
 
-Defined in: [result/unwrap/index.ts:53](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/unwrap/index.ts#L53)
+Defined in: [result/unwrap/index.ts:53](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/unwrap/index.ts#L53)
 
 Extracts the value from an Ok Result or returns a default.
 
@@ -60,7 +60,7 @@ unwrapOrElse - for lazy default computation
 
 > **unwrapOr**\<`T`\>(`defaultValue`): \<`E`\>(`result`) => `T`
 
-Defined in: [result/unwrap/index.ts:54](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/unwrap/index.ts#L54)
+Defined in: [result/unwrap/index.ts:54](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/unwrap/index.ts#L54)
 
 Extracts the value from an Ok Result or returns a default.
 

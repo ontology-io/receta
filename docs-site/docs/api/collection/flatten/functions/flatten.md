@@ -4,7 +4,7 @@
 
 > **flatten**\<`T`\>(`items`, `config`): readonly [`FlattenedItem`](../../types/interfaces/FlattenedItem.md)\<`T`\>[]
 
-Defined in: [collection/flatten/index.ts:74](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/flatten/index.ts#L74)
+Defined in: [collection/flatten/index.ts:74](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/flatten/index.ts#L74)
 
 Flattens a tree structure into a flat array with optional depth control and path tracking.
 
@@ -104,7 +104,7 @@ nest - for inverse operation (flat → tree)
 
 > **flatten**\<`T`\>(`items`, `config`): readonly `T`[]
 
-Defined in: [collection/flatten/index.ts:78](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/flatten/index.ts#L78)
+Defined in: [collection/flatten/index.ts:78](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/flatten/index.ts#L78)
 
 Flattens a tree structure into a flat array with optional depth control and path tracking.
 
@@ -204,7 +204,7 @@ nest - for inverse operation (flat → tree)
 
 > **flatten**\<`T`\>(`items`, `config`): readonly `T`[] \| readonly [`FlattenedItem`](../../types/interfaces/FlattenedItem.md)\<`T`\>[]
 
-Defined in: [collection/flatten/index.ts:82](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/flatten/index.ts#L82)
+Defined in: [collection/flatten/index.ts:82](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/flatten/index.ts#L82)
 
 Flattens a tree structure into a flat array with optional depth control and path tracking.
 
@@ -304,7 +304,7 @@ nest - for inverse operation (flat → tree)
 
 > **flatten**\<`T`\>(`config`): (`items`) => readonly [`FlattenedItem`](../../types/interfaces/FlattenedItem.md)\<`T`\>[]
 
-Defined in: [collection/flatten/index.ts:86](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/flatten/index.ts#L86)
+Defined in: [collection/flatten/index.ts:86](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/flatten/index.ts#L86)
 
 Flattens a tree structure into a flat array with optional depth control and path tracking.
 
@@ -408,7 +408,7 @@ nest - for inverse operation (flat → tree)
 
 > **flatten**\<`T`\>(`config`): (`items`) => readonly `T`[]
 
-Defined in: [collection/flatten/index.ts:89](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/flatten/index.ts#L89)
+Defined in: [collection/flatten/index.ts:89](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/flatten/index.ts#L89)
 
 Flattens a tree structure into a flat array with optional depth control and path tracking.
 
@@ -512,7 +512,7 @@ nest - for inverse operation (flat → tree)
 
 > **flatten**\<`T`\>(`config`): (`items`) => readonly `T`[] \| readonly [`FlattenedItem`](../../types/interfaces/FlattenedItem.md)\<`T`\>[]
 
-Defined in: [collection/flatten/index.ts:92](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/flatten/index.ts#L92)
+Defined in: [collection/flatten/index.ts:92](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/flatten/index.ts#L92)
 
 Flattens a tree structure into a flat array with optional depth control and path tracking.
 

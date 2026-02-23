@@ -1,6 +1,6 @@
 # Class: DuplicateKeyError
 
-Defined in: [collection/types.ts:172](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L172)
+Defined in: [collection/types.ts:172](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L172)
 
 Error thrown when a duplicate key is found during indexing.
 
@@ -14,7 +14,7 @@ Error thrown when a duplicate key is found during indexing.
 
 > **new DuplicateKeyError**(`key`, `message?`): `DuplicateKeyError`
 
-Defined in: [collection/types.ts:173](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L173)
+Defined in: [collection/types.ts:173](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L173)
 
 #### Parameters
 
@@ -40,4 +40,4 @@ Defined in: [collection/types.ts:173](https://github.com/maxios/receta/blob/2efc
 
 > `readonly` **key**: `string` \| `number`
 
-Defined in: [collection/types.ts:174](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L174)
+Defined in: [collection/types.ts:174](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L174)

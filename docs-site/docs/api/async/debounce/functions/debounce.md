@@ -2,7 +2,7 @@
 
 > **debounce**\<`TArgs`, `TReturn`\>(`fn`, `options`): (...`args`) => `Promise`\<`TReturn`\>
 
-Defined in: [async/debounce/index.ts:43](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/debounce/index.ts#L43)
+Defined in: [async/debounce/index.ts:43](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/debounce/index.ts#L43)
 
 Debounces an async function.
 

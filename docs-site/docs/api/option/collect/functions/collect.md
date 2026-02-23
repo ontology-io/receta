@@ -4,7 +4,7 @@
 
 > **collect**\<`T`\>(`options`): [`Option`](../../types/type-aliases/Option.md)\<`T`[]\>
 
-Defined in: [option/collect/index.ts:45](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/option/collect/index.ts#L45)
+Defined in: [option/collect/index.ts:45](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/option/collect/index.ts#L45)
 
 Collects an array of Options into an Option of array.
 
@@ -68,7 +68,7 @@ partition - for separating Some and None values
 
 > **collect**\<`T`\>(): (`options`) => [`Option`](../../types/type-aliases/Option.md)\<`T`[]\>
 
-Defined in: [option/collect/index.ts:46](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/option/collect/index.ts#L46)
+Defined in: [option/collect/index.ts:46](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/option/collect/index.ts#L46)
 
 Collects an array of Options into an Option of array.
 

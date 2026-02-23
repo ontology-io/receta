@@ -1,6 +1,6 @@
 # Interface: MemoizedFunction()\<Args, R\>
 
-Defined in: [memo/types.ts:46](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/types.ts#L46)
+Defined in: [memo/types.ts:46](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/types.ts#L46)
 
 A memoized function with cache access.
 
@@ -16,7 +16,7 @@ A memoized function with cache access.
 
 > **MemoizedFunction**(...`args`): `R`
 
-Defined in: [memo/types.ts:47](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/types.ts#L47)
+Defined in: [memo/types.ts:47](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/types.ts#L47)
 
 A memoized function with cache access.
 
@@ -36,7 +36,7 @@ A memoized function with cache access.
 
 > **cache**: [`Cache`](Cache.md)\<`unknown`, `R`\>
 
-Defined in: [memo/types.ts:48](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/types.ts#L48)
+Defined in: [memo/types.ts:48](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/types.ts#L48)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [memo/types.ts:48](https://github.com/maxios/receta/blob/2efcc1ca4c2
 
 > **clear**: () => `void`
 
-Defined in: [memo/types.ts:49](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/types.ts#L49)
+Defined in: [memo/types.ts:49](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/types.ts#L49)
 
 #### Returns
 

@@ -4,7 +4,7 @@
 
 > **transformKeys**(`obj`, `transform`, `options?`): [`PlainObject`](../../types/type-aliases/PlainObject.md)
 
-Defined in: [object/transformKeys/index.ts:219](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/transformKeys/index.ts#L219)
+Defined in: [object/transformKeys/index.ts:219](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/transformKeys/index.ts#L219)
 
 Recursively transforms all keys in an object and its nested structures.
 
@@ -134,7 +134,7 @@ mapKeys - for shallow key transformation only
 
 > **transformKeys**(`transform`, `options?`): (`obj`) => [`PlainObject`](../../types/type-aliases/PlainObject.md)
 
-Defined in: [object/transformKeys/index.ts:224](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/transformKeys/index.ts#L224)
+Defined in: [object/transformKeys/index.ts:224](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/transformKeys/index.ts#L224)
 
 Recursively transforms all keys in an object and its nested structures.
 

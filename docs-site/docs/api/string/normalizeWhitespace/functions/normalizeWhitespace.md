@@ -2,7 +2,7 @@
 
 > **normalizeWhitespace**(`str`): `string`
 
-Defined in: [string/normalizeWhitespace/index.ts:49](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/normalizeWhitespace/index.ts#L49)
+Defined in: [string/normalizeWhitespace/index.ts:49](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/normalizeWhitespace/index.ts#L49)
 
 Normalizes whitespace in a string by replacing multiple consecutive whitespace
 characters with a single space and trimming leading/trailing whitespace.

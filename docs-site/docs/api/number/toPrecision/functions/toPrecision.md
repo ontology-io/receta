@@ -4,7 +4,7 @@
 
 > **toPrecision**(`value`, `digits`): `string`
 
-Defined in: [number/toPrecision/index.ts:28](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/toPrecision/index.ts#L28)
+Defined in: [number/toPrecision/index.ts:28](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/toPrecision/index.ts#L28)
 
 Formats a number to a specified number of significant digits.
 
@@ -53,7 +53,7 @@ round - for rounding to decimal places
 
 > **toPrecision**(`digits`): (`value`) => `string`
 
-Defined in: [number/toPrecision/index.ts:29](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/toPrecision/index.ts#L29)
+Defined in: [number/toPrecision/index.ts:29](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/toPrecision/index.ts#L29)
 
 Formats a number to a specified number of significant digits.
 

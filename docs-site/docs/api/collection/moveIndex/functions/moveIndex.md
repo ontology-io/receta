@@ -4,7 +4,7 @@
 
 > **moveIndex**\<`T`\>(`items`, `fromIndex`, `toIndex`): readonly `T`[]
 
-Defined in: [collection/moveIndex/index.ts:66](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/moveIndex/index.ts#L66)
+Defined in: [collection/moveIndex/index.ts:66](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/moveIndex/index.ts#L66)
 
 Moves an element from one index to another (immutably).
 
@@ -102,7 +102,7 @@ pipe(
 
 > **moveIndex**(`fromIndex`, `toIndex`): \<`T`\>(`items`) => readonly `T`[]
 
-Defined in: [collection/moveIndex/index.ts:71](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/moveIndex/index.ts#L71)
+Defined in: [collection/moveIndex/index.ts:71](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/moveIndex/index.ts#L71)
 
 Moves an element from one index to another (immutably).
 

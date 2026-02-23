@@ -1,6 +1,6 @@
 # Interface: OptionArbitraryConfig
 
-Defined in: [testing/arbitraries/types.ts:37](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/arbitraries/types.ts#L37)
+Defined in: [testing/arbitraries/types.ts:37](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/arbitraries/types.ts#L37)
 
 Configuration for Option arbitrary generation.
 
@@ -17,7 +17,7 @@ option(fc.integer(), { someWeight: 0.7 })
 
 > `optional` **someWeight**: `number`
 
-Defined in: [testing/arbitraries/types.ts:48](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/arbitraries/types.ts#L48)
+Defined in: [testing/arbitraries/types.ts:48](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/arbitraries/types.ts#L48)
 
 Weight for Some values (0-1).
 Default: 0.5 (50% Some, 50% None)

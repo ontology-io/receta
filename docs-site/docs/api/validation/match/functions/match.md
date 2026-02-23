@@ -4,7 +4,7 @@
 
 > **match**\<`T`, `E`, `R`\>(`validation`, `matcher`): `R`
 
-Defined in: [validation/match/index.ts:91](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/match/index.ts#L91)
+Defined in: [validation/match/index.ts:91](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/match/index.ts#L91)
 
 Performs pattern matching on a Validation.
 
@@ -114,7 +114,7 @@ const processWithLogging = (data: unknown) =>
 
 > **match**\<`T`, `E`, `R`\>(`matcher`): (`validation`) => `R`
 
-Defined in: [validation/match/index.ts:95](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/match/index.ts#L95)
+Defined in: [validation/match/index.ts:95](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/match/index.ts#L95)
 
 Performs pattern matching on a Validation.
 

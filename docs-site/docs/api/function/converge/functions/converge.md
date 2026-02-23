@@ -4,7 +4,7 @@
 
 > **converge**\<`T`, `Args`, `R`\>(`after`, `fns`): (`value`) => `R`
 
-Defined in: [function/converge/index.ts:65](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/converge/index.ts#L65)
+Defined in: [function/converge/index.ts:65](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/converge/index.ts#L65)
 
 Creates a function that applies multiple functions to the same input, then combines their results.
 
@@ -106,7 +106,7 @@ const result = converge(
 
 > **converge**\<`T`, `Args`, `R`\>(`after`, `fns`, `value`): `R`
 
-Defined in: [function/converge/index.ts:69](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/converge/index.ts#L69)
+Defined in: [function/converge/index.ts:69](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/converge/index.ts#L69)
 
 Creates a function that applies multiple functions to the same input, then combines their results.
 

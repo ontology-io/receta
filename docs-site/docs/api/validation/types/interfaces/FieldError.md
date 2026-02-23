@@ -1,6 +1,6 @@
 # Interface: FieldError\<E\>
 
-Defined in: [validation/types.ts:104](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/types.ts#L104)
+Defined in: [validation/types.ts:104](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/types.ts#L104)
 
 Represents a validation error for a specific field.
 
@@ -29,7 +29,7 @@ The type of individual error messages
 
 > `readonly` **errors**: readonly `E`[]
 
-Defined in: [validation/types.ts:106](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/types.ts#L106)
+Defined in: [validation/types.ts:106](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/types.ts#L106)
 
 ***
 
@@ -37,4 +37,4 @@ Defined in: [validation/types.ts:106](https://github.com/maxios/receta/blob/2efc
 
 > `readonly` **field**: `string`
 
-Defined in: [validation/types.ts:105](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/types.ts#L105)
+Defined in: [validation/types.ts:105](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/types.ts#L105)

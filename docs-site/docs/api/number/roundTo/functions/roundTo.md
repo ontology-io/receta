@@ -4,7 +4,7 @@
 
 > **roundTo**(`value`, `step`): `number`
 
-Defined in: [number/roundTo/index.ts:40](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/roundTo/index.ts#L40)
+Defined in: [number/roundTo/index.ts:40](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/roundTo/index.ts#L40)
 
 Rounds a number to the nearest multiple of a step value.
 
@@ -65,7 +65,7 @@ round - for decimal place rounding
 
 > **roundTo**(`step`): (`value`) => `number`
 
-Defined in: [number/roundTo/index.ts:41](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/roundTo/index.ts#L41)
+Defined in: [number/roundTo/index.ts:41](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/roundTo/index.ts#L41)
 
 Rounds a number to the nearest multiple of a step value.
 

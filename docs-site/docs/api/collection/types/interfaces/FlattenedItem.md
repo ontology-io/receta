@@ -1,6 +1,6 @@
 # Interface: FlattenedItem\<T\>
 
-Defined in: [collection/types.ts:214](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L214)
+Defined in: [collection/types.ts:214](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L214)
 
 Result item from flatten operation with path information.
 
@@ -18,7 +18,7 @@ The type of the item
 
 > `readonly` **depth**: `number`
 
-Defined in: [collection/types.ts:217](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L217)
+Defined in: [collection/types.ts:217](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L217)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [collection/types.ts:217](https://github.com/maxios/receta/blob/2efc
 
 > `readonly` **item**: `T`
 
-Defined in: [collection/types.ts:215](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L215)
+Defined in: [collection/types.ts:215](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L215)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [collection/types.ts:215](https://github.com/maxios/receta/blob/2efc
 
 > `readonly` **path**: readonly `T`[]
 
-Defined in: [collection/types.ts:216](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L216)
+Defined in: [collection/types.ts:216](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L216)

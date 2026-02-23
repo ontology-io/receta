@@ -1,6 +1,6 @@
 # Interface: FunctorLawConfig\<F, A\>
 
-Defined in: [testing/laws/types.ts:20](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/laws/types.ts#L20)
+Defined in: [testing/laws/types.ts:20](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/laws/types.ts#L20)
 
 Configuration for testing functor laws.
 
@@ -33,7 +33,7 @@ testFunctorLaws({
 
 > `optional` **equals**: (`a`, `b`) => `boolean`
 
-Defined in: [testing/laws/types.ts:44](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/laws/types.ts#L44)
+Defined in: [testing/laws/types.ts:44](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/laws/types.ts#L44)
 
 Custom equality function for comparing functor values.
 Defaults to deep equality check.
@@ -58,7 +58,7 @@ Defaults to deep equality check.
 
 > **map**: \<`B`\>(`fa`, `fn`) => `F`
 
-Defined in: [testing/laws/types.ts:38](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/laws/types.ts#L38)
+Defined in: [testing/laws/types.ts:38](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/laws/types.ts#L38)
 
 Map function to test.
 
@@ -94,7 +94,7 @@ Result.map, Option.map
 
 > **of**: (`value`) => `F`
 
-Defined in: [testing/laws/types.ts:31](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/laws/types.ts#L31)
+Defined in: [testing/laws/types.ts:31](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/laws/types.ts#L31)
 
 Constructor function to wrap values in the functor.
 
@@ -120,7 +120,7 @@ ok, some, Just
 
 > `optional` **testCases**: [`FunctorTestCase`](FunctorTestCase.md)\<`A`\>[]
 
-Defined in: [testing/laws/types.ts:50](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/laws/types.ts#L50)
+Defined in: [testing/laws/types.ts:50](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/laws/types.ts#L50)
 
 Specific test cases to run.
 If not provided, uses default test cases.
@@ -131,6 +131,6 @@ If not provided, uses default test cases.
 
 > **type**: `string`
 
-Defined in: [testing/laws/types.ts:24](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/laws/types.ts#L24)
+Defined in: [testing/laws/types.ts:24](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/laws/types.ts#L24)
 
 Name of the type being tested (for test descriptions).

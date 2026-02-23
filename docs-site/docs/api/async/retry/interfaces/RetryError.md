@@ -1,6 +1,6 @@
 # Interface: RetryError
 
-Defined in: [async/retry/index.ts:8](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/retry/index.ts#L8)
+Defined in: [async/retry/index.ts:8](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/retry/index.ts#L8)
 
 Error type returned when all retry attempts fail.
 
@@ -10,7 +10,7 @@ Error type returned when all retry attempts fail.
 
 > `readonly` **attempts**: `number`
 
-Defined in: [async/retry/index.ts:11](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/retry/index.ts#L11)
+Defined in: [async/retry/index.ts:11](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/retry/index.ts#L11)
 
 ***
 
@@ -18,7 +18,7 @@ Defined in: [async/retry/index.ts:11](https://github.com/maxios/receta/blob/2efc
 
 > `readonly` **lastError**: `unknown`
 
-Defined in: [async/retry/index.ts:10](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/retry/index.ts#L10)
+Defined in: [async/retry/index.ts:10](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/retry/index.ts#L10)
 
 ***
 
@@ -26,4 +26,4 @@ Defined in: [async/retry/index.ts:10](https://github.com/maxios/receta/blob/2efc
 
 > `readonly` **type**: `"max_attempts_exceeded"`
 
-Defined in: [async/retry/index.ts:9](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/retry/index.ts#L9)
+Defined in: [async/retry/index.ts:9](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/retry/index.ts#L9)

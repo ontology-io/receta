@@ -4,7 +4,7 @@
 
 > **filterAsync**\<`T`\>(`items`, `predicate`, `options?`): `Promise`\<[`Result`](../../../result/types/type-aliases/Result.md)\<`T`[], [`FilterAsyncError`](../interfaces/FilterAsyncError.md)\>\>
 
-Defined in: [async/filterAsync/index.ts:58](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/filterAsync/index.ts#L58)
+Defined in: [async/filterAsync/index.ts:58](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/filterAsync/index.ts#L58)
 
 Filters an array using an async predicate function.
 
@@ -83,7 +83,7 @@ const filtered = await R.pipe(
 
 > **filterAsync**\<`T`\>(`predicate`, `options?`): (`items`) => `Promise`\<[`Result`](../../../result/types/type-aliases/Result.md)\<`T`[], [`FilterAsyncError`](../interfaces/FilterAsyncError.md)\>\>
 
-Defined in: [async/filterAsync/index.ts:64](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/filterAsync/index.ts#L64)
+Defined in: [async/filterAsync/index.ts:64](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/filterAsync/index.ts#L64)
 
 Filters an array using an async predicate function.
 

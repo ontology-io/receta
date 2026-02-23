@@ -2,7 +2,7 @@
 
 > **memoizeAsync**\<`Args`, `R`\>(`fn`, `options?`): [`MemoizedAsyncFunction`](../../types/interfaces/MemoizedAsyncFunction.md)\<`Args`, `R`\>
 
-Defined in: [memo/memoizeAsync/index.ts:44](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/memoizeAsync/index.ts#L44)
+Defined in: [memo/memoizeAsync/index.ts:44](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/memoizeAsync/index.ts#L44)
 
 Creates a memoized async function with request deduplication.
 

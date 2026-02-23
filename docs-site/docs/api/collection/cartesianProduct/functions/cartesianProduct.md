@@ -4,7 +4,7 @@
 
 > **cartesianProduct**\<`A`, `B`\>(`arr1`, `arr2`): readonly \[`A`, `B`\][]
 
-Defined in: [collection/cartesianProduct/index.ts:64](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/cartesianProduct/index.ts#L64)
+Defined in: [collection/cartesianProduct/index.ts:64](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/cartesianProduct/index.ts#L64)
 
 Generates the Cartesian product of multiple arrays.
 
@@ -96,7 +96,7 @@ zip - for pairing elements at same index
 
 > **cartesianProduct**\<`A`, `B`, `C`\>(`arr1`, `arr2`, `arr3`): readonly \[`A`, `B`, `C`\][]
 
-Defined in: [collection/cartesianProduct/index.ts:69](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/cartesianProduct/index.ts#L69)
+Defined in: [collection/cartesianProduct/index.ts:69](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/cartesianProduct/index.ts#L69)
 
 Generates the Cartesian product of multiple arrays.
 
@@ -196,7 +196,7 @@ zip - for pairing elements at same index
 
 > **cartesianProduct**\<`A`, `B`, `C`, `D`\>(`arr1`, `arr2`, `arr3`, `arr4`): readonly \[`A`, `B`, `C`, `D`\][]
 
-Defined in: [collection/cartesianProduct/index.ts:75](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/cartesianProduct/index.ts#L75)
+Defined in: [collection/cartesianProduct/index.ts:75](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/cartesianProduct/index.ts#L75)
 
 Generates the Cartesian product of multiple arrays.
 
@@ -304,7 +304,7 @@ zip - for pairing elements at same index
 
 > **cartesianProduct**\<`A`, `B`, `C`, `D`, `E`\>(`arr1`, `arr2`, `arr3`, `arr4`, `arr5`): readonly \[`A`, `B`, `C`, `D`, `E`\][]
 
-Defined in: [collection/cartesianProduct/index.ts:82](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/cartesianProduct/index.ts#L82)
+Defined in: [collection/cartesianProduct/index.ts:82](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/cartesianProduct/index.ts#L82)
 
 Generates the Cartesian product of multiple arrays.
 
@@ -420,7 +420,7 @@ zip - for pairing elements at same index
 
 > **cartesianProduct**\<`T`\>(...`arrays`): readonly `T`[][]
 
-Defined in: [collection/cartesianProduct/index.ts:91](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/cartesianProduct/index.ts#L91)
+Defined in: [collection/cartesianProduct/index.ts:91](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/cartesianProduct/index.ts#L91)
 
 Generates the Cartesian product of multiple arrays.
 

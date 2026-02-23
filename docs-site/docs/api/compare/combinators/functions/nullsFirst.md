@@ -2,7 +2,7 @@
 
 > **nullsFirst**\<`T`\>(`comparator`): [`Comparator`](../../types/type-aliases/Comparator.md)\<[`Nullable`](../../types/type-aliases/Nullable.md)\<`T`\>\>
 
-Defined in: [compare/combinators/index.ts:120](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/compare/combinators/index.ts#L120)
+Defined in: [compare/combinators/index.ts:120](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/compare/combinators/index.ts#L120)
 
 Wraps a comparator to place null/undefined values first.
 

@@ -1,6 +1,6 @@
 # Interface: MemoizedAsyncFunction()\<Args, R\>
 
-Defined in: [memo/types.ts:55](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/types.ts#L55)
+Defined in: [memo/types.ts:55](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/types.ts#L55)
 
 A memoized async function with cache access and deduplication.
 
@@ -16,7 +16,7 @@ A memoized async function with cache access and deduplication.
 
 > **MemoizedAsyncFunction**(...`args`): `Promise`\<`R`\>
 
-Defined in: [memo/types.ts:56](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/types.ts#L56)
+Defined in: [memo/types.ts:56](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/types.ts#L56)
 
 A memoized async function with cache access and deduplication.
 
@@ -36,7 +36,7 @@ A memoized async function with cache access and deduplication.
 
 > **cache**: [`Cache`](Cache.md)\<`unknown`, `Promise`\<`R`\>\>
 
-Defined in: [memo/types.ts:57](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/types.ts#L57)
+Defined in: [memo/types.ts:57](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/types.ts#L57)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [memo/types.ts:57](https://github.com/maxios/receta/blob/2efcc1ca4c2
 
 > **clear**: () => `void`
 
-Defined in: [memo/types.ts:58](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/types.ts#L58)
+Defined in: [memo/types.ts:58](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/types.ts#L58)
 
 #### Returns
 

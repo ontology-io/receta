@@ -2,7 +2,7 @@
 
 > **memoizeBy**\<`Args`, `R`, `K`\>(`fn`, `keyFn`, `options?`): [`MemoizedFunction`](../../types/interfaces/MemoizedFunction.md)\<`Args`, `R`\>
 
-Defined in: [memo/memoizeBy/index.ts:42](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/memoizeBy/index.ts#L42)
+Defined in: [memo/memoizeBy/index.ts:42](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/memoizeBy/index.ts#L42)
 
 Creates a memoized function with custom key extraction.
 

@@ -2,7 +2,7 @@
 
 > **PredicateSchema**\<`T`\> = `{ [K in keyof T]?: Predicate<T[K]> }`
 
-Defined in: [predicate/types.ts:71](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/predicate/types.ts#L71)
+Defined in: [predicate/types.ts:71](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/predicate/types.ts#L71)
 
 A schema definition for the `where` function.
 

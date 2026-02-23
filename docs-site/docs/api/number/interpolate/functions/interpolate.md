@@ -4,7 +4,7 @@
 
 > **interpolate**(`from`, `to`, `progress`): `number`
 
-Defined in: [number/interpolate/index.ts:39](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/interpolate/index.ts#L39)
+Defined in: [number/interpolate/index.ts:39](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/interpolate/index.ts#L39)
 
 Linearly interpolates between two numbers.
 
@@ -67,7 +67,7 @@ const animateValue = (start: number, end: number, duration: number) => {
 
 > **interpolate**(`from`, `to`): (`progress`) => `number`
 
-Defined in: [number/interpolate/index.ts:44](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/interpolate/index.ts#L44)
+Defined in: [number/interpolate/index.ts:44](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/interpolate/index.ts#L44)
 
 Linearly interpolates between two numbers.
 

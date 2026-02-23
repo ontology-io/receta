@@ -1,6 +1,6 @@
 # Interface: ThrottleOptions
 
-Defined in: [async/types.ts:135](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L135)
+Defined in: [async/types.ts:135](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L135)
 
 Options for throttle operations.
 
@@ -10,7 +10,7 @@ Options for throttle operations.
 
 > `readonly` **delay**: `number`
 
-Defined in: [async/types.ts:139](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L139)
+Defined in: [async/types.ts:139](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L139)
 
 Delay in milliseconds between function invocations.
 
@@ -20,7 +20,7 @@ Delay in milliseconds between function invocations.
 
 > `readonly` `optional` **leading**: `boolean`
 
-Defined in: [async/types.ts:145](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L145)
+Defined in: [async/types.ts:145](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L145)
 
 Whether to invoke the function on the leading edge.
 
@@ -36,7 +36,7 @@ true
 
 > `readonly` `optional` **trailing**: `boolean`
 
-Defined in: [async/types.ts:151](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L151)
+Defined in: [async/types.ts:151](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L151)
 
 Whether to invoke the function on the trailing edge.
 

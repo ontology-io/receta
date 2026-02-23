@@ -1,6 +1,6 @@
 # Interface: HighlightOptions
 
-Defined in: [string/highlight/index.ts:8](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/highlight/index.ts#L8)
+Defined in: [string/highlight/index.ts:8](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/highlight/index.ts#L8)
 
 Options for highlight function.
 
@@ -10,7 +10,7 @@ Options for highlight function.
 
 > `readonly` `optional` **caseInsensitive**: `boolean`
 
-Defined in: [string/highlight/index.ts:28](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/highlight/index.ts#L28)
+Defined in: [string/highlight/index.ts:28](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/highlight/index.ts#L28)
 
 If true, performs case-insensitive matching.
 
@@ -26,7 +26,7 @@ true
 
 > `readonly` `optional` **className**: `string`
 
-Defined in: [string/highlight/index.ts:21](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/highlight/index.ts#L21)
+Defined in: [string/highlight/index.ts:21](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/highlight/index.ts#L21)
 
 CSS class name to add to the tag.
 
@@ -42,7 +42,7 @@ undefined
 
 > `readonly` `optional` **escapeHtml**: `boolean`
 
-Defined in: [string/highlight/index.ts:36](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/highlight/index.ts#L36)
+Defined in: [string/highlight/index.ts:36](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/highlight/index.ts#L36)
 
 If true, escapes HTML in the input text before highlighting.
 This prevents XSS when highlighting user-generated content.
@@ -59,7 +59,7 @@ true
 
 > `readonly` `optional` **tag**: `string`
 
-Defined in: [string/highlight/index.ts:14](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/highlight/index.ts#L14)
+Defined in: [string/highlight/index.ts:14](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/highlight/index.ts#L14)
 
 HTML tag to wrap matched text.
 

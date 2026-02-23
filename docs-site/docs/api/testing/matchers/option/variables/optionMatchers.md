@@ -2,7 +2,7 @@
 
 > `const` **optionMatchers**: `object`
 
-Defined in: [testing/matchers/option.ts:206](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/matchers/option.ts#L206)
+Defined in: [testing/matchers/option.ts:206](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/matchers/option.ts#L206)
 
 All Option matchers as a single object for easy extension.
 

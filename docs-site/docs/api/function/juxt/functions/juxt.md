@@ -4,7 +4,7 @@
 
 > **juxt**\<`Fns`\>(`fns`): (...`args`) => [`ReturnTypes`](../../types/type-aliases/ReturnTypes.md)\<`Fns`\>
 
-Defined in: [function/juxt/index.ts:67](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/juxt/index.ts#L67)
+Defined in: [function/juxt/index.ts:67](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/juxt/index.ts#L67)
 
 Creates a function that applies multiple functions to the same input and returns all results as an array.
 
@@ -96,7 +96,7 @@ pipe(
 
 > **juxt**\<`Fns`\>(`fns`, ...`args`): [`ReturnTypes`](../../types/type-aliases/ReturnTypes.md)\<`Fns`\>
 
-Defined in: [function/juxt/index.ts:70](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/juxt/index.ts#L70)
+Defined in: [function/juxt/index.ts:70](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/juxt/index.ts#L70)
 
 Creates a function that applies multiple functions to the same input and returns all results as an array.
 

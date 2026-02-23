@@ -2,7 +2,7 @@
 
 > **errResult**\<`E`\>(`errorArb`): `Arbitrary`\<[`Result`](../../../../result/types/type-aliases/Result.md)\<`never`, `E`\>\>
 
-Defined in: [testing/arbitraries/result.ts:112](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/arbitraries/result.ts#L112)
+Defined in: [testing/arbitraries/result.ts:112](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/arbitraries/result.ts#L112)
 
 Generate only Err results.
 

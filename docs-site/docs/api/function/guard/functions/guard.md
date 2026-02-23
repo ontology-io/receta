@@ -4,7 +4,7 @@
 
 > **guard**\<`T`, `E`\>(`pairs`): (`value`) => [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, `E`\>
 
-Defined in: [function/guard/index.ts:92](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/guard/index.ts#L92)
+Defined in: [function/guard/index.ts:92](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/guard/index.ts#L92)
 
 Validates a value through a series of guard clauses (early return pattern).
 
@@ -121,7 +121,7 @@ const validatePassword = guard<string, ValidationError>([
 
 > **guard**\<`T`, `E`\>(`pairs`, `value`): [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, `E`\>
 
-Defined in: [function/guard/index.ts:93](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/guard/index.ts#L93)
+Defined in: [function/guard/index.ts:93](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/guard/index.ts#L93)
 
 Validates a value through a series of guard clauses (early return pattern).
 

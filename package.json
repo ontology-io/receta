@@ -113,6 +113,8 @@
     "generate-llm": "bun run scripts/generate-llm-txt.ts",
     "docs:generate": "bun run scripts/generate-docs.ts",
     "docs:watch": "bun run scripts/generate-docs.ts --watch",
+    "docs:build": "cd docs-site && bun install && bun run build",
+    "docs:deploy": "bash scripts/deploy-docs.sh",
     "prepublishOnly": "bun run clean && bun run build && bun run test && bun run typecheck",
     "ci": "act --container-architecture linux/amd64 -P ubuntu-latest=catthehacker/ubuntu:act-latest",
     "ci:test": "act -j test --container-architecture linux/amd64 -P ubuntu-latest=catthehacker/ubuntu:act-latest",

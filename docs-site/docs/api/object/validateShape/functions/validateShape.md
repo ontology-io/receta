@@ -4,7 +4,7 @@
 
 > **validateShape**\<`T`\>(`obj`, `schema`): [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, [`ObjectError`](../../types/interfaces/ObjectError.md)\>
 
-Defined in: [object/validateShape/index.ts:74](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/validateShape/index.ts#L74)
+Defined in: [object/validateShape/index.ts:74](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/validateShape/index.ts#L74)
 
 Validates an object against a schema, returning Result.
 
@@ -84,7 +84,7 @@ Validation module - for more complex validation with error accumulation
 
 > **validateShape**\<`T`\>(`schema`): (`obj`) => [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, [`ObjectError`](../../types/interfaces/ObjectError.md)\>
 
-Defined in: [object/validateShape/index.ts:78](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/validateShape/index.ts#L78)
+Defined in: [object/validateShape/index.ts:78](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/validateShape/index.ts#L78)
 
 Validates an object against a schema, returning Result.
 

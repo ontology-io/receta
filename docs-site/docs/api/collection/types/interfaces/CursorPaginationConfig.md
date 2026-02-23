@@ -1,6 +1,6 @@
 # Interface: CursorPaginationConfig\<TCursor\>
 
-Defined in: [collection/types.ts:66](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L66)
+Defined in: [collection/types.ts:66](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L66)
 
 Cursor-based pagination configuration.
 
@@ -25,7 +25,7 @@ const config: CursorPaginationConfig<string> = {
 
 > `readonly` `optional` **cursor**: `TCursor`
 
-Defined in: [collection/types.ts:67](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L67)
+Defined in: [collection/types.ts:67](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L67)
 
 ***
 
@@ -33,4 +33,4 @@ Defined in: [collection/types.ts:67](https://github.com/maxios/receta/blob/2efcc
 
 > `readonly` **limit**: `number`
 
-Defined in: [collection/types.ts:68](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L68)
+Defined in: [collection/types.ts:68](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L68)

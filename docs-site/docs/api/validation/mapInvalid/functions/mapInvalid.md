@@ -4,7 +4,7 @@
 
 > **mapInvalid**\<`T`, `E`, `F`\>(`validation`, `fn`): [`Validation`](../../types/type-aliases/Validation.md)\<`T`, `F`\>
 
-Defined in: [validation/mapInvalid/index.ts:60](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/mapInvalid/index.ts#L60)
+Defined in: [validation/mapInvalid/index.ts:60](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/mapInvalid/index.ts#L60)
 
 Maps over the Invalid errors of a Validation.
 
@@ -90,7 +90,7 @@ pipe(
 
 > **mapInvalid**\<`E`, `F`\>(`fn`): \<`T`\>(`validation`) => [`Validation`](../../types/type-aliases/Validation.md)\<`T`, `F`\>
 
-Defined in: [validation/mapInvalid/index.ts:64](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/mapInvalid/index.ts#L64)
+Defined in: [validation/mapInvalid/index.ts:64](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/mapInvalid/index.ts#L64)
 
 Maps over the Invalid errors of a Validation.
 

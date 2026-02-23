@@ -4,7 +4,7 @@
 
 > **unwrapOrElse**\<`T`, `E`\>(`result`, `fn`): `T`
 
-Defined in: [result/unwrap/index.ts:94](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/unwrap/index.ts#L94)
+Defined in: [result/unwrap/index.ts:94](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/unwrap/index.ts#L94)
 
 Extracts the value from an Ok Result or computes a fallback from the error.
 
@@ -69,7 +69,7 @@ unwrapOr - for static default values
 
 > **unwrapOrElse**\<`T`, `E`\>(`fn`): (`result`) => `T`
 
-Defined in: [result/unwrap/index.ts:95](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/unwrap/index.ts#L95)
+Defined in: [result/unwrap/index.ts:95](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/unwrap/index.ts#L95)
 
 Extracts the value from an Ok Result or computes a fallback from the error.
 

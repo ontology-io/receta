@@ -2,7 +2,7 @@
 
 > **toResults**\<`T`, `E`\>(`results`): [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, `E`\>[]
 
-Defined in: [async/promiseAllSettled/index.ts:220](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/promiseAllSettled/index.ts#L220)
+Defined in: [async/promiseAllSettled/index.ts:220](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/promiseAllSettled/index.ts#L220)
 
 Converts settled results to Result array for composability.
 

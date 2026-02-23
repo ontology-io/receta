@@ -1,6 +1,6 @@
 # Interface: CompactOptions
 
-Defined in: [number/types.ts:90](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/types.ts#L90)
+Defined in: [number/types.ts:90](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/types.ts#L90)
 
 Options for compact number formatting (1K, 1M, etc.).
 
@@ -10,7 +10,7 @@ Options for compact number formatting (1K, 1M, etc.).
 
 > `readonly` `optional` **digits**: `number`
 
-Defined in: [number/types.ts:101](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/types.ts#L101)
+Defined in: [number/types.ts:101](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/types.ts#L101)
 
 Number of significant digits.
 
@@ -26,7 +26,7 @@ Number of significant digits.
 
 > `readonly` `optional` **locale**: `string`
 
-Defined in: [number/types.ts:95](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/types.ts#L95)
+Defined in: [number/types.ts:95](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/types.ts#L95)
 
 Locale to use for formatting.
 
@@ -42,7 +42,7 @@ Locale to use for formatting.
 
 > `readonly` `optional` **notation**: `"short"` \| `"long"`
 
-Defined in: [number/types.ts:107](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/types.ts#L107)
+Defined in: [number/types.ts:107](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/types.ts#L107)
 
 Notation style.
 

@@ -2,7 +2,7 @@
 
 > **testMonadLaws**\<`M`, `A`\>(`config`): `void`
 
-Defined in: [testing/laws/monad.ts:66](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/laws/monad.ts#L66)
+Defined in: [testing/laws/monad.ts:66](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/laws/monad.ts#L66)
 
 Test that a monad implementation satisfies monad laws.
 

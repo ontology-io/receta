@@ -2,7 +2,7 @@
 
 > **satisfies**\<`T`\>(`predicate`): [`Predicate`](../../types/type-aliases/Predicate.md)\<`T`\>
 
-Defined in: [predicate/builders/index.ts:273](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/predicate/builders/index.ts#L273)
+Defined in: [predicate/builders/index.ts:273](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/predicate/builders/index.ts#L273)
 
 Creates a predicate that tests if a value satisfies a custom condition.
 

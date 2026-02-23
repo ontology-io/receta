@@ -4,7 +4,7 @@
 
 > **updatePath**\<`T`, `V`\>(`path`, `fn`, `obj`): `T`
 
-Defined in: [object/updatePath/index.ts:51](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/updatePath/index.ts#L51)
+Defined in: [object/updatePath/index.ts:51](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/updatePath/index.ts#L51)
 
 Immutably updates a value at a given path using a function.
 
@@ -80,7 +80,7 @@ pipe(
 
 > **updatePath**\<`V`\>(`path`, `fn`): \<`T`\>(`obj`) => `T`
 
-Defined in: [object/updatePath/index.ts:56](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/updatePath/index.ts#L56)
+Defined in: [object/updatePath/index.ts:56](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/updatePath/index.ts#L56)
 
 Immutably updates a value at a given path using a function.
 

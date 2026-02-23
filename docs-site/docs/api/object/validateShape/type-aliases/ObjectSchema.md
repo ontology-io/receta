@@ -2,7 +2,7 @@
 
 > **ObjectSchema**\<`T`\> = \{ readonly \[K in keyof T\]: Validator\<T\[K\]\> \| ObjectSchema\<any\> \}
 
-Defined in: [object/validateShape/index.ts:20](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/validateShape/index.ts#L20)
+Defined in: [object/validateShape/index.ts:20](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/validateShape/index.ts#L20)
 
 Schema for object validation.
 

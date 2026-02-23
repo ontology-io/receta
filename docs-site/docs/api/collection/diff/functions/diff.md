@@ -4,7 +4,7 @@
 
 > **diff**\<`T`, `TId`\>(`oldItems`, `newItems`, `getId`, `isEqual?`): [`DiffResult`](../../types/interfaces/DiffResult.md)\<`T`\>
 
-Defined in: [collection/diff/index.ts:45](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/diff/index.ts#L45)
+Defined in: [collection/diff/index.ts:45](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/diff/index.ts#L45)
 
 Compares two collections and returns added, updated, removed, and unchanged items.
 
@@ -89,7 +89,7 @@ pipe(
 
 > **diff**\<`T`, `TId`\>(`newItems`, `getId`, `isEqual?`): (`oldItems`) => [`DiffResult`](../../types/interfaces/DiffResult.md)\<`T`\>
 
-Defined in: [collection/diff/index.ts:51](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/diff/index.ts#L51)
+Defined in: [collection/diff/index.ts:51](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/diff/index.ts#L51)
 
 Compares two collections and returns added, updated, removed, and unchanged items.
 

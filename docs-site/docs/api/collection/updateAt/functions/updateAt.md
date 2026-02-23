@@ -4,7 +4,7 @@
 
 > **updateAt**\<`T`\>(`items`, `index`, `value`): readonly `T`[]
 
-Defined in: [collection/updateAt/index.ts:69](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/updateAt/index.ts#L69)
+Defined in: [collection/updateAt/index.ts:69](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/updateAt/index.ts#L69)
 
 Updates (replaces) an element at a specific index (immutably).
 
@@ -105,7 +105,7 @@ pipe(
 
 > **updateAt**\<`T`\>(`index`, `value`): (`items`) => readonly `T`[]
 
-Defined in: [collection/updateAt/index.ts:74](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/updateAt/index.ts#L74)
+Defined in: [collection/updateAt/index.ts:74](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/updateAt/index.ts#L74)
 
 Updates (replaces) an element at a specific index (immutably).
 

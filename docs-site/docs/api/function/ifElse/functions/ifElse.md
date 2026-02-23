@@ -4,7 +4,7 @@
 
 > **ifElse**\<`T`, `U`\>(`predicate`, `onTrue`, `onFalse`): (`value`) => `U`
 
-Defined in: [function/ifElse/index.ts:48](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/ifElse/index.ts#L48)
+Defined in: [function/ifElse/index.ts:48](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/ifElse/index.ts#L48)
 
 Creates a function that conditionally applies one of two functions based on a predicate.
 
@@ -90,7 +90,7 @@ pipe(
 
 > **ifElse**\<`T`, `U`\>(`predicate`, `onTrue`, `onFalse`, `value`): `U`
 
-Defined in: [function/ifElse/index.ts:53](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/ifElse/index.ts#L53)
+Defined in: [function/ifElse/index.ts:53](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/ifElse/index.ts#L53)
 
 Creates a function that conditionally applies one of two functions based on a predicate.
 

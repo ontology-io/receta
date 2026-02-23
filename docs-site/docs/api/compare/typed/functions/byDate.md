@@ -2,7 +2,7 @@
 
 > **byDate**\<`T`\>(`fn`): [`Comparator`](../../types/type-aliases/Comparator.md)\<`T`\>
 
-Defined in: [compare/typed/index.ts:38](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/compare/typed/index.ts#L38)
+Defined in: [compare/typed/index.ts:38](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/compare/typed/index.ts#L38)
 
 Creates a comparator for date values.
 

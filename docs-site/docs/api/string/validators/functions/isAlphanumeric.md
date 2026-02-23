@@ -2,7 +2,7 @@
 
 > **isAlphanumeric**(`str`): `boolean`
 
-Defined in: [string/validators/index.ts:149](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/validators/index.ts#L149)
+Defined in: [string/validators/index.ts:149](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/validators/index.ts#L149)
 
 Validates if a string contains only alphanumeric characters.
 

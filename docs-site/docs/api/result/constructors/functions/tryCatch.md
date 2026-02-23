@@ -4,7 +4,7 @@
 
 > **tryCatch**\<`T`\>(`fn`): [`Result`](../../types/type-aliases/Result.md)\<`T`, `unknown`\>
 
-Defined in: [result/constructors/index.ts:56](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/constructors/index.ts#L56)
+Defined in: [result/constructors/index.ts:56](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/constructors/index.ts#L56)
 
 Wraps a potentially throwing function in a Result.
 
@@ -48,7 +48,7 @@ parseJSON('invalid json')
 
 > **tryCatch**\<`T`, `E`\>(`fn`, `mapError`): [`Result`](../../types/type-aliases/Result.md)\<`T`, `E`\>
 
-Defined in: [result/constructors/index.ts:78](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/constructors/index.ts#L78)
+Defined in: [result/constructors/index.ts:78](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/constructors/index.ts#L78)
 
 Wraps a potentially throwing function in a Result with custom error mapping.
 

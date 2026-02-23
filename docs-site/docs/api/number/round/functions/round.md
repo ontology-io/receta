@@ -4,7 +4,7 @@
 
 > **round**(`value`, `decimals?`): `number`
 
-Defined in: [number/round/index.ts:33](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/round/index.ts#L33)
+Defined in: [number/round/index.ts:33](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/round/index.ts#L33)
 
 Rounds a number to a specified number of decimal places.
 
@@ -58,7 +58,7 @@ toPrecision - for significant digits
 
 > **round**(`decimals?`): (`value`) => `number`
 
-Defined in: [number/round/index.ts:34](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/round/index.ts#L34)
+Defined in: [number/round/index.ts:34](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/round/index.ts#L34)
 
 Rounds a number to a specified number of decimal places.
 

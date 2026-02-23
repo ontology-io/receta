@@ -4,7 +4,7 @@
 
 > **toBytes**(`value`, `options?`): `string`
 
-Defined in: [number/toBytes/index.ts:35](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/toBytes/index.ts#L35)
+Defined in: [number/toBytes/index.ts:35](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/toBytes/index.ts#L35)
 
 Formats a number as a byte size string (KB, MB, GB, etc.).
 
@@ -59,7 +59,7 @@ fromBytes - for parsing byte strings
 
 > **toBytes**(`options?`): (`value`) => `string`
 
-Defined in: [number/toBytes/index.ts:36](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/toBytes/index.ts#L36)
+Defined in: [number/toBytes/index.ts:36](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/toBytes/index.ts#L36)
 
 Formats a number as a byte size string (KB, MB, GB, etc.).
 

@@ -1,6 +1,6 @@
 # Interface: PaginatedResult\<T\>
 
-Defined in: [collection/types.ts:88](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L88)
+Defined in: [collection/types.ts:88](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L88)
 
 Result of a pagination operation.
 
@@ -31,7 +31,7 @@ The type of items in the page
 
 > `readonly` **hasNext**: `boolean`
 
-Defined in: [collection/types.ts:93](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L93)
+Defined in: [collection/types.ts:93](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L93)
 
 ***
 
@@ -39,7 +39,7 @@ Defined in: [collection/types.ts:93](https://github.com/maxios/receta/blob/2efcc
 
 > `readonly` **hasPrevious**: `boolean`
 
-Defined in: [collection/types.ts:94](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L94)
+Defined in: [collection/types.ts:94](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L94)
 
 ***
 
@@ -47,7 +47,7 @@ Defined in: [collection/types.ts:94](https://github.com/maxios/receta/blob/2efcc
 
 > `readonly` **items**: readonly `T`[]
 
-Defined in: [collection/types.ts:89](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L89)
+Defined in: [collection/types.ts:89](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L89)
 
 ***
 
@@ -55,7 +55,7 @@ Defined in: [collection/types.ts:89](https://github.com/maxios/receta/blob/2efcc
 
 > `readonly` **page**: `number`
 
-Defined in: [collection/types.ts:90](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L90)
+Defined in: [collection/types.ts:90](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L90)
 
 ***
 
@@ -63,7 +63,7 @@ Defined in: [collection/types.ts:90](https://github.com/maxios/receta/blob/2efcc
 
 > `readonly` **pageSize**: `number`
 
-Defined in: [collection/types.ts:91](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L91)
+Defined in: [collection/types.ts:91](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L91)
 
 ***
 
@@ -71,4 +71,4 @@ Defined in: [collection/types.ts:91](https://github.com/maxios/receta/blob/2efcc
 
 > `readonly` **total**: `number`
 
-Defined in: [collection/types.ts:92](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L92)
+Defined in: [collection/types.ts:92](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L92)

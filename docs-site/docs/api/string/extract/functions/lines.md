@@ -2,7 +2,7 @@
 
 > **lines**(`str`): `string`[]
 
-Defined in: [string/extract/index.ts:90](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/extract/index.ts#L90)
+Defined in: [string/extract/index.ts:90](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/extract/index.ts#L90)
 
 Splits a string into an array of lines.
 

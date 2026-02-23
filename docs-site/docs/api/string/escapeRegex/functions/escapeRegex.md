@@ -2,7 +2,7 @@
 
 > **escapeRegex**(`str`): `string`
 
-Defined in: [string/escapeRegex/index.ts:38](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/escapeRegex/index.ts#L38)
+Defined in: [string/escapeRegex/index.ts:38](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/escapeRegex/index.ts#L38)
 
 Escapes special regex characters in a string to make it safe for use in RegExp.
 

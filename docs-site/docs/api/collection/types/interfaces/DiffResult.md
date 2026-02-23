@@ -1,6 +1,6 @@
 # Interface: DiffResult\<T\>
 
-Defined in: [collection/types.ts:22](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L22)
+Defined in: [collection/types.ts:22](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L22)
 
 Result of a diff operation showing added, updated, and removed items.
 
@@ -29,7 +29,7 @@ The type of items in the collection
 
 > `readonly` **added**: readonly `T`[]
 
-Defined in: [collection/types.ts:23](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L23)
+Defined in: [collection/types.ts:23](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L23)
 
 ***
 
@@ -37,7 +37,7 @@ Defined in: [collection/types.ts:23](https://github.com/maxios/receta/blob/2efcc
 
 > `readonly` **removed**: readonly `T`[]
 
-Defined in: [collection/types.ts:25](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L25)
+Defined in: [collection/types.ts:25](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L25)
 
 ***
 
@@ -45,7 +45,7 @@ Defined in: [collection/types.ts:25](https://github.com/maxios/receta/blob/2efcc
 
 > `readonly` **unchanged**: readonly `T`[]
 
-Defined in: [collection/types.ts:26](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L26)
+Defined in: [collection/types.ts:26](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L26)
 
 ***
 
@@ -53,4 +53,4 @@ Defined in: [collection/types.ts:26](https://github.com/maxios/receta/blob/2efcc
 
 > `readonly` **updated**: readonly [`UpdatedItem`](UpdatedItem.md)\<`T`\>[]
 
-Defined in: [collection/types.ts:24](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L24)
+Defined in: [collection/types.ts:24](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L24)

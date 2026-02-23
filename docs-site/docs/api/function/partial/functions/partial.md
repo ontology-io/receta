@@ -4,7 +4,7 @@
 
 > **partial**\<`Args`, `R`\>(`fn`): (...`args`) => `R`
 
-Defined in: [function/partial/index.ts:40](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/partial/index.ts#L40)
+Defined in: [function/partial/index.ts:40](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/partial/index.ts#L40)
 
 Creates a partially applied function by pre-filling arguments from the left.
 
@@ -77,7 +77,7 @@ logUserError('Invalid input')  // => '[ERROR] UserModule: Invalid input'
 
 > **partial**\<`Args`, `R`\>(`fn`, ...`prefilledArgs`): (...`args`) => `R`
 
-Defined in: [function/partial/index.ts:43](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/partial/index.ts#L43)
+Defined in: [function/partial/index.ts:43](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/partial/index.ts#L43)
 
 Creates a partially applied function by pre-filling arguments from the left.
 

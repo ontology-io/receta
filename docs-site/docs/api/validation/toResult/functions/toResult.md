@@ -4,7 +4,7 @@
 
 > **toResult**\<`T`, `E`\>(`validation`): [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, readonly `E`[]\>
 
-Defined in: [validation/toResult/index.ts:62](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/toResult/index.ts#L62)
+Defined in: [validation/toResult/index.ts:62](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/toResult/index.ts#L62)
 
 Converts a Validation to a Result.
 
@@ -82,7 +82,7 @@ fromResult - for converting Result to Validation
 
 > **toResult**\<`T`, `E`\>(): (`validation`) => [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, readonly `E`[]\>
 
-Defined in: [validation/toResult/index.ts:63](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/toResult/index.ts#L63)
+Defined in: [validation/toResult/index.ts:63](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/toResult/index.ts#L63)
 
 Converts a Validation to a Result.
 

@@ -4,7 +4,7 @@
 
 > **mapValues**\<`T`, `U`\>(`obj`, `fn`): `Record`\<keyof `T`, `U`\>
 
-Defined in: [object/mapValues/index.ts:45](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/mapValues/index.ts#L45)
+Defined in: [object/mapValues/index.ts:45](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/mapValues/index.ts#L45)
 
 Transforms all values in an object using a mapping function.
 
@@ -73,7 +73,7 @@ pipe(
 
 > **mapValues**\<`U`\>(`fn`): \<`T`\>(`obj`) => `Record`\<keyof `T`, `U`\>
 
-Defined in: [object/mapValues/index.ts:49](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/mapValues/index.ts#L49)
+Defined in: [object/mapValues/index.ts:49](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/mapValues/index.ts#L49)
 
 Transforms all values in an object using a mapping function.
 

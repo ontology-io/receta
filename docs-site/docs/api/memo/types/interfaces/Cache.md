@@ -1,6 +1,6 @@
 # Interface: Cache\<K, V\>
 
-Defined in: [memo/types.ts:7](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/types.ts#L7)
+Defined in: [memo/types.ts:7](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/types.ts#L7)
 
 Cache interface that memoization functions can use.
 Allows custom cache implementations (Map, LRU, TTL, WeakMap, etc.).
@@ -21,7 +21,7 @@ Allows custom cache implementations (Map, LRU, TTL, WeakMap, etc.).
 
 > **clear**(): `void`
 
-Defined in: [memo/types.ts:12](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/types.ts#L12)
+Defined in: [memo/types.ts:12](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/types.ts#L12)
 
 #### Returns
 
@@ -33,7 +33,7 @@ Defined in: [memo/types.ts:12](https://github.com/maxios/receta/blob/2efcc1ca4c2
 
 > **delete**(`key`): `boolean`
 
-Defined in: [memo/types.ts:11](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/types.ts#L11)
+Defined in: [memo/types.ts:11](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/types.ts#L11)
 
 #### Parameters
 
@@ -51,7 +51,7 @@ Defined in: [memo/types.ts:11](https://github.com/maxios/receta/blob/2efcc1ca4c2
 
 > **get**(`key`): [`Option`](../../../option/types/type-aliases/Option.md)\<`V`\>
 
-Defined in: [memo/types.ts:8](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/types.ts#L8)
+Defined in: [memo/types.ts:8](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/types.ts#L8)
 
 #### Parameters
 
@@ -69,7 +69,7 @@ Defined in: [memo/types.ts:8](https://github.com/maxios/receta/blob/2efcc1ca4c25
 
 > **has**(`key`): `boolean`
 
-Defined in: [memo/types.ts:10](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/types.ts#L10)
+Defined in: [memo/types.ts:10](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/types.ts#L10)
 
 #### Parameters
 
@@ -87,7 +87,7 @@ Defined in: [memo/types.ts:10](https://github.com/maxios/receta/blob/2efcc1ca4c2
 
 > **set**(`key`, `value`): `void`
 
-Defined in: [memo/types.ts:9](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/types.ts#L9)
+Defined in: [memo/types.ts:9](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/types.ts#L9)
 
 #### Parameters
 

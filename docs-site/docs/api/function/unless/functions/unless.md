@@ -4,7 +4,7 @@
 
 > **unless**\<`T`\>(`predicate`, `fn`): (`value`) => `T`
 
-Defined in: [function/unless/index.ts:50](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/unless/index.ts#L50)
+Defined in: [function/unless/index.ts:50](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/unless/index.ts#L50)
 
 Creates a function that conditionally applies a transformation (inverse of when).
 
@@ -86,7 +86,7 @@ when - for the normal condition
 
 > **unless**\<`T`\>(`predicate`, `fn`, `value`): `T`
 
-Defined in: [function/unless/index.ts:51](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/unless/index.ts#L51)
+Defined in: [function/unless/index.ts:51](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/unless/index.ts#L51)
 
 Creates a function that conditionally applies a transformation (inverse of when).
 

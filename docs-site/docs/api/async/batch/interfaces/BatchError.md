@@ -1,6 +1,6 @@
 # Interface: BatchError
 
-Defined in: [async/batch/index.ts:10](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/batch/index.ts#L10)
+Defined in: [async/batch/index.ts:10](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/batch/index.ts#L10)
 
 Error type for batch processing failures.
 
@@ -10,7 +10,7 @@ Error type for batch processing failures.
 
 > `readonly` **batchIndex**: `number`
 
-Defined in: [async/batch/index.ts:12](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/batch/index.ts#L12)
+Defined in: [async/batch/index.ts:12](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/batch/index.ts#L12)
 
 ***
 
@@ -18,7 +18,7 @@ Defined in: [async/batch/index.ts:12](https://github.com/maxios/receta/blob/2efc
 
 > `readonly` **itemsInBatch**: `number`
 
-Defined in: [async/batch/index.ts:13](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/batch/index.ts#L13)
+Defined in: [async/batch/index.ts:13](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/batch/index.ts#L13)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [async/batch/index.ts:13](https://github.com/maxios/receta/blob/2efc
 
 > `readonly` **type**: `"batch_error"`
 
-Defined in: [async/batch/index.ts:11](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/batch/index.ts#L11)
+Defined in: [async/batch/index.ts:11](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/batch/index.ts#L11)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [async/batch/index.ts:11](https://github.com/maxios/receta/blob/2efc
 
 > `readonly` **underlyingError**: `unknown`
 
-Defined in: [async/batch/index.ts:14](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/batch/index.ts#L14)
+Defined in: [async/batch/index.ts:14](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/batch/index.ts#L14)

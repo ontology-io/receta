@@ -2,7 +2,7 @@
 
 > **invalidateMany**\<`K`\>(`memoized`, `keys`): `void`
 
-Defined in: [memo/invalidation/index.ts:32](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/memo/invalidation/index.ts#L32)
+Defined in: [memo/invalidation/index.ts:32](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/memo/invalidation/index.ts#L32)
 
 Invalidates multiple cache entries by their keys.
 

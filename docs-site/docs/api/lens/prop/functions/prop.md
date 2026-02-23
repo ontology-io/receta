@@ -2,7 +2,7 @@
 
 > **prop**\<`S`, `K`\>(`key`): [`Lens`](../../types/interfaces/Lens.md)\<`S`, `S`\[`K`\]\>
 
-Defined in: [lens/prop/index.ts:35](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/lens/prop/index.ts#L35)
+Defined in: [lens/prop/index.ts:35](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/lens/prop/index.ts#L35)
 
 Creates a Lens focusing on a specific property of an object.
 

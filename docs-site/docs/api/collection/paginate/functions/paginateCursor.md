@@ -4,7 +4,7 @@
 
 > **paginateCursor**\<`T`, `TCursor`\>(`items`, `getCursor`, `config`): [`CursorPaginatedResult`](../../types/interfaces/CursorPaginatedResult.md)\<`T`, `TCursor`\>
 
-Defined in: [collection/paginate/index.ts:112](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/paginate/index.ts#L112)
+Defined in: [collection/paginate/index.ts:112](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/paginate/index.ts#L112)
 
 Paginates an array using cursor-based pagination.
 
@@ -81,7 +81,7 @@ paginate - for offset-based pagination
 
 > **paginateCursor**\<`T`, `TCursor`\>(`getCursor`, `config`): (`items`) => [`CursorPaginatedResult`](../../types/interfaces/CursorPaginatedResult.md)\<`T`, `TCursor`\>
 
-Defined in: [collection/paginate/index.ts:117](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/paginate/index.ts#L117)
+Defined in: [collection/paginate/index.ts:117](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/paginate/index.ts#L117)
 
 Paginates an array using cursor-based pagination.
 

@@ -4,7 +4,7 @@
 
 > **clamp**(`value`, `min`, `max`): `number`
 
-Defined in: [number/clamp/index.ts:35](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/clamp/index.ts#L35)
+Defined in: [number/clamp/index.ts:35](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/clamp/index.ts#L35)
 
 Constrains a number to be within a specified range.
 
@@ -65,7 +65,7 @@ inRange - for checking if a value is in range
 
 > **clamp**(`min`, `max`): (`value`) => `number`
 
-Defined in: [number/clamp/index.ts:36](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/clamp/index.ts#L36)
+Defined in: [number/clamp/index.ts:36](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/clamp/index.ts#L36)
 
 Constrains a number to be within a specified range.
 

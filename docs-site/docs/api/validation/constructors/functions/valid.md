@@ -2,7 +2,7 @@
 
 > **valid**\<`T`\>(`value`): [`Valid`](../../types/interfaces/Valid.md)\<`T`\>
 
-Defined in: [validation/constructors/index.ts:27](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/constructors/index.ts#L27)
+Defined in: [validation/constructors/index.ts:27](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/constructors/index.ts#L27)
 
 Creates a Valid validation containing a value.
 

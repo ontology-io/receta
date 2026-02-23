@@ -1,6 +1,6 @@
 # Interface: ResultMatchers\<R\>
 
-Defined in: [testing/types.ts:8](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L8)
+Defined in: [testing/types.ts:8](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L8)
 
 Extended Vitest matcher interface for Result types.
 
@@ -20,7 +20,7 @@ Extended Vitest matcher interface for Result types.
 
 > **toBeErr**\<`E`\>(`expectedError?`): `R`
 
-Defined in: [testing/types.ts:31](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L31)
+Defined in: [testing/types.ts:31](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L31)
 
 Assert that a Result is Err, optionally checking the error.
 
@@ -54,7 +54,7 @@ expect(ok(5)).not.toBeErr()
 
 > **toBeOk**\<`T`\>(`expectedValue?`): `R`
 
-Defined in: [testing/types.ts:19](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L19)
+Defined in: [testing/types.ts:19](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L19)
 
 Assert that a Result is Ok, optionally checking the value.
 
@@ -88,7 +88,7 @@ expect(err('fail')).not.toBeOk()
 
 > **toEqualResult**\<`T`, `E`\>(`expected`): `R`
 
-Defined in: [testing/types.ts:42](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L42)
+Defined in: [testing/types.ts:42](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L42)
 
 Deep equality check for Result types.
 

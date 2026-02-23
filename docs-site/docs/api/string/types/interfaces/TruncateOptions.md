@@ -1,6 +1,6 @@
 # Interface: TruncateOptions
 
-Defined in: [string/types.ts:10](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/types.ts#L10)
+Defined in: [string/types.ts:10](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/types.ts#L10)
 
 Options for truncating a string.
 
@@ -10,7 +10,7 @@ Options for truncating a string.
 
 > `readonly` `optional` **ellipsis**: `string`
 
-Defined in: [string/types.ts:21](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/types.ts#L21)
+Defined in: [string/types.ts:21](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/types.ts#L21)
 
 The string to append when truncated.
 
@@ -26,7 +26,7 @@ The string to append when truncated.
 
 > `readonly` **length**: `number`
 
-Defined in: [string/types.ts:14](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/types.ts#L14)
+Defined in: [string/types.ts:14](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/types.ts#L14)
 
 The maximum length of the string (including ellipsis).
 
@@ -36,7 +36,7 @@ The maximum length of the string (including ellipsis).
 
 > `readonly` `optional` **words**: `boolean`
 
-Defined in: [string/types.ts:28](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/types.ts#L28)
+Defined in: [string/types.ts:28](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/types.ts#L28)
 
 If true, truncate at word boundary to avoid cutting words.
 

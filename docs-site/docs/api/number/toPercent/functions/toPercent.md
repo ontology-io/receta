@@ -4,7 +4,7 @@
 
 > **toPercent**(`value`, `decimals?`): `string`
 
-Defined in: [number/toPercent/index.ts:37](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/toPercent/index.ts#L37)
+Defined in: [number/toPercent/index.ts:37](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/toPercent/index.ts#L37)
 
 Formats a number as a percentage.
 
@@ -62,7 +62,7 @@ percentage - for calculating percentages
 
 > **toPercent**(`decimals?`): (`value`) => `string`
 
-Defined in: [number/toPercent/index.ts:38](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/toPercent/index.ts#L38)
+Defined in: [number/toPercent/index.ts:38](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/toPercent/index.ts#L38)
 
 Formats a number as a percentage.
 

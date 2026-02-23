@@ -1,6 +1,6 @@
 # Interface: RecetaMatchers\<R\>
 
-Defined in: [testing/types.ts:87](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L87)
+Defined in: [testing/types.ts:87](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L87)
 
 Combined matcher interface for all Receta types.
 
@@ -20,7 +20,7 @@ Combined matcher interface for all Receta types.
 
 > **toBeErr**\<`E`\>(`expectedError?`): `R`
 
-Defined in: [testing/types.ts:31](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L31)
+Defined in: [testing/types.ts:31](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L31)
 
 Assert that a Result is Err, optionally checking the error.
 
@@ -58,7 +58,7 @@ expect(ok(5)).not.toBeErr()
 
 > **toBeNone**(): `R`
 
-Defined in: [testing/types.ts:70](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L70)
+Defined in: [testing/types.ts:70](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L70)
 
 Assert that an Option is None.
 
@@ -83,7 +83,7 @@ expect(some(5)).not.toBeNone()
 
 > **toBeOk**\<`T`\>(`expectedValue?`): `R`
 
-Defined in: [testing/types.ts:19](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L19)
+Defined in: [testing/types.ts:19](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L19)
 
 Assert that a Result is Ok, optionally checking the value.
 
@@ -121,7 +121,7 @@ expect(err('fail')).not.toBeOk()
 
 > **toBeSome**\<`T`\>(`expectedValue?`): `R`
 
-Defined in: [testing/types.ts:59](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L59)
+Defined in: [testing/types.ts:59](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L59)
 
 Assert that an Option is Some, optionally checking the value.
 
@@ -159,7 +159,7 @@ expect(none()).not.toBeSome()
 
 > **toEqualOption**\<`T`\>(`expected`): `R`
 
-Defined in: [testing/types.ts:81](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L81)
+Defined in: [testing/types.ts:81](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L81)
 
 Deep equality check for Option types.
 
@@ -196,7 +196,7 @@ expect(none()).toEqualOption(none())
 
 > **toEqualResult**\<`T`, `E`\>(`expected`): `R`
 
-Defined in: [testing/types.ts:42](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L42)
+Defined in: [testing/types.ts:42](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L42)
 
 Deep equality check for Result types.
 

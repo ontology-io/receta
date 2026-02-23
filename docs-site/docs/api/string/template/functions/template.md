@@ -4,7 +4,7 @@
 
 > **template**(`templateStr`, `vars`): [`Result`](../../../result/types/type-aliases/Result.md)\<`string`, [`TemplateError`](../../types/type-aliases/TemplateError.md)\>
 
-Defined in: [string/template/index.ts:34](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/template/index.ts#L34)
+Defined in: [string/template/index.ts:34](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/template/index.ts#L34)
 
 Safely interpolates variables into a template string.
 
@@ -57,7 +57,7 @@ parseTemplate - to extract variable names from a template
 
 > **template**(`vars`): (`templateStr`) => [`Result`](../../../result/types/type-aliases/Result.md)\<`string`, [`TemplateError`](../../types/type-aliases/TemplateError.md)\>
 
-Defined in: [string/template/index.ts:38](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/template/index.ts#L38)
+Defined in: [string/template/index.ts:38](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/template/index.ts#L38)
 
 Safely interpolates variables into a template string.
 

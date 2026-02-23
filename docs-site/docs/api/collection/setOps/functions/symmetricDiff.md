@@ -4,7 +4,7 @@
 
 > **symmetricDiff**\<`T`\>(`items1`, `items2`, `isEqual?`): `T`[]
 
-Defined in: [collection/setOps/index.ts:187](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/setOps/index.ts#L187)
+Defined in: [collection/setOps/index.ts:187](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/setOps/index.ts#L187)
 
 Finds elements that exist in either collection but not both (symmetric difference).
 
@@ -72,7 +72,7 @@ pipe(
 
 > **symmetricDiff**\<`T`\>(`items2`, `isEqual?`): (`items1`) => `T`[]
 
-Defined in: [collection/setOps/index.ts:192](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/setOps/index.ts#L192)
+Defined in: [collection/setOps/index.ts:192](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/setOps/index.ts#L192)
 
 Finds elements that exist in either collection but not both (symmetric difference).
 

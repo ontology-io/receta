@@ -2,7 +2,7 @@
 
 > `const` **mapAsyncOrThrow**: `never`
 
-Defined in: [async/mapAsync/index.ts:201](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/mapAsync/index.ts#L201)
+Defined in: [async/mapAsync/index.ts:201](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/mapAsync/index.ts#L201)
 
 Throwing variant of mapAsync for backward compatibility.
 

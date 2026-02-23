@@ -2,7 +2,7 @@
 
 > **titleCase**(`str`, `options?`): `string`
 
-Defined in: [string/case/index.ts:171](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/case/index.ts#L171)
+Defined in: [string/case/index.ts:171](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/case/index.ts#L171)
 
 Converts a string to Title Case.
 

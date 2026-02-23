@@ -4,7 +4,7 @@
 
 > **pluralize**(`word`, `count`, `options?`): `string`
 
-Defined in: [string/pluralize/index.ts:72](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/pluralize/index.ts#L72)
+Defined in: [string/pluralize/index.ts:72](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/pluralize/index.ts#L72)
 
 Pluralizes a word based on count, with smart English pluralization rules.
 
@@ -85,7 +85,7 @@ toOrdinal - for ordinal numbers (1st, 2nd, 3rd)
 
 > **pluralize**(`count`, `options?`): (`word`) => `string`
 
-Defined in: [string/pluralize/index.ts:73](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/pluralize/index.ts#L73)
+Defined in: [string/pluralize/index.ts:73](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/pluralize/index.ts#L73)
 
 Pluralizes a word based on count, with smart English pluralization rules.
 

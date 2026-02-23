@@ -1,6 +1,6 @@
 # Interface: ValidationMatcher\<T, E, R\>
 
-Defined in: [validation/match/index.ts:14](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/match/index.ts#L14)
+Defined in: [validation/match/index.ts:14](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/match/index.ts#L14)
 
 Pattern matching interface for Validation.
 
@@ -24,7 +24,7 @@ Pattern matching interface for Validation.
 
 > `readonly` **onInvalid**: (`errors`) => `R`
 
-Defined in: [validation/match/index.ts:16](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/match/index.ts#L16)
+Defined in: [validation/match/index.ts:16](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/match/index.ts#L16)
 
 #### Parameters
 
@@ -42,7 +42,7 @@ readonly `E`[]
 
 > `readonly` **onValid**: (`value`) => `R`
 
-Defined in: [validation/match/index.ts:15](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/match/index.ts#L15)
+Defined in: [validation/match/index.ts:15](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/match/index.ts#L15)
 
 #### Parameters
 

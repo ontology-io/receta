@@ -4,7 +4,7 @@
 
 > **setPath**\<`T`\>(`path`, `value`, `obj`): `T`
 
-Defined in: [object/setPath/index.ts:48](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/setPath/index.ts#L48)
+Defined in: [object/setPath/index.ts:48](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/setPath/index.ts#L48)
 
 Immutably sets a value at a given path in an object.
 
@@ -77,7 +77,7 @@ pipe(
 
 > **setPath**(`path`, `value`): \<`T`\>(`obj`) => `T`
 
-Defined in: [object/setPath/index.ts:49](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/setPath/index.ts#L49)
+Defined in: [object/setPath/index.ts:49](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/setPath/index.ts#L49)
 
 Immutably sets a value at a given path in an object.
 

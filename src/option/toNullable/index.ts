@@ -41,7 +41,6 @@ export function toNullable(...args: unknown[]): unknown {
   return R.purry(toNullableImplementation, args)
 }
 
-// eslint-disable-next-line receta/prefer-option-over-null -- Intentional escape hatch for external API interop
 function toNullableImplementation<T>(option: Option<T>): T | null {
   return isSome(option) ? option.value : null
 }

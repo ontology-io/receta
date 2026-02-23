@@ -4,7 +4,7 @@
 
 > **highlight**(`text`, `query`, `options?`): `string`
 
-Defined in: [string/highlight/index.ts:95](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/highlight/index.ts#L95)
+Defined in: [string/highlight/index.ts:95](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/highlight/index.ts#L95)
 
 Highlights matching substrings by wrapping them in HTML tags.
 
@@ -89,7 +89,7 @@ pipe(
 
 > **highlight**(`query`, `options?`): (`text`) => `string`
 
-Defined in: [string/highlight/index.ts:96](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/highlight/index.ts#L96)
+Defined in: [string/highlight/index.ts:96](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/highlight/index.ts#L96)
 
 Highlights matching substrings by wrapping them in HTML tags.
 

@@ -4,7 +4,7 @@
 
 > **map**\<`T`, `U`, `E`\>(`validation`, `fn`): [`Validation`](../../types/type-aliases/Validation.md)\<`U`, `E`\>
 
-Defined in: [validation/map/index.ts:45](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/map/index.ts#L45)
+Defined in: [validation/map/index.ts:45](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/map/index.ts#L45)
 
 Maps over the Valid value of a Validation.
 
@@ -75,7 +75,7 @@ const validateAndFormat = (email: string) =>
 
 > **map**\<`T`, `U`\>(`fn`): \<`E`\>(`validation`) => [`Validation`](../../types/type-aliases/Validation.md)\<`U`, `E`\>
 
-Defined in: [validation/map/index.ts:46](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/map/index.ts#L46)
+Defined in: [validation/map/index.ts:46](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/map/index.ts#L46)
 
 Maps over the Valid value of a Validation.
 

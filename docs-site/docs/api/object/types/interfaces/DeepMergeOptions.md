@@ -1,6 +1,6 @@
 # Interface: DeepMergeOptions
 
-Defined in: [object/types.ts:72](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/types.ts#L72)
+Defined in: [object/types.ts:72](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/types.ts#L72)
 
 Options for deep merging objects.
 
@@ -10,7 +10,7 @@ Options for deep merging objects.
 
 > `readonly` `optional` **arrayStrategy**: `"concat"` \| `"replace"` \| `"merge"`
 
-Defined in: [object/types.ts:79](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/types.ts#L79)
+Defined in: [object/types.ts:79](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/types.ts#L79)
 
 Strategy for handling array conflicts.
 - 'replace': Replace the target array with source array (default)
@@ -23,7 +23,7 @@ Strategy for handling array conflicts.
 
 > `readonly` `optional` **customMerge**: (`key`, `target`, `source`) => `unknown`
 
-Defined in: [object/types.ts:84](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/types.ts#L84)
+Defined in: [object/types.ts:84](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/types.ts#L84)
 
 Custom merge function for specific keys.
 

@@ -1,6 +1,6 @@
 # Interface: TransformKeysOptions
 
-Defined in: [object/transformKeys/index.ts:18](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/transformKeys/index.ts#L18)
+Defined in: [object/transformKeys/index.ts:18](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/transformKeys/index.ts#L18)
 
 Options for transformKeys operation.
 
@@ -10,7 +10,7 @@ Options for transformKeys operation.
 
 > `readonly` `optional` **deep**: `boolean`
 
-Defined in: [object/transformKeys/index.ts:22](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/transformKeys/index.ts#L22)
+Defined in: [object/transformKeys/index.ts:22](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/transformKeys/index.ts#L22)
 
 Whether to transform keys recursively in nested objects (default: true).
 
@@ -20,6 +20,6 @@ Whether to transform keys recursively in nested objects (default: true).
 
 > `readonly` `optional` **transformArrays**: `boolean`
 
-Defined in: [object/transformKeys/index.ts:27](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/transformKeys/index.ts#L27)
+Defined in: [object/transformKeys/index.ts:27](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/transformKeys/index.ts#L27)
 
 Whether to transform keys in arrays of objects (default: true).

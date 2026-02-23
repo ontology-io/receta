@@ -4,7 +4,7 @@
 
 > **unflatten**(`obj`, `options?`): [`PlainObject`](../../types/type-aliases/PlainObject.md)
 
-Defined in: [object/unflatten/index.ts:44](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/unflatten/index.ts#L44)
+Defined in: [object/unflatten/index.ts:44](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/unflatten/index.ts#L44)
 
 Unflattens a single-level object with dot-notation keys into a nested object.
 
@@ -62,7 +62,7 @@ flatten - for the reverse operation
 
 > **unflatten**(`options?`): (`obj`) => [`PlainObject`](../../types/type-aliases/PlainObject.md)
 
-Defined in: [object/unflatten/index.ts:45](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/unflatten/index.ts#L45)
+Defined in: [object/unflatten/index.ts:45](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/unflatten/index.ts#L45)
 
 Unflattens a single-level object with dot-notation keys into a nested object.
 

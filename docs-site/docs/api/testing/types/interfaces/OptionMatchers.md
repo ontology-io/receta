@@ -1,6 +1,6 @@
 # Interface: OptionMatchers\<R\>
 
-Defined in: [testing/types.ts:48](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L48)
+Defined in: [testing/types.ts:48](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L48)
 
 Extended Vitest matcher interface for Option types.
 
@@ -20,7 +20,7 @@ Extended Vitest matcher interface for Option types.
 
 > **toBeNone**(): `R`
 
-Defined in: [testing/types.ts:70](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L70)
+Defined in: [testing/types.ts:70](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L70)
 
 Assert that an Option is None.
 
@@ -41,7 +41,7 @@ expect(some(5)).not.toBeNone()
 
 > **toBeSome**\<`T`\>(`expectedValue?`): `R`
 
-Defined in: [testing/types.ts:59](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L59)
+Defined in: [testing/types.ts:59](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L59)
 
 Assert that an Option is Some, optionally checking the value.
 
@@ -75,7 +75,7 @@ expect(none()).not.toBeSome()
 
 > **toEqualOption**\<`T`\>(`expected`): `R`
 
-Defined in: [testing/types.ts:81](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/types.ts#L81)
+Defined in: [testing/types.ts:81](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/types.ts#L81)
 
 Deep equality check for Option types.
 

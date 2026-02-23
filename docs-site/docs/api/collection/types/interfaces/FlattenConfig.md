@@ -1,6 +1,6 @@
 # Interface: FlattenConfig\<T\>
 
-Defined in: [collection/types.ts:203](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L203)
+Defined in: [collection/types.ts:203](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L203)
 
 Configuration for flatten operation.
 
@@ -28,7 +28,7 @@ The type of tree nodes
 
 > `readonly` **getChildren**: (`node`) => readonly `T`[] \| `undefined`
 
-Defined in: [collection/types.ts:204](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L204)
+Defined in: [collection/types.ts:204](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L204)
 
 #### Parameters
 
@@ -46,7 +46,7 @@ readonly `T`[] \| `undefined`
 
 > `readonly` `optional` **includePath**: `boolean`
 
-Defined in: [collection/types.ts:206](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L206)
+Defined in: [collection/types.ts:206](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L206)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [collection/types.ts:206](https://github.com/maxios/receta/blob/2efc
 
 > `readonly` `optional` **maxDepth**: `number`
 
-Defined in: [collection/types.ts:205](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L205)
+Defined in: [collection/types.ts:205](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L205)

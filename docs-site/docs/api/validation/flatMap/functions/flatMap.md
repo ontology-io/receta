@@ -4,7 +4,7 @@
 
 > **flatMap**\<`T`, `U`, `E`\>(`validation`, `fn`): [`Validation`](../../types/type-aliases/Validation.md)\<`U`, `E`\>
 
-Defined in: [validation/flatMap/index.ts:60](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/flatMap/index.ts#L60)
+Defined in: [validation/flatMap/index.ts:60](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/flatMap/index.ts#L60)
 
 Chains validation operations.
 
@@ -91,7 +91,7 @@ const parseAndValidate = (str: string) =>
 
 > **flatMap**\<`T`, `U`, `E`\>(`fn`): (`validation`) => [`Validation`](../../types/type-aliases/Validation.md)\<`U`, `E`\>
 
-Defined in: [validation/flatMap/index.ts:64](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/flatMap/index.ts#L64)
+Defined in: [validation/flatMap/index.ts:64](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/flatMap/index.ts#L64)
 
 Chains validation operations.
 

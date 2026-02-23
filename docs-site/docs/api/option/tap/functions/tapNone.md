@@ -4,7 +4,7 @@
 
 > **tapNone**\<`T`\>(`option`, `fn`): [`Option`](../../types/type-aliases/Option.md)\<`T`\>
 
-Defined in: [option/tap/index.ts:77](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/option/tap/index.ts#L77)
+Defined in: [option/tap/index.ts:77](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/option/tap/index.ts#L77)
 
 Performs a side effect when the Option is None.
 
@@ -63,7 +63,7 @@ tap - for side effects on Some
 
 > **tapNone**\<`T`\>(`fn`): (`option`) => [`Option`](../../types/type-aliases/Option.md)\<`T`\>
 
-Defined in: [option/tap/index.ts:78](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/option/tap/index.ts#L78)
+Defined in: [option/tap/index.ts:78](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/option/tap/index.ts#L78)
 
 Performs a side effect when the Option is None.
 

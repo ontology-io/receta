@@ -4,7 +4,7 @@
 
 > **flip**\<`A`, `B`, `R`\>(`fn`): (`b`, `a`) => `R`
 
-Defined in: [function/flip/index.ts:36](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/flip/index.ts#L36)
+Defined in: [function/flip/index.ts:36](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/flip/index.ts#L36)
 
 Creates a function that reverses the order of the first two arguments.
 
@@ -81,7 +81,7 @@ append(' world', 'hello')   // => 'hello world'
 
 > **flip**\<`A`, `B`, `C`, `R`\>(`fn`): (`b`, `a`, `c`) => `R`
 
-Defined in: [function/flip/index.ts:37](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/flip/index.ts#L37)
+Defined in: [function/flip/index.ts:37](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/flip/index.ts#L37)
 
 Creates a function that reverses the order of the first two arguments.
 
@@ -166,7 +166,7 @@ append(' world', 'hello')   // => 'hello world'
 
 > **flip**\<`A`, `B`, `C`, `D`, `R`\>(`fn`): (`b`, `a`, `c`, `d`) => `R`
 
-Defined in: [function/flip/index.ts:38](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/function/flip/index.ts#L38)
+Defined in: [function/flip/index.ts:38](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/function/flip/index.ts#L38)
 
 Creates a function that reverses the order of the first two arguments.
 

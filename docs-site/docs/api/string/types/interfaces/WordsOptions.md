@@ -1,6 +1,6 @@
 # Interface: WordsOptions
 
-Defined in: [string/types.ts:46](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/types.ts#L46)
+Defined in: [string/types.ts:46](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/types.ts#L46)
 
 Options for splitting text into words.
 
@@ -10,7 +10,7 @@ Options for splitting text into words.
 
 > `readonly` `optional` **pattern**: `RegExp`
 
-Defined in: [string/types.ts:52](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/types.ts#L52)
+Defined in: [string/types.ts:52](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/types.ts#L52)
 
 Pattern to match word boundaries.
 

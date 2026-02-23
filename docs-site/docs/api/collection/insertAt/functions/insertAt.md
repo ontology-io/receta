@@ -4,7 +4,7 @@
 
 > **insertAt**\<`T`\>(`items`, `index`, `values`): readonly `T`[]
 
-Defined in: [collection/insertAt/index.ts:67](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/insertAt/index.ts#L67)
+Defined in: [collection/insertAt/index.ts:67](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/insertAt/index.ts#L67)
 
 Inserts one or more elements at a specific index (immutably).
 
@@ -103,7 +103,7 @@ pipe(
 
 > **insertAt**\<`T`\>(`index`, `values`): (`items`) => readonly `T`[]
 
-Defined in: [collection/insertAt/index.ts:72](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/insertAt/index.ts#L72)
+Defined in: [collection/insertAt/index.ts:72](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/insertAt/index.ts#L72)
 
 Inserts one or more elements at a specific index (immutably).
 

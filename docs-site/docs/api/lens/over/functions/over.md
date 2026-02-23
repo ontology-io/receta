@@ -4,7 +4,7 @@
 
 > **over**\<`S`, `A`\>(`l`, `fn`, `source`): `S`
 
-Defined in: [lens/over/index.ts:79](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/lens/over/index.ts#L79)
+Defined in: [lens/over/index.ts:79](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/lens/over/index.ts#L79)
 
 Applies a transformation function to the value focused by a Lens.
 
@@ -114,7 +114,7 @@ setState(over(countLens, n => n + 1))
 
 > **over**\<`S`, `A`\>(`l`, `fn`): (`source`) => `S`
 
-Defined in: [lens/over/index.ts:80](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/lens/over/index.ts#L80)
+Defined in: [lens/over/index.ts:80](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/lens/over/index.ts#L80)
 
 Applies a transformation function to the value focused by a Lens.
 

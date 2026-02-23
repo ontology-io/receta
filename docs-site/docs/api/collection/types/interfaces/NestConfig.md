@@ -1,6 +1,6 @@
 # Interface: NestConfig\<T\>
 
-Defined in: [collection/types.ts:131](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L131)
+Defined in: [collection/types.ts:131](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L131)
 
 Configuration for nested grouping operations.
 
@@ -27,7 +27,7 @@ The type of items being grouped
 
 > `readonly` **by**: readonly (keyof `T` \| (`item`) => `string` \| `number`)[]
 
-Defined in: [collection/types.ts:132](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L132)
+Defined in: [collection/types.ts:132](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L132)
 
 ***
 
@@ -35,7 +35,7 @@ Defined in: [collection/types.ts:132](https://github.com/maxios/receta/blob/2efc
 
 > `readonly` `optional` **createEmpty**: () => `unknown`
 
-Defined in: [collection/types.ts:133](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/collection/types.ts#L133)
+Defined in: [collection/types.ts:133](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/collection/types.ts#L133)
 
 #### Returns
 

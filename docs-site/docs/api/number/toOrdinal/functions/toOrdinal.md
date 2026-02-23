@@ -4,7 +4,7 @@
 
 > **toOrdinal**(`value`): `string`
 
-Defined in: [number/toOrdinal/index.ts:33](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/toOrdinal/index.ts#L33)
+Defined in: [number/toOrdinal/index.ts:33](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/toOrdinal/index.ts#L33)
 
 Formats a number as an ordinal (1st, 2nd, 3rd, etc.).
 
@@ -51,7 +51,7 @@ const displayRank = (rank: number) =>
 
 > **toOrdinal**(): (`value`) => `string`
 
-Defined in: [number/toOrdinal/index.ts:34](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/number/toOrdinal/index.ts#L34)
+Defined in: [number/toOrdinal/index.ts:34](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/number/toOrdinal/index.ts#L34)
 
 Formats a number as an ordinal (1st, 2nd, 3rd, etc.).
 

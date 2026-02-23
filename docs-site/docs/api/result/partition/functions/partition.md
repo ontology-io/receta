@@ -4,7 +4,7 @@
 
 > **partition**\<`T`, `E`\>(`results`): \[`T`[], `E`[]\]
 
-Defined in: [result/partition/index.ts:41](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/partition/index.ts#L41)
+Defined in: [result/partition/index.ts:41](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/partition/index.ts#L41)
 
 Separates an array of Results into Ok values and Err values.
 
@@ -69,7 +69,7 @@ collect - for short-circuiting on first error
 
 > **partition**\<`T`\>(): \<`E`\>(`results`) => \[`T`[], `E`[]\]
 
-Defined in: [result/partition/index.ts:42](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/partition/index.ts#L42)
+Defined in: [result/partition/index.ts:42](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/partition/index.ts#L42)
 
 Separates an array of Results into Ok values and Err values.
 

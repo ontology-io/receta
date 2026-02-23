@@ -4,7 +4,7 @@
 
 > **unwrapOrElse**\<`T`, `E`\>(`validation`, `fn`): `T`
 
-Defined in: [validation/unwrap/index.ts:151](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/unwrap/index.ts#L151)
+Defined in: [validation/unwrap/index.ts:151](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/unwrap/index.ts#L151)
 
 Extracts the value from a Valid validation or computes a default from errors.
 
@@ -93,7 +93,7 @@ const processForm = (data: FormData) =>
 
 > **unwrapOrElse**\<`T`, `E`\>(`fn`): (`validation`) => `T`
 
-Defined in: [validation/unwrap/index.ts:155](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/unwrap/index.ts#L155)
+Defined in: [validation/unwrap/index.ts:155](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/unwrap/index.ts#L155)
 
 Extracts the value from a Valid validation or computes a default from errors.
 

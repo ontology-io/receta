@@ -4,7 +4,7 @@
 
 > **mapKeys**\<`T`\>(`obj`, `fn`): [`PlainObject`](../../types/type-aliases/PlainObject.md)
 
-Defined in: [object/mapKeys/index.ts:51](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/mapKeys/index.ts#L51)
+Defined in: [object/mapKeys/index.ts:51](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/mapKeys/index.ts#L51)
 
 Transforms all keys in an object using a mapping function.
 
@@ -75,7 +75,7 @@ pipe(
 
 > **mapKeys**(`fn`): \<`T`\>(`obj`) => [`PlainObject`](../../types/type-aliases/PlainObject.md)
 
-Defined in: [object/mapKeys/index.ts:55](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/mapKeys/index.ts#L55)
+Defined in: [object/mapKeys/index.ts:55](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/mapKeys/index.ts#L55)
 
 Transforms all keys in an object using a mapping function.
 

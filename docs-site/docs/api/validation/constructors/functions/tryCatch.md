@@ -4,7 +4,7 @@
 
 > **tryCatch**\<`T`\>(`fn`): [`Validation`](../../types/type-aliases/Validation.md)\<`T`, `unknown`\>
 
-Defined in: [validation/constructors/index.ts:197](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/constructors/index.ts#L197)
+Defined in: [validation/constructors/index.ts:197](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/constructors/index.ts#L197)
 
 Wraps a potentially throwing function in a Validation.
 
@@ -49,7 +49,7 @@ parseJSON('invalid json')
 
 > **tryCatch**\<`T`, `E`\>(`fn`, `mapError`): [`Validation`](../../types/type-aliases/Validation.md)\<`T`, `E`\>
 
-Defined in: [validation/constructors/index.ts:223](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/constructors/index.ts#L223)
+Defined in: [validation/constructors/index.ts:223](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/constructors/index.ts#L223)
 
 Wraps a potentially throwing function in a Validation with error mapping.
 

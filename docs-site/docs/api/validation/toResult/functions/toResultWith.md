@@ -4,7 +4,7 @@
 
 > **toResultWith**\<`T`, `E`, `F`\>(`validation`, `combineErrors`): [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, `F`\>
 
-Defined in: [validation/toResult/index.ts:118](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/toResult/index.ts#L118)
+Defined in: [validation/toResult/index.ts:118](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/toResult/index.ts#L118)
 
 Converts a Validation to a Result, combining all errors into a single error.
 
@@ -88,7 +88,7 @@ const toDisplayResult = (validation: Validation<Data, FieldError>) =>
 
 > **toResultWith**\<`E`, `F`\>(`combineErrors`): \<`T`\>(`validation`) => [`Result`](../../../result/types/type-aliases/Result.md)\<`T`, `F`\>
 
-Defined in: [validation/toResult/index.ts:122](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/validation/toResult/index.ts#L122)
+Defined in: [validation/toResult/index.ts:122](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/validation/toResult/index.ts#L122)
 
 Converts a Validation to a Result, combining all errors into a single error.
 

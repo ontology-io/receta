@@ -1,6 +1,6 @@
 # Interface: Err\<E\>
 
-Defined in: [result/types.ts:12](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/types.ts#L12)
+Defined in: [result/types.ts:12](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/types.ts#L12)
 
 Represents a failed computation containing an error.
 
@@ -16,7 +16,7 @@ Represents a failed computation containing an error.
 
 > `readonly` **\_tag**: `"Err"`
 
-Defined in: [result/types.ts:13](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/types.ts#L13)
+Defined in: [result/types.ts:13](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/types.ts#L13)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [result/types.ts:13](https://github.com/maxios/receta/blob/2efcc1ca4
 
 > `readonly` **error**: `E`
 
-Defined in: [result/types.ts:14](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/result/types.ts#L14)
+Defined in: [result/types.ts:14](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/types.ts#L14)

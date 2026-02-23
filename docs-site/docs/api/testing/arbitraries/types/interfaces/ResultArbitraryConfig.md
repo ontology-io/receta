@@ -1,6 +1,6 @@
 # Interface: ResultArbitraryConfig
 
-Defined in: [testing/arbitraries/types.ts:14](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/arbitraries/types.ts#L14)
+Defined in: [testing/arbitraries/types.ts:14](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/arbitraries/types.ts#L14)
 
 Configuration for Result arbitrary generation.
 
@@ -17,7 +17,7 @@ result(fc.integer(), fc.string(), { okWeight: 0.8 })
 
 > `optional` **okWeight**: `number`
 
-Defined in: [testing/arbitraries/types.ts:25](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/testing/arbitraries/types.ts#L25)
+Defined in: [testing/arbitraries/types.ts:25](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/testing/arbitraries/types.ts#L25)
 
 Weight for Ok values (0-1).
 Default: 0.5 (50% Ok, 50% Err)

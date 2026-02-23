@@ -1,6 +1,6 @@
 # Interface: DebounceOptions
 
-Defined in: [async/types.ts:113](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L113)
+Defined in: [async/types.ts:113](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L113)
 
 Options for debounce operations.
 
@@ -10,7 +10,7 @@ Options for debounce operations.
 
 > `readonly` **delay**: `number`
 
-Defined in: [async/types.ts:117](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L117)
+Defined in: [async/types.ts:117](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L117)
 
 Delay in milliseconds to wait before invoking the function.
 
@@ -20,7 +20,7 @@ Delay in milliseconds to wait before invoking the function.
 
 > `readonly` `optional` **leading**: `boolean`
 
-Defined in: [async/types.ts:123](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L123)
+Defined in: [async/types.ts:123](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L123)
 
 Whether to invoke the function on the leading edge.
 
@@ -36,7 +36,7 @@ false
 
 > `readonly` `optional` **trailing**: `boolean`
 
-Defined in: [async/types.ts:129](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/async/types.ts#L129)
+Defined in: [async/types.ts:129](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/async/types.ts#L129)
 
 Whether to invoke the function on the trailing edge.
 

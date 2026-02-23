@@ -1,6 +1,6 @@
 # Interface: InitialsOptions
 
-Defined in: [string/initials/index.ts:6](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/initials/index.ts#L6)
+Defined in: [string/initials/index.ts:6](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/initials/index.ts#L6)
 
 Options for initials function.
 
@@ -10,7 +10,7 @@ Options for initials function.
 
 > `readonly` `optional` **maxInitials**: `number`
 
-Defined in: [string/initials/index.ts:13](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/initials/index.ts#L13)
+Defined in: [string/initials/index.ts:13](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/initials/index.ts#L13)
 
 Maximum number of initials to return.
 If not specified, returns all initials.
@@ -27,7 +27,7 @@ undefined (return all)
 
 > `readonly` `optional` **uppercase**: `boolean`
 
-Defined in: [string/initials/index.ts:20](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/string/initials/index.ts#L20)
+Defined in: [string/initials/index.ts:20](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/string/initials/index.ts#L20)
 
 If true, converts initials to uppercase.
 

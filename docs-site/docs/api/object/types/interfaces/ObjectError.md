@@ -1,6 +1,6 @@
 # Interface: ObjectError
 
-Defined in: [object/types.ts:90](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/types.ts#L90)
+Defined in: [object/types.ts:90](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/types.ts#L90)
 
 Error type for object operations.
 
@@ -10,7 +10,7 @@ Error type for object operations.
 
 > `readonly` `optional` **cause**: `unknown`
 
-Defined in: [object/types.ts:94](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/types.ts#L94)
+Defined in: [object/types.ts:94](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/types.ts#L94)
 
 ***
 
@@ -18,7 +18,7 @@ Defined in: [object/types.ts:94](https://github.com/maxios/receta/blob/2efcc1ca4
 
 > `readonly` **code**: `"PATH_NOT_FOUND"` \| `"INVALID_PATH"` \| `"VALIDATION_ERROR"` \| `"CIRCULAR_REFERENCE"`
 
-Defined in: [object/types.ts:91](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/types.ts#L91)
+Defined in: [object/types.ts:91](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/types.ts#L91)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [object/types.ts:91](https://github.com/maxios/receta/blob/2efcc1ca4
 
 > `readonly` **message**: `string`
 
-Defined in: [object/types.ts:92](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/types.ts#L92)
+Defined in: [object/types.ts:92](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/types.ts#L92)
 
 ***
 
@@ -34,4 +34,4 @@ Defined in: [object/types.ts:92](https://github.com/maxios/receta/blob/2efcc1ca4
 
 > `readonly` `optional` **path**: [`ObjectPath`](../type-aliases/ObjectPath.md)
 
-Defined in: [object/types.ts:93](https://github.com/maxios/receta/blob/2efcc1ca4c25f7c40cb62cc270556bb4fa8f0cc6/src/object/types.ts#L93)
+Defined in: [object/types.ts:93](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/object/types.ts#L93)

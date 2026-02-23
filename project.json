@@ -43,6 +43,20 @@
       "options": {
         "command": "bun run scripts/generate-llm-txt.ts"
       }
+    },
+    "docs:build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/docs-site/build"],
+      "options": {
+        "command": "cd docs-site && bun install && bun run build"
+      }
+    },
+    "docs:deploy": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["docs:build"],
+      "options": {
+        "command": "bash scripts/deploy-docs.sh"
+      }
     }
   },
   "tags": []
