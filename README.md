@@ -2,7 +2,7 @@
 
 > **Practical FP recipes built on Remeda** — Higher-level patterns for real-world TypeScript applications
 
-[![npm version](https://img.shields.io/npm/v/receta.svg)](https://www.npmjs.com/package/receta)
+[![npm version](https://img.shields.io/npm/v/receta.svg)](https://www.npmjs.com/package/@ontologyio/receta)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 
