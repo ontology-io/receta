@@ -8,6 +8,8 @@
 
 ---
 
+![gemini-2 5-flash-image_remove_the_text_Typescript_Package_Library-0](https://github.com/user-attachments/assets/706475dc-3c32-439f-a6c1-460bcaa15e24)
+
 ## What is Receta?
 
 **Receta** (Spanish for "recipe") is a functional utility library that builds on top of [Remeda](https://remedajs.com). While Remeda provides low-level FP primitives (map, filter, pipe, etc.), **Receta provides composed patterns** that solve common real-world problems.
