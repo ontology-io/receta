@@ -85,9 +85,3 @@ export interface OptionMatchers<R = unknown> {
  * Combined matcher interface for all Receta types.
  */
 export interface RecetaMatchers<R = unknown> extends ResultMatchers<R>, OptionMatchers<R> {}
-
-// Augment Vitest's matcher types
-declare module 'vitest' {
-  interface Assertion<T = any> extends RecetaMatchers {}
-  interface AsymmetricMatchersContaining extends RecetaMatchers {}
-}

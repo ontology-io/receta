@@ -1,5 +1,5 @@
 {
-  "name": "receta",
+  "name": "@ontologyio/receta",
   "version": "0.3.2",
   "description": "Practical FP recipes built on Remeda — higher-level patterns for real-world TypeScript applications",
   "author": "Khaled Maher",
