@@ -14,7 +14,7 @@ We take security vulnerabilities seriously. If you discover a security issue in 
 
 **Please do NOT report security vulnerabilities through public GitHub issues.**
 
-Instead, please report them via email to: **[Your security email here]**
+Instead, please report them via email to: **khaled.mailhub@gmail.com**
 
 Include the following information:
 - Description of the vulnerability
