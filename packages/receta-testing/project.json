@@ -35,6 +35,13 @@
         "command": "rm -rf dist",
         "cwd": "{projectRoot}"
       }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bunx eslint . --max-warnings 0",
+        "cwd": "{projectRoot}"
+      }
     }
   }
 }
