@@ -1,0 +1,43 @@
+name: Setup Build Environment
+description: Install Node.js, Bun, and project dependencies for building packages
+
+inputs:
+  node-version:
+    description: Node.js version to install
+    required: false
+    default: '20'
+
+  bun-version:
+    description: Bun version to install
+    required: false
+    default: 'latest'
+
+  registry-url:
+    description: npm registry URL (for publishing)
+    required: false
+    default: 'https://registry.npmjs.org'
+
+  scope:
+    description: npm scope for registry configuration
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        registry-url: ${{ inputs.registry-url }}
+        scope: ${{ inputs.scope }}
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: ${{ inputs.bun-version }}
+        no-cache: true
+
+    - name: Install dependencies
+      shell: bash
+      run: bun install

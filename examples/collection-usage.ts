@@ -25,8 +25,8 @@ import {
   removeAtIndex,
   type DiffResult,
   type PaginatedResult,
-} from '../src/collection'
-import { isOk, unwrapOr } from '../src/result'
+} from '@ontologyio/receta/collection'
+import { isOk, unwrapOr } from '@ontologyio/receta/result'
 
 console.log('=== Collection Module Examples ===\n')
 

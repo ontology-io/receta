@@ -24,8 +24,6 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "outDir": "dist",
-    "rootDir": "src",
     "removeComments": false,
     "importHelpers": false,
     "importsNotUsedAsValues": "remove",
@@ -35,6 +33,9 @@
     "allowImportingTsExtensions": false,
     "noEmit": false
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+  "references": [
+    { "path": "packages/receta" },
+    { "path": "packages/receta-testing" },
+    { "path": "packages/eslint-plugin-receta" }
+  ]
 }

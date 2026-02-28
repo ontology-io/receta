@@ -32,7 +32,7 @@ import {
   oneOf,
   type Validation,
   type FieldError,
-} from '../src/validation'
+} from '@ontologyio/receta/validation'
 
 console.log('=== Validation Module Examples ===\n')
 

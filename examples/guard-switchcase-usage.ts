@@ -4,9 +4,9 @@
  */
 
 import * as R from 'remeda'
-import { guard, switchCase } from '../src/function'
-import * as Result from '../src/result'
-import { isOk, isErr, type Result as ResultType } from '../src/result'
+import { guard, switchCase } from '@ontologyio/receta/function'
+import * as Result from '@ontologyio/receta/result'
+import { isOk, isErr, type Result as ResultType } from '@ontologyio/receta/result'
 
 // ============================================================================
 // GUARD - Early Return Pattern for Validation
@@ -275,7 +275,7 @@ console.log(
 // - Returns Some(result) if a predicate matches
 // - Returns None if no match
 console.log('\ncond: Pattern matching that can return None')
-import { cond } from '../src/function'
+import { cond } from '@ontologyio/receta/function'
 console.log(
   cond<string, number>(
     [

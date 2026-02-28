@@ -23,12 +23,12 @@ import {
   tap,
   tryCatch,
   memoize,
-} from '../src/function'
-import { unwrapOr, unwrap } from '../src/option'
-import { isOk, unwrap as unwrapResult, ok } from '../src/result'
-import { where, gt, lt, between, and as andPred, or as orPred } from '../src/predicate'
-import { nest, indexByUnique } from '../src/collection'
-import { flatten, getPath } from '../src/object'
+} from '@ontologyio/receta/function'
+import { unwrapOr, unwrap } from '@ontologyio/receta/option'
+import { isOk, unwrap as unwrapResult, ok } from '@ontologyio/receta/result'
+import { where, gt, lt, between, and as andPred, or as orPred } from '@ontologyio/receta/predicate'
+import { nest, indexByUnique } from '@ontologyio/receta/collection'
+import { flatten, getPath } from '@ontologyio/receta/object'
 
 console.log('='.repeat(60))
 console.log('Function Module - Real-World Examples')

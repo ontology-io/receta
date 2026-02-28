@@ -8,7 +8,7 @@
       "cache": true
     },
     "test": {
-      "cache": true
+      "cache": false
     },
     "typecheck": {
       "cache": true
@@ -34,7 +34,7 @@
     "default": {
       "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": ["build", "test", "typecheck", "lint"]
+        "cacheableOperations": ["build", "typecheck", "lint"]
       }
     }
   },

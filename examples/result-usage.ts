@@ -17,7 +17,7 @@ import {
   partition,
   fromNullable,
   type Result,
-} from '../src/result'
+} from '@ontologyio/receta/result'
 
 // Example 1: Safe JSON parsing
 console.log('=== Example 1: Safe JSON Parsing ===')

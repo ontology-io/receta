@@ -16,8 +16,8 @@ import {
   over,
   optional,
   type Lens,
-} from '../src/lens'
-import { some, none, isSome } from '../src/option'
+} from '@ontologyio/receta/lens'
+import { some, none, isSome } from '@ontologyio/receta/option'
 
 // Example 1: Basic Property Lens
 console.log('=== Example 1: Basic Property Lens ===')

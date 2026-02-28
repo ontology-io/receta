@@ -4,7 +4,7 @@
  * Demonstrates core memoization patterns for caching expensive computations.
  */
 
-import { memoize, memoizeBy, memoizeAsync, ttlCache, lruCache, weakCache, clearCache } from '../src/memo'
+import { memoize, memoizeBy, memoizeAsync, ttlCache, lruCache, weakCache, clearCache } from '@ontologyio/receta/memo'
 
 // ============================================================================
 // Example 1: Basic Memoization

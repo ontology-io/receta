@@ -1,13 +1,9 @@
 {
-  "name": "@ontologyio/receta",
-  "version": "0.3.2",
-  "description": "Practical FP recipes built on Remeda — higher-level patterns for real-world TypeScript applications",
+  "name": "@ontologyio/receta-monorepo",
+  "private": true,
+  "description": "Monorepo for @ontologyio/receta packages",
   "author": "Khaled Maher",
   "license": "MIT",
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/khaledmaher/receta.git"
@@ -19,144 +15,23 @@
   "workspaces": [
     "packages/*"
   ],
-  "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "sideEffects": false,
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE",
-    "CHANGELOG.md"
-  ],
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./result": {
-      "import": "./dist/result/index.js",
-      "types": "./dist/result/index.d.ts"
-    },
-    "./option": {
-      "import": "./dist/option/index.js",
-      "types": "./dist/option/index.d.ts"
-    },
-    "./async": {
-      "import": "./dist/async/index.js",
-      "types": "./dist/async/index.d.ts"
-    },
-    "./predicate": {
-      "import": "./dist/predicate/index.js",
-      "types": "./dist/predicate/index.d.ts"
-    },
-    "./validation": {
-      "import": "./dist/validation/index.js",
-      "types": "./dist/validation/index.d.ts"
-    },
-    "./collection": {
-      "import": "./dist/collection/index.js",
-      "types": "./dist/collection/index.d.ts"
-    },
-    "./object": {
-      "import": "./dist/object/index.js",
-      "types": "./dist/object/index.d.ts"
-    },
-    "./string": {
-      "import": "./dist/string/index.js",
-      "types": "./dist/string/index.d.ts"
-    },
-    "./number": {
-      "import": "./dist/number/index.js",
-      "types": "./dist/number/index.d.ts"
-    },
-    "./memo": {
-      "import": "./dist/memo/index.js",
-      "types": "./dist/memo/index.d.ts"
-    },
-    "./lens": {
-      "import": "./dist/lens/index.js",
-      "types": "./dist/lens/index.d.ts"
-    },
-    "./compare": {
-      "import": "./dist/compare/index.js",
-      "types": "./dist/compare/index.d.ts"
-    },
-    "./function": {
-      "import": "./dist/function/index.js",
-      "types": "./dist/function/index.d.ts"
-    },
-    "./testing": {
-      "import": "./dist/testing/index.js",
-      "types": "./dist/testing/index.d.ts"
-    },
-    "./testing/matchers": {
-      "import": "./dist/testing/matchers/index.js",
-      "types": "./dist/testing/matchers/index.d.ts"
-    },
-    "./testing/laws": {
-      "import": "./dist/testing/laws/index.js",
-      "types": "./dist/testing/laws/index.d.ts"
-    },
-    "./testing/arbitraries": {
-      "import": "./dist/testing/arbitraries/index.js",
-      "types": "./dist/testing/arbitraries/index.d.ts"
-    }
-  },
   "scripts": {
     "build": "nx run-many --target=build --all",
-    "build:receta": "nx run receta:build",
     "test": "nx run-many --target=test --all",
     "test:watch": "bun test --watch",
     "typecheck": "nx run-many --target=typecheck --all",
     "clean": "nx run-many --target=clean --all",
-    "lint": "nx run receta:lint",
+    "lint": "nx run-many --target=lint --all",
     "generate-llm": "bun run scripts/generate-llm-txt.ts",
     "docs:generate": "bun run scripts/generate-docs.ts",
     "docs:watch": "bun run scripts/generate-docs.ts --watch",
     "docs:build": "cd docs-site && bun install && bun run build",
     "docs:deploy": "bash scripts/deploy-docs.sh",
-    "prepublishOnly": "bun run clean && bun run build && bun run test && bun run typecheck",
-    "publish:jsr": "npx jsr publish",
-    "ci": "act --container-architecture linux/amd64 -P ubuntu-latest=catthehacker/ubuntu:act-latest",
-    "ci:test": "act -j test --container-architecture linux/amd64 -P ubuntu-latest=catthehacker/ubuntu:act-latest",
-    "ci:lint": "act -j lint --container-architecture linux/amd64 -P ubuntu-latest=catthehacker/ubuntu:act-latest",
+    "ci": "act --container-architecture linux/amd64 -P ubuntu-latest=node:20-bookworm-slim",
+    "ci:test": "act -j test --container-architecture linux/amd64 -P ubuntu-latest=node:20-bookworm-slim",
+    "ci:lint": "act -j lint --container-architecture linux/amd64 -P ubuntu-latest=node:20-bookworm-slim",
     "ci:list": "act -l",
     "ci:dry-run": "act -n"
-  },
-  "keywords": [
-    "functional-programming",
-    "fp",
-    "utilities",
-    "typescript",
-    "remeda",
-    "result",
-    "option",
-    "either",
-    "async",
-    "validation",
-    "predicates",
-    "collection",
-    "lens",
-    "memoization",
-    "type-safe",
-    "error-handling"
-  ],
-  "dependencies": {
-    "remeda": "^2.19.1"
-  },
-  "peerDependencies": {
-    "typescript": ">=5.0.0",
-    "vitest": "^1.0.0 || ^2.0.0",
-    "fast-check": "^4.0.0"
-  },
-  "peerDependenciesMeta": {
-    "vitest": {
-      "optional": true
-    },
-    "fast-check": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@nx/js": "^22.4.4",

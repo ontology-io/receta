@@ -21,7 +21,7 @@ import {
   byBoolean,
   caseInsensitive,
   type Comparator
-} from '../src/compare'
+} from '@ontologyio/receta/compare'
 
 console.log('=== Example 1: Basic Sorting ===\n')
 

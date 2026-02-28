@@ -24,7 +24,7 @@ import {
   isString,
   isNumber,
   isDefined,
-} from '../src/predicate'
+} from '@ontologyio/receta/predicate'
 
 console.log('=== Example 1: Basic Comparisons ===\n')
 

@@ -5,9 +5,9 @@
  */
 
 import * as R from 'remeda'
-import * as N from '../src/number'
-import { isOk, unwrapOr } from '../src/result'
-import { unwrapOr as optionUnwrapOr } from '../src/option'
+import * as N from '@ontologyio/receta/number'
+import { isOk, unwrapOr } from '@ontologyio/receta/result'
+import { unwrapOr as optionUnwrapOr } from '@ontologyio/receta/option'
 
 console.log('=== Number Module Examples ===\n')
 

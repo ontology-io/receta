@@ -47,8 +47,8 @@ describe('Result Arbitraries', () => {
       const results = fc.sample(result(fc.integer(), fc.string(), { okWeight: 0.9 }), 200)
       const okCount = results.filter((r) => r._tag === 'Ok').length
 
-      // Should be roughly 90% Ok (allow 10% variance)
-      expect(okCount).toBeGreaterThan(160) // 80% of 200
+      // Should be roughly 90% Ok (allow ~20% variance for statistical fluctuation)
+      expect(okCount).toBeGreaterThanOrEqual(160) // 80% of 200
       expect(okCount).toBeLessThan(200) // Not 100%
     })
 

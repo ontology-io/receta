@@ -24,7 +24,6 @@ export default [
       'scripts/**',
       '*.config.js',
       '*.config.mjs',
-      'packages/**',
       '.nx/**',
     ],
   },

@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "description": "Configuration for monorepo packages - single source of truth for release and publishing workflows",
+  "packages": [
+    {
+      "name": "@ontologyio/receta",
+      "path": "packages/receta",
+      "releaseKey": "receta",
+      "registries": {
+        "npm": {
+          "enabled": true,
+          "access": "public"
+        },
+        "jsr": {
+          "enabled": true,
+          "name": "@ontologyio/receta"
+        },
+        "github": {
+          "enabled": true,
+          "name": "@ontologyio/receta"
+        }
+      }
+    },
+    {
+      "name": "@ontologyio/receta-testing",
+      "path": "packages/receta-testing",
+      "releaseKey": "receta_testing",
+      "registries": {
+        "npm": {
+          "enabled": true,
+          "access": "public"
+        },
+        "jsr": {
+          "enabled": true,
+          "name": "@ontologyio/receta-testing"
+        },
+        "github": {
+          "enabled": true,
+          "name": "@ontologyio/receta-testing"
+        }
+      }
+    },
+    {
+      "name": "@ontologyio/eslint-plugin-receta",
+      "path": "packages/eslint-plugin-receta",
+      "releaseKey": "eslint_plugin_receta",
+      "registries": {
+        "npm": {
+          "enabled": true,
+          "access": "public"
+        },
+        "jsr": {
+          "enabled": true,
+          "name": "@receta/eslint-plugin"
+        },
+        "github": {
+          "enabled": true,
+          "name": "@ontologyio/eslint-plugin-receta"
+        }
+      }
+    }
+  ]
+}

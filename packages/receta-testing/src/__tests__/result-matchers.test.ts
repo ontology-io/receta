@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'bun:test'
-import { ok, err } from '../../result'
+import { ok, err } from '@ontologyio/receta/result'
 import { resultMatchers } from '../matchers/result'
 
 // Extend expect with Result matchers

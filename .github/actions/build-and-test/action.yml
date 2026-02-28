@@ -1,0 +1,23 @@
+name: Build and Test Packages
+description: Build, type-check, and test all packages in the monorepo
+
+outputs:
+  build-success:
+    description: Whether the build succeeded
+    value: ${{ steps.build.outcome == 'success' }}
+
+runs:
+  using: composite
+  steps:
+    - name: Build all packages
+      id: build
+      shell: bash
+      run: bunx nx run-many --target=build --all
+
+    - name: Type check all packages
+      shell: bash
+      run: bunx nx run-many --target=typecheck --all
+
+    - name: Run tests for all packages
+      shell: bash
+      run: bunx nx run-many --target=test --all

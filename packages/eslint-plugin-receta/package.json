@@ -1,0 +1,71 @@
+{
+  "name": "@ontologyio/eslint-plugin-receta",
+  "version": "0.1.0",
+  "description": "ESLint plugin to enforce Receta/Remeda-first functional programming patterns with autofix support",
+  "author": "Khaled Maher",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/khaledmaher/receta.git",
+    "directory": "packages/eslint-plugin-receta"
+  },
+  "bugs": {
+    "url": "https://github.com/khaledmaher/receta/issues"
+  },
+  "homepage": "https://github.com/khaledmaher/receta#readme",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "eslint-plugin",
+    "receta",
+    "remeda",
+    "functional-programming",
+    "fp",
+    "autofix",
+    "typescript"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@typescript-eslint/utils": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@typescript-eslint/parser": "^8.20.0",
+    "@typescript-eslint/rule-tester": "^8.20.0",
+    "eslint": "^9.18.0",
+    "typescript": "^5.7.3"
+  },
+  "peerDependencies": {
+    "eslint": "^8.0.0 || ^9.0.0",
+    "typescript": ">=5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
