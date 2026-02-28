@@ -5,7 +5,7 @@ import {
   extractChainedMethods,
   isChainableArrayMethod,
   generateImportStatement,
-} from '../utils/ast-helpers'
+} from '../utils/ast-helpers.js'
 
 const createRule = ESLintUtils.RuleCreator(
   name => `https://github.com/khaledmaher/receta/blob/main/packages/eslint-plugin-receta/docs/rules/${name}.md`

@@ -1,6 +1,6 @@
 import { ESLintUtils } from '@typescript-eslint/utils'
 import type { TSESTree } from '@typescript-eslint/utils'
-import { isNullableReturnType, generateImportStatement } from '../utils/ast-helpers'
+import { isNullableReturnType, generateImportStatement } from '../utils/ast-helpers.js'
 
 const createRule = ESLintUtils.RuleCreator(
   name => `https://github.com/khaledmaher/receta/blob/main/packages/eslint-plugin-receta/docs/rules/${name}.md`

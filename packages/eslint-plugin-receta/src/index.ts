@@ -1,6 +1,6 @@
-import preferResultOverTryCatch from './rules/prefer-result-over-try-catch'
-import preferOptionOverNull from './rules/prefer-option-over-null'
-import preferPipeComposition from './rules/prefer-pipe-composition'
+import preferResultOverTryCatch from './rules/prefer-result-over-try-catch.js'
+import preferOptionOverNull from './rules/prefer-option-over-null.js'
+import preferPipeComposition from './rules/prefer-pipe-composition.js'
 
 const plugin = {
   meta: {
