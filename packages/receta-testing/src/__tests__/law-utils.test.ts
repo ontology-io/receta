@@ -6,10 +6,10 @@
  */
 
 import { describe } from 'bun:test'
-import { ok } from '../../result'
-import { some } from '../../option'
-import * as Result from '../../result'
-import * as Option from '../../option'
+import { ok } from '@ontologyio/receta/result'
+import { some } from '@ontologyio/receta/option'
+import * as Result from '@ontologyio/receta/result'
+import * as Option from '@ontologyio/receta/option'
 import { testFunctorLaws } from '../laws/functor'
 import { testMonadLaws } from '../laws/monad'
 

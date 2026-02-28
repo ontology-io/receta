@@ -1,11 +1,26 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "release-type": "node",
   "packages": {
-    ".": {
-      "package-name": "receta",
+    "packages/receta": {
+      "package-name": "@ontologyio/receta",
       "changelog-path": "CHANGELOG.md",
-      "include-component-in-tag": false
+      "release-type": "node",
+      "include-component-in-tag": true,
+      "tag-separator": "@"
+    },
+    "packages/receta-testing": {
+      "package-name": "@ontologyio/receta-testing",
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node",
+      "include-component-in-tag": true,
+      "tag-separator": "@"
+    },
+    "packages/eslint-plugin-receta": {
+      "package-name": "@ontologyio/eslint-plugin-receta",
+      "changelog-path": "CHANGELOG.md",
+      "release-type": "node",
+      "include-component-in-tag": true,
+      "tag-separator": "@"
     }
   },
   "bump-minor-pre-major": true,

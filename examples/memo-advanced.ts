@@ -4,7 +4,7 @@
  * Demonstrates advanced memoization patterns for real-world scenarios.
  */
 
-import { memoize, memoizeBy, memoizeAsync, ttlCache, lruCache } from '../src/memo'
+import { memoize, memoizeBy, memoizeAsync, ttlCache, lruCache } from '@ontologyio/receta/memo'
 
 // ============================================================================
 // Example 1: API Client with TTL Cache

@@ -15,8 +15,15 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
-      tag_name: ${{ steps.release.outputs.tag_name }}
+      # Dynamic outputs for each package
+      receta_release_created: ${{ steps.release.outputs['packages/receta--release_created'] }}
+      receta_tag_name: ${{ steps.release.outputs['packages/receta--tag_name'] }}
+      receta_testing_release_created: ${{ steps.release.outputs['packages/receta-testing--release_created'] }}
+      receta_testing_tag_name: ${{ steps.release.outputs['packages/receta-testing--tag_name'] }}
+      eslint_plugin_receta_release_created: ${{ steps.release.outputs['packages/eslint-plugin-receta--release_created'] }}
+      eslint_plugin_receta_tag_name: ${{ steps.release.outputs['packages/eslint-plugin-receta--tag_name'] }}
+      # Flag if any package was released
+      any_release_created: ${{ steps.release.outputs['packages/receta--release_created'] == 'true' || steps.release.outputs['packages/receta-testing--release_created'] == 'true' || steps.release.outputs['packages/eslint-plugin-receta--release_created'] == 'true' }}
 
     steps:
       - name: Run Release Please
@@ -27,84 +34,139 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
+  # Publish to npm (requires build and tests)
   publish-npm:
     name: Publish to npm
     needs: release-please
-    if: ${{ needs.release-please.outputs.release_created }}
+    if: needs.release-please.outputs.any_release_created == 'true'
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
       id-token: write
 
+    strategy:
+      matrix:
+        package:
+          - name: '@ontologyio/receta'
+            path: 'packages/receta'
+            release_flag: receta_release_created
+            tag: receta_tag_name
+          - name: '@ontologyio/receta-testing'
+            path: 'packages/receta-testing'
+            release_flag: receta_testing_release_created
+            tag: receta_testing_tag_name
+          - name: '@ontologyio/eslint-plugin-receta'
+            path: 'packages/eslint-plugin-receta'
+            release_flag: eslint_plugin_receta_release_created
+            tag: eslint_plugin_receta_tag_name
+
     steps:
+      - name: Check if package was released
+        id: should_publish
+        run: |
+          if [[ "${{ needs.release-please.outputs[matrix.package.release_flag] }}" == "true" ]]; then
+            echo "publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "publish=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout code
+        if: steps.should_publish.outputs.publish == 'true'
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup build environment
+        if: steps.should_publish.outputs.publish == 'true'
+        uses: ./.github/actions/setup-build-env
         with:
-          node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - name: Build and test
+        if: steps.should_publish.outputs.publish == 'true'
+        uses: ./.github/actions/build-and-test
+
+      - name: Publish to npm
+        if: steps.should_publish.outputs.publish == 'true'
+        uses: ./.github/actions/publish-package
         with:
-          bun-version: latest
-          no-cache: true
+          package-path: ${{ matrix.package.path }}
+          package-name: ${{ matrix.package.name }}
+          registry: 'npm'
+          access: 'public'
+          auth-token: ${{ secrets.NPM_TOKEN }}
 
-      - name: Install dependencies
-        run: bun install
-
-      - name: Build all packages
-        run: bunx nx run-many --target=build --all
-
-      - name: Type check
-        run: bunx nx run-many --target=typecheck --all
-
-      - name: Run tests
-        run: bunx nx run-many --target=test --all
-
-      - name: Publish receta to npm
-        run: npm publish --access public
-
-      - name: Summary
+      - name: Add to summary
+        if: steps.should_publish.outputs.publish == 'true'
         run: |
-          echo "## Published to npm" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ receta@${{ needs.release-please.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Published ${{ matrix.package.name }}@${{ needs.release-please.outputs[matrix.package.tag] }} to npm" >> $GITHUB_STEP_SUMMARY
 
+  # Publish to JSR (Deno) - no build needed
   publish-jsr:
-    name: Publish to JSR (Deno)
+    name: Publish to JSR
     needs: release-please
-    if: ${{ needs.release-please.outputs.release_created }}
+    if: needs.release-please.outputs.any_release_created == 'true'
     runs-on: ubuntu-latest
 
     permissions:
       contents: read
       id-token: write
 
+    strategy:
+      matrix:
+        package:
+          - name: '@ontologyio/receta'
+            path: 'packages/receta'
+            release_flag: receta_release_created
+            tag: receta_tag_name
+          - name: '@ontologyio/receta-testing'
+            path: 'packages/receta-testing'
+            release_flag: receta_testing_release_created
+            tag: receta_testing_tag_name
+          - name: '@receta/eslint-plugin'
+            path: 'packages/eslint-plugin-receta'
+            release_flag: eslint_plugin_receta_release_created
+            tag: eslint_plugin_receta_tag_name
+
     steps:
+      - name: Check if package was released
+        id: should_publish
+        run: |
+          if [[ "${{ needs.release-please.outputs[matrix.package.release_flag] }}" == "true" ]]; then
+            echo "publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "publish=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout code
+        if: steps.should_publish.outputs.publish == 'true'
         uses: actions/checkout@v4
 
       - name: Setup Bun
+        if: steps.should_publish.outputs.publish == 'true'
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
           no-cache: true
 
       - name: Publish to JSR
-        run: npx jsr publish --allow-dirty
+        if: steps.should_publish.outputs.publish == 'true'
+        uses: ./.github/actions/publish-package
+        with:
+          package-path: ${{ matrix.package.path }}
+          package-name: ${{ matrix.package.name }}
+          registry: 'jsr'
+          auth-token: 'not-needed'
 
-      - name: Summary
+      - name: Add to summary
+        if: steps.should_publish.outputs.publish == 'true'
         run: |
-          echo "## Published to JSR" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ @receta/receta@${{ needs.release-please.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Published ${{ matrix.package.name }}@${{ needs.release-please.outputs[matrix.package.tag] }} to JSR" >> $GITHUB_STEP_SUMMARY
 
+  # Publish to GitHub Packages (requires build)
   publish-github:
     name: Publish to GitHub Packages
     needs: release-please
-    if: ${{ needs.release-please.outputs.release_created }}
+    if: needs.release-please.outputs.any_release_created == 'true'
     runs-on: ubuntu-latest
 
     permissions:
@@ -112,39 +174,57 @@ jobs:
       packages: write
       id-token: write
 
+    strategy:
+      matrix:
+        package:
+          - name: '@ontologyio/receta'
+            path: 'packages/receta'
+            release_flag: receta_release_created
+            tag: receta_tag_name
+          - name: '@ontologyio/receta-testing'
+            path: 'packages/receta-testing'
+            release_flag: receta_testing_release_created
+            tag: receta_testing_tag_name
+          - name: '@ontologyio/eslint-plugin-receta'
+            path: 'packages/eslint-plugin-receta'
+            release_flag: eslint_plugin_receta_release_created
+            tag: eslint_plugin_receta_tag_name
+
     steps:
+      - name: Check if package was released
+        id: should_publish
+        run: |
+          if [[ "${{ needs.release-please.outputs[matrix.package.release_flag] }}" == "true" ]]; then
+            echo "publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "publish=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout code
+        if: steps.should_publish.outputs.publish == 'true'
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup build environment
+        if: steps.should_publish.outputs.publish == 'true'
+        uses: ./.github/actions/setup-build-env
         with:
-          node-version: '20'
           registry-url: 'https://npm.pkg.github.com'
-          scope: '@ontology-io'
+          scope: '@ontologyio'
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
-          no-cache: true
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Build all packages
+      - name: Build packages
+        if: steps.should_publish.outputs.publish == 'true'
         run: bunx nx run-many --target=build --all
 
-      - name: Update package name for GitHub Packages
-        run: |
-          sed -i 's/"name": "receta"/"name": "@ontology-io\/receta"/' package.json
-
       - name: Publish to GitHub Packages
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.should_publish.outputs.publish == 'true'
+        uses: ./.github/actions/publish-package
+        with:
+          package-path: ${{ matrix.package.path }}
+          package-name: ${{ matrix.package.name }}
+          registry: 'github'
+          auth-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Summary
+      - name: Add to summary
+        if: steps.should_publish.outputs.publish == 'true'
         run: |
-          echo "## Published to GitHub Packages" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ @ontology-io/receta@${{ needs.release-please.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Published ${{ matrix.package.name }}@${{ needs.release-please.outputs[matrix.package.tag] }} to GitHub Packages" >> $GITHUB_STEP_SUMMARY

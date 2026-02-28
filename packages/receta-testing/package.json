@@ -1,0 +1,57 @@
+{
+  "name": "@ontologyio/receta-testing",
+  "version": "0.1.0",
+  "description": "Testing utilities for @ontologyio/receta — matchers, law testers, and fast-check arbitraries",
+  "author": "Khaled Maher",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/khaledmaher/receta.git",
+    "directory": "packages/receta-testing"
+  },
+  "bugs": {
+    "url": "https://github.com/khaledmaher/receta/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./matchers": {
+      "import": "./dist/matchers/index.js",
+      "types": "./dist/matchers/index.d.ts"
+    },
+    "./laws": {
+      "import": "./dist/laws/index.js",
+      "types": "./dist/laws/index.d.ts"
+    },
+    "./arbitraries": {
+      "import": "./dist/arbitraries/index.js",
+      "types": "./dist/arbitraries/index.d.ts"
+    }
+  },
+  "peerDependencies": {
+    "@ontologyio/receta": "*",
+    "vitest": ">=1.0.0",
+    "fast-check": ">=4.0.0"
+  },
+  "devDependencies": {
+    "@ontologyio/receta": "workspace:*",
+    "fast-check": "^4.5.3",
+    "vitest": "^2.1.9"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

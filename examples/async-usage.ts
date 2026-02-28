@@ -16,7 +16,7 @@ import {
   debounce,
   throttle,
   sleep,
-} from '../src/async'
+} from '@ontologyio/receta/async'
 
 console.log('=== Async Module Examples ===\n')
 
@@ -267,8 +267,8 @@ console.log()
 console.log('Example 10: Result + Async Composition Pattern')
 console.log('-----------------------------------------------')
 
-import { isOk, isErr, unwrapOr, mapErr } from '../src/result'
-import * as Result from '../src/result'
+import { isOk, isErr, unwrapOr, mapErr } from '@ontologyio/receta/result'
+import * as Result from '@ontologyio/receta/result'
 import * as R from 'remeda'
 
 interface User {
@@ -340,7 +340,7 @@ console.log()
 console.log('Example 11: Predicate Integration in Retry Logic')
 console.log('------------------------------------------------')
 
-import { lt as predicateLt } from '../src/predicate'
+import { lt as predicateLt } from '@ontologyio/receta/predicate'
 
 class NetworkError extends Error {
   constructor(message: string) {
@@ -400,7 +400,7 @@ console.log()
 console.log('Example 12: Complex Async Pipeline with Result and Predicates')
 console.log('--------------------------------------------------------------')
 
-import { gte, between } from '../src/predicate'
+import { gte, between } from '@ontologyio/receta/predicate'
 
 interface Product {
   id: number

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'bun:test'
-import { some, none } from '../../option'
+import { some, none } from '@ontologyio/receta/option'
 import { optionMatchers } from '../matchers/option'
 
 // Extend expect with Option matchers

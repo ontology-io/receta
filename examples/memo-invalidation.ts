@@ -11,7 +11,7 @@ import {
   invalidateMany,
   invalidateWhere,
   invalidateAll,
-} from '../src/memo'
+} from '@ontologyio/receta/memo'
 
 // ============================================================================
 // Example 1: Batch Update with invalidateMany

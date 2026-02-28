@@ -1,0 +1,120 @@
+{
+  "name": "@ontologyio/receta",
+  "version": "0.3.2",
+  "description": "Practical FP recipes built on Remeda — higher-level patterns for real-world TypeScript applications",
+  "author": "Khaled Maher",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/khaledmaher/receta.git",
+    "directory": "packages/receta"
+  },
+  "bugs": {
+    "url": "https://github.com/khaledmaher/receta/issues"
+  },
+  "homepage": "https://github.com/khaledmaher/receta#readme",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./result": {
+      "import": "./dist/result/index.js",
+      "types": "./dist/result/index.d.ts"
+    },
+    "./option": {
+      "import": "./dist/option/index.js",
+      "types": "./dist/option/index.d.ts"
+    },
+    "./async": {
+      "import": "./dist/async/index.js",
+      "types": "./dist/async/index.d.ts"
+    },
+    "./predicate": {
+      "import": "./dist/predicate/index.js",
+      "types": "./dist/predicate/index.d.ts"
+    },
+    "./validation": {
+      "import": "./dist/validation/index.js",
+      "types": "./dist/validation/index.d.ts"
+    },
+    "./collection": {
+      "import": "./dist/collection/index.js",
+      "types": "./dist/collection/index.d.ts"
+    },
+    "./object": {
+      "import": "./dist/object/index.js",
+      "types": "./dist/object/index.d.ts"
+    },
+    "./string": {
+      "import": "./dist/string/index.js",
+      "types": "./dist/string/index.d.ts"
+    },
+    "./number": {
+      "import": "./dist/number/index.js",
+      "types": "./dist/number/index.d.ts"
+    },
+    "./memo": {
+      "import": "./dist/memo/index.js",
+      "types": "./dist/memo/index.d.ts"
+    },
+    "./lens": {
+      "import": "./dist/lens/index.js",
+      "types": "./dist/lens/index.d.ts"
+    },
+    "./compare": {
+      "import": "./dist/compare/index.js",
+      "types": "./dist/compare/index.d.ts"
+    },
+    "./function": {
+      "import": "./dist/function/index.js",
+      "types": "./dist/function/index.d.ts"
+    }
+  },
+  "keywords": [
+    "functional-programming",
+    "fp",
+    "utilities",
+    "typescript",
+    "remeda",
+    "result",
+    "option",
+    "either",
+    "async",
+    "validation",
+    "predicates",
+    "collection",
+    "lens",
+    "memoization",
+    "type-safe",
+    "error-handling"
+  ],
+  "dependencies": {
+    "remeda": "^2.19.1"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

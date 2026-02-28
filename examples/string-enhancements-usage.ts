@@ -18,7 +18,7 @@ import {
   normalizeWhitespace,
   initials,
   highlight,
-} from '../src/string'
+} from '@ontologyio/receta/string'
 
 console.log('=== String Module Enhancements Examples ===\n')
 

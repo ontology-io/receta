@@ -12,9 +12,9 @@
  */
 
 import * as R from 'remeda'
-import * as Obj from '../src/object'
-import { isOk, isErr } from '../src/result'
-import { isSome, unwrapOr } from '../src/option'
+import * as Obj from '@ontologyio/receta/object'
+import { isOk, isErr } from '@ontologyio/receta/result'
+import { isSome, unwrapOr } from '@ontologyio/receta/option'
 
 console.log('='.repeat(60))
 console.log('Object Module Usage Examples')

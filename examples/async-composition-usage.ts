@@ -10,8 +10,8 @@ import {
   extractFulfilled,
   extractRejected,
   toResults,
-} from '../src/async'
-import { map, unwrapOr, partition } from '../src/result'
+} from '@ontologyio/receta/async'
+import { map, unwrapOr, partition } from '@ontologyio/receta/result'
 
 // ============================================================================
 // Example 1: pipeAsync - Sequential API data pipeline

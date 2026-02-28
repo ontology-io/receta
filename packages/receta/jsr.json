@@ -1,6 +1,6 @@
 {
-  "version": "0.3.0",
   "name": "@ontologyio/receta",
+  "version": "0.3.2",
   "license": "MIT",
   "exports": {
     "./result": "./src/result/index.ts",
@@ -15,28 +15,14 @@
     "./memo": "./src/memo/index.ts",
     "./lens": "./src/lens/index.ts",
     "./compare": "./src/compare/index.ts",
-    "./function": "./src/function/index.ts",
-    "./testing": "./src/testing/index.ts",
-    "./testing/matchers": "./src/testing/matchers/index.ts",
-    "./testing/laws": "./src/testing/laws/index.ts",
-    "./testing/arbitraries": "./src/testing/arbitraries/index.ts"
+    "./function": "./src/function/index.ts"
   },
   "publish": {
     "exclude": [
       "node_modules",
       "dist",
       "**/*.test.ts",
-      "**/__tests__",
-      ".github",
-      "docs-site",
-      "scripts",
-      "examples",
-      ".nx",
-      "nx.json",
-      "package.json",
-      "bun.lockb",
-      "*.config.js",
-      "*.config.ts"
+      "**/__tests__"
     ]
   }
 }

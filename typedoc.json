@@ -1,6 +1,6 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["src"],
+  "entryPoints": ["packages/receta/src", "packages/receta-testing/src"],
   "entryPointStrategy": "expand",
   "out": "docs-temp",
   "plugin": ["typedoc-plugin-markdown"],

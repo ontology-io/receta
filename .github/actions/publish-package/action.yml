@@ -1,0 +1,53 @@
+name: Publish Package to Registry
+description: Publish a single package to npm, JSR, or GitHub Packages
+
+inputs:
+  package-path:
+    description: Path to the package directory (e.g., packages/receta)
+    required: true
+
+  package-name:
+    description: Package name for display (e.g., @ontologyio/receta)
+    required: true
+
+  registry:
+    description: Target registry (npm, jsr, or github)
+    required: true
+
+  access:
+    description: npm access level (public or restricted)
+    required: false
+    default: 'public'
+
+  auth-token:
+    description: Authentication token for the registry
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Publish to npm
+      if: inputs.registry == 'npm'
+      shell: bash
+      working-directory: ${{ inputs.package-path }}
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.auth-token }}
+      run: npm publish --access ${{ inputs.access }}
+
+    - name: Publish to JSR
+      if: inputs.registry == 'jsr'
+      shell: bash
+      working-directory: ${{ inputs.package-path }}
+      run: npx jsr publish --allow-dirty
+
+    - name: Publish to GitHub Packages
+      if: inputs.registry == 'github'
+      shell: bash
+      working-directory: ${{ inputs.package-path }}
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.auth-token }}
+      run: npm publish
+
+    - name: Log success
+      shell: bash
+      run: echo "✅ Published ${{ inputs.package-name }} to ${{ inputs.registry }}"

@@ -19,8 +19,8 @@ import {
   partition,
   toResult,
   type Option,
-} from '../src/option'
-import { ok, err } from '../src/result'
+} from '@ontologyio/receta/option'
+import { ok, err } from '@ontologyio/receta/result'
 
 console.log('=== Example 1: Basic Option Construction ===\n')
 

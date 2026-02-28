@@ -35,9 +35,9 @@ import {
   lines,
   between,
   extract,
-} from '../src/string'
-import { isSome, unwrapOr } from '../src/option'
-import { isOk } from '../src/result'
+} from '@ontologyio/receta/string'
+import { isSome, unwrapOr } from '@ontologyio/receta/option'
+import { isOk } from '@ontologyio/receta/result'
 
 console.log('=== Example 1: Blog Post URL Slugs ===\n')
 

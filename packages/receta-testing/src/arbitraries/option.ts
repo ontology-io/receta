@@ -5,7 +5,7 @@
  */
 
 import * as fc from 'fast-check'
-import type { Option } from '../../option/types'
+import type { Option } from '@ontologyio/receta/option'
 import type { OptionArbitraryConfig } from './types'
 
 /**
