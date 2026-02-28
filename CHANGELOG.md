@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3](https://github.com/ontology-io/receta/compare/v0.3.2...v0.3.3) (2026-02-28)
+
+
+### Bug Fixes
+
+* arbitrary testing with random seed ([5b67d22](https://github.com/ontology-io/receta/commit/5b67d221698bd313f7f8cacc2194ef89108d4b21))
+* github action publishing with trusted publishing ([3e60859](https://github.com/ontology-io/receta/commit/3e6085914689553b9cc822fe9a75e1936cb0e893))
+
 ## [0.3.2](https://github.com/ontology-io/receta/compare/v0.3.1...v0.3.2) (2026-02-24)
 
 
