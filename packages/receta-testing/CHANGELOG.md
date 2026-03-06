@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/ontology-io/receta/compare/receta-testing@v0.1.1...receta-testing@v0.1.2) (2026-03-06)
+
+
+### Bug Fixes
+
+* arbitrary testing uncertainity for receta-testing package ([92b6fbb](https://github.com/ontology-io/receta/commit/92b6fbbc285a5e81aa741856a791ac212a7dc9d9))
+
 ## [0.1.1](https://github.com/ontology-io/receta/compare/receta-testing@v0.1.0...receta-testing@v0.1.1) (2026-02-28)
 
 
