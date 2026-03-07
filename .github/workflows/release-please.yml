@@ -8,6 +8,8 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  id-token: write
+  packages: write
 
 jobs:
   release-please:
@@ -57,6 +59,10 @@ jobs:
     needs: release-please
     if: needs.release-please.outputs.any_release_created == 'true'
     uses: ./.github/workflows/publish.yml
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
     with:
       registry: 'all'
       packages: ${{ needs.release-please.outputs.packages_list }}
