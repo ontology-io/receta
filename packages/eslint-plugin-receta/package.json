@@ -1,6 +1,6 @@
 {
   "name": "@ontologyio/eslint-plugin-receta",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "ESLint plugin to enforce Receta/Remeda-first functional programming patterns with autofix support",
   "author": "Khaled Maher",
   "license": "MIT",

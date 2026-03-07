@@ -1,6 +1,6 @@
 {
   "name": "@ontologyio/receta-testing",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Testing utilities for @ontologyio/receta — matchers, law testers, and fast-check arbitraries",
   "author": "Khaled Maher",
   "license": "MIT",

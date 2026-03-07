@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/ontology-io/receta/compare/receta-testing@v0.1.2...receta-testing@v0.1.3) (2026-03-07)
+
+
+### Bug Fixes
+
+* repository url ([22d1b70](https://github.com/ontology-io/receta/commit/22d1b7046529bb1735ff08b2f3c71b9f2be5f20a))
+
 ## [0.1.2](https://github.com/ontology-io/receta/compare/receta-testing@v0.1.1...receta-testing@v0.1.2) (2026-03-06)
 
 
