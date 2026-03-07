@@ -1,76 +1,259 @@
 # Function Categorization Framework
 
-> An ontological lens for understanding receta's ~240+ functions through three fundamental concerns.
-
-## The Three Categories
-
-Every function in receta addresses one (or more) of three fundamental computational concerns:
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│                                                              │
-│   STRUCTURE          MOTION            PERSISTENCE           │
-│   ─────────          ──────            ───────────           │
-│   The "what"         The "how"         The "where/when"      │
-│                                                              │
-│   Creating &         Speed,            Storage,              │
-│   transforming       throughput,        capacity,             │
-│   data shapes        concurrency,       maps of motion        │
-│                      paths & flow       & structure           │
-│                                                              │
-│   ┌─────┐            ┌─────┐           ┌─────┐              │
-│   │ { } │ ──────────►│ ≋≋≋ │──────────►│ ▤▤▤ │              │
-│   └─────┘            └─────┘           └─────┘              │
-│   Form               Flow              Storage               │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
-```
-
-### Structure — The "What"
-
-**Concern**: Creating, mutating, and constraining data shapes.
-
-Structure functions define *what* data looks like. They construct values, transform shapes, validate forms, and establish invariants. Structure is about the geometry of data — its type, its fields, its relationships.
-
-| Aspect | Description |
-|--------|-------------|
-| Construction | Creating typed values (`ok`, `some`, `valid`) |
-| Transformation | Changing shape without changing identity (`map`, `flatMap`, `flatten`) |
-| Constraint | Defining what's valid (`where`, `gt`, `schema`, type guards) |
-| Decomposition | Breaking structures apart (`unwrap`, `match`, `partition`) |
-| Projection | Viewing parts of structures (`view`, `getPath`, `prop`) |
-
-### Motion — The "How"
-
-**Concern**: Speed, throughput, concurrency, paths, and liquidity of structures.
-
-Motion functions define *how* data moves. They control timing, parallelism, error recovery paths, and the flow of values through pipelines. Motion is about the dynamics of computation — when things happen, how fast, through what channels.
-
-| Aspect | Description |
-|--------|-------------|
-| Concurrency | Parallel execution (`mapAsync`, `parallel`, `batch`) |
-| Timing | When things happen (`debounce`, `throttle`, `sleep`, `timeout`) |
-| Recovery | Error paths and retry strategies (`retry`, `tryCatch`, `poll`) |
-| Composition | Sequencing operations (`pipeAsync`, `sequential`, `compose`) |
-| Liquidity | Converting between forms in flight (`toResult`, `fromNullable`) |
-
-### Persistence — The "Where/When"
-
-**Concern**: Storage, capacity, maps of motion and structure.
-
-Persistence functions define *where* data lives and *when* it expires. They manage caches, indexes, pagination windows, and capacity limits. Persistence is about the statics of data — how it's stored, retrieved, and evicted.
-
-| Aspect | Description |
-|--------|-------------|
-| Caching | Storing computed results (`memoize`, `ttlCache`, `lruCache`) |
-| Indexing | Fast lookup structures (`indexByUnique`, `nest`, `groupByPath`) |
-| Pagination | Windowed access to collections (`paginate`, `paginateCursor`) |
-| Capacity | Managing size limits (`lruCache`, `truncate`, `clamp`) |
-| Invalidation | Expiring stored data (`clearCache`, `invalidateMany`, `invalidateWhere`) |
+> A universal ontological lens for understanding computation through three irreducible concerns: **Structure**, **Motion**, and **Persistence**.
 
 ---
 
-## Complete Function Map
+## Part I: The Ontology
+
+### The Triadic Nature of Computation
+
+Every computation — from a single function call to a distributed system — addresses three fundamental concerns. These are not design choices or architectural preferences. They are **irreducible**: you cannot compute without all three, and each exists only in relation to the other two.
+
+```
+                        ╭─────────────╮
+                        │  STRUCTURE  │
+                        │  The "what" │
+                        │             │
+                        │  Form       │
+                        │  Shape      │
+                        │  Constraint │
+                        ╰──────┬──────╯
+                               │
+                     ┌─────────┼─────────┐
+                     │         │         │
+                     │    The Trinity    │
+                     │   (emergence)     │
+                     │         │         │
+              ╭──────┴──────╮  │  ╭──────┴──────╮
+              │   MOTION    │  │  │ PERSISTENCE │
+              │  The "how"  │  │  │ The "where" │
+              │             │  │  │             │
+              │  Flow       │──┘  │  Storage    │
+              │  Speed      │─────│  Capacity   │
+              │  Path       │     │  Memory     │
+              ╰─────────────╯     ╰─────────────╯
+```
+
+**Structure** is the geometry of data — *what* exists. Types, fields, shapes, constraints, invariants. A `Result<User, Error>` is a structure. A predicate `age > 18` is a structural constraint. A lens `prop('name')` is a structural accessor. Structure answers: *what is the shape of this thing?*
+
+**Motion** is the dynamics of computation — *how* data moves. Timing, concurrency, paths, branching, error recovery, throughput. An async retry is motion. A pipe composition is motion. A `tryCatch` captures the motion of exceptions into structure. Motion answers: *how does this thing flow?*
+
+**Persistence** is the statics of storage — *where* data lives and *when* it expires. Caches, indexes, pagination windows, capacity limits, invalidation policies. A memoized function is persistence. An LRU cache is persistence. A paginated view is persistence. Persistence answers: *where is this thing kept, and for how long?*
+
+### Why They Are Irreducible
+
+Each category is meaningless without the other two:
+
+- **Structure without Motion** is inert definition — a type that is never instantiated, a schema that is never applied, a building with no doors. You have described *what* but nothing happens.
+
+- **Structure without Persistence** is ephemeral form — a value that exists for one tick and disappears, a sandcastle before the tide. You have shaped *what* but it doesn't last.
+
+- **Motion without Structure** is chaos — data flowing with no type, no constraint, no shape. Wind carrying nothing. You have *how* but not *what*.
+
+- **Motion without Persistence** is amnesia — computation that forgets everything between calls. A river with no banks that floods everywhere. You have *how* but no memory of where.
+
+- **Persistence without Structure** is a junkyard — storage with no schema, a cache with no types. Bytes on disk with no meaning. You have *where* but not *what*.
+
+- **Persistence without Motion** is a sealed vault — data stored perfectly but unreachable. A warehouse with no trucks. You have *where* but no way to get there.
+
+### The Six Dyads
+
+When two categories combine without the third, something specific is missing. Recognizing these dyads reveals what the absent category would provide:
+
+| Dyad | Present | Missing | Result | Analogy |
+|------|---------|---------|--------|---------|
+| **S+M** | Structure + Motion | Persistence | Ephemeral computation — correct but forgetful | Pure functions: perfect transformations that remember nothing |
+| **S+P** | Structure + Persistence | Motion | Frozen archive — stored but immobile | A database with no queries: data exists but can't flow |
+| **M+P** | Motion + Persistence | Structure | Blind caching — flow with memory but no form | Caching raw bytes without knowing what they mean |
+| **S only** | Structure | Motion, Persistence | Type definitions: shapes that do nothing, go nowhere | A blueprint that is never built |
+| **M only** | Motion | Structure, Persistence | Undefined behavior: flow without form or memory | `any` flowing through `Promise.all` with no error handling |
+| **P only** | Persistence | Structure, Motion | Dead storage: capacity with nothing in it, no way to use it | An empty, disconnected hard drive |
+
+### The Trinity — Where Emergence Happens
+
+When all three categories meet in a single abstraction, something qualitatively different emerges. The trinity produces *living* patterns — things that have form, flow, and memory simultaneously:
+
+- **A state machine** has Structure (states and transition definitions), Motion (events trigger transitions), and Persistence (current state is remembered between events).
+
+- **A circuit breaker** has Structure (the open/closed/half-open state enum), Motion (controls whether calls flow through), and Persistence (remembers failure count across calls).
+
+- **A cache with revalidation** has Structure (typed cached values), Motion (background refresh flow), and Persistence (TTL-bounded storage with stale windows).
+
+These trinity patterns are the most powerful because they honor all three concerns. They are also the hardest to implement correctly — which is why they get reimplemented (often poorly) in every project.
+
+---
+
+## Part II: The Liquidity Spectrum
+
+Motion functions vary in how freely they allow data to flow between structural forms. We call this **liquidity** — the ease of conversion at category boundaries.
+
+```
+High Liquidity                                              Low Liquidity
+(frictionless)                                              (forced/lossy)
+     │                                                           │
+     ▼                                                           ▼
+fromNullable ─── toResult ─── map ─── flatMap ─── unwrapOr ─── unwrap ─── orThrow
+     │              │           │         │            │           │          │
+  nullable      Option →     within    chained     with         raw       back to
+  → Option      Result     container   containers  default    extraction  exceptions
+```
+
+**High liquidity** functions convert between forms seamlessly, preserving information:
+- `fromNullable`: nullable world → Option world (no information lost)
+- `toResult`: Option → Result (adds error context)
+- `tryCatch`: exception world → Result world (captures the error)
+
+**Medium liquidity** functions transform within a container:
+- `map`, `flatMap`: change the inner value, keep the container
+- `filter`: may remove values (Option.filter: Some → None)
+
+**Low liquidity** functions force extraction, potentially losing information or failing:
+- `unwrapOr`: extracts with a default (loses the "was it present?" information)
+- `unwrap`: extracts or throws (breaks out of Structure into Motion's exception path)
+- `orThrow`: explicitly converts Result back to exception flow
+
+**Good library design maximizes liquidity.** Every Structure type should have smooth conversion paths to every other Structure type. Gaps in liquidity are where bugs hide — developers write unsafe `as` casts and `!` assertions because the library doesn't provide a liquid path.
+
+### The Liquidity Map of Receta
+
+```
+                    fromNullable
+          nullable ──────────────► Option
+              ▲                       │  ▲
+              │ toNullable            │  │ fromResult
+              │                       │  │
+              │         toResult      ▼  │
+          Result ◄───────────────── Option
+              │  ▲                    │
+              │  │ fromResult         │ (via toResult)
+              │  │                    ▼
+              │  │              Validation
+              ▼  │                    │
+          (throw)│                    │ toResult
+           orThrow                    ▼
+              │                    Result
+              ▼
+          exception flow
+```
+
+Every arrow is a liquidity path. Missing arrows are places where developers must write manual, unsafe conversion code.
+
+---
+
+## Part III: The Computation Cycle
+
+Real programs don't flow linearly through the categories. They **cycle**:
+
+```
+    ╭───────────────────────────────────────────╮
+    │                                           │
+    ▼                                           │
+STRUCTURE ──────► MOTION ──────► PERSISTENCE ───╯
+  define            flow            store
+  shape             transform       remember
+  constrain         branch          index
+                    recover         cache
+    ▲                                           │
+    │                                           │
+    ╰───────────────────────────────────────────╯
+           retrieve, extract, reshape
+```
+
+A concrete example:
+
+```typescript
+// 1. STRUCTURE — define the shape
+const userSchema = schema({ name: isNonEmpty, email: isEmail })
+
+// 2. MOTION — flow data through validation and API call
+const result = await pipeAsync(
+  rawInput,
+  (input) => validate(userSchema, input),        // Structure → Motion
+  (valid) => tryCatchAsync(() => saveUser(valid)), // Motion (can fail)
+)
+
+// 3. PERSISTENCE — cache the result
+const getCachedUser = memoizeAsync(
+  (id) => fetchUser(id),
+  { ttl: 60_000 }
+)
+
+// 4. MOTION — retrieve from cache, flow again
+const user = await retry(() => getCachedUser('123'))
+
+// 5. STRUCTURE — extract final shape
+const name = R.pipe(user, Result.map(u => u.name), Result.unwrapOr('Anonymous'))
+```
+
+**Programs that break the cycle have bugs:**
+- Skip Structure → Motion? Untyped data flows through — runtime crashes.
+- Skip Motion → Persistence? Every call refetches — performance death.
+- Skip Persistence → Structure? Stale data served without revalidation — correctness bugs.
+
+---
+
+## Part IV: Applying the Framework
+
+### Evaluating Any Library or API
+
+The S/M/P framework applies beyond receta. Use it to evaluate any library:
+
+| Library | Structure | Motion | Persistence | Assessment |
+|---------|-----------|--------|-------------|------------|
+| **Zod** | Strong (schemas, parsing) | Weak (no async flow) | None | Pure Structure — needs Motion/Persistence partners |
+| **RxJS** | Weak (loosely typed) | Very strong (operators, scheduling) | Weak (replay subjects) | Pure Motion — needs Structure for type safety |
+| **Redis client** | Weak (string keys/values) | Medium (async commands) | Strong (storage, TTL, eviction) | Pure Persistence — needs Structure for type safety |
+| **Remeda** | Strong (typed transforms) | None (sync only) | None | Pure Structure — receta adds Motion and Persistence |
+| **Receta** | Strong | Strong | Medium | **Balanced, with Persistence as the growth area** |
+
+### Evaluating a System Design
+
+For any system component, ask:
+
+1. **What structures does it define?** (Types, schemas, invariants)
+2. **How does data flow through it?** (Async paths, error handling, concurrency)
+3. **Where does it store state?** (Caches, databases, indexes)
+4. **Are all three connected?** (Liquid paths between S↔M↔P)
+
+If any category is absent or poorly connected, that's where bugs and performance problems will concentrate.
+
+### The Decision Tree for New Functions
+
+```
+Is this function primarily about...
+
+STRUCTURE?
+├── Does it create a new data shape?          → Constructor (ok, some, valid)
+├── Does it transform an existing shape?      → Transformer (map, flatMap, evolve)
+├── Does it constrain what's valid?           → Predicate/Validator (where, schema)
+├── Does it decompose a structure?            → Extractor (unwrap, match, partition)
+└── Does it access part of a structure?       → Projector (view, getPath, prop)
+
+MOTION?
+├── Does it control timing?                   → Timer (debounce, throttle, sleep, timeout)
+├── Does it control concurrency?              → Concurrency (mapAsync, parallel, batch)
+├── Does it handle error paths?               → Recovery (retry, tryCatch, poll)
+├── Does it sequence operations?              → Composer (pipeAsync, sequential, compose)
+└── Does it convert between forms?            → Liquidity (toResult, fromNullable, orThrow)
+
+PERSISTENCE?
+├── Does it store computed results?           → Cache (memoize, ttlCache, lruCache)
+├── Does it create lookup structures?         → Index (indexByUnique, nest, groupByPath)
+├── Does it window into collections?          → Paginator (paginate, paginateCursor)
+├── Does it manage capacity limits?           → Capacity (lruCache, clamp, truncate)
+└── Does it expire stored data?              → Invalidator (clearCache, invalidateWhere)
+
+AT AN INTERSECTION?
+├── Structure ↔ Motion                        → Boundary function (tryCatch, parse*)
+├── Motion ↔ Persistence                      → Stateful flow control (memoize, throttle)
+├── Structure ↔ Persistence                   → Indexed/windowed structure (paginate, nest)
+└── Trinity (all three)                       → Emergent pattern (circuitBreaker, stateMachine)
+```
+
+---
+
+## Part V: Complete Function Map
 
 ### Result Module
 
@@ -78,8 +261,8 @@ Persistence functions define *where* data lives and *when* it expires. They mana
 |----------|----------|-----------|
 | `ok` | **Structure** | Constructs a success value |
 | `err` | **Structure** | Constructs an error value |
-| `tryCatch` | **Motion** | Captures exception flow into Structure |
-| `tryCatchAsync` | **Motion** | Async exception capture path |
+| `tryCatch` | **S↔M** | Captures exception flow into Structure |
+| `tryCatchAsync` | **S↔M** | Async exception capture path |
 | `isOk` | **Structure** | Structural type guard |
 | `isErr` | **Structure** | Structural type guard |
 | `map` | **Structure** | Transforms inner shape |
@@ -94,11 +277,11 @@ Persistence functions define *where* data lives and *when* it expires. They mana
 | `tapErr` | **Motion** | Side-effect on error path |
 | `collect` | **Structure** | Combines multiple Results into one |
 | `partition` | **Structure** | Splits Results by variant |
-| `fromNullable` | **Motion** | Converts nullable flow to Result |
-| `parseJSON` | **Motion** | Parsing path (can fail) |
-| `parseNumber` | **Motion** | Parsing path (can fail) |
-| `parseInt` | **Motion** | Parsing path (can fail) |
-| `orThrow` | **Motion** | Converts Result back to exception flow |
+| `fromNullable` | **S↔M** | Converts nullable flow to Result |
+| `parseJSON` | **S↔M** | Parsing path (can fail) |
+| `parseNumber` | **S↔M** | Parsing path (can fail) |
+| `parseInt` | **S↔M** | Parsing path (can fail) |
+| `orThrow` | **S↔M** | Converts Result back to exception flow |
 
 ### Option Module
 
@@ -106,9 +289,9 @@ Persistence functions define *where* data lives and *when* it expires. They mana
 |----------|----------|-----------|
 | `some` | **Structure** | Constructs a present value |
 | `none` | **Structure** | Constructs an absent value |
-| `fromNullable` | **Motion** | Captures nullable flow into Structure |
-| `fromResult` | **Motion** | Converts between algebraic structures |
-| `tryCatch` | **Motion** | Captures exception flow |
+| `fromNullable` | **S↔M** | Captures nullable flow into Structure |
+| `fromResult` | **S↔M** | Converts between algebraic structures |
+| `tryCatch` | **S↔M** | Captures exception flow |
 | `isSome` | **Structure** | Structural type guard |
 | `isNone` | **Structure** | Structural type guard |
 | `map` | **Structure** | Transforms inner shape |
@@ -123,8 +306,8 @@ Persistence functions define *where* data lives and *when* it expires. They mana
 | `tapNone` | **Motion** | Side-effect on empty path |
 | `collect` | **Structure** | Combines multiple Options |
 | `partition` | **Structure** | Splits by variant |
-| `toResult` | **Motion** | Converts to Result flow |
-| `toNullable` | **Motion** | Converts back to nullable flow |
+| `toResult` | **S↔M** | Converts to Result flow |
+| `toNullable` | **S↔M** | Converts back to nullable flow |
 
 ### Async Module
 
@@ -141,16 +324,16 @@ Persistence functions define *where* data lives and *when* it expires. They mana
 | `retry` | **Motion** | Retry with backoff (recovery path) |
 | `timeout` | **Motion** | Time-bounded execution |
 | `sleep` | **Motion** | Timing control |
-| `poll` | **Motion** | Repeated async checking |
+| `poll` | **M↔P** | Repeated checking with state tracking |
 | `batch` | **Motion** | Batched concurrent execution |
 | `batchOrThrow` | **Motion** | Throwing variant |
-| `debounce` | **Motion** | Rate limiting (timing) |
-| `throttle` | **Motion** | Rate limiting (throughput) |
+| `debounce` | **M↔P** | Uses timer state to control timing |
+| `throttle` | **M↔P** | Uses rate state to control throughput |
 | `pipeAsync` | **Motion** | Async pipeline composition |
 | `promiseAllSettled` | **Motion** | Concurrent settlement |
 | `extractFulfilled` | **Structure** | Extracts fulfilled from settled |
 | `extractRejected` | **Structure** | Extracts rejected from settled |
-| `toResults` | **Motion** | Converts settled to Result flow |
+| `toResults` | **S↔M** | Converts settled to Result flow |
 
 ### Predicate Module
 
@@ -181,29 +364,29 @@ Persistence functions define *where* data lives and *when* it expires. They mana
 | `invalid` | **Structure** | Constructs invalid value with errors |
 | `fromPredicate` | **Structure** | Creates validator from constraint |
 | `fromPredicateWithError` | **Structure** | Validator with typed errors |
-| `fromResult` | **Motion** | Converts from Result flow |
-| `tryCatch`, `tryCatchAsync` | **Motion** | Captures exceptions into validation |
+| `fromResult` | **S↔M** | Converts from Result flow |
+| `tryCatch`, `tryCatchAsync` | **S↔M** | Captures exceptions into validation |
 | `isValid`, `isInvalid` | **Structure** | Structural type guards |
 | `map`, `mapInvalid`, `flatMap`, `flatten` | **Structure** | Transforms validation shape |
-| `collectErrors` | **Structure** | Accumulates errors (Structure of errors) |
+| `collectErrors` | **Structure** | Accumulates errors |
 | `validate`, `validateAll` | **Structure** | Applies constraints |
 | `schema`, `partial` | **Structure** | Object-level constraint definition |
 | `unwrap`, `unwrapOr`, `unwrapOrElse` | **Structure** | Extracts from validation |
 | `match` | **Structure** | Pattern matches |
 | `tap`, `tapInvalid` | **Motion** | Side-effects along validation flow |
-| `toResult`, `toResultWith` | **Motion** | Converts to Result flow |
+| `toResult`, `toResultWith` | **S↔M** | Converts to Result flow |
 | Built-in validators | **Structure** | Pre-built constraints |
 
 ### Collection Module
 
 | Function | Category | Rationale |
 |----------|----------|-----------|
-| `nest` | **Persistence** | Creates hierarchical index |
-| `groupByPath` | **Persistence** | Groups into indexed structure |
+| `nest` | **S↔P** | Builds hierarchical index from flat data |
+| `groupByPath` | **S↔P** | Groups into indexed structure |
 | `diff` | **Structure** | Computes structural difference |
-| `paginate` | **Persistence** | Windowed access |
-| `paginateCursor` | **Persistence** | Cursor-based windowed access |
-| `indexByUnique` | **Persistence** | Creates unique lookup index |
+| `paginate` | **S↔P** | Windowed access to collection |
+| `paginateCursor` | **S↔P** | Cursor-based windowed access |
+| `indexByUnique` | **S↔P** | Creates unique lookup index |
 | `union`, `intersect`, `symmetricDiff` | **Structure** | Set operations on collections |
 | `flatten` | **Structure** | Flattens tree structure |
 | `batchBy` | **Structure** | Groups consecutive elements |
@@ -242,7 +425,7 @@ Persistence functions define *where* data lives and *when* it expires. They mana
 | `slugify` | **Structure** | Transforms to URL shape |
 | `kebabCase`, `snakeCase`, `camelCase`, `pascalCase` | **Structure** | Case transformations |
 | `capitalize`, `titleCase` | **Structure** | Capitalization transformation |
-| `truncate`, `truncateWords` | **Persistence** | Capacity-limited representation |
+| `truncate`, `truncateWords` | **S↔P** | Capacity-limited representation |
 | `pluralize` | **Structure** | Grammatical transformation |
 | `initials` | **Structure** | Abbreviation extraction |
 | `highlight` | **Structure** | Wraps matches in markup |
@@ -259,14 +442,14 @@ Persistence functions define *where* data lives and *when* it expires. They mana
 |----------|----------|-----------|
 | `isInteger`, `isFinite`, `isPositive`, `isNegative` | **Structure** | Numeric constraints |
 | `inRange` | **Structure** | Range constraint |
-| `clamp` | **Persistence** | Capacity-bounded value |
+| `clamp` | **S↔P** | Capacity-bounded value |
 | `format`, `toCurrency`, `toPercent`, `toCompact` | **Structure** | Display shape |
 | `toPrecision`, `toOrdinal` | **Structure** | Display shape |
 | `sum`, `average` | **Structure** | Aggregation |
 | `round`, `roundTo` | **Structure** | Precision transformation |
 | `percentage`, `ratio` | **Structure** | Relational calculation |
-| `fromString`, `fromCurrency`, `parseFormattedNumber` | **Motion** | Parsing path |
-| `toBytes`, `fromBytes` | **Motion** | Unit conversion path |
+| `fromString`, `fromCurrency`, `parseFormattedNumber` | **S↔M** | Parsing path |
+| `toBytes`, `fromBytes` | **S↔M** | Unit conversion path |
 | `random` | **Motion** | Non-deterministic generation |
 | `step` | **Structure** | Step-based rounding |
 | `interpolate`, `normalize` | **Structure** | Range mapping |
@@ -275,9 +458,9 @@ Persistence functions define *where* data lives and *when* it expires. They mana
 
 | Function | Category | Rationale |
 |----------|----------|-----------|
-| `memoize` | **Persistence** | Stores computed results |
-| `memoizeBy` | **Persistence** | Stores with custom key |
-| `memoizeAsync` | **Persistence** | Stores async results |
+| `memoize` | **M↔P** | Stores Motion results in Persistence |
+| `memoizeBy` | **M↔P** | Stores with custom key |
+| `memoizeAsync` | **M↔P** | Stores async results |
 | `ttlCache` | **Persistence** | Time-bounded storage |
 | `lruCache` | **Persistence** | Capacity-bounded storage |
 | `weakCache` | **Persistence** | GC-aware storage |
@@ -331,118 +514,110 @@ Persistence functions define *where* data lives and *when* it expires. They mana
 | `partial`, `partialRight` | **Structure** | Partial application (structural) |
 | `unary`, `binary`, `nAry` | **Structure** | Arity constraints |
 | `tap` | **Motion** | Side-effect in flow |
-| `tryCatch` | **Motion** | Exception capture path |
-| `memoize` | **Persistence** | Result storage |
+| `tryCatch` | **S↔M** | Exception capture path |
+| `memoize` | **M↔P** | Result storage |
 
 ---
 
-## Category Distribution
+## Part VI: Category Distribution
 
 ```
-Structure    ████████████████████████████████████████████  ~60%
-Motion       █████████████████████████                     ~28%
-Persistence  ████████                                      ~12%
+Structure    ████████████████████████████████████████████  ~55%
+S↔M bridges  ██████████                                    ~10%
+Motion       ████████████████████                           ~20%
+M↔P bridges  ████                                           ~5%
+S↔P bridges  ████                                           ~5%
+Persistence  ████████                                       ~5%
+Trinity      ░░░░                                           ~0%  ← THE GAP
 ```
 
-This distribution makes sense — receta is fundamentally a *structural* library (creating and transforming data types). Motion functions enable data flow, and Persistence functions handle caching and indexing.
+This refined view shows receta is well-balanced between pure Structure and pure Motion, with reasonable Persistence. But the **intersection functions** — especially Motion↔Persistence and Trinity patterns — are underdeveloped. These are the functions the world needs most. See [PROPOSED-FUNCTIONS.md](./PROPOSED-FUNCTIONS.md) for what fills these gaps.
 
 ### By Module Affinity
 
-| Module | Primary | Secondary | Notes |
-|--------|---------|-----------|-------|
-| **result** | Structure | Motion | Core algebraic type; Motion for flow conversions |
-| **option** | Structure | Motion | Core algebraic type; Motion for flow conversions |
-| **async** | Motion | — | Almost entirely Motion |
-| **predicate** | Structure | — | Entirely constraint/shape definition |
-| **validation** | Structure | Motion | Constraint definition with flow conversions |
-| **collection** | Structure | Persistence | Structural ops + indexing/pagination |
-| **object** | Structure | — | Entirely shape manipulation |
-| **string** | Structure | — | Entirely shape transformation |
-| **number** | Structure | Motion | Shape + parsing paths |
-| **memo** | Persistence | — | Entirely storage/caching |
-| **lens** | Structure | — | Entirely structural access |
-| **compare** | Structure | — | Entirely ordering definition |
-| **function** | Motion | Structure | Flow combinators + structural adapters |
+| Module | Primary | Secondary | Intersection Role |
+|--------|---------|-----------|-------------------|
+| **result** | Structure | — | S↔M boundary (tryCatch, parse*, orThrow) |
+| **option** | Structure | — | S↔M boundary (fromNullable, toResult) |
+| **async** | Motion | — | Some M↔P (debounce, throttle, poll) |
+| **predicate** | Structure | — | Pure constraint definition |
+| **validation** | Structure | — | S↔M boundary (tryCatch, toResult) |
+| **collection** | Structure | Persistence | S↔P boundary (nest, paginate, indexByUnique) |
+| **object** | Structure | — | Pure shape manipulation |
+| **string** | Structure | — | Pure shape transformation |
+| **number** | Structure | — | S↔M boundary (parsing functions) |
+| **memo** | Persistence | Motion | M↔P boundary (memoize*, caches) |
+| **lens** | Structure | — | Pure structural access |
+| **compare** | Structure | — | Pure ordering definition |
+| **function** | Motion | Structure | S↔M (tryCatch) + M↔P (memoize) |
 
 ---
 
-## Cross-Cutting Patterns
+## Part VII: Cross-Cutting Patterns
 
-### Functions that span categories
+### Boundary Functions
 
-Some functions naturally bridge categories:
-
-```
-Structure ←→ Motion
-├── tryCatch:      Captures Motion (exceptions) into Structure (Result/Option)
-├── fromNullable:  Captures Motion (nullable flow) into Structure (Option/Result)
-├── toResult:      Converts Structure (Option) to Structure (Result) via Motion
-├── orThrow:       Converts Structure (Result) back to Motion (exception flow)
-└── parse*:        Motion (parsing can fail) producing Structure (typed value)
-
-Motion ←→ Persistence
-├── memoize:       Stores Motion results in Persistence (cache)
-├── debounce:      Uses Persistence (timer state) to control Motion (timing)
-├── throttle:      Uses Persistence (rate state) to control Motion (throughput)
-└── poll:          Motion (repeated checking) with Persistence (state tracking)
-
-Structure ←→ Persistence
-├── indexByUnique:  Builds Persistence (lookup map) from Structure (array)
-├── paginate:       Creates Persistence (windowed view) of Structure (collection)
-├── nest:           Builds Persistence (hierarchical index) from Structure (flat data)
-├── lruCache:       Persistence with Structure (capacity constraint)
-└── clamp:          Structure (range) enforcing Persistence (bounds)
-```
-
-### The Flow of Computation
-
-A typical receta pipeline flows through all three categories:
+The most important functions in any library are the ones at category boundaries — they are the **connective tissue** that makes computation whole:
 
 ```
-1. STRUCTURE    → Define the shape
-   ok(rawData)
+Structure ←→ Motion (well-covered ✓)
+├── tryCatch / tryCatchAsync   Exception path → Result structure
+├── fromNullable               Nullable flow → Option/Result structure
+├── toResult / fromResult      Conversion between algebraic structures
+├── orThrow                    Result structure → exception path
+├── parse* (JSON, Number)      Raw input flow → typed structure
+└── tap / tapErr               Side-effects along the flow
 
-2. MOTION       → Move it through transformations
-   pipe(data, Result.map(transform), Result.flatMap(validate))
+Motion ←→ Persistence (sparse — needs growth)
+├── memoize / memoizeAsync     Store computation results
+├── debounce / throttle        Timer/rate state controls flow
+├── poll                       Repeated flow with state
+└── (gap: no circuit breaker, rate limiter, deduplication, SWR)
 
-3. PERSISTENCE  → Store the result
-   memoize(computeExpensiveResult)
+Structure ←→ Persistence (moderate — some coverage)
+├── indexByUnique              Array structure → lookup index
+├── nest / groupByPath         Flat structure → hierarchical index
+├── paginate / paginateCursor  Collection → windowed view
+├── lruCache                   Capacity-constrained storage
+├── clamp / truncate           Value bounded by capacity
+└── (gap: no snapshot, changelog, serialize/deserialize)
 
-4. MOTION       → Retrieve and flow again
-   retry(() => fetchFromCache(key))
-
-5. STRUCTURE    → Extract final shape
-   Result.unwrapOr(result, defaultValue)
+Trinity: Structure + Motion + Persistence (absent)
+└── (gap: no circuit breaker, state machine, resource management, queue)
 ```
 
----
+### The Cycle in Practice
 
-## Design Implications
+Every well-structured application cycles through S→M→P repeatedly. Here's a real-world example:
 
-### When adding new functions
+```typescript
+// STRUCTURE: Define the shape of a user request
+const requestSchema = Validation.schema({
+  email: Validation.isEmail,
+  age: Validation.fromPredicate(Predicate.gte(18), 'Must be 18+'),
+})
 
-Ask: **"Is this function primarily about Structure, Motion, or Persistence?"**
+// MOTION: Flow the request through validation + API call
+const processRequest = pipeAsync(
+  rawInput,
+  (input) => Validation.validate(requestSchema, input),  // Structure
+  (validated) => Validation.toResult(validated),           // S↔M bridge
+  (result) => Result.flatMap(result, (user) =>            // Motion
+    Result.tryCatchAsync(() => saveUser(user))             // S↔M bridge
+  ),
+)
 
-- If **Structure**: It should be pure, synchronous, and focused on data shape
-- If **Motion**: It may be async, have timing concerns, or control execution flow
-- If **Persistence**: It manages state, storage, or capacity
+// PERSISTENCE: Cache the result
+const cachedProcess = memoizeAsync(processRequest, {       // M↔P bridge
+  ttl: 300_000,                                           // Persistence
+  key: (input) => input.email,                             // Structure
+})
 
-### Module placement guidance
-
+// MOTION: Retry with circuit breaking (currently missing from receta)
+const resilientProcess = circuitBreaker(cachedProcess, {   // Trinity
+  maxFailures: 5,                                          // Persistence
+  resetTimeout: 30_000,                                    // Motion
+})
 ```
-Need to create/transform data shapes?          → result, option, object, string, number, lens
-Need to define constraints/invariants?          → predicate, validation, compare
-Need to control execution flow/timing?          → async, function
-Need to store/retrieve/invalidate?              → memo, collection (indexing/pagination)
-Need hierarchical/indexed access?               → collection, lens
-```
 
-### The "liquidity" insight
-
-Motion functions are about the *liquidity* of structures — how easily they flow between forms:
-
-- **High liquidity**: `fromNullable`, `toResult`, `tryCatch` — seamless conversion
-- **Medium liquidity**: `map`, `flatMap` — transformation within a container
-- **Low liquidity**: `unwrap`, `orThrow` — forced extraction, may fail
-
-Good APIs maximize liquidity by providing smooth conversion paths between all Structure types.
+This example shows exactly where the gaps are: the trinity function (`circuitBreaker`) doesn't exist yet, forcing developers to either skip resilience or build it from scratch.
