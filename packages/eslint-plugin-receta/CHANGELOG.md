@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/ontology-io/receta/compare/eslint-plugin-receta@v0.1.3...eslint-plugin-receta@v0.1.4) (2026-03-07)
+
+
+### Bug Fixes
+
+* versions source of truth ([161ffc3](https://github.com/ontology-io/receta/commit/161ffc3275f87ed9d14df4cc77a5416b91e58d91))
+
 ## [0.1.3](https://github.com/ontology-io/receta/compare/eslint-plugin-receta@v0.1.2...eslint-plugin-receta@v0.1.3) (2026-03-07)
 
 

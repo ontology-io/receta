@@ -1,5 +1,5 @@
 {
-  "packages/receta": "0.3.4",
+  "packages/receta": "0.3.5",
   "packages/receta-testing": "0.1.3",
-  "packages/eslint-plugin-receta": "0.1.3"
+  "packages/eslint-plugin-receta": "0.1.4"
 }
