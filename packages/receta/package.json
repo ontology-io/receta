@@ -1,6 +1,6 @@
 {
   "name": "@ontologyio/receta",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Practical FP recipes built on Remeda — higher-level patterns for real-world TypeScript applications",
   "author": "Khaled Maher",
   "license": "MIT",
