@@ -29,10 +29,13 @@ runs:
     - name: Publish to npm
       if: inputs.registry == 'npm'
       shell: bash
-      working-directory: ${{ inputs.package-path }}
       env:
-        NODE_AUTH_TOKEN: ${{ inputs.auth-token }}
-      run: npm publish --access ${{ inputs.access }}
+        NODE_AUTH_TOKEN: ""
+      run: |
+        npm install -g npm@latest
+        printf 'registry=https://registry.npmjs.org/\n' > /tmp/npm-isolated.npmrc
+        cd ${{ inputs.package-path }}
+        NPM_CONFIG_USERCONFIG=/tmp/npm-isolated.npmrc npm publish --provenance --access ${{ inputs.access }}
 
     - name: Publish to JSR
       if: inputs.registry == 'jsr'

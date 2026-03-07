@@ -30,9 +30,6 @@ on:
         description: 'Packages to publish (comma-separated: receta,receta-testing,eslint-plugin-receta or "all")'
         type: string
         required: true
-    secrets:
-      NPM_TOKEN:
-        required: true
 
 jobs:
   # Publish to npm (requires build and tests)
@@ -93,7 +90,7 @@ jobs:
           package-name: ${{ matrix.package.name }}
           registry: 'npm'
           access: 'public'
-          auth-token: ${{ secrets.NPM_TOKEN }}
+          auth-token: 'not-needed'
 
       - name: Add to summary
         if: steps.should_publish.outputs.publish == 'true'
