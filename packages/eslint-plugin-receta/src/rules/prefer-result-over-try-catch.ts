@@ -3,7 +3,7 @@ import type { TSESTree } from '@typescript-eslint/utils'
 import { isTryCatchStatement, isCatchClauseSimple, generateImportStatement } from '../utils/ast-helpers.js'
 
 const createRule = ESLintUtils.RuleCreator(
-  name => `https://github.com/khaledmaher/receta/blob/main/packages/eslint-plugin-receta/docs/rules/${name}.md`
+  name => `https://github.com/ontology-io/receta/blob/main/packages/eslint-plugin-receta/docs/rules/${name}.md`
 )
 
 type MessageIds = 'preferResult' | 'addResultImport'

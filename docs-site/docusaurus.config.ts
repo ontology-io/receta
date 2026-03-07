@@ -31,7 +31,7 @@ const config: Config = {
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'khaledmaher', // Usually your GitHub org/user name.
+  organizationName: 'ontology-io', // Usually your GitHub org/user name.
   projectName: 'receta', // Usually your repo name.
 
   onBrokenLinks: 'warn', // Temporarily warn instead of throwing
@@ -78,7 +78,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl:
-            'https://github.com/khaledmaher/receta/tree/main/docs-site/',
+            'https://github.com/ontology-io/receta/tree/main/docs-site/',
         },
         blog: false, // Disable blog for now
         theme: {
@@ -110,7 +110,7 @@ const config: Config = {
           position: 'left',
         },
         {
-          href: 'https://github.com/khaledmaher/receta',
+          href: 'https://github.com/ontology-io/receta',
           label: 'GitHub',
           position: 'right',
         },
@@ -137,7 +137,7 @@ const config: Config = {
           items: [
             {
               label: 'GitHub',
-              href: 'https://github.com/khaledmaher/receta',
+              href: 'https://github.com/ontology-io/receta',
             },
             {
               label: 'npm',

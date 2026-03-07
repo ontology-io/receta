@@ -35,7 +35,13 @@ runs:
         npm install -g npm@latest
         printf 'registry=https://registry.npmjs.org/\n' > /tmp/npm-isolated.npmrc
         cd ${{ inputs.package-path }}
-        NPM_CONFIG_USERCONFIG=/tmp/npm-isolated.npmrc npm publish --provenance --access ${{ inputs.access }}
+        VERSION=$(node -p "require('./package.json').version")
+        PACKAGE_NAME=$(node -p "require('./package.json').name")
+        if npm view "${PACKAGE_NAME}@${VERSION}" version &>/dev/null 2>&1; then
+          echo "⏭️ ${PACKAGE_NAME}@${VERSION} already published, skipping"
+        else
+          NPM_CONFIG_USERCONFIG=/tmp/npm-isolated.npmrc npm publish --provenance --access ${{ inputs.access }}
+        fi
 
     - name: Publish to JSR
       if: inputs.registry == 'jsr'
@@ -49,7 +55,14 @@ runs:
       working-directory: ${{ inputs.package-path }}
       env:
         NODE_AUTH_TOKEN: ${{ inputs.auth-token }}
-      run: npm publish
+      run: |
+        VERSION=$(node -p "require('./package.json').version")
+        PACKAGE_NAME=$(node -p "require('./package.json').name")
+        if npm view "${PACKAGE_NAME}@${VERSION}" version --registry=https://npm.pkg.github.com &>/dev/null 2>&1; then
+          echo "⏭️ ${PACKAGE_NAME}@${VERSION} already published to GitHub Packages, skipping"
+        else
+          npm publish
+        fi
 
     - name: Log success
       shell: bash

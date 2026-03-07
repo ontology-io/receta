@@ -440,9 +440,9 @@ const result = data
 
 ## Getting Help
 
-- **Questions?** Open a [GitHub Discussion](https://github.com/khaledmaher/receta/discussions)
-- **Bug reports** Open a [GitHub Issue](https://github.com/khaledmaher/receta/issues)
-- **Feature requests** Open a [GitHub Issue](https://github.com/khaledmaher/receta/issues) with `[Feature Request]` prefix
+- **Questions?** Open a [GitHub Discussion](https://github.com/ontology-io/receta/discussions)
+- **Bug reports** Open a [GitHub Issue](https://github.com/ontology-io/receta/issues)
+- **Feature requests** Open a [GitHub Issue](https://github.com/ontology-io/receta/issues) with `[Feature Request]` prefix
 
 ---
 

@@ -9,9 +9,9 @@
     "url": "https://github.com/ontology-io/receta.git"
   },
   "bugs": {
-    "url": "https://github.com/khaledmaher/receta/issues"
+    "url": "https://github.com/ontology-io/receta/issues"
   },
-  "homepage": "https://github.com/khaledmaher/receta#readme",
+  "homepage": "https://github.com/ontology-io/receta#readme",
   "workspaces": [
     "packages/*"
   ],

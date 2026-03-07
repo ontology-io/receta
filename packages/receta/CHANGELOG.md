@@ -264,4 +264,4 @@ This is the initial release of Receta, providing a comprehensive functional prog
 - [Option Migration Guide](./docs/option/06-migration.md)
 - [Async Migration Guide](./docs/async/06-migration.md)
 
-[0.1.0]: https://github.com/khaledmaher/receta/releases/tag/v0.1.0
+[0.1.0]: https://github.com/ontology-io/receta/releases/tag/v0.1.0

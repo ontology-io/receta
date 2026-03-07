@@ -263,4 +263,4 @@ Contributions welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 
-MIT © [Khaled Maher](https://github.com/khaledmaher)
+MIT © [Khaled Maher](https://github.com/ontology-io)

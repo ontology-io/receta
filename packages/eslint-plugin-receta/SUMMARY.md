@@ -372,7 +372,7 @@ return R.pipe(
 
 ## Resources
 
-- **Receta repo:** https://github.com/khaledmaher/receta
+- **Receta repo:** https://github.com/ontology-io/receta
 - **Remeda plugin:** https://github.com/AndreaPontrandolfo/eslint-plugin-remeda
 - **AST Explorer:** https://astexplorer.net/
 - **TypeScript ESLint:** https://typescript-eslint.io/

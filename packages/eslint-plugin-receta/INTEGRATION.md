@@ -569,14 +569,14 @@ After successful integration:
 1. ✅ Monitor CI/CD for violations
 2. ✅ Update team docs with Receta patterns
 3. ✅ Schedule quarterly reviews to ensure compliance
-4. ✅ Contribute improvements back to [Receta repo](https://github.com/khaledmaher/receta)
+4. ✅ Contribute improvements back to [Receta repo](https://github.com/ontology-io/receta)
 
 ---
 
 ## Support
 
-- **GitHub Issues:** https://github.com/khaledmaher/receta/issues
-- **Receta Docs:** https://github.com/khaledmaher/receta#readme
+- **GitHub Issues:** https://github.com/ontology-io/receta/issues
+- **Receta Docs:** https://github.com/ontology-io/receta#readme
 - **Remeda Docs:** https://remedajs.com
 
 Happy refactoring! 🚀
