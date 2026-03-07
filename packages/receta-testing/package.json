@@ -10,11 +10,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/khaledmaher/receta.git",
+    "url": "https://github.com/ontology-io/receta.git",
     "directory": "packages/receta-testing"
   },
   "bugs": {
-    "url": "https://github.com/khaledmaher/receta/issues"
+    "url": "https://github.com/ontology-io/receta/issues"
   },
   "type": "module",
   "sideEffects": false,

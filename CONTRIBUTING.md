@@ -35,7 +35,7 @@ This project adheres to the [Contributor Covenant Code of Conduct](./CODE_OF_CON
 
 ```bash
 # Clone the repository
-git clone https://github.com/khaledmaher/receta.git
+git clone https://github.com/ontology-io/receta.git
 cd receta
 
 # Install dependencies

@@ -6,7 +6,7 @@ Thank you for your interest in contributing! This guide will help you add new ru
 
 ```bash
 # Clone the repo
-git clone https://github.com/khaledmaher/receta.git
+git clone https://github.com/ontology-io/receta.git
 cd receta/packages/eslint-plugin-receta
 
 # Install dependencies
