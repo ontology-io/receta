@@ -20,11 +20,25 @@ on:
         required: true
         default: 'all'
 
+  workflow_call:
+    inputs:
+      registry:
+        description: 'Target registry'
+        type: string
+        default: 'all'
+      packages:
+        description: 'Packages to publish (comma-separated: receta,receta-testing,eslint-plugin-receta or "all")'
+        type: string
+        required: true
+    secrets:
+      NPM_TOKEN:
+        required: true
+
 jobs:
   # Publish to npm (requires build and tests)
   publish-npm:
     name: Publish to npm
-    if: github.event.inputs.registry == 'npm' || github.event.inputs.registry == 'all'
+    if: inputs.registry == 'npm' || inputs.registry == 'all'
     runs-on: ubuntu-latest
 
     permissions:
@@ -48,7 +62,7 @@ jobs:
       - name: Check if package should be published
         id: should_publish
         run: |
-          PACKAGES_INPUT="${{ github.event.inputs.packages }}"
+          PACKAGES_INPUT="${{ inputs.packages }}"
           PACKAGE_ID="${{ matrix.package.id }}"
 
           if [[ "$PACKAGES_INPUT" == "all" ]] || [[ ",$PACKAGES_INPUT," == *",$PACKAGE_ID,"* ]]; then
@@ -89,7 +103,7 @@ jobs:
   # Publish to JSR (Deno) - no build needed
   publish-jsr:
     name: Publish to JSR
-    if: github.event.inputs.registry == 'jsr' || github.event.inputs.registry == 'all'
+    if: inputs.registry == 'jsr' || inputs.registry == 'all'
     runs-on: ubuntu-latest
 
     permissions:
@@ -113,7 +127,7 @@ jobs:
       - name: Check if package should be published
         id: should_publish
         run: |
-          PACKAGES_INPUT="${{ github.event.inputs.packages }}"
+          PACKAGES_INPUT="${{ inputs.packages }}"
           PACKAGE_ID="${{ matrix.package.id }}"
 
           if [[ "$PACKAGES_INPUT" == "all" ]] || [[ ",$PACKAGES_INPUT," == *",$PACKAGE_ID,"* ]]; then
@@ -150,7 +164,7 @@ jobs:
   # Publish to GitHub Packages (requires build)
   publish-github:
     name: Publish to GitHub Packages
-    if: github.event.inputs.registry == 'github' || github.event.inputs.registry == 'all'
+    if: inputs.registry == 'github' || inputs.registry == 'all'
     runs-on: ubuntu-latest
 
     permissions:
@@ -175,7 +189,7 @@ jobs:
       - name: Check if package should be published
         id: should_publish
         run: |
-          PACKAGES_INPUT="${{ github.event.inputs.packages }}"
+          PACKAGES_INPUT="${{ inputs.packages }}"
           PACKAGE_ID="${{ matrix.package.id }}"
 
           if [[ "$PACKAGES_INPUT" == "all" ]] || [[ ",$PACKAGES_INPUT," == *",$PACKAGE_ID,"* ]]; then
