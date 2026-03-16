@@ -1,0 +1,16 @@
+{
+  "name": "@ontologyio/receta-trace",
+  "version": "0.1.0",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "publish": {
+    "exclude": [
+      "node_modules",
+      "dist",
+      "**/*.test.ts",
+      "**/__tests__"
+    ]
+  }
+}

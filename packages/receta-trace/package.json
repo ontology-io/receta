@@ -1,0 +1,43 @@
+{
+  "name": "@ontologyio/receta-trace",
+  "version": "0.1.0",
+  "description": "Runtime execution tracing for @ontologyio/receta — observe function pipelines with zero-overhead opt-in tracing",
+  "author": "Khaled Maher",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ontology-io/receta.git",
+    "directory": "packages/receta-trace"
+  },
+  "bugs": {
+    "url": "https://github.com/ontology-io/receta/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "peerDependencies": {
+    "@ontologyio/receta": "*"
+  },
+  "devDependencies": {
+    "@ontologyio/receta": "workspace:*",
+    "remeda": "^2.21.0",
+    "vitest": "^2.1.9"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

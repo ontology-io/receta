@@ -36,6 +36,7 @@
   "references": [
     { "path": "packages/receta" },
     { "path": "packages/receta-testing" },
-    { "path": "packages/eslint-plugin-receta" }
+    { "path": "packages/eslint-plugin-receta" },
+    { "path": "packages/receta-trace" }
   ]
 }
