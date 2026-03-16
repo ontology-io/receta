@@ -2,6 +2,7 @@
 export type {
   SpanId,
   FnMeta,
+  SpanEvent,
   Span,
   Trace,
   TracerOptions,
@@ -10,6 +11,9 @@ export type {
 
 // Context
 export { getActiveContext } from './context'
+
+// Span runtime APIs
+export { emitEvent, setTag, annotate } from './span'
 
 // Traced wrapper
 export { traced, isTraced } from './traced'
@@ -22,6 +26,9 @@ export { createTracer } from './tracer'
 export { tracedPipe } from './tracedPipe'
 export { tracedPipeAsync } from './tracedPipeAsync'
 
+// Async-aware tracing
+export { tracedRetry, tracedTimeout, tracedMapAsync } from './async'
+
 // Formatters
-export type { TreeStringOptions, SpanJSON, TraceJSON } from './format'
+export type { TreeStringOptions, SpanEventJSON, SpanJSON, TraceJSON } from './format'
 export { toTreeString, toJSON } from './format'

@@ -65,6 +65,27 @@ export function DetailPanel({ data }: DetailPanelProps) {
         </div>
       </div>
 
+      {data.tags && Object.keys(data.tags).length > 0 && (
+        <div style={sectionStyle}>
+          <div style={labelStyle}>Tags</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {Object.entries(data.tags).map(([key, val]) => (
+              <span key={key} style={{
+                fontSize: 11,
+                padding: '2px 8px',
+                borderRadius: 12,
+                background: '#e0e7ff',
+                color: '#3730a3',
+                fontFamily: 'monospace',
+                whiteSpace: 'nowrap',
+              }}>
+                {key}={typeof val === 'string' ? val : JSON.stringify(val)}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {data.input !== undefined && (
         <div style={sectionStyle}>
           <div style={labelStyle}>Input</div>
@@ -85,6 +106,38 @@ export function DetailPanel({ data }: DetailPanelProps) {
           <pre style={{ ...preStyle, color: '#ef4444', background: '#fef2f2' }}>
             {formatJson(data.error)}
           </pre>
+        </div>
+      )}
+
+      {data.events && data.events.length > 0 && (
+        <div style={sectionStyle}>
+          <div style={labelStyle}>Events ({data.events.length})</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {data.events.map((evt, i) => (
+              <div key={i} style={{
+                background: '#fffbeb',
+                border: '1px solid #fde68a',
+                borderRadius: 6,
+                padding: '6px 8px',
+              }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#92400e', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ color: '#f59e0b' }}>&#9670;</span>
+                  {evt.name}
+                </div>
+                {evt.data && (
+                  <pre style={{
+                    ...preStyle,
+                    background: 'transparent',
+                    padding: '4px 0 0 0',
+                    maxHeight: 100,
+                    fontSize: 11,
+                  }}>
+                    {formatJson(evt.data)}
+                  </pre>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

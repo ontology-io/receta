@@ -1,0 +1,265 @@
+{
+  "id": "ad528cc6-8ca2-477f-b94f-c799f4e281ad",
+  "rootSpan": {
+    "id": "0ec81939-851e-4148-89d0-dc179eba8696",
+    "parentId": null,
+    "name": "processOrder",
+    "input": {
+      "id": "ORD-2024-001",
+      "userId": "user-101",
+      "items": [
+        {
+          "sku": "SKU-LAPTOP",
+          "qty": 1
+        },
+        {
+          "sku": "SKU-MOUSE",
+          "qty": 2
+        }
+      ]
+    },
+    "output": {
+      "_tag": "Ok",
+      "value": {
+        "orderId": "ORD-2024-001",
+        "status": "completed",
+        "total": 2585.49,
+        "transactionId": "txn_1773625862968"
+      }
+    },
+    "startTime": 141.619208,
+    "endTime": 224.308708,
+    "durationMs": 82.68950000000001,
+    "status": "ok",
+    "metadata": {},
+    "tags": {
+      "orderId": "ORD-2024-001",
+      "userId": "user-101",
+      "totalCharged": 2585.49
+    },
+    "events": [],
+    "children": [
+      {
+        "id": "62805569-cb01-42ec-975a-35ab7bd0ae86",
+        "parentId": "0ec81939-851e-4148-89d0-dc179eba8696",
+        "name": "fetchUser",
+        "input": "user-101",
+        "output": {
+          "_tag": "Ok",
+          "value": {
+            "id": "user-101",
+            "name": "Alice Chen",
+            "email": "alice@example.com",
+            "tier": "premium"
+          }
+        },
+        "startTime": 142.209208,
+        "endTime": 159.491125,
+        "durationMs": 17.28191700000002,
+        "status": "ok",
+        "metadata": {},
+        "tags": {
+          "userId": "user-101",
+          "userName": "Alice Chen",
+          "tier": "premium"
+        },
+        "events": [
+          {
+            "name": "cache-check",
+            "timestamp": 142.278583,
+            "data": {
+              "key": "user:user-101"
+            }
+          },
+          {
+            "name": "cache-hit",
+            "timestamp": 159.428833
+          }
+        ],
+        "children": []
+      },
+      {
+        "id": "d3204329-e5ed-490c-9103-4974920d38b6",
+        "parentId": "0ec81939-851e-4148-89d0-dc179eba8696",
+        "name": "checkInventory",
+        "input": [
+          {
+            "sku": "SKU-LAPTOP",
+            "qty": 1
+          },
+          {
+            "sku": "SKU-MOUSE",
+            "qty": 2
+          }
+        ],
+        "output": {
+          "_tag": "Ok",
+          "value": {
+            "verified": true,
+            "items": 2
+          }
+        },
+        "startTime": 159.528875,
+        "endTime": 170.735583,
+        "durationMs": 11.206707999999992,
+        "status": "ok",
+        "metadata": {},
+        "tags": {
+          "itemCount": 2
+        },
+        "events": [
+          {
+            "name": "stock-check",
+            "timestamp": 170.720208,
+            "data": {
+              "sku": "SKU-LAPTOP",
+              "requested": 1,
+              "available": 12
+            }
+          },
+          {
+            "name": "stock-check",
+            "timestamp": 170.723375,
+            "data": {
+              "sku": "SKU-MOUSE",
+              "requested": 2,
+              "available": 45
+            }
+          }
+        ],
+        "children": []
+      },
+      {
+        "id": "78d6f3d4-22e7-4ebc-b839-8ce74d124535",
+        "parentId": "0ec81939-851e-4148-89d0-dc179eba8696",
+        "name": "calculatePricing",
+        "input": [
+          [
+            {
+              "sku": "SKU-LAPTOP",
+              "qty": 1
+            },
+            {
+              "sku": "SKU-MOUSE",
+              "qty": 2
+            }
+          ],
+          {
+            "id": "user-101",
+            "name": "Alice Chen",
+            "email": "alice@example.com",
+            "tier": "premium"
+          }
+        ],
+        "output": {
+          "_tag": "Ok",
+          "value": {
+            "subtotal": 2659.97,
+            "discount": 265.997,
+            "tax": 191.51784,
+            "total": 2585.49
+          }
+        },
+        "startTime": 170.743916,
+        "endTime": 179.99175,
+        "durationMs": 9.247833999999983,
+        "status": "ok",
+        "metadata": {},
+        "tags": {
+          "subtotal": 2659.97,
+          "discount": 266,
+          "total": 2585.49,
+          "discountReason": "premium_member_10pct"
+        },
+        "events": [],
+        "children": []
+      },
+      {
+        "id": "1eb213c2-ed3e-486e-a5b1-e163816d9976",
+        "parentId": "0ec81939-851e-4148-89d0-dc179eba8696",
+        "name": "chargePayment",
+        "input": [
+          2585.49,
+          "credit_card"
+        ],
+        "output": {
+          "_tag": "Ok",
+          "value": {
+            "transactionId": "txn_1773625862968",
+            "status": "approved"
+          }
+        },
+        "startTime": 179.996291,
+        "endTime": 211.339416,
+        "durationMs": 31.343124999999986,
+        "status": "ok",
+        "metadata": {},
+        "tags": {
+          "provider": "stripe",
+          "amount": 2585.49,
+          "method": "credit_card",
+          "transactionId": "txn_1773625862968"
+        },
+        "events": [
+          {
+            "name": "gateway-connect",
+            "timestamp": 180.086875,
+            "data": {
+              "provider": "stripe",
+              "endpoint": "charges/create"
+            }
+          },
+          {
+            "name": "charge-authorized",
+            "timestamp": 211.070708
+          }
+        ],
+        "children": []
+      },
+      {
+        "id": "6ae3626f-366b-4831-bfe0-bc0854ad825c",
+        "parentId": "0ec81939-851e-4148-89d0-dc179eba8696",
+        "name": "sendConfirmation",
+        "input": [
+          "alice@example.com",
+          "ORD-2024-001"
+        ],
+        "output": {
+          "_tag": "Ok",
+          "value": {
+            "sent": true
+          }
+        },
+        "startTime": 211.349791,
+        "endTime": 224.30125,
+        "durationMs": 12.951459,
+        "status": "ok",
+        "metadata": {},
+        "tags": {
+          "channel": "email",
+          "recipient": "alice@example.com"
+        },
+        "events": [
+          {
+            "name": "template-render",
+            "timestamp": 211.539833,
+            "data": {
+              "template": "order-confirmation",
+              "orderId": "ORD-2024-001"
+            }
+          },
+          {
+            "name": "email-sent",
+            "timestamp": 224.297333,
+            "data": {
+              "messageId": "msg_1773625862982"
+            }
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  "totalDurationMs": 82.68950000000001,
+  "spanCount": 6
+}

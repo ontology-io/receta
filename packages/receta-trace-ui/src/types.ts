@@ -1,3 +1,10 @@
+/** Mirror of SpanEventJSON from @ontologyio/receta-trace */
+export interface SpanEventJSON {
+  readonly name: string
+  readonly timestamp: number
+  readonly data?: Record<string, unknown>
+}
+
 /** Mirror of SpanJSON from @ontologyio/receta-trace */
 export interface SpanJSON {
   readonly id: string
@@ -11,6 +18,8 @@ export interface SpanJSON {
   readonly status: 'ok' | 'error'
   readonly error?: unknown
   readonly metadata: Record<string, unknown>
+  readonly tags: Record<string, unknown>
+  readonly events: readonly SpanEventJSON[]
   readonly children: readonly SpanJSON[]
 }
 
@@ -31,6 +40,8 @@ export type TraceNodeData = {
   output: unknown
   error?: unknown
   metadata: Record<string, unknown>
+  tags: Record<string, unknown>
+  events: readonly SpanEventJSON[]
   order: number
   selected?: boolean
   [key: string]: unknown

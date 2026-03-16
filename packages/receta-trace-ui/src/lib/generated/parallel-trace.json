@@ -1,0 +1,529 @@
+{
+  "id": "f51af20b-4255-48b4-ae88-d6c792c2d34b",
+  "rootSpan": {
+    "id": "939b1de4-0692-481c-94f3-9f7ea4074363",
+    "parentId": null,
+    "name": "processOrder",
+    "input": {
+      "id": "ORD-2024-003",
+      "userId": "user-101",
+      "items": [
+        {
+          "sku": "SKU-LAPTOP",
+          "qty": 1
+        },
+        {
+          "sku": "SKU-MOUSE",
+          "qty": 2
+        }
+      ]
+    },
+    "output": {
+      "_tag": "Ok",
+      "value": {
+        "orderId": "ORD-2024-003",
+        "status": "completed",
+        "total": 2585.49,
+        "transactionId": "txn_1773625863083",
+        "notifications": {
+          "email": true,
+          "sms": true,
+          "push": true
+        }
+      }
+    },
+    "startTime": 256.879791,
+    "endTime": 351.442291,
+    "durationMs": 94.5625,
+    "status": "ok",
+    "metadata": {},
+    "tags": {
+      "orderId": "ORD-2024-003",
+      "userId": "user-101",
+      "pattern": "parallel",
+      "totalCharged": 2585.49
+    },
+    "events": [],
+    "children": [
+      {
+        "id": "1650e1a6-cf56-4f6c-ac9f-95ee16f04b35",
+        "parentId": "939b1de4-0692-481c-94f3-9f7ea4074363",
+        "name": "fetchUser",
+        "input": "user-101",
+        "output": {
+          "_tag": "Ok",
+          "value": {
+            "id": "user-101",
+            "name": "Alice Chen",
+            "email": "alice@example.com",
+            "tier": "premium"
+          }
+        },
+        "startTime": 257.023666,
+        "endTime": 273.447375,
+        "durationMs": 16.42370900000003,
+        "status": "ok",
+        "metadata": {},
+        "tags": {
+          "userId": "user-101",
+          "userName": "Alice Chen",
+          "tier": "premium"
+        },
+        "events": [
+          {
+            "name": "cache-check",
+            "timestamp": 257.030375,
+            "data": {
+              "key": "user:user-101"
+            }
+          },
+          {
+            "name": "cache-hit",
+            "timestamp": 273.423625
+          }
+        ],
+        "children": []
+      },
+      {
+        "id": "839e80ff-e115-49ab-9be4-efe4307c1ae2",
+        "parentId": "939b1de4-0692-481c-94f3-9f7ea4074363",
+        "name": "enrichOrder",
+        "input": [
+          {
+            "id": "ORD-2024-003",
+            "userId": "user-101",
+            "items": [
+              {
+                "sku": "SKU-LAPTOP",
+                "qty": 1
+              },
+              {
+                "sku": "SKU-MOUSE",
+                "qty": 2
+              }
+            ]
+          },
+          {
+            "id": "user-101",
+            "name": "Alice Chen",
+            "email": "alice@example.com",
+            "tier": "premium"
+          }
+        ],
+        "output": {
+          "_tag": "Ok",
+          "value": {
+            "products": [
+              {
+                "sku": "SKU-LAPTOP",
+                "name": "MacBook Pro",
+                "price": 2499.99,
+                "stock": 12
+              },
+              {
+                "sku": "SKU-MOUSE",
+                "name": "Magic Mouse",
+                "price": 79.99,
+                "stock": 45
+              }
+            ],
+            "inventory": {
+              "verified": true,
+              "items": 2
+            }
+          }
+        },
+        "startTime": 273.46125,
+        "endTime": 285.140083,
+        "durationMs": 11.678832999999997,
+        "status": "ok",
+        "metadata": {},
+        "tags": {},
+        "events": [],
+        "children": [
+          {
+            "id": "f294d3c2-940f-47ce-851f-f3e6294faf3e",
+            "parentId": "839e80ff-e115-49ab-9be4-efe4307c1ae2",
+            "name": "fetchProductDetails",
+            "input": [
+              "SKU-LAPTOP",
+              "SKU-MOUSE"
+            ],
+            "output": {
+              "_tag": "Ok",
+              "value": [
+                {
+                  "sku": "SKU-LAPTOP",
+                  "name": "MacBook Pro",
+                  "price": 2499.99,
+                  "stock": 12
+                },
+                {
+                  "sku": "SKU-MOUSE",
+                  "name": "Magic Mouse",
+                  "price": 79.99,
+                  "stock": 45
+                }
+              ]
+            },
+            "startTime": 273.5945,
+            "endTime": 279.153208,
+            "durationMs": 5.558708000000024,
+            "status": "ok",
+            "metadata": {},
+            "tags": {
+              "skuCount": 2
+            },
+            "events": [
+              {
+                "name": "parallel-fetch-start",
+                "timestamp": 273.670916,
+                "data": {
+                  "skus": [
+                    "SKU-LAPTOP",
+                    "SKU-MOUSE"
+                  ]
+                }
+              },
+              {
+                "name": "parallel-fetch-done",
+                "timestamp": 279.143625,
+                "data": {
+                  "fetched": 2
+                }
+              }
+            ],
+            "children": [
+              {
+                "id": "330c3a4d-35d8-4811-87b0-5b0911df2b7a",
+                "parentId": "f294d3c2-940f-47ce-851f-f3e6294faf3e",
+                "name": "lookupProduct",
+                "input": "SKU-LAPTOP",
+                "output": {
+                  "_tag": "Ok",
+                  "value": {
+                    "sku": "SKU-LAPTOP",
+                    "name": "MacBook Pro",
+                    "price": 2499.99,
+                    "stock": 12
+                  }
+                },
+                "startTime": 273.68125,
+                "endTime": 279.039291,
+                "durationMs": 5.358041000000014,
+                "status": "ok",
+                "metadata": {},
+                "tags": {
+                  "sku": "SKU-LAPTOP"
+                },
+                "events": [],
+                "children": []
+              },
+              {
+                "id": "976fc70d-2930-433f-bd81-cf124045b94e",
+                "parentId": "f294d3c2-940f-47ce-851f-f3e6294faf3e",
+                "name": "lookupProduct",
+                "input": "SKU-MOUSE",
+                "output": {
+                  "_tag": "Ok",
+                  "value": {
+                    "sku": "SKU-MOUSE",
+                    "name": "Magic Mouse",
+                    "price": 79.99,
+                    "stock": 45
+                  }
+                },
+                "startTime": 273.735791,
+                "endTime": 279.094791,
+                "durationMs": 5.3589999999999804,
+                "status": "ok",
+                "metadata": {},
+                "tags": {
+                  "sku": "SKU-MOUSE"
+                },
+                "events": [],
+                "children": []
+              }
+            ]
+          },
+          {
+            "id": "292951b7-f3f3-4b91-9e18-cbb78982a94a",
+            "parentId": "839e80ff-e115-49ab-9be4-efe4307c1ae2",
+            "name": "checkInventory",
+            "input": [
+              {
+                "sku": "SKU-LAPTOP",
+                "qty": 1
+              },
+              {
+                "sku": "SKU-MOUSE",
+                "qty": 2
+              }
+            ],
+            "output": {
+              "_tag": "Ok",
+              "value": {
+                "verified": true,
+                "items": 2
+              }
+            },
+            "startTime": 273.903625,
+            "endTime": 285.127208,
+            "durationMs": 11.22358300000002,
+            "status": "ok",
+            "metadata": {},
+            "tags": {
+              "itemCount": 2
+            },
+            "events": [
+              {
+                "name": "stock-check",
+                "timestamp": 285.122125,
+                "data": {
+                  "sku": "SKU-LAPTOP",
+                  "requested": 1,
+                  "available": 12
+                }
+              },
+              {
+                "name": "stock-check",
+                "timestamp": 285.124916,
+                "data": {
+                  "sku": "SKU-MOUSE",
+                  "requested": 2,
+                  "available": 45
+                }
+              }
+            ],
+            "children": []
+          }
+        ]
+      },
+      {
+        "id": "871d823b-a25e-48d9-aa87-5d0995b56368",
+        "parentId": "939b1de4-0692-481c-94f3-9f7ea4074363",
+        "name": "calculatePricing",
+        "input": [
+          [
+            {
+              "sku": "SKU-LAPTOP",
+              "qty": 1
+            },
+            {
+              "sku": "SKU-MOUSE",
+              "qty": 2
+            }
+          ],
+          {
+            "id": "user-101",
+            "name": "Alice Chen",
+            "email": "alice@example.com",
+            "tier": "premium"
+          }
+        ],
+        "output": {
+          "_tag": "Ok",
+          "value": {
+            "subtotal": 2659.97,
+            "discount": 265.997,
+            "tax": 191.51784,
+            "total": 2585.49
+          }
+        },
+        "startTime": 285.148708,
+        "endTime": 294.232458,
+        "durationMs": 9.083750000000009,
+        "status": "ok",
+        "metadata": {},
+        "tags": {
+          "subtotal": 2659.97,
+          "discount": 266,
+          "total": 2585.49,
+          "discountReason": "premium_member_10pct"
+        },
+        "events": [],
+        "children": []
+      },
+      {
+        "id": "841f7060-4e4e-4ee4-b319-9fe8f8b92797",
+        "parentId": "939b1de4-0692-481c-94f3-9f7ea4074363",
+        "name": "chargePayment",
+        "input": [
+          2585.49,
+          "credit_card"
+        ],
+        "output": {
+          "_tag": "Ok",
+          "value": {
+            "transactionId": "txn_1773625863083",
+            "status": "approved"
+          }
+        },
+        "startTime": 294.236625,
+        "endTime": 325.756583,
+        "durationMs": 31.519957999999974,
+        "status": "ok",
+        "metadata": {},
+        "tags": {
+          "provider": "stripe",
+          "amount": 2585.49,
+          "method": "credit_card",
+          "transactionId": "txn_1773625863083"
+        },
+        "events": [
+          {
+            "name": "gateway-connect",
+            "timestamp": 294.24325,
+            "data": {
+              "provider": "stripe",
+              "endpoint": "charges/create"
+            }
+          },
+          {
+            "name": "charge-authorized",
+            "timestamp": 325.7
+          }
+        ],
+        "children": []
+      },
+      {
+        "id": "97b9894e-88df-43d6-b8b6-725d5b06dd9a",
+        "parentId": "939b1de4-0692-481c-94f3-9f7ea4074363",
+        "name": "sendNotifications",
+        "input": [
+          {
+            "id": "user-101",
+            "name": "Alice Chen",
+            "email": "alice@example.com",
+            "tier": "premium"
+          },
+          "ORD-2024-003"
+        ],
+        "output": {
+          "_tag": "Ok",
+          "value": {
+            "email": true,
+            "sms": true,
+            "push": true
+          }
+        },
+        "startTime": 325.770833,
+        "endTime": 351.423208,
+        "durationMs": 25.652375000000006,
+        "status": "ok",
+        "metadata": {},
+        "tags": {
+          "channels": 3
+        },
+        "events": [],
+        "children": [
+          {
+            "id": "7c72fdc6-e232-45d4-9461-e446764fea3b",
+            "parentId": "97b9894e-88df-43d6-b8b6-725d5b06dd9a",
+            "name": "sendEmail",
+            "input": [
+              "alice@example.com",
+              "ORD-2024-003"
+            ],
+            "output": {
+              "_tag": "Ok",
+              "value": {
+                "sent": true,
+                "messageId": "email_1773625863102"
+              }
+            },
+            "startTime": 325.956166,
+            "endTime": 344.793916,
+            "durationMs": 18.837750000000028,
+            "status": "ok",
+            "metadata": {},
+            "tags": {
+              "channel": "email",
+              "recipient": "alice@example.com"
+            },
+            "events": [
+              {
+                "name": "template-render",
+                "timestamp": 326.018291,
+                "data": {
+                  "template": "order-confirmation"
+                }
+              },
+              {
+                "name": "delivered",
+                "timestamp": 344.779375
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "f185492a-ef5a-440d-b3fd-7248d2f3a545",
+            "parentId": "97b9894e-88df-43d6-b8b6-725d5b06dd9a",
+            "name": "sendSms",
+            "input": [
+              "user-101",
+              "ORD-2024-003"
+            ],
+            "output": {
+              "_tag": "Ok",
+              "value": {
+                "sent": true,
+                "messageId": "sms_1773625863109"
+              }
+            },
+            "startTime": 326.03175,
+            "endTime": 351.404541,
+            "durationMs": 25.372791000000007,
+            "status": "ok",
+            "metadata": {},
+            "tags": {
+              "channel": "sms",
+              "userId": "user-101"
+            },
+            "events": [
+              {
+                "name": "delivered",
+                "timestamp": 351.397375
+              }
+            ],
+            "children": []
+          },
+          {
+            "id": "1e99a3c2-5cb5-44d4-9d15-68423c956434",
+            "parentId": "97b9894e-88df-43d6-b8b6-725d5b06dd9a",
+            "name": "sendPush",
+            "input": [
+              "user-101",
+              "ORD-2024-003"
+            ],
+            "output": {
+              "_tag": "Ok",
+              "value": {
+                "sent": true,
+                "messageId": "push_1773625863092"
+              }
+            },
+            "startTime": 326.084333,
+            "endTime": 335.164125,
+            "durationMs": 9.079791999999998,
+            "status": "ok",
+            "metadata": {},
+            "tags": {
+              "channel": "push",
+              "userId": "user-101"
+            },
+            "events": [
+              {
+                "name": "delivered",
+                "timestamp": 335.15875
+              }
+            ],
+            "children": []
+          }
+        ]
+      }
+    ]
+  },
+  "totalDurationMs": 94.5625,
+  "spanCount": 13
+}

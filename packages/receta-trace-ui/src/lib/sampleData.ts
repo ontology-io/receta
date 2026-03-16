@@ -17,6 +17,8 @@ export const sampleTrace: TraceJSON = {
     durationMs: 95.5,
     status: 'ok',
     metadata: { module: 'orders' },
+    tags: { orderId: 'ORD-2024-001', userId: 'user-123', region: 'us-east-1' },
+    events: [],
     children: [
       {
         id: 'span-1',
@@ -29,6 +31,12 @@ export const sampleTrace: TraceJSON = {
         durationMs: 11.8,
         status: 'ok',
         metadata: { module: 'users', category: 'io' },
+        tags: { source: 'database', cacheHit: false },
+        events: [
+          { name: 'cache-check', timestamp: 1.0, data: { key: 'user:user-123' } },
+          { name: 'cache-miss', timestamp: 1.5 },
+          { name: 'db-query', timestamp: 2.0, data: { table: 'users', id: 'user-123' } },
+        ],
         children: [],
       },
       {
@@ -42,6 +50,8 @@ export const sampleTrace: TraceJSON = {
         durationMs: 22.6,
         status: 'ok',
         metadata: { module: 'validation' },
+        tags: { itemCount: 2, rulesChecked: 5 },
+        events: [],
         children: [
           {
             id: 'span-2a',
@@ -54,6 +64,8 @@ export const sampleTrace: TraceJSON = {
             durationMs: 12.5,
             status: 'ok',
             metadata: { module: 'inventory', category: 'io' },
+            tags: {},
+            events: [],
             children: [],
           },
           {
@@ -67,6 +79,8 @@ export const sampleTrace: TraceJSON = {
             durationMs: 9.1,
             status: 'ok',
             metadata: { module: 'pricing' },
+            tags: {},
+            events: [],
             children: [],
           },
         ],
@@ -82,6 +96,8 @@ export const sampleTrace: TraceJSON = {
         durationMs: 2.7,
         status: 'ok',
         metadata: { module: 'pricing' },
+        tags: { discountType: 'premium_member', discountPct: '10%' },
+        events: [],
         children: [],
       },
       {
@@ -95,6 +111,8 @@ export const sampleTrace: TraceJSON = {
         durationMs: 43.5,
         status: 'ok',
         metadata: { module: 'payments', category: 'io' },
+        tags: { provider: 'stripe', transactionId: 'txn-abc123', amount: 146.97 },
+        events: [],
         children: [
           {
             id: 'span-4a',
@@ -107,6 +125,8 @@ export const sampleTrace: TraceJSON = {
             durationMs: 36.5,
             status: 'ok',
             metadata: { provider: 'stripe' },
+            tags: {},
+            events: [],
             children: [],
           },
           {
@@ -120,6 +140,8 @@ export const sampleTrace: TraceJSON = {
             durationMs: 5.5,
             status: 'ok',
             metadata: { module: 'ledger' },
+            tags: {},
+            events: [],
             children: [],
           },
         ],
@@ -135,6 +157,8 @@ export const sampleTrace: TraceJSON = {
         durationMs: 12.5,
         status: 'ok',
         metadata: { module: 'notifications', category: 'io' },
+        tags: { channel: 'email', messageId: 'msg-xyz' },
+        events: [],
         children: [],
       },
     ],
@@ -160,6 +184,8 @@ export const sampleTraceWithError: TraceJSON = {
     status: 'error',
     error: 'Payment declined: insufficient funds',
     metadata: { module: 'orders' },
+    tags: { orderId: 'ORD-2024-002', userId: 'user-456', region: 'us-east-1' },
+    events: [],
     children: [
       {
         id: 'err-1',
@@ -172,6 +198,12 @@ export const sampleTraceWithError: TraceJSON = {
         durationMs: 7.7,
         status: 'ok',
         metadata: { module: 'users', category: 'io' },
+        tags: {},
+        events: [
+          { name: 'cache-check', timestamp: 1.0, data: { key: 'user:user-123' } },
+          { name: 'cache-miss', timestamp: 1.5 },
+          { name: 'db-query', timestamp: 2.0, data: { table: 'users', id: 'user-123' } },
+        ],
         children: [],
       },
       {
@@ -185,6 +217,8 @@ export const sampleTraceWithError: TraceJSON = {
         durationMs: 13.5,
         status: 'ok',
         metadata: { module: 'validation' },
+        tags: {},
+        events: [],
         children: [
           {
             id: 'err-2a',
@@ -197,6 +231,8 @@ export const sampleTraceWithError: TraceJSON = {
             durationMs: 9.0,
             status: 'ok',
             metadata: { module: 'inventory' },
+            tags: {},
+            events: [],
             children: [],
           },
           {
@@ -210,6 +246,8 @@ export const sampleTraceWithError: TraceJSON = {
             durationMs: 3.3,
             status: 'ok',
             metadata: { module: 'pricing' },
+            tags: {},
+            events: [],
             children: [],
           },
         ],
@@ -226,6 +264,11 @@ export const sampleTraceWithError: TraceJSON = {
         status: 'error',
         error: 'Payment declined: insufficient funds',
         metadata: { module: 'payments', category: 'io' },
+        tags: { provider: 'stripe', amount: 647.99, declineCode: 'insufficient_funds' },
+        events: [
+          { name: 'attempt', timestamp: 23.0, data: { attempt: 1, provider: 'stripe' } },
+          { name: 'declined', timestamp: 57.5, data: { code: 'insufficient_funds' } },
+        ],
         children: [
           {
             id: 'err-3a',
@@ -239,6 +282,8 @@ export const sampleTraceWithError: TraceJSON = {
             status: 'error',
             error: { code: 'card_declined', message: 'Insufficient funds', decline_code: 'insufficient_funds' },
             metadata: { provider: 'stripe' },
+            tags: { gateway: 'stripe-v3', cardBrand: 'visa', last4: '1234' },
+            events: [],
             children: [],
           },
           {
@@ -252,6 +297,8 @@ export const sampleTraceWithError: TraceJSON = {
             durationMs: 6.0,
             status: 'ok',
             metadata: { module: 'audit' },
+            tags: {},
+            events: [],
             children: [],
           },
         ],

@@ -27,6 +27,8 @@ export function traceToNodesAndEdges(trace: TraceJSON): {
         output: span.output,
         error: span.error,
         metadata: span.metadata,
+        tags: span.tags ?? {},
+        events: span.events ?? [],
         order: 0, // placeholder
         startTime: span.startTime, // used for sorting
       },

@@ -1,0 +1,132 @@
+{
+  "id": "3a8c5b56-a103-49e2-8f00-2b23f767094d",
+  "rootSpan": {
+    "id": "8e28d160-8598-4dbf-bf57-0aa705944a04",
+    "parentId": null,
+    "name": "processOrder",
+    "input": {
+      "id": "ORD-2024-002",
+      "userId": "user-101",
+      "items": [
+        {
+          "sku": "SKU-KB",
+          "qty": 1
+        }
+      ]
+    },
+    "output": {
+      "_tag": "Err",
+      "error": {
+        "code": "OUT_OF_STOCK",
+        "sku": "SKU-KB",
+        "requested": 1,
+        "available": 0
+      }
+    },
+    "startTime": 228.46275,
+    "endTime": 256.221625,
+    "durationMs": 27.758875000000018,
+    "status": "error",
+    "error": {
+      "code": "OUT_OF_STOCK",
+      "sku": "SKU-KB",
+      "requested": 1,
+      "available": 0
+    },
+    "metadata": {},
+    "tags": {
+      "orderId": "ORD-2024-002",
+      "userId": "user-101"
+    },
+    "events": [],
+    "children": [
+      {
+        "id": "7afcd222-5bc4-4e43-a0bb-31c0709c3a95",
+        "parentId": "8e28d160-8598-4dbf-bf57-0aa705944a04",
+        "name": "fetchUser",
+        "input": "user-101",
+        "output": {
+          "_tag": "Ok",
+          "value": {
+            "id": "user-101",
+            "name": "Alice Chen",
+            "email": "alice@example.com",
+            "tier": "premium"
+          }
+        },
+        "startTime": 228.54925,
+        "endTime": 244.629625,
+        "durationMs": 16.080375000000004,
+        "status": "ok",
+        "metadata": {},
+        "tags": {
+          "userId": "user-101",
+          "userName": "Alice Chen",
+          "tier": "premium"
+        },
+        "events": [
+          {
+            "name": "cache-check",
+            "timestamp": 228.5605,
+            "data": {
+              "key": "user:user-101"
+            }
+          },
+          {
+            "name": "cache-hit",
+            "timestamp": 244.618125
+          }
+        ],
+        "children": []
+      },
+      {
+        "id": "2ca89692-b9aa-44eb-a8f8-40251f08ee11",
+        "parentId": "8e28d160-8598-4dbf-bf57-0aa705944a04",
+        "name": "checkInventory",
+        "input": [
+          {
+            "sku": "SKU-KB",
+            "qty": 1
+          }
+        ],
+        "output": {
+          "_tag": "Err",
+          "error": {
+            "code": "OUT_OF_STOCK",
+            "sku": "SKU-KB",
+            "requested": 1,
+            "available": 0
+          }
+        },
+        "startTime": 244.665125,
+        "endTime": 256.215833,
+        "durationMs": 11.550707999999986,
+        "status": "error",
+        "error": {
+          "code": "OUT_OF_STOCK",
+          "sku": "SKU-KB",
+          "requested": 1,
+          "available": 0
+        },
+        "metadata": {},
+        "tags": {
+          "itemCount": 1
+        },
+        "events": [
+          {
+            "name": "stock-check",
+            "timestamp": 256.167708,
+            "data": {
+              "sku": "SKU-KB",
+              "requested": 1,
+              "available": 0
+            }
+          }
+        ],
+        "children": []
+      }
+    ]
+  },
+  "totalDurationMs": 27.758875000000018,
+  "spanCount": 3
+}

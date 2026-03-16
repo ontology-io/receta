@@ -1,4 +1,4 @@
-import type { Span, Trace } from './types'
+import type { Span, SpanEvent, Trace } from './types'
 
 /**
  * Options for tree string formatting.
@@ -16,6 +16,7 @@ const ansi = {
   red: '\x1b[31m',
   green: '\x1b[32m',
   cyan: '\x1b[36m',
+  yellow: '\x1b[33m',
   boldRed: '\x1b[1;31m',
   dimWhite: '\x1b[2;37m',
 } as const
@@ -62,12 +63,28 @@ function formatSpan(
   const timing = c(ansi.dim, `(${duration}ms)`, color)
   const statusMark = isError ? c(ansi.red, ' ✗', color) : ''
   const output = formatOutput(span, color)
+  const tagKeys = Object.keys(span.tags)
+  const tagsStr = tagKeys.length > 0
+    ? ' ' + c(ansi.dim, `[${tagKeys.map((k) => `${k}=${formatValue(span.tags[k])}`).join(', ')}]`, color)
+    : ''
 
-  let line = `${prefix}${connector}${name} ${timing}${statusMark}${output}`
+  let line = `${prefix}${connector}${name} ${timing}${tagsStr}${statusMark}${output}`
 
   const childPrefix = isRoot ? '' : prefix + (isLast ? '   ' : '│  ')
-  const children = span.children
 
+  // Render events before children
+  for (const event of span.events) {
+    const evtName = c(ansi.yellow, `◆ ${event.name}`, color)
+    const evtTime = c(ansi.dim, `+${(event.timestamp - span.startTime).toFixed(1)}ms`, color)
+    const evtData = event.data
+      ? c(ansi.dim, ` ${formatValue(event.data)}`, color)
+      : ''
+    const hasChildren = span.children.length > 0
+    const evtConnector = hasChildren ? '│  ' : '   '
+    line += `\n${childPrefix}${evtConnector}${evtName} ${evtTime}${evtData}`
+  }
+
+  const children = span.children
   for (let i = 0; i < children.length; i++) {
     const child = children[i]!
     const isChildLast = i === children.length - 1
@@ -114,6 +131,12 @@ function formatValue(value: unknown): string {
 /**
  * Serializable JSON representation of a span.
  */
+export interface SpanEventJSON {
+  readonly name: string
+  readonly timestamp: number
+  readonly data?: Record<string, unknown>
+}
+
 export interface SpanJSON {
   readonly id: string
   readonly parentId: string | null
@@ -126,6 +149,8 @@ export interface SpanJSON {
   readonly status: 'ok' | 'error'
   readonly error?: unknown
   readonly metadata: Record<string, unknown>
+  readonly tags: Record<string, unknown>
+  readonly events: readonly SpanEventJSON[]
   readonly children: readonly SpanJSON[]
 }
 
@@ -172,6 +197,12 @@ function spanToJSON(span: Span): SpanJSON {
     status: span.status,
     ...(span.error !== undefined ? { error: span.error } : {}),
     metadata: span.metadata,
+    tags: span.tags,
+    events: span.events.map((e) => ({
+      name: e.name,
+      timestamp: e.timestamp,
+      ...(e.data !== undefined ? { data: e.data } : {}),
+    })),
     children: span.children.map(spanToJSON),
   }
 }

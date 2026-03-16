@@ -14,6 +14,17 @@ export interface FnMeta {
 }
 
 /**
+ * A timestamped event emitted during span execution.
+ * Use emitEvent() inside a traced function to record events
+ * like retry attempts, cache hits, or decision points.
+ */
+export interface SpanEvent {
+  readonly name: string
+  readonly timestamp: number
+  readonly data?: Record<string, unknown>
+}
+
+/**
  * A single execution span in the trace tree.
  *
  * Each span represents one function call within a traced execution,
@@ -31,6 +42,8 @@ export interface Span {
   readonly status: 'ok' | 'error'
   readonly error?: unknown
   readonly metadata: Record<string, unknown>
+  readonly tags: Record<string, unknown>
+  readonly events: readonly SpanEvent[]
   readonly children: readonly Span[]
 }
 
@@ -80,6 +93,8 @@ export interface MutableSpan {
   status: 'ok' | 'error'
   error?: unknown
   metadata: Record<string, unknown>
+  tags: Record<string, unknown>
+  events: SpanEvent[]
   children: MutableSpan[]
 }
 

@@ -1,4 +1,4 @@
-import type { SpanId, MutableSpan, Span, Trace } from './types'
+import type { SpanId, MutableSpan, Span, SpanEvent, Trace } from './types'
 import type { TraceContext, TracerState } from './context'
 import { getActiveContext, runWithContext } from './context'
 
@@ -21,6 +21,8 @@ export function createSpan(
     endTime: 0,
     status: 'ok',
     metadata: {},
+    tags: {},
+    events: [],
     children: [],
   }
 
@@ -34,7 +36,20 @@ export function createSpan(
 }
 
 /**
+ * Check if a value is a Result with _tag: 'Err'.
+ */
+function isResultErr(value: unknown): boolean {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '_tag' in value &&
+    (value as { _tag: string })._tag === 'Err'
+  )
+}
+
+/**
  * Finalize a span with its output or error.
+ * Automatically detects Result Err values and marks span as error.
  */
 export function finalizeSpan(
   state: TracerState,
@@ -48,8 +63,90 @@ export function finalizeSpan(
     span.error = error
   } else {
     span.output = state.options.captureOutputs ? output : undefined
+    // Result-awareness: detect Err(_tag) and mark as error
+    if (isResultErr(output)) {
+      span.status = 'error'
+      span.error = (output as { error: unknown }).error
+    }
   }
   state.options.onSpan?.(freezeSpan(span))
+}
+
+/**
+ * Emit a timestamped event on the current span.
+ * Call this inside a traced function to record events like retry attempts,
+ * cache hits, or decision points.
+ *
+ * No-op when no tracer is active.
+ *
+ * @example
+ * ```typescript
+ * const fetchData = traced('fetchData', async (url: string) => {
+ *   emitEvent('cache-check', { url })
+ *   const cached = cache.get(url)
+ *   if (cached) {
+ *     emitEvent('cache-hit')
+ *     return cached
+ *   }
+ *   emitEvent('cache-miss')
+ *   return await fetch(url)
+ * })
+ * ```
+ */
+export function emitEvent(name: string, data?: Record<string, unknown>): void {
+  const ctx = getActiveContext()
+  if (ctx === undefined || ctx.currentSpan === null) return
+
+  ctx.currentSpan.events.push({
+    name,
+    timestamp: ctx.state.options.clock(),
+    ...(data !== undefined ? { data } : {}),
+  })
+}
+
+/**
+ * Set a tag on the current span.
+ * Tags are searchable key-value attributes set at runtime.
+ *
+ * No-op when no tracer is active.
+ *
+ * @example
+ * ```typescript
+ * const processOrder = traced('processOrder', (order) => {
+ *   setTag('orderId', order.id)
+ *   setTag('userId', order.userId)
+ *   // ...
+ * })
+ * ```
+ */
+export function setTag(key: string, value: unknown): void {
+  const ctx = getActiveContext()
+  if (ctx === undefined || ctx.currentSpan === null) return
+  ctx.currentSpan.tags[key] = value
+}
+
+/**
+ * Attach an annotation to the current span.
+ * Annotations are dynamic key-value data discovered during execution.
+ *
+ * This is an alias for `setTag` — both write to the same `tags` field.
+ * Use `annotate` when the intent is enriching context (e.g. transactionId),
+ * and `setTag` when the intent is filtering/search (e.g. userId).
+ *
+ * No-op when no tracer is active.
+ *
+ * @example
+ * ```typescript
+ * const processPayment = traced('processPayment', async (order) => {
+ *   annotate('provider', selectProvider(order).name)
+ *   const result = await charge(order)
+ *   annotate('transactionId', result.txnId)
+ *   return result
+ * })
+ * ```
+ */
+export function annotate(key: string, value: unknown): void {
+  setTag(key, value)
 }
 
 /**
@@ -114,6 +211,8 @@ export function freezeSpan(mutable: MutableSpan): Span {
     status: mutable.status,
     ...(mutable.error !== undefined ? { error: mutable.error } : {}),
     metadata: { ...mutable.metadata },
+    tags: { ...mutable.tags },
+    events: [...mutable.events],
     children: mutable.children.map(freezeSpan),
   }
 }
@@ -154,6 +253,8 @@ export function buildTrace(
           durationMs: 0,
           status: rootSpans.some((s) => s.status === 'error') ? 'error' : 'ok',
           metadata: {},
+          tags: {},
+          events: [],
           children: rootSpans,
         }
 

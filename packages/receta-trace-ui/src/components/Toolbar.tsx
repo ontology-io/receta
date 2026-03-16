@@ -1,5 +1,5 @@
 import type { TraceJSON } from '../types'
-import { sampleTrace, sampleTraceWithError } from '../lib/sampleData'
+import { generatedSuccessTrace, generatedErrorTrace, generatedParallelTrace } from '../lib/generated'
 
 interface ToolbarProps {
   onLoadTrace: (trace: TraceJSON) => void
@@ -59,10 +59,13 @@ export function Toolbar({ onLoadTrace, traceInfo }: ToolbarProps) {
       </div>
 
       <div style={{ display: 'flex', gap: 8 }}>
-        <button onClick={() => onLoadTrace(sampleTrace)} style={buttonStyle}>
+        <button onClick={() => onLoadTrace(generatedSuccessTrace)} style={buttonStyle}>
           Success Example
         </button>
-        <button onClick={() => onLoadTrace(sampleTraceWithError)} style={{ ...buttonStyle, color: '#ef4444', borderColor: '#fca5a5' }}>
+        <button onClick={() => onLoadTrace(generatedParallelTrace)} style={{ ...buttonStyle, color: '#7c3aed', borderColor: '#c4b5fd' }}>
+          Parallel Example
+        </button>
+        <button onClick={() => onLoadTrace(generatedErrorTrace)} style={{ ...buttonStyle, color: '#ef4444', borderColor: '#fca5a5' }}>
           Error Example
         </button>
         <button onClick={handlePaste} style={buttonStyle}>
