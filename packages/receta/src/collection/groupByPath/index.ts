@@ -1,6 +1,7 @@
 import * as R from 'remeda'
 import { getPath } from '../../object/getPath'
 import { unwrapOr } from '../../option'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Groups items by a nested object path.
@@ -49,7 +50,7 @@ export function groupByPath<T>(
   path: string
 ): (items: readonly T[]) => Record<string, T[]>
 export function groupByPath(...args: unknown[]): unknown {
-  return R.purry(groupByPathImplementation, args)
+  return instrumentedPurry('groupByPath', 'collection', groupByPathImplementation, args)
 }
 
 function groupByPathImplementation<T>(

@@ -4,7 +4,7 @@
  * @module validation/flatMap
  */
 
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Validation } from '../types'
 import { isValid } from '../guards'
 
@@ -65,7 +65,7 @@ export function flatMap<T, U, E>(
   fn: (value: T) => Validation<U, E>
 ): (validation: Validation<T, E>) => Validation<U, E>
 export function flatMap(...args: unknown[]): unknown {
-  return R.purry(flatMapImplementation, args)
+  return instrumentedPurry('flatMap', 'validation', flatMapImplementation, args)
 }
 
 function flatMapImplementation<T, U, E>(

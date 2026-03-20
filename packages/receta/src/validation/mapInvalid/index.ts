@@ -4,7 +4,7 @@
  * @module validation/mapInvalid
  */
 
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Validation } from '../types'
 import { isInvalid } from '../guards'
 import { invalid } from '../constructors'
@@ -65,7 +65,7 @@ export function mapInvalid<E, F>(
   fn: (error: E) => F
 ): <T>(validation: Validation<T, E>) => Validation<T, F>
 export function mapInvalid(...args: unknown[]): unknown {
-  return R.purry(mapInvalidImplementation, args)
+  return instrumentedPurry('mapInvalid', 'validation', mapInvalidImplementation, args)
 }
 
 function mapInvalidImplementation<T, E, F>(

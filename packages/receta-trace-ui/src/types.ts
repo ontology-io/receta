@@ -31,6 +31,47 @@ export interface TraceJSON {
   readonly spanCount: number
 }
 
+/** Mirror of TraceEvent from @ontologyio/receta-trace */
+export type TraceEvent =
+  | { type: 'trace-start'; traceId: string; timestamp: number }
+  | {
+      type: 'span-start'
+      traceId: string
+      spanId: string
+      parentId: string | null
+      name: string
+      module: string
+      input?: unknown
+      timestamp: number
+      depth: number
+    }
+  | {
+      type: 'span-end'
+      traceId: string
+      spanId: string
+      name: string
+      output?: unknown
+      durationMs: number
+      status: 'ok' | 'error'
+      error?: unknown
+      timestamp: number
+    }
+  | {
+      type: 'event'
+      traceId: string
+      spanId: string
+      name: string
+      data?: Record<string, unknown>
+      timestamp: number
+    }
+  | {
+      type: 'trace-end'
+      traceId: string
+      totalDurationMs: number
+      spanCount: number
+      timestamp: number
+    }
+
 /** Data carried by each React Flow node */
 export type TraceNodeData = {
   name: string

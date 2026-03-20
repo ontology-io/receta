@@ -4,7 +4,7 @@
  * @module validation/match
  */
 
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Validation } from '../types'
 import { isValid } from '../guards'
 
@@ -96,7 +96,7 @@ export function match<T, E, R>(
   matcher: ValidationMatcher<T, E, R>
 ): (validation: Validation<T, E>) => R
 export function match(...args: unknown[]): unknown {
-  return R.purry(matchImplementation, args)
+  return instrumentedPurry('match', 'validation', matchImplementation, args)
 }
 
 function matchImplementation<T, E, R>(

@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Option } from '../types'
 import { isSome } from '../guards'
 import { some } from '../constructors'
@@ -35,7 +35,7 @@ import { some } from '../constructors'
 export function map<T, U>(option: Option<T>, fn: (value: T) => U): Option<U>
 export function map<T, U>(fn: (value: T) => U): (option: Option<T>) => Option<U>
 export function map(...args: unknown[]): unknown {
-  return R.purry(mapImplementation, args)
+  return instrumentedPurry('map', 'option', mapImplementation, args)
 }
 
 function mapImplementation<T, U>(option: Option<T>, fn: (value: T) => U): Option<U> {

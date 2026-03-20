@@ -1,4 +1,5 @@
 import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Removes an element at a specific index (immutably).
@@ -78,7 +79,7 @@ export function removeAtIndex(
   index: number
 ): <T>(items: readonly T[]) => readonly T[]
 export function removeAtIndex(...args: unknown[]): unknown {
-  return R.purry(removeAtIndexImplementation, args)
+  return instrumentedPurry('removeAtIndex', 'collection', removeAtIndexImplementation, args)
 }
 
 function removeAtIndexImplementation<T>(

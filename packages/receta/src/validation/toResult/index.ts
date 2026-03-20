@@ -4,7 +4,7 @@
  * @module validation/toResult
  */
 
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Validation } from '../types'
 import type { Result } from '../../result/types'
 import { ok, err } from '../../result/constructors'
@@ -62,7 +62,7 @@ import { isValid } from '../guards'
 export function toResult<T, E>(validation: Validation<T, E>): Result<T, readonly E[]>
 export function toResult<T, E>(): (validation: Validation<T, E>) => Result<T, readonly E[]>
 export function toResult(...args: unknown[]): unknown {
-  return R.purry(toResultImplementation, args)
+  return instrumentedPurry('toResult', 'validation', toResultImplementation, args)
 }
 
 function toResultImplementation<T, E>(validation: Validation<T, E>): Result<T, readonly E[]> {
@@ -123,7 +123,7 @@ export function toResultWith<E, F>(
   combineErrors: (errors: readonly E[]) => F
 ): <T>(validation: Validation<T, E>) => Result<T, F>
 export function toResultWith(...args: unknown[]): unknown {
-  return R.purry(toResultWithImplementation, args)
+  return instrumentedPurry('toResultWith', 'validation', toResultWithImplementation, args)
 }
 
 function toResultWithImplementation<T, E, F>(

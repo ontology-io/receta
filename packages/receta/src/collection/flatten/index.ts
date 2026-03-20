@@ -1,5 +1,5 @@
-import * as R from 'remeda'
 import type { FlattenConfig, FlattenedItem } from '../types'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Flattens a tree structure into a flat array with optional depth control and path tracking.
@@ -93,7 +93,7 @@ export function flatten<T>(
   config: FlattenConfig<T>
 ): (items: readonly T[]) => readonly T[] | readonly FlattenedItem<T>[]
 export function flatten(...args: unknown[]): unknown {
-  return R.purry(flattenImplementation, args)
+  return instrumentedPurry('flatten', 'collection', flattenImplementation, args)
 }
 
 function flattenImplementation<T>(

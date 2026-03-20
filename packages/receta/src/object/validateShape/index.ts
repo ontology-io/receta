@@ -5,6 +5,7 @@
  */
 
 import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Result } from '../../result/types'
 import { ok, err } from '../../result/constructors'
 import type { PlainObject, ObjectError } from '../types'
@@ -79,7 +80,7 @@ export function validateShape<T extends PlainObject>(
   schema: ObjectSchema<T>
 ): (obj: unknown) => Result<T, ObjectError>
 export function validateShape(...args: unknown[]): unknown {
-  return R.purry(validateShapeImplementation, args)
+  return instrumentedPurry('validateShape', 'object', validateShapeImplementation, args)
 }
 
 function validateShapeImplementation<T extends PlainObject>(

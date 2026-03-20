@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Result } from '../types'
 import { isOk } from '../guards'
 
@@ -29,7 +29,7 @@ import { isOk } from '../guards'
 export function flatten<T, E, F>(result: Result<Result<T, E>, F>): Result<T, E | F>
 export function flatten<T, E>(): <F>(result: Result<Result<T, E>, F>) => Result<T, E | F>
 export function flatten(...args: unknown[]): unknown {
-  return R.purry(flattenImplementation, args)
+  return instrumentedPurry('flatten', 'result', flattenImplementation, args)
 }
 
 function flattenImplementation<T, E, F>(result: Result<Result<T, E>, F>): Result<T, E | F> {

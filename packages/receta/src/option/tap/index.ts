@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Option } from '../types'
 import { isSome } from '../guards'
 
@@ -35,7 +35,7 @@ import { isSome } from '../guards'
 export function tap<T>(option: Option<T>, fn: (value: T) => void): Option<T>
 export function tap<T>(fn: (value: T) => void): (option: Option<T>) => Option<T>
 export function tap(...args: unknown[]): unknown {
-  return R.purry(tapImplementation, args)
+  return instrumentedPurry('tap', 'option', tapImplementation, args)
 }
 
 function tapImplementation<T>(option: Option<T>, fn: (value: T) => void): Option<T> {
@@ -77,7 +77,7 @@ function tapImplementation<T>(option: Option<T>, fn: (value: T) => void): Option
 export function tapNone<T>(option: Option<T>, fn: () => void): Option<T>
 export function tapNone<T>(fn: () => void): (option: Option<T>) => Option<T>
 export function tapNone(...args: unknown[]): unknown {
-  return R.purry(tapNoneImplementation, args)
+  return instrumentedPurry('tapNone', 'option', tapNoneImplementation, args)
 }
 
 function tapNoneImplementation<T>(option: Option<T>, fn: () => void): Option<T> {

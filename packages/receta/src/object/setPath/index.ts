@@ -5,7 +5,7 @@
  */
 
 import type { ObjectPath, PlainObject } from '../types'
-import { purryConfig2 } from '../../utils/purry'
+import { instrumentedPurryConfig2 } from '../../utils'
 
 /**
  * Immutably sets a value at a given path in an object.
@@ -48,7 +48,7 @@ import { purryConfig2 } from '../../utils/purry'
 export function setPath<T extends PlainObject>(path: ObjectPath, value: unknown, obj: T): T
 export function setPath(path: ObjectPath, value: unknown): <T extends PlainObject>(obj: T) => T
 export function setPath(...args: unknown[]): unknown {
-  return purryConfig2(setPathImplementation, args)
+  return instrumentedPurryConfig2('setPath', 'object', setPathImplementation, args)
 }
 
 function setPathImplementation<T extends PlainObject>(path: ObjectPath, value: unknown, obj: T): T {

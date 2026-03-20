@@ -4,7 +4,7 @@
  * @module validation/schema
  */
 
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Validation, ValidationSchema, FieldError } from '../types'
 import { valid, invalid } from '../constructors'
 import { isInvalid } from '../guards'
@@ -91,7 +91,7 @@ export function schema<T extends Record<string, unknown>, E>(
   schemaObj: ValidationSchema<T, E>
 ): (value: T) => Validation<T, FieldError<E>>
 export function schema(...args: unknown[]): unknown {
-  return R.purry(schemaImplementation, args)
+  return instrumentedPurry('schema', 'validation', schemaImplementation, args)
 }
 
 function schemaImplementation<T extends Record<string, unknown>, E>(
@@ -166,7 +166,7 @@ export function partial<T extends Record<string, unknown>, E>(
   schemaObj: ValidationSchema<T, E>
 ): (value: Partial<T>) => Validation<Partial<T>, FieldError<E>>
 export function partial(...args: unknown[]): unknown {
-  return R.purry(partialImplementation, args)
+  return instrumentedPurry('partial', 'validation', partialImplementation, args)
 }
 
 function partialImplementation<T extends Record<string, unknown>, E>(

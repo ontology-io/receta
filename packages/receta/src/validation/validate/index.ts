@@ -4,7 +4,7 @@
  * @module validation/validate
  */
 
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Validation, Validator } from '../types'
 import { collectErrors } from '../collectErrors'
 import { map } from '../map'
@@ -81,7 +81,7 @@ export function validate<T, E>(
   validators: readonly Validator<T, T, E>[]
 ): (value: T) => Validation<T, E>
 export function validate(...args: unknown[]): unknown {
-  return R.purry(validateImplementation, args)
+  return instrumentedPurry('validate', 'validation', validateImplementation, args)
 }
 
 function validateImplementation<T, E>(

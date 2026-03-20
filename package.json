@@ -13,7 +13,8 @@
   },
   "homepage": "https://github.com/ontology-io/receta#readme",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "examples/*"
   ],
   "scripts": {
     "build": "nx run-many --target=build --all",

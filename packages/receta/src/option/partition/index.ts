@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Option } from '../types'
 import { isSome } from '../guards'
 
@@ -34,7 +34,7 @@ import { isSome } from '../guards'
 export function partition<T>(options: readonly Option<T>[]): [T[], number]
 export function partition<T>(): (options: readonly Option<T>[]) => [T[], number]
 export function partition(...args: unknown[]): unknown {
-  return R.purry(partitionImplementation, args)
+  return instrumentedPurry('partition', 'option', partitionImplementation, args)
 }
 
 function partitionImplementation<T>(options: readonly Option<T>[]): [T[], number] {

@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Result } from '../types'
 import { isOk } from '../guards'
 
@@ -53,7 +53,7 @@ export function unwrap<T, E>(result: Result<T, E>): T {
 export function unwrapOr<T, E>(result: Result<T, E>, defaultValue: T): T
 export function unwrapOr<T>(defaultValue: T): <E>(result: Result<T, E>) => T
 export function unwrapOr(...args: unknown[]): unknown {
-  return R.purry(unwrapOrImplementation, args)
+  return instrumentedPurry('unwrapOr', 'result', unwrapOrImplementation, args)
 }
 
 function unwrapOrImplementation<T, E>(result: Result<T, E>, defaultValue: T): T {
@@ -94,7 +94,7 @@ function unwrapOrImplementation<T, E>(result: Result<T, E>, defaultValue: T): T 
 export function unwrapOrElse<T, E>(result: Result<T, E>, fn: (error: E) => T): T
 export function unwrapOrElse<T, E>(fn: (error: E) => T): (result: Result<T, E>) => T
 export function unwrapOrElse(...args: unknown[]): unknown {
-  return R.purry(unwrapOrElseImplementation, args)
+  return instrumentedPurry('unwrapOrElse', 'result', unwrapOrElseImplementation, args)
 }
 
 function unwrapOrElseImplementation<T, E>(result: Result<T, E>, fn: (error: E) => T): T {

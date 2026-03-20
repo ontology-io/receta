@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Result } from '../types'
 import { isOk } from '../guards'
 
@@ -45,7 +45,7 @@ export function flatMap<T, U, F>(
   fn: (value: T) => Result<U, F>
 ): <E>(result: Result<T, E>) => Result<U, E | F>
 export function flatMap(...args: unknown[]): unknown {
-  return R.purry(flatMapImplementation, args)
+  return instrumentedPurry('flatMap', 'result', flatMapImplementation, args)
 }
 
 function flatMapImplementation<T, U, E, F>(

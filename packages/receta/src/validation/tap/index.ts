@@ -4,7 +4,7 @@
  * @module validation/tap
  */
 
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Validation } from '../types'
 import { isValid } from '../guards'
 
@@ -71,7 +71,7 @@ import { isValid } from '../guards'
 export function tap<T, E>(validation: Validation<T, E>, fn: (value: T) => void): Validation<T, E>
 export function tap<T>(fn: (value: T) => void): <E>(validation: Validation<T, E>) => Validation<T, E>
 export function tap(...args: unknown[]): unknown {
-  return R.purry(tapImplementation, args)
+  return instrumentedPurry('tap', 'validation', tapImplementation, args)
 }
 
 function tapImplementation<T, E>(validation: Validation<T, E>, fn: (value: T) => void): Validation<T, E> {
@@ -158,7 +158,7 @@ export function tapInvalid<E>(
   fn: (errors: readonly E[]) => void
 ): <T>(validation: Validation<T, E>) => Validation<T, E>
 export function tapInvalid(...args: unknown[]): unknown {
-  return R.purry(tapInvalidImplementation, args)
+  return instrumentedPurry('tapInvalid', 'validation', tapInvalidImplementation, args)
 }
 
 function tapInvalidImplementation<T, E>(

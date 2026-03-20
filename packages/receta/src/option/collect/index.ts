@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Option } from '../types'
 import { some, none } from '../constructors'
 import { isSome } from '../guards'
@@ -45,7 +45,7 @@ import { isSome } from '../guards'
 export function collect<T>(options: readonly Option<T>[]): Option<T[]>
 export function collect<T>(): (options: readonly Option<T>[]) => Option<T[]>
 export function collect(...args: unknown[]): unknown {
-  return R.purry(collectImplementation, args)
+  return instrumentedPurry('collect', 'option', collectImplementation, args)
 }
 
 function collectImplementation<T>(options: readonly Option<T>[]): Option<T[]> {

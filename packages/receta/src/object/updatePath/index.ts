@@ -9,7 +9,7 @@ import { isSome } from '../../option/guards'
 import { getPath } from '../getPath'
 import { setPath } from '../setPath'
 import type { ObjectPath, PlainObject } from '../types'
-import { purryConfig2 } from '../../utils/purry'
+import { instrumentedPurryConfig2 } from '../../utils'
 
 /**
  * Immutably updates a value at a given path using a function.
@@ -58,7 +58,7 @@ export function updatePath<V>(
   fn: (value: V) => V
 ): <T extends PlainObject>(obj: T) => T
 export function updatePath(...args: unknown[]): unknown {
-  return purryConfig2(updatePathImplementation, args)
+  return instrumentedPurryConfig2('updatePath', 'object', updatePathImplementation, args)
 }
 
 function updatePathImplementation<T extends PlainObject, V>(

@@ -4,7 +4,7 @@
  * @module validation/flatten
  */
 
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Validation } from '../types'
 import { isValid } from '../guards'
 
@@ -53,7 +53,7 @@ import { isValid } from '../guards'
 export function flatten<T, E>(validation: Validation<Validation<T, E>, E>): Validation<T, E>
 export function flatten<T, E>(): (validation: Validation<Validation<T, E>, E>) => Validation<T, E>
 export function flatten(...args: unknown[]): unknown {
-  return R.purry(flattenImplementation, args)
+  return instrumentedPurry('flatten', 'validation', flattenImplementation, args)
 }
 
 function flattenImplementation<T, E>(validation: Validation<Validation<T, E>, E>): Validation<T, E> {

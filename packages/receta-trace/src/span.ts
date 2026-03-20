@@ -4,17 +4,21 @@ import { getActiveContext, runWithContext } from './context'
 
 /**
  * Create a new mutable span and attach it to the current context.
+ * Emits a real-time 'span-start' event if onEvent is configured.
  */
 export function createSpan(
   state: TracerState,
   name: string,
   input: unknown,
   parentSpan: MutableSpan | null,
+  module: string = '',
+  depth: number = 0,
 ): MutableSpan {
   const span: MutableSpan = {
     id: state.options.generateId() as SpanId,
     parentId: parentSpan?.id ?? null,
     name,
+    module,
     input: state.options.captureInputs ? input : undefined,
     output: undefined,
     startTime: state.options.clock(),
@@ -31,6 +35,19 @@ export function createSpan(
   } else {
     state.rootSpans.push(span)
   }
+
+  // Emit real-time span-start event
+  state.options.onEvent?.({
+    type: 'span-start',
+    traceId: state.traceId,
+    spanId: span.id,
+    parentId: span.parentId,
+    name,
+    module,
+    input: state.options.captureInputs ? input : undefined,
+    timestamp: span.startTime,
+    depth,
+  })
 
   return span
 }
@@ -70,6 +87,19 @@ export function finalizeSpan(
     }
   }
   state.options.onSpan?.(freezeSpan(span))
+
+  // Emit real-time span-end event
+  state.options.onEvent?.({
+    type: 'span-end',
+    traceId: state.traceId,
+    spanId: span.id,
+    name: span.name,
+    output: state.options.captureOutputs ? output : undefined,
+    durationMs: span.endTime - span.startTime,
+    status: span.status,
+    ...(span.error !== undefined ? { error: span.error } : {}),
+    timestamp: span.endTime,
+  })
 }
 
 /**
@@ -97,10 +127,22 @@ export function emitEvent(name: string, data?: Record<string, unknown>): void {
   const ctx = getActiveContext()
   if (ctx === undefined || ctx.currentSpan === null) return
 
+  const timestamp = ctx.state.options.clock()
+
   ctx.currentSpan.events.push({
     name,
-    timestamp: ctx.state.options.clock(),
+    timestamp,
     ...(data !== undefined ? { data } : {}),
+  })
+
+  // Emit real-time event
+  ctx.state.options.onEvent?.({
+    type: 'event',
+    traceId: ctx.state.traceId,
+    spanId: ctx.currentSpan.id,
+    name,
+    ...(data !== undefined ? { data } : {}),
+    timestamp,
   })
 }
 
@@ -159,9 +201,10 @@ export function recordSpan<T>(
   name: string,
   fn: (...args: readonly any[]) => T,
   args: readonly any[],
+  module: string = '',
 ): T {
   const input = args.length === 1 ? args[0] : args
-  const span = createSpan(ctx.state, name, input, ctx.currentSpan)
+  const span = createSpan(ctx.state, name, input, ctx.currentSpan, module, ctx.depth)
 
   const childCtx: TraceContext = {
     state: ctx.state,
@@ -203,6 +246,7 @@ export function freezeSpan(mutable: MutableSpan): Span {
     id: mutable.id,
     parentId: mutable.parentId,
     name: mutable.name,
+    module: mutable.module,
     input: mutable.input,
     output: mutable.output,
     startTime: mutable.startTime,
@@ -246,6 +290,7 @@ export function buildTrace(
           id: state.options.generateId() as SpanId,
           parentId: null,
           name: 'trace',
+          module: '',
           input: undefined,
           output: undefined,
           startTime: Math.min(...rootSpans.map((s) => s.startTime)),

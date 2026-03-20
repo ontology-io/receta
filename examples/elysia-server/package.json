@@ -1,0 +1,16 @@
+{
+  "name": "elysia-receta-trace-example",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "elysia": "^1.2.25",
+    "@elysiajs/cors": "^1.2.0",
+    "remeda": "^2.19.1",
+    "@ontologyio/receta": "workspace:*",
+    "@ontologyio/receta-trace": "workspace:*"
+  }
+}

@@ -1,5 +1,5 @@
 import type { Predicate, Mapper } from '../types'
-import { purryConfig3 } from '../../utils'
+import { instrumentedPurryConfig3 } from '../../utils'
 
 /**
  * Creates a function that conditionally applies one of two functions based on a predicate.
@@ -57,7 +57,7 @@ export function ifElse<T, U>(
   value: T
 ): U
 export function ifElse(...args: unknown[]): unknown {
-  return purryConfig3(ifElseImplementation, args)
+  return instrumentedPurryConfig3('ifElse', 'function', ifElseImplementation, args)
 }
 
 function ifElseImplementation<T, U>(

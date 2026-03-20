@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Result } from '../types'
 import { ok, err } from '../constructors'
 import { isErr } from '../guards'
@@ -42,7 +42,7 @@ import { isErr } from '../guards'
 export function collect<T, E>(results: readonly Result<T, E>[]): Result<T[], E>
 export function collect<T>(): <E>(results: readonly Result<T, E>[]) => Result<T[], E>
 export function collect(...args: unknown[]): unknown {
-  return R.purry(collectImplementation, args)
+  return instrumentedPurry('collect', 'result', collectImplementation, args)
 }
 
 function collectImplementation<T, E>(results: readonly Result<T, E>[]): Result<T[], E> {

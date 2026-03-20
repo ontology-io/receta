@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Constrains a number to be within a specified range.
@@ -35,7 +35,7 @@ import * as R from 'remeda'
 export function clamp(value: number, min: number, max: number): number
 export function clamp(min: number, max: number): (value: number) => number
 export function clamp(...args: unknown[]): unknown {
-  return R.purry(clampImpl, args)
+  return instrumentedPurry('clamp', 'number', clampImpl, args)
 }
 
 function clampImpl(value: number, min: number, max: number): number {

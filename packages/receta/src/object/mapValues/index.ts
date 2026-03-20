@@ -5,6 +5,7 @@
  */
 
 import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { PlainObject } from '../types'
 
 /**
@@ -50,7 +51,7 @@ export function mapValues<U>(
   fn: (value: any, key: string) => U
 ): <T extends PlainObject>(obj: T) => Record<keyof T, U>
 export function mapValues(...args: unknown[]): unknown {
-  return R.purry(mapValuesImplementation, args)
+  return instrumentedPurry('mapValues', 'object', mapValuesImplementation, args)
 }
 
 function mapValuesImplementation<T extends PlainObject, U>(

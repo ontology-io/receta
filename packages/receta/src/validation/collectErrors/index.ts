@@ -4,7 +4,7 @@
  * @module validation/collectErrors
  */
 
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Validation } from '../types'
 import { valid, invalid } from '../constructors'
 import { isInvalid } from '../guards'
@@ -70,7 +70,7 @@ export function collectErrors<T>(): <E>(
   validations: readonly Validation<T, E>[]
 ) => Validation<T[], E>
 export function collectErrors(...args: unknown[]): unknown {
-  return R.purry(collectErrorsImplementation, args)
+  return instrumentedPurry('collectErrors', 'validation', collectErrorsImplementation, args)
 }
 
 function collectErrorsImplementation<T, E>(

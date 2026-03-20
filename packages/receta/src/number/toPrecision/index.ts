@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Formats a number to a specified number of significant digits.
@@ -28,7 +28,7 @@ import * as R from 'remeda'
 export function toPrecision(value: number, digits: number): string
 export function toPrecision(digits: number): (value: number) => string
 export function toPrecision(...args: unknown[]): unknown {
-  return R.purry(toPrecisionImpl, args)
+  return instrumentedPurry('toPrecision', 'number', toPrecisionImpl, args)
 }
 
 function toPrecisionImpl(value: number, digits: number): string {

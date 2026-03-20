@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Checks if a number is within a specified range (inclusive).
@@ -32,7 +32,7 @@ export function inRange(
   max: number
 ): (value: number) => boolean
 export function inRange(...args: unknown[]): unknown {
-  return R.purry(inRangeImpl, args)
+  return instrumentedPurry('inRange', 'number', inRangeImpl, args)
 }
 
 function inRangeImpl(value: number, min: number, max: number): boolean {

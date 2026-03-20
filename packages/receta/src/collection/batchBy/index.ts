@@ -1,4 +1,5 @@
 import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Groups consecutive items in an array based on a predicate or grouping function.
@@ -66,7 +67,7 @@ export function batchBy<T, K extends string | number>(
   fn: (item: T) => K
 ): (items: readonly T[]) => readonly (readonly T[])[]
 export function batchBy(...args: unknown[]): unknown {
-  return R.purry(batchByImplementation, args)
+  return instrumentedPurry('batchBy', 'collection', batchByImplementation, args)
 }
 
 function batchByImplementation<T, K extends string | number>(

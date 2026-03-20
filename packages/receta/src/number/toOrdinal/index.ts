@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Formats a number as an ordinal (1st, 2nd, 3rd, etc.).
@@ -33,7 +33,7 @@ import * as R from 'remeda'
 export function toOrdinal(value: number): string
 export function toOrdinal(): (value: number) => string
 export function toOrdinal(...args: unknown[]): unknown {
-  return R.purry(toOrdinalImpl, args)
+  return instrumentedPurry('toOrdinal', 'number', toOrdinalImpl, args)
 }
 
 function toOrdinalImpl(value: number): string {

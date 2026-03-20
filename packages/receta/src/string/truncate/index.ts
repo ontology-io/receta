@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { TruncateOptions } from '../types'
 
 /**
@@ -39,7 +39,7 @@ import type { TruncateOptions } from '../types'
 export function truncate(str: string, options: TruncateOptions): string
 export function truncate(options: TruncateOptions): (str: string) => string
 export function truncate(...args: unknown[]): unknown {
-  return R.purry(truncateImplementation, args)
+  return instrumentedPurry('truncate', 'string', truncateImplementation, args)
 }
 
 function truncateImplementation(str: string, options: TruncateOptions): string {

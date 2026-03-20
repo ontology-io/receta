@@ -50,7 +50,7 @@ export function traced<F extends (...args: any[]) => any>(
       return fn(...args)
     }
 
-    return recordSpan(ctx, meta.name, fn, args)
+    return recordSpan(ctx, meta.name, fn, args, meta.module ?? '')
   }) as TracedFunction<F>
 
   Object.defineProperty(wrapper, '__trace_meta', {

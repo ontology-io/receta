@@ -1,5 +1,5 @@
 import type { CondPair } from '../types'
-import { purryConfig2 } from '../../utils'
+import { instrumentedPurryConfig2 } from '../../utils'
 
 /**
  * Creates a function that applies the first matching predicate-function pair, with a required default.
@@ -109,7 +109,7 @@ export function switchCase<T, U>(
   value: T
 ): U
 export function switchCase(...args: unknown[]): unknown {
-  return purryConfig2(switchCaseImplementation, args)
+  return instrumentedPurryConfig2('switchCase', 'function', switchCaseImplementation, args)
 }
 
 function switchCaseImplementation<T, U>(

@@ -7,6 +7,7 @@ export type {
   Trace,
   TracerOptions,
   TracedFunction,
+  TraceEvent,
 } from './types'
 
 // Context
@@ -15,14 +16,20 @@ export { getActiveContext } from './context'
 // Span runtime APIs
 export { emitEvent, setTag, annotate } from './span'
 
-// Traced wrapper
+// Traced wrapper (still useful for user-defined functions)
 export { traced, isTraced } from './traced'
 
 // Tracer
 export type { Tracer } from './tracer'
 export { createTracer } from './tracer'
 
-// Traced pipes
+// Native tracing activation
+export { activateTracing, deactivateTracing } from './activate'
+
+// Convenience API
+export { withTrace, withTraceAsync } from './withTrace'
+
+// Traced pipes (convenience for self-contained traces)
 export { tracedPipe } from './tracedPipe'
 export { tracedPipeAsync } from './tracedPipeAsync'
 

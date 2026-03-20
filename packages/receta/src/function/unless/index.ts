@@ -1,5 +1,5 @@
 import type { Predicate, Mapper } from '../types'
-import { purryConfig2 } from '../../utils'
+import { instrumentedPurryConfig2 } from '../../utils'
 
 /**
  * Creates a function that conditionally applies a transformation (inverse of when).
@@ -50,7 +50,7 @@ import { purryConfig2 } from '../../utils'
 export function unless<T>(predicate: Predicate<T>, fn: Mapper<T, T>): (value: T) => T
 export function unless<T>(predicate: Predicate<T>, fn: Mapper<T, T>, value: T): T
 export function unless(...args: unknown[]): unknown {
-  return purryConfig2(unlessImplementation, args)
+  return instrumentedPurryConfig2('unless', 'function', unlessImplementation, args)
 }
 
 function unlessImplementation<T>(predicate: Predicate<T>, fn: Mapper<T, T>, value: T): T {

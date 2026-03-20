@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import type { TraceJSON, TraceNodeData } from './types'
 import { TraceGraph } from './components/TraceGraph'
 import { TimelineView } from './components/TimelineView'
 import { DetailPanel } from './components/DetailPanel'
 import { Toolbar } from './components/Toolbar'
+import { useTraceStream } from './lib/useTraceStream'
 import { generatedSuccessTrace } from './lib/generated'
 
 type ViewMode = 'graph' | 'timeline'
@@ -13,11 +14,24 @@ export function App() {
   const [selectedNode, setSelectedNode] = useState<TraceNodeData | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>('graph')
 
+  const handleLoadTrace = useCallback((t: TraceJSON) => {
+    setTrace(t)
+    setSelectedNode(null)
+  }, [])
+
+  const { status, connect, disconnect } = useTraceStream(handleLoadTrace)
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
       <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #e5e7eb' }}>
         <div style={{ flex: 1 }}>
-          <Toolbar onLoadTrace={(t) => { setTrace(t); setSelectedNode(null) }} traceInfo={trace} />
+          <Toolbar
+            onLoadTrace={handleLoadTrace}
+            traceInfo={trace}
+            connectionStatus={status}
+            onConnect={connect}
+            onDisconnect={disconnect}
+          />
         </div>
         <div style={{ display: 'flex', gap: 0, marginRight: 16 }}>
           <button

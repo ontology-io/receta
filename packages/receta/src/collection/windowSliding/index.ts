@@ -1,5 +1,5 @@
-import * as R from 'remeda'
 import type { WindowSlidingConfig } from '../types'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Creates a sliding window over an array with configurable size and step.
@@ -64,7 +64,7 @@ export function windowSliding<T>(
   config: WindowSlidingConfig
 ): (items: readonly T[]) => readonly (readonly T[])[]
 export function windowSliding(...args: unknown[]): unknown {
-  return R.purry(windowSlidingImplementation, args)
+  return instrumentedPurry('windowSliding', 'collection', windowSlidingImplementation, args)
 }
 
 function windowSlidingImplementation<T>(

@@ -1,5 +1,5 @@
 import type { Lens } from '../types'
-import { purryConfig2 } from '../../utils'
+import { instrumentedPurryConfig2 } from '../../utils'
 
 /**
  * Applies a transformation function to the value focused by a Lens.
@@ -79,7 +79,7 @@ import { purryConfig2 } from '../../utils'
 export function over<S, A>(l: Lens<S, A>, fn: (a: A) => A, source: S): S
 export function over<S, A>(l: Lens<S, A>, fn: (a: A) => A): (source: S) => S
 export function over(...args: unknown[]): unknown {
-  return purryConfig2(overImplementation, args)
+  return instrumentedPurryConfig2('over', 'lens', overImplementation, args)
 }
 
 function overImplementation<S, A>(l: Lens<S, A>, fn: (a: A) => A, source: S): S {

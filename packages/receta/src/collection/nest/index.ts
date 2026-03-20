@@ -1,5 +1,6 @@
 import * as R from 'remeda'
 import type { NestedMap } from '../types'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Groups items hierarchically by multiple keys, creating a nested structure.
@@ -47,7 +48,7 @@ export function nest<T>(
   keys: readonly (keyof T | ((item: T) => string | number))[]
 ): (items: readonly T[]) => NestedMap<T>
 export function nest(...args: unknown[]): unknown {
-  return R.purry(nestImplementation, args)
+  return instrumentedPurry('nest', 'collection', nestImplementation, args)
 }
 
 function nestImplementation<T>(

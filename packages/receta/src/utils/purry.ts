@@ -4,6 +4,9 @@
  * @module utils/purry
  */
 
+import * as R from 'remeda'
+import { getInstrumentHook } from '../instrument'
+
 /**
  * Creates a function that supports both data-first and data-last signatures
  * where the "configuration" parameter comes first.
@@ -145,4 +148,142 @@ export function purryConfig3(impl: any, args: readonly unknown[]): any {
   }
 
   throw new Error(`purryConfig3: expected 3 or 4 arguments, got ${args.length}`)
+}
+
+// ---------------------------------------------------------------------------
+// Instrumented variants — check the global instrument hook before executing.
+// When no hook is registered, these fall through to the original implementations
+// with near-zero overhead (one variable read + falsy check).
+// ---------------------------------------------------------------------------
+
+/**
+ * Instrumented version of Remeda's `purry`.
+ * Checks the instrument hook and, if active, wraps execution for tracing.
+ *
+ * @param name - Function name (e.g. 'map')
+ * @param module - Module name (e.g. 'result')
+ * @param implementation - The actual implementation function
+ * @param args - Raw arguments from the overloaded wrapper
+ * @internal
+ */
+export function instrumentedPurry(
+  name: string,
+  module: string,
+  implementation: (...args: any[]) => any,
+  args: readonly unknown[],
+): unknown {
+  const hook = getInstrumentHook()
+  if (!hook) {
+    return R.purry(implementation, args)
+  }
+
+  const instrumented = (...resolvedArgs: unknown[]) => {
+    // Only pass the data (first arg) as context, not the transform function
+    return hook(name, module, () => implementation(...resolvedArgs), [resolvedArgs[0]])
+  }
+
+  // Preserve function length so R.purry can distinguish data-first from data-last
+  Object.defineProperty(instrumented, 'length', {
+    value: implementation.length,
+  })
+
+  return R.purry(instrumented, args)
+}
+
+/**
+ * Instrumented version of `purryConfig`.
+ * Config-first pattern: `fn(config, data)` / `fn(config)(data)`.
+ *
+ * @internal
+ */
+export function instrumentedPurryConfig(
+  name: string,
+  module: string,
+  impl: any,
+  args: readonly unknown[],
+): any {
+  const hook = getInstrumentHook()
+  if (!hook) {
+    return purryConfig(impl, args)
+  }
+
+  if (args.length === 2) {
+    return hook(name, module, () => impl(args[0], args[1]), [args[1]])
+  }
+
+  if (args.length === 1) {
+    return (data: unknown) =>
+      hook(name, module, () => impl(args[0], data), [data])
+  }
+
+  throw new Error(
+    `instrumentedPurryConfig: expected 1 or 2 arguments, got ${args.length}`,
+  )
+}
+
+/**
+ * Instrumented version of `purryConfig2`.
+ * Two-config pattern: `fn(c1, c2, data)` / `fn(c1, c2)(data)`.
+ *
+ * @internal
+ */
+export function instrumentedPurryConfig2(
+  name: string,
+  module: string,
+  impl: any,
+  args: readonly unknown[],
+): any {
+  const hook = getInstrumentHook()
+  if (!hook) {
+    return purryConfig2(impl, args)
+  }
+
+  if (args.length === 3) {
+    return hook(name, module, () => impl(args[0], args[1], args[2]), [args[2]])
+  }
+
+  if (args.length === 2) {
+    return (data: unknown) =>
+      hook(name, module, () => impl(args[0], args[1], data), [data])
+  }
+
+  throw new Error(
+    `instrumentedPurryConfig2: expected 2 or 3 arguments, got ${args.length}`,
+  )
+}
+
+/**
+ * Instrumented version of `purryConfig3`.
+ * Three-config pattern: `fn(c1, c2, c3, data)` / `fn(c1, c2, c3)(data)`.
+ *
+ * @internal
+ */
+export function instrumentedPurryConfig3(
+  name: string,
+  module: string,
+  impl: any,
+  args: readonly unknown[],
+): any {
+  const hook = getInstrumentHook()
+  if (!hook) {
+    return purryConfig3(impl, args)
+  }
+
+  if (args.length === 4) {
+    return hook(
+      name,
+      module,
+      () => impl(args[0], args[1], args[2], args[3]),
+      [args[3]],
+    )
+  }
+
+  if (args.length === 3) {
+    return (data: unknown) =>
+      hook(name, module, () => impl(args[0], args[1], args[2], data), [data])
+  }
+
+  throw new Error(
+    `instrumentedPurryConfig3: expected 3 or 4 arguments, got ${args.length}`,
+  )
 }

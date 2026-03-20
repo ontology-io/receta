@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Result } from '../types'
 import { isOk } from '../guards'
 import { ok } from '../constructors'
@@ -35,7 +35,7 @@ import { ok } from '../constructors'
 export function map<T, U, E>(result: Result<T, E>, fn: (value: T) => U): Result<U, E>
 export function map<T, U>(fn: (value: T) => U): <E>(result: Result<T, E>) => Result<U, E>
 export function map(...args: unknown[]): unknown {
-  return R.purry(mapImplementation, args)
+  return instrumentedPurry('map', 'result', mapImplementation, args)
 }
 
 function mapImplementation<T, U, E>(result: Result<T, E>, fn: (value: T) => U): Result<U, E> {

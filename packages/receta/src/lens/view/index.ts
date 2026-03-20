@@ -1,5 +1,5 @@
 import type { Lens } from '../types'
-import { purryConfig } from '../../utils'
+import { instrumentedPurryConfig } from '../../utils'
 
 /**
  * Gets the value focused by a Lens from a source object.
@@ -51,7 +51,7 @@ import { purryConfig } from '../../utils'
 export function view<S, A>(l: Lens<S, A>, source: S): A
 export function view<S, A>(l: Lens<S, A>): (source: S) => A
 export function view(...args: unknown[]): unknown {
-  return purryConfig(viewImplementation, args)
+  return instrumentedPurryConfig('view', 'lens', viewImplementation, args)
 }
 
 function viewImplementation<S, A>(l: Lens<S, A>, source: S): A {

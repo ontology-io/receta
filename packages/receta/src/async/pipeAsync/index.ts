@@ -1,3 +1,5 @@
+import { getInstrumentHook } from '../../instrument'
+
 /**
  * Composes async functions from left to right.
  *
@@ -170,7 +172,13 @@ export async function pipeAsync(
   let result = initialValue
 
   for (const fn of fns) {
-    result = await fn(result)
+    const hook = getInstrumentHook()
+    if (hook) {
+      const fnName = fn.name || 'anonymous'
+      result = await hook(fnName, 'async', () => fn(result), [result])
+    } else {
+      result = await fn(result)
+    }
   }
 
   return result

@@ -4,7 +4,7 @@
  * @module validation/unwrap
  */
 
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Validation } from '../types'
 import { isValid } from '../guards'
 
@@ -86,7 +86,7 @@ export function unwrap<T, E>(validation: Validation<T, E>): T {
 export function unwrapOr<T, E>(validation: Validation<T, E>, defaultValue: T): T
 export function unwrapOr<T>(defaultValue: T): <E>(validation: Validation<T, E>) => T
 export function unwrapOr(...args: unknown[]): unknown {
-  return R.purry(unwrapOrImplementation, args)
+  return instrumentedPurry('unwrapOr', 'validation', unwrapOrImplementation, args)
 }
 
 function unwrapOrImplementation<T, E>(validation: Validation<T, E>, defaultValue: T): T {
@@ -156,7 +156,7 @@ export function unwrapOrElse<T, E>(
   fn: (errors: readonly E[]) => T
 ): (validation: Validation<T, E>) => T
 export function unwrapOrElse(...args: unknown[]): unknown {
-  return R.purry(unwrapOrElseImplementation, args)
+  return instrumentedPurry('unwrapOrElse', 'validation', unwrapOrElseImplementation, args)
 }
 
 function unwrapOrElseImplementation<T, E>(

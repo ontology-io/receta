@@ -1,7 +1,6 @@
-import * as R from 'remeda'
 import { some, none, type Option } from '../../option'
 import type { WordsOptions } from '../types'
-import { purryConfig2 } from '../../utils/purry'
+import { instrumentedPurry, instrumentedPurryConfig2 } from '../../utils'
 
 /**
  * Splits a string into an array of words.
@@ -135,7 +134,7 @@ export function between(
   end: string
 ): (str: string) => Option<string>
 export function between(...args: unknown[]): unknown {
-  return purryConfig2(betweenImplementation, args)
+  return instrumentedPurryConfig2('between', 'string', betweenImplementation, args)
 }
 
 function betweenImplementation(start: string, end: string, str: string): Option<string> {
@@ -187,7 +186,7 @@ function betweenImplementation(start: string, end: string, str: string): Option<
 export function extract(str: string, pattern: RegExp): string[]
 export function extract(pattern: RegExp): (str: string) => string[]
 export function extract(...args: unknown[]): unknown {
-  return R.purry(extractImplementation, args)
+  return instrumentedPurry('extract', 'string', extractImplementation, args)
 }
 
 function extractImplementation(str: string, pattern: RegExp): string[] {

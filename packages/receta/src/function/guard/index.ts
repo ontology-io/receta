@@ -1,7 +1,7 @@
 import type { Result } from '../../result/types'
 import { ok, err } from '../../result/constructors'
 import type { Predicate } from '../types'
-import { purryConfig } from '../../utils'
+import { instrumentedPurryConfig } from '../../utils'
 
 /**
  * A pair of predicate and corresponding error for guard validation.
@@ -92,7 +92,7 @@ export type GuardPair<T, E> = readonly [predicate: Predicate<T>, error: E]
 export function guard<T, E>(pairs: readonly GuardPair<T, E>[]): (value: T) => Result<T, E>
 export function guard<T, E>(pairs: readonly GuardPair<T, E>[], value: T): Result<T, E>
 export function guard(...args: unknown[]): unknown {
-  return purryConfig(guardImplementation, args)
+  return instrumentedPurryConfig('guard', 'function', guardImplementation, args)
 }
 
 function guardImplementation<T, E>(pairs: readonly GuardPair<T, E>[], value: T): Result<T, E> {

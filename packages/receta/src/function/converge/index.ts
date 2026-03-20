@@ -1,6 +1,6 @@
 import * as R from 'remeda'
 import type { FunctionTuple } from '../types'
-import { purryConfig2 } from '../../utils'
+import { instrumentedPurryConfig2 } from '../../utils'
 
 /**
  * Creates a function that applies multiple functions to the same input, then combines their results.
@@ -72,7 +72,7 @@ export function converge<T, Args extends readonly unknown[], R>(
   value: T
 ): R
 export function converge(...args: unknown[]): unknown {
-  return purryConfig2(convergeImplementation, args)
+  return instrumentedPurryConfig2('converge', 'function', convergeImplementation, args)
 }
 
 function convergeImplementation<T, Args extends readonly unknown[], R>(

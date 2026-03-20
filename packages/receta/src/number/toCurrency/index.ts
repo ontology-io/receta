@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { CurrencyOptions } from '../types'
 
 /**
@@ -38,7 +38,7 @@ import type { CurrencyOptions } from '../types'
 export function toCurrency(value: number, options: CurrencyOptions): string
 export function toCurrency(options: CurrencyOptions): (value: number) => string
 export function toCurrency(...args: unknown[]): unknown {
-  return R.purry(toCurrencyImpl, args)
+  return instrumentedPurry('toCurrency', 'number', toCurrencyImpl, args)
 }
 
 function toCurrencyImpl(value: number, options: CurrencyOptions): string {

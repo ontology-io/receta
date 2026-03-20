@@ -1,5 +1,5 @@
 import type { Predicate, Mapper } from '../types'
-import { purryConfig2 } from '../../utils'
+import { instrumentedPurryConfig2 } from '../../utils'
 
 /**
  * Creates a function that conditionally applies a transformation.
@@ -51,7 +51,7 @@ import { purryConfig2 } from '../../utils'
 export function when<T>(predicate: Predicate<T>, fn: Mapper<T, T>): (value: T) => T
 export function when<T>(predicate: Predicate<T>, fn: Mapper<T, T>, value: T): T
 export function when(...args: unknown[]): unknown {
-  return purryConfig2(whenImplementation, args)
+  return instrumentedPurryConfig2('when', 'function', whenImplementation, args)
 }
 
 function whenImplementation<T>(predicate: Predicate<T>, fn: Mapper<T, T>, value: T): T {

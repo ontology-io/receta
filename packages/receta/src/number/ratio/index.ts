@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Calculates the ratio of two numbers.
@@ -34,7 +34,7 @@ import * as R from 'remeda'
 export function ratio(a: number, b: number): number
 export function ratio(b: number): (a: number) => number
 export function ratio(...args: unknown[]): unknown {
-  return R.purry(ratioImpl, args)
+  return instrumentedPurry('ratio', 'number', ratioImpl, args)
 }
 
 function ratioImpl(a: number, b: number): number {

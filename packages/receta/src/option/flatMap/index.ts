@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Option } from '../types'
 import { isSome } from '../guards'
 
@@ -37,7 +37,7 @@ import { isSome } from '../guards'
 export function flatMap<T, U>(option: Option<T>, fn: (value: T) => Option<U>): Option<U>
 export function flatMap<T, U>(fn: (value: T) => Option<U>): (option: Option<T>) => Option<U>
 export function flatMap(...args: unknown[]): unknown {
-  return R.purry(flatMapImplementation, args)
+  return instrumentedPurry('flatMap', 'option', flatMapImplementation, args)
 }
 
 function flatMapImplementation<T, U>(option: Option<T>, fn: (value: T) => Option<U>): Option<U> {

@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Option } from '../types'
 import { isSome } from '../guards'
 
@@ -61,7 +61,7 @@ export function unwrap<T>(option: Option<T>): T {
 export function unwrapOr<T>(option: Option<T>, defaultValue: T): T
 export function unwrapOr<T>(defaultValue: T): (option: Option<T>) => T
 export function unwrapOr(...args: unknown[]): unknown {
-  return R.purry(unwrapOrImplementation, args)
+  return instrumentedPurry('unwrapOr', 'option', unwrapOrImplementation, args)
 }
 
 function unwrapOrImplementation<T>(option: Option<T>, defaultValue: T): T {
@@ -99,7 +99,7 @@ function unwrapOrImplementation<T>(option: Option<T>, defaultValue: T): T {
 export function unwrapOrElse<T>(option: Option<T>, fn: () => T): T
 export function unwrapOrElse<T>(fn: () => T): (option: Option<T>) => T
 export function unwrapOrElse(...args: unknown[]): unknown {
-  return R.purry(unwrapOrElseImplementation, args)
+  return instrumentedPurry('unwrapOrElse', 'option', unwrapOrElseImplementation, args)
 }
 
 function unwrapOrElseImplementation<T>(option: Option<T>, fn: () => T): T {

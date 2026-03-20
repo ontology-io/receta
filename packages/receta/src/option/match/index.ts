@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Option } from '../types'
 import { isSome } from '../guards'
 
@@ -50,7 +50,7 @@ export function match<T, R>(patterns: {
   onNone: () => R
 }): (option: Option<T>) => R
 export function match(...args: unknown[]): unknown {
-  return R.purry(matchImplementation, args)
+  return instrumentedPurry('match', 'option', matchImplementation, args)
 }
 
 function matchImplementation<T, R>(

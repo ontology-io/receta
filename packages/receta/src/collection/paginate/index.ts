@@ -5,6 +5,7 @@ import type {
   CursorPaginationConfig,
   CursorPaginatedResult,
 } from '../types'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Paginates an array using offset-based pagination.
@@ -47,7 +48,7 @@ export function paginate<T>(
   config: PaginationConfig
 ): (items: readonly T[]) => PaginatedResult<T>
 export function paginate(...args: unknown[]): unknown {
-  return R.purry(paginateImplementation, args)
+  return instrumentedPurry('paginate', 'collection', paginateImplementation, args)
 }
 
 function paginateImplementation<T>(
@@ -119,7 +120,7 @@ export function paginateCursor<T, TCursor>(
   config: CursorPaginationConfig<TCursor>
 ): (items: readonly T[]) => CursorPaginatedResult<T, TCursor>
 export function paginateCursor(...args: unknown[]): unknown {
-  return R.purry(paginateCursorImplementation, args)
+  return instrumentedPurry('paginateCursor', 'collection', paginateCursorImplementation, args)
 }
 
 function paginateCursorImplementation<T, TCursor>(

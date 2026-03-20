@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Option } from '../types'
 import { isSome } from '../guards'
 
@@ -30,7 +30,7 @@ import { isSome } from '../guards'
 export function flatten<T>(option: Option<Option<T>>): Option<T>
 export function flatten<T>(): (option: Option<Option<T>>) => Option<T>
 export function flatten(...args: unknown[]): unknown {
-  return R.purry(flattenImplementation, args)
+  return instrumentedPurry('flatten', 'option', flattenImplementation, args)
 }
 
 function flattenImplementation<T>(option: Option<Option<T>>): Option<T> {

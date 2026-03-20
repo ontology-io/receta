@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Calculates what percentage one number is of another.
@@ -38,7 +38,7 @@ import * as R from 'remeda'
 export function percentage(value: number, total: number): number
 export function percentage(total: number): (value: number) => number
 export function percentage(...args: unknown[]): unknown {
-  return R.purry(percentageImpl, args)
+  return instrumentedPurry('percentage', 'number', percentageImpl, args)
 }
 
 function percentageImpl(value: number, total: number): number {

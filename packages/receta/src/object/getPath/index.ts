@@ -7,7 +7,7 @@
 import type { Option } from '../../option/types'
 import { some, none } from '../../option/constructors'
 import type { ObjectPath, PlainObject } from '../types'
-import { purryConfig } from '../../utils/purry'
+import { instrumentedPurryConfig } from '../../utils'
 
 /**
  * Safely gets a value at a given path in an object, returning Option.
@@ -53,7 +53,7 @@ import { purryConfig } from '../../utils/purry'
 export function getPath<T = unknown>(path: ObjectPath, obj: PlainObject): Option<T>
 export function getPath<T = unknown>(path: ObjectPath): (obj: PlainObject) => Option<T>
 export function getPath(...args: unknown[]): unknown {
-  return purryConfig(getPathImplementation, args)
+  return instrumentedPurryConfig('getPath', 'object', getPathImplementation, args)
 }
 
 function getPathImplementation<T>(path: ObjectPath, obj: PlainObject): Option<T> {

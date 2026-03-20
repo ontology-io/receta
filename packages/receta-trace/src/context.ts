@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks'
-import type { SpanId, Span, MutableSpan, TracerOptions } from './types'
+import type { SpanId, Span, MutableSpan, TraceEvent } from './types'
 
 /**
  * Internal state managed by a tracer during execution.
@@ -11,11 +11,13 @@ export interface ResolvedTracerOptions {
   readonly clock: () => number
   readonly generateId: () => string
   readonly onSpan: ((span: Span) => void) | undefined
+  readonly onEvent: ((event: TraceEvent) => void) | undefined
 }
 
 export interface TracerState {
   readonly options: ResolvedTracerOptions
   readonly rootSpans: MutableSpan[]
+  readonly traceId: string
 }
 
 /**

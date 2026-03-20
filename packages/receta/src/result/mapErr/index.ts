@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Result } from '../types'
 import { isErr } from '../guards'
 import { err } from '../constructors'
@@ -37,7 +37,7 @@ import { err } from '../constructors'
 export function mapErr<T, E, F>(result: Result<T, E>, fn: (error: E) => F): Result<T, F>
 export function mapErr<E, F>(fn: (error: E) => F): <T>(result: Result<T, E>) => Result<T, F>
 export function mapErr(...args: unknown[]): unknown {
-  return R.purry(mapErrImplementation, args)
+  return instrumentedPurry('mapErr', 'result', mapErrImplementation, args)
 }
 
 function mapErrImplementation<T, E, F>(result: Result<T, E>, fn: (error: E) => F): Result<T, F> {

@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import { isSome } from '../guards'
 import type { Option } from '../types'
 
@@ -38,7 +38,7 @@ import type { Option } from '../types'
 export function toNullable<T>(option: Option<T>): T | null
 export function toNullable<T>(): (option: Option<T>) => T | null
 export function toNullable(...args: unknown[]): unknown {
-  return R.purry(toNullableImplementation, args)
+  return instrumentedPurry('toNullable', 'option', toNullableImplementation, args)
 }
 
 function toNullableImplementation<T>(option: Option<T>): T | null {

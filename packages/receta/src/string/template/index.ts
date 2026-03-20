@@ -1,4 +1,5 @@
 import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import { ok, err, type Result } from '../../result'
 import type { TemplateError, TemplateVars } from '../types'
 
@@ -39,7 +40,7 @@ export function template(
   vars: TemplateVars
 ): (templateStr: string) => Result<string, TemplateError>
 export function template(...args: unknown[]): unknown {
-  return R.purry(templateImplementation, args)
+  return instrumentedPurry('template', 'string', templateImplementation, args)
 }
 
 function templateImplementation(

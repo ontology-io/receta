@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Result } from '../types'
 import { ok, err } from '../constructors'
 
@@ -36,7 +36,7 @@ import { ok, err } from '../constructors'
 export function fromNullable<T, E>(value: T | null | undefined, error: E): Result<T, E>
 export function fromNullable<E>(error: E): <T>(value: T | null | undefined) => Result<T, E>
 export function fromNullable(...args: unknown[]): unknown {
-  return R.purry(fromNullableImplementation, args)
+  return instrumentedPurry('fromNullable', 'result', fromNullableImplementation, args)
 }
 
 function fromNullableImplementation<T, E>(value: T | null | undefined, error: E): Result<T, E> {

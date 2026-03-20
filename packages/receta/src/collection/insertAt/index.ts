@@ -1,4 +1,5 @@
 import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Inserts one or more elements at a specific index (immutably).
@@ -74,7 +75,7 @@ export function insertAt<T>(
   values: T | readonly T[]
 ): (items: readonly T[]) => readonly T[]
 export function insertAt(...args: unknown[]): unknown {
-  return R.purry(insertAtImplementation, args)
+  return instrumentedPurry('insertAt', 'collection', insertAtImplementation, args)
 }
 
 function insertAtImplementation<T>(

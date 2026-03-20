@@ -4,7 +4,7 @@
  * @module object/filterValues
  */
 
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { PlainObject } from '../types'
 
 /**
@@ -55,7 +55,7 @@ export function filterValues(
   predicate: (value: any, key: string) => boolean
 ): <T extends PlainObject>(obj: T) => Partial<T>
 export function filterValues(...args: unknown[]): unknown {
-  return R.purry(filterValuesImplementation, args)
+  return instrumentedPurry('filterValues', 'object', filterValuesImplementation, args)
 }
 
 function filterValuesImplementation<T extends PlainObject>(

@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Option } from '../types'
 import { isSome } from '../guards'
 import { none } from '../constructors'
@@ -35,7 +35,7 @@ import { none } from '../constructors'
 export function filter<T>(option: Option<T>, predicate: (value: T) => boolean): Option<T>
 export function filter<T>(predicate: (value: T) => boolean): (option: Option<T>) => Option<T>
 export function filter(...args: unknown[]): unknown {
-  return R.purry(filterImplementation, args)
+  return instrumentedPurry('filter', 'option', filterImplementation, args)
 }
 
 function filterImplementation<T>(option: Option<T>, predicate: (value: T) => boolean): Option<T> {

@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Result } from '../types'
 import { isOk } from '../guards'
 
@@ -51,7 +51,7 @@ export function match<T, E, U>(handlers: {
   readonly onErr: (error: E) => U
 }): (result: Result<T, E>) => U
 export function match(...args: unknown[]): unknown {
-  return R.purry(matchImplementation, args)
+  return instrumentedPurry('match', 'result', matchImplementation, args)
 }
 
 function matchImplementation<T, E, U>(

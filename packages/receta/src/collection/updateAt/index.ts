@@ -1,4 +1,5 @@
 import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Updates (replaces) an element at a specific index (immutably).
@@ -76,7 +77,7 @@ export function updateAt<T>(
   value: T
 ): (items: readonly T[]) => readonly T[]
 export function updateAt(...args: unknown[]): unknown {
-  return R.purry(updateAtImplementation, args)
+  return instrumentedPurry('updateAt', 'collection', updateAtImplementation, args)
 }
 
 function updateAtImplementation<T>(

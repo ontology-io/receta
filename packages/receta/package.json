@@ -83,6 +83,10 @@
     "./function": {
       "import": "./dist/function/index.js",
       "types": "./dist/function/index.d.ts"
+    },
+    "./instrument": {
+      "import": "./dist/instrument.js",
+      "types": "./dist/instrument.d.ts"
     }
   },
   "keywords": [

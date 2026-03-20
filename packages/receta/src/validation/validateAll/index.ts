@@ -4,7 +4,7 @@
  * @module validation/validateAll
  */
 
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Validation, Validator } from '../types'
 import { collectErrors } from '../collectErrors'
 
@@ -73,7 +73,7 @@ export function validateAll<T, U, E>(
   validator: Validator<T, U, E>
 ): (values: readonly T[]) => Validation<U[], E>
 export function validateAll(...args: unknown[]): unknown {
-  return R.purry(validateAllImplementation, args)
+  return instrumentedPurry('validateAll', 'validation', validateAllImplementation, args)
 }
 
 function validateAllImplementation<T, U, E>(

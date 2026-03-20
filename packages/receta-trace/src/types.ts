@@ -34,6 +34,7 @@ export interface Span {
   readonly id: SpanId
   readonly parentId: SpanId | null
   readonly name: string
+  readonly module: string
   readonly input: unknown
   readonly output: unknown
   readonly startTime: number
@@ -61,6 +62,54 @@ export interface Trace {
 }
 
 /**
+ * A real-time trace event emitted as functions execute.
+ * Subscribe via `onEvent` in TracerOptions to receive these as JSON.
+ */
+export type TraceEvent =
+  | {
+      readonly type: 'trace-start'
+      readonly traceId: string
+      readonly timestamp: number
+    }
+  | {
+      readonly type: 'span-start'
+      readonly traceId: string
+      readonly spanId: string
+      readonly parentId: string | null
+      readonly name: string
+      readonly module: string
+      readonly input?: unknown
+      readonly timestamp: number
+      readonly depth: number
+    }
+  | {
+      readonly type: 'span-end'
+      readonly traceId: string
+      readonly spanId: string
+      readonly name: string
+      readonly output?: unknown
+      readonly durationMs: number
+      readonly status: 'ok' | 'error'
+      readonly error?: unknown
+      readonly timestamp: number
+    }
+  | {
+      readonly type: 'event'
+      readonly traceId: string
+      readonly spanId: string
+      readonly name: string
+      readonly data?: Record<string, unknown>
+      readonly timestamp: number
+    }
+  | {
+      readonly type: 'trace-end'
+      readonly traceId: string
+      readonly totalDurationMs: number
+      readonly spanCount: number
+      readonly timestamp: number
+    }
+
+/**
  * Configuration options for creating a tracer.
  */
 export interface TracerOptions {
@@ -76,6 +125,8 @@ export interface TracerOptions {
   readonly generateId?: () => string
   /** Called when each span completes */
   readonly onSpan?: (span: Span) => void
+  /** Called in real-time as trace events occur (span start/end, trace start/end) */
+  readonly onEvent?: (event: TraceEvent) => void
 }
 
 /**
@@ -86,6 +137,7 @@ export interface MutableSpan {
   id: SpanId
   parentId: SpanId | null
   name: string
+  module: string
   input: unknown
   output: unknown
   startTime: number

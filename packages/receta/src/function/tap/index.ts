@@ -1,4 +1,4 @@
-import { purryConfig } from '../../utils'
+import { instrumentedPurryConfig } from '../../utils'
 
 /**
  * Executes a side effect function and returns the original value unchanged.
@@ -60,7 +60,7 @@ import { purryConfig } from '../../utils'
 export function tap<T>(fn: (value: T) => void): (value: T) => T
 export function tap<T>(fn: (value: T) => void, value: T): T
 export function tap(...args: unknown[]): unknown {
-  return purryConfig(tapImplementation, args)
+  return instrumentedPurryConfig('tap', 'function', tapImplementation, args)
 }
 
 function tapImplementation<T>(fn: (value: T) => void, value: T): T {

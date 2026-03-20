@@ -5,6 +5,7 @@
  */
 
 import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { PlainObject } from '../types'
 
 /**
@@ -48,7 +49,7 @@ import type { PlainObject } from '../types'
 export function mask<T extends PlainObject>(obj: T, allowedKeys: readonly string[]): Partial<T>
 export function mask(allowedKeys: readonly string[]): <T extends PlainObject>(obj: T) => Partial<T>
 export function mask(...args: unknown[]): unknown {
-  return R.purry(maskImplementation, args)
+  return instrumentedPurry('mask', 'object', maskImplementation, args)
 }
 
 function maskImplementation<T extends PlainObject>(obj: T, allowedKeys: readonly string[]): Partial<T> {

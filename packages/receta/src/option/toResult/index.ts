@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Option } from '../types'
 import type { Result } from '../../result/types'
 import { ok, err } from '../../result/constructors'
@@ -39,7 +39,7 @@ import { isSome } from '../guards'
 export function toResult<T, E>(option: Option<T>, error: E): Result<T, E>
 export function toResult<E>(error: E): <T>(option: Option<T>) => Result<T, E>
 export function toResult(...args: unknown[]): unknown {
-  return R.purry(toResultImplementation, args)
+  return instrumentedPurry('toResult', 'option', toResultImplementation, args)
 }
 
 function toResultImplementation<T, E>(option: Option<T>, error: E): Result<T, E> {

@@ -1,7 +1,7 @@
 import type { Option } from '../../option/types'
 import { some, none } from '../../option/constructors'
 import type { CondPair } from '../types'
-import { purryConfig } from '../../utils'
+import { instrumentedPurryConfig } from '../../utils'
 
 /**
  * Creates a function that applies the first matching predicate-function pair.
@@ -59,7 +59,7 @@ import { purryConfig } from '../../utils'
 export function cond<T, U>(pairs: readonly CondPair<T, U>[]): (value: T) => Option<U>
 export function cond<T, U>(pairs: readonly CondPair<T, U>[], value: T): Option<U>
 export function cond(...args: unknown[]): unknown {
-  return purryConfig(condImplementation, args)
+  return instrumentedPurryConfig('cond', 'function', condImplementation, args)
 }
 
 function condImplementation<T, U>(pairs: readonly CondPair<T, U>[], value: T): Option<U> {

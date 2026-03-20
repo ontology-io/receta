@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { Result } from '../types'
 import { isOk, isErr } from '../guards'
 
@@ -32,7 +32,7 @@ import { isOk, isErr } from '../guards'
 export function tap<T, E>(result: Result<T, E>, fn: (value: T) => void): Result<T, E>
 export function tap<T>(fn: (value: T) => void): <E>(result: Result<T, E>) => Result<T, E>
 export function tap(...args: unknown[]): unknown {
-  return R.purry(tapImplementation, args)
+  return instrumentedPurry('tap', 'result', tapImplementation, args)
 }
 
 function tapImplementation<T, E>(result: Result<T, E>, fn: (value: T) => void): Result<T, E> {
@@ -75,7 +75,7 @@ function tapImplementation<T, E>(result: Result<T, E>, fn: (value: T) => void): 
 export function tapErr<T, E>(result: Result<T, E>, fn: (error: E) => void): Result<T, E>
 export function tapErr<E>(fn: (error: E) => void): <T>(result: Result<T, E>) => Result<T, E>
 export function tapErr(...args: unknown[]): unknown {
-  return R.purry(tapErrImplementation, args)
+  return instrumentedPurry('tapErr', 'result', tapErrImplementation, args)
 }
 
 function tapErrImplementation<T, E>(result: Result<T, E>, fn: (error: E) => void): Result<T, E> {

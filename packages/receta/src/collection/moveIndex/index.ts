@@ -1,4 +1,5 @@
 import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Moves an element from one index to another (immutably).
@@ -73,7 +74,7 @@ export function moveIndex(
   toIndex: number
 ): <T>(items: readonly T[]) => readonly T[]
 export function moveIndex(...args: unknown[]): unknown {
-  return R.purry(moveIndexImplementation, args)
+  return instrumentedPurry('moveIndex', 'collection', moveIndexImplementation, args)
 }
 
 function moveIndexImplementation<T>(

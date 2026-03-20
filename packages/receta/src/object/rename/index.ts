@@ -4,7 +4,7 @@
  * @module object/rename
  */
 
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 import type { PlainObject } from '../types'
 
 /**
@@ -41,7 +41,7 @@ import type { PlainObject } from '../types'
 export function rename<T extends PlainObject>(obj: T, mapping: Record<string, string>): PlainObject
 export function rename(mapping: Record<string, string>): <T extends PlainObject>(obj: T) => PlainObject
 export function rename(...args: unknown[]): unknown {
-  return R.purry(renameImplementation, args)
+  return instrumentedPurry('rename', 'object', renameImplementation, args)
 }
 
 function renameImplementation<T extends PlainObject>(obj: T, mapping: Record<string, string>): PlainObject {

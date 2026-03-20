@@ -1,4 +1,4 @@
-import * as R from 'remeda'
+import { instrumentedPurry } from '../../utils'
 
 /**
  * Rounds a number to the nearest step value.
@@ -38,7 +38,7 @@ import * as R from 'remeda'
 export function step(value: number, stepSize: number): number
 export function step(stepSize: number): (value: number) => number
 export function step(...args: unknown[]): unknown {
-  return R.purry(stepImpl, args)
+  return instrumentedPurry('step', 'number', stepImpl, args)
 }
 
 function stepImpl(value: number, stepSize: number): number {
