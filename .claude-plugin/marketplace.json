@@ -1,0 +1,27 @@
+{
+  "name": "receta-tools",
+  "owner": {
+    "name": "ontology-io",
+    "email": "khaled@ontology.io"
+  },
+  "metadata": {
+    "description": "Skills for adopting functional programming patterns with Receta — Result, Option, Validation, pipe, and more.",
+    "version": "1.0.0",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "receta-skills",
+      "source": "./plugins/receta-skills",
+      "description": "Core skills for Receta adoption: refactor vanilla code, review for compliance, generate modules, migrate projects, and explain patterns.",
+      "version": "1.0.0",
+      "keywords": ["functional-programming", "typescript", "error-handling", "refactoring"],
+      "author": {
+        "name": "ontology-io"
+      },
+      "homepage": "https://github.com/ontology-io/receta",
+      "repository": "https://github.com/ontology-io/receta",
+      "license": "MIT"
+    }
+  ]
+}

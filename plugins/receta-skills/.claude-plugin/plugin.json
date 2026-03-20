@@ -1,0 +1,18 @@
+{
+  "name": "receta-skills",
+  "displayName": "Receta FP Skills",
+  "description": "Skills for adopting Receta functional programming patterns in TypeScript projects.",
+  "version": "0.0.1",
+  "author": {
+    "name": "ontology-io"
+  },
+  "repository": "https://github.com/ontology-io/receta",
+  "license": "MIT",
+  "commands": [
+    "./skills/refactor/",
+    "./skills/review/",
+    "./skills/generate-module/",
+    "./skills/migrate/",
+    "./skills/explain/"
+  ]
+}
