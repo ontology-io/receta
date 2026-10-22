@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.5](https://github.com/ontology-io/receta/compare/eslint-plugin-receta@v0.1.4...eslint-plugin-receta@v0.1.5) (2026-10-22)
+
+
+### Bug Fixes
+
+* restore eslint-plugin tsbuildinfo accidentally modified by local build ([4dfa1b7](https://github.com/ontology-io/receta/commit/4dfa1b78431209d82501870e8ec3247307de7b45))
+* use @ontologyio/receta in README and sync jsr.json versions ([8e7be48](https://github.com/ontology-io/receta/commit/8e7be484e5b59b3a346269d2330ae3947c9ca217))
+
 ## [0.1.4](https://github.com/ontology-io/receta/compare/eslint-plugin-receta@v0.1.3...eslint-plugin-receta@v0.1.4) (2026-03-07)
 
 

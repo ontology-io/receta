@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.0](https://github.com/ontology-io/receta/compare/receta-testing@v0.1.3...receta-testing@v0.2.0) (2026-10-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* **receta-testing:** exports map resolves to bundled dist output with types first.
+
+### Features
+
+* **receta-testing:** build with tsup and types-first exports ([fe320ef](https://github.com/ontology-io/receta/commit/fe320ef499da76f7dbf2fcb41bfae3d85bec57d6))
+
 ## [0.1.3](https://github.com/ontology-io/receta/compare/receta-testing@v0.1.2...receta-testing@v0.1.3) (2026-03-07)
 
 
