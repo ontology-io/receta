@@ -6,21 +6,42 @@
       "changelog-path": "CHANGELOG.md",
       "release-type": "node",
       "include-component-in-tag": true,
-      "tag-separator": "@"
+      "tag-separator": "@",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "jsr.json",
+          "jsonpath": "$.version"
+        }
+      ]
     },
     "packages/receta-testing": {
       "package-name": "@ontologyio/receta-testing",
       "changelog-path": "CHANGELOG.md",
       "release-type": "node",
       "include-component-in-tag": true,
-      "tag-separator": "@"
+      "tag-separator": "@",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "jsr.json",
+          "jsonpath": "$.version"
+        }
+      ]
     },
     "packages/eslint-plugin-receta": {
       "package-name": "@ontologyio/eslint-plugin-receta",
       "changelog-path": "CHANGELOG.md",
       "release-type": "node",
       "include-component-in-tag": true,
-      "tag-separator": "@"
+      "tag-separator": "@",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "jsr.json",
+          "jsonpath": "$.version"
+        }
+      ]
     }
   },
   "bump-minor-pre-major": true,

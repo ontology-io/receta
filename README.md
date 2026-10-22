@@ -55,8 +55,8 @@ async function getUserProfile(userId: string) {
 ```typescript
 // ✅ RECETA: Type-safe, composable, self-documenting
 import * as R from 'remeda'
-import { Result, tryCatchAsync } from 'receta/result'
-import { Option, fromNullable } from 'receta/option'
+import { Result, tryCatchAsync } from '@ontologyio/receta/result'
+import { Option, fromNullable } from '@ontologyio/receta/option'
 
 async function getUserProfile(
   userId: string
@@ -99,11 +99,11 @@ R.pipe(
 ## Installation
 
 ```bash
-npm install receta remeda
+npm install @ontologyio/receta remeda
 # or
-bun add receta remeda
+bun add @ontologyio/receta remeda
 # or
-yarn add receta remeda
+yarn add @ontologyio/receta remeda
 ```
 
 ---
@@ -113,7 +113,7 @@ yarn add receta remeda
 ### Result: Type-Safe Error Handling
 
 ```typescript
-import { Result, ok, err, tryCatch } from 'receta/result'
+import { Result, ok, err, tryCatch } from '@ontologyio/receta/result'
 import * as R from 'remeda'
 
 // Parse JSON safely
@@ -137,7 +137,7 @@ console.log(result) // "Alice"
 ### Option: No More Null/Undefined Bugs
 
 ```typescript
-import { Option, fromNullable } from 'receta/option'
+import { Option, fromNullable } from '@ontologyio/receta/option'
 import * as R from 'remeda'
 
 type User = { settings?: { theme?: string } }
@@ -156,7 +156,7 @@ getUserTheme({ settings: { theme: 'dark' } }) // "dark"
 ### Async: Concurrency Control + Retry
 
 ```typescript
-import { mapAsync, retry } from 'receta/async'
+import { mapAsync, retry } from '@ontologyio/receta/async'
 
 // Fetch URLs with concurrency limit
 const results = await mapAsync(
@@ -179,7 +179,7 @@ const response = await retry(
 ### Predicate: Composable Filters
 
 ```typescript
-import { where, between, oneOf, gte } from 'receta/predicate'
+import { where, between, oneOf, gte } from '@ontologyio/receta/predicate'
 import * as R from 'remeda'
 
 const products = [
@@ -202,8 +202,8 @@ const filtered = R.filter(
 ### Validation: Form Validation with Error Accumulation
 
 ```typescript
-import { validate, combine, field } from 'receta/validation'
-import { isEmail, minLength } from 'receta/string'
+import { validate, combine, field } from '@ontologyio/receta/validation'
+import { isEmail, minLength } from '@ontologyio/receta/string'
 
 const validateRegistration = combine({
   email: field('email', [
