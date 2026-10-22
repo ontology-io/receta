@@ -1,7 +1,7 @@
 {
   "name": "@ontologyio/receta",
   "version": "0.3.5",
-  "description": "Practical FP recipes built on Remeda — higher-level patterns for real-world TypeScript applications",
+  "description": "Practical FP recipes built on Remeda \u2014 higher-level patterns for real-world TypeScript applications",
   "author": "Khaled Maher",
   "license": "MIT",
   "publishConfig": {
@@ -18,8 +18,6 @@
   },
   "homepage": "https://github.com/ontology-io/receta#readme",
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "sideEffects": false,
   "files": [
     "dist",
@@ -28,61 +26,135 @@
     "CHANGELOG.md"
   ],
   "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
     "./result": {
-      "import": "./dist/result/index.js",
-      "types": "./dist/result/index.d.ts"
+      "import": {
+        "types": "./dist/result/index.d.ts",
+        "default": "./dist/result/index.js"
+      },
+      "require": {
+        "types": "./dist/result/index.d.cts",
+        "default": "./dist/result/index.cjs"
+      }
     },
     "./option": {
-      "import": "./dist/option/index.js",
-      "types": "./dist/option/index.d.ts"
+      "import": {
+        "types": "./dist/option/index.d.ts",
+        "default": "./dist/option/index.js"
+      },
+      "require": {
+        "types": "./dist/option/index.d.cts",
+        "default": "./dist/option/index.cjs"
+      }
     },
     "./async": {
-      "import": "./dist/async/index.js",
-      "types": "./dist/async/index.d.ts"
+      "import": {
+        "types": "./dist/async/index.d.ts",
+        "default": "./dist/async/index.js"
+      },
+      "require": {
+        "types": "./dist/async/index.d.cts",
+        "default": "./dist/async/index.cjs"
+      }
     },
     "./predicate": {
-      "import": "./dist/predicate/index.js",
-      "types": "./dist/predicate/index.d.ts"
+      "import": {
+        "types": "./dist/predicate/index.d.ts",
+        "default": "./dist/predicate/index.js"
+      },
+      "require": {
+        "types": "./dist/predicate/index.d.cts",
+        "default": "./dist/predicate/index.cjs"
+      }
     },
     "./validation": {
-      "import": "./dist/validation/index.js",
-      "types": "./dist/validation/index.d.ts"
+      "import": {
+        "types": "./dist/validation/index.d.ts",
+        "default": "./dist/validation/index.js"
+      },
+      "require": {
+        "types": "./dist/validation/index.d.cts",
+        "default": "./dist/validation/index.cjs"
+      }
     },
     "./collection": {
-      "import": "./dist/collection/index.js",
-      "types": "./dist/collection/index.d.ts"
+      "import": {
+        "types": "./dist/collection/index.d.ts",
+        "default": "./dist/collection/index.js"
+      },
+      "require": {
+        "types": "./dist/collection/index.d.cts",
+        "default": "./dist/collection/index.cjs"
+      }
     },
     "./object": {
-      "import": "./dist/object/index.js",
-      "types": "./dist/object/index.d.ts"
+      "import": {
+        "types": "./dist/object/index.d.ts",
+        "default": "./dist/object/index.js"
+      },
+      "require": {
+        "types": "./dist/object/index.d.cts",
+        "default": "./dist/object/index.cjs"
+      }
     },
     "./string": {
-      "import": "./dist/string/index.js",
-      "types": "./dist/string/index.d.ts"
+      "import": {
+        "types": "./dist/string/index.d.ts",
+        "default": "./dist/string/index.js"
+      },
+      "require": {
+        "types": "./dist/string/index.d.cts",
+        "default": "./dist/string/index.cjs"
+      }
     },
     "./number": {
-      "import": "./dist/number/index.js",
-      "types": "./dist/number/index.d.ts"
+      "import": {
+        "types": "./dist/number/index.d.ts",
+        "default": "./dist/number/index.js"
+      },
+      "require": {
+        "types": "./dist/number/index.d.cts",
+        "default": "./dist/number/index.cjs"
+      }
     },
     "./memo": {
-      "import": "./dist/memo/index.js",
-      "types": "./dist/memo/index.d.ts"
+      "import": {
+        "types": "./dist/memo/index.d.ts",
+        "default": "./dist/memo/index.js"
+      },
+      "require": {
+        "types": "./dist/memo/index.d.cts",
+        "default": "./dist/memo/index.cjs"
+      }
     },
     "./lens": {
-      "import": "./dist/lens/index.js",
-      "types": "./dist/lens/index.d.ts"
+      "import": {
+        "types": "./dist/lens/index.d.ts",
+        "default": "./dist/lens/index.js"
+      },
+      "require": {
+        "types": "./dist/lens/index.d.cts",
+        "default": "./dist/lens/index.cjs"
+      }
     },
     "./compare": {
-      "import": "./dist/compare/index.js",
-      "types": "./dist/compare/index.d.ts"
+      "import": {
+        "types": "./dist/compare/index.d.ts",
+        "default": "./dist/compare/index.js"
+      },
+      "require": {
+        "types": "./dist/compare/index.d.cts",
+        "default": "./dist/compare/index.cjs"
+      }
     },
     "./function": {
-      "import": "./dist/function/index.js",
-      "types": "./dist/function/index.d.ts"
+      "import": {
+        "types": "./dist/function/index.d.ts",
+        "default": "./dist/function/index.js"
+      },
+      "require": {
+        "types": "./dist/function/index.d.cts",
+        "default": "./dist/function/index.cjs"
+      }
     }
   },
   "keywords": [
@@ -119,5 +191,12 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/*/index.d.ts"
+      ]
+    }
   }
 }
