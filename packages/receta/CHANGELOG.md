@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0](https://github.com/ontology-io/receta/compare/receta@v0.3.5...receta@v0.4.0) (2026-10-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* **receta:** the "." export (dist/index.js, which never existed) is gone. Import from subpaths such as @ontologyio/receta/result.
+
+### Features
+
+* **receta:** add jitter option to retry ([a925296](https://github.com/ontology-io/receta/commit/a925296ef8f5bb365599b778b0a8e7fa2db1d855))
+* **receta:** build with tsup for dual ESM/CJS subpath exports ([ced52b4](https://github.com/ontology-io/receta/commit/ced52b4716e0dd5e9120b16793da3e7222212126))
+
+
+### Bug Fixes
+
+* use @ontologyio/receta in README and sync jsr.json versions ([8e7be48](https://github.com/ontology-io/receta/commit/8e7be484e5b59b3a346269d2330ae3947c9ca217))
+
 ## [0.3.5](https://github.com/ontology-io/receta/compare/receta@v0.3.4...receta@v0.3.5) (2026-03-07)
 
 
