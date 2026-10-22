@@ -1,7 +1,7 @@
 {
   "name": "@ontologyio/receta-testing",
   "version": "0.1.3",
-  "description": "Testing utilities for @ontologyio/receta — matchers, law testers, and fast-check arbitraries",
+  "description": "Testing utilities for @ontologyio/receta \u2014 matchers, law testers, and fast-check arbitraries",
   "author": "Khaled Maher",
   "license": "MIT",
   "publishConfig": {
@@ -25,20 +25,20 @@
   ],
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./matchers": {
-      "import": "./dist/matchers/index.js",
-      "types": "./dist/matchers/index.d.ts"
+      "types": "./dist/matchers/index.d.ts",
+      "default": "./dist/matchers/index.js"
     },
     "./laws": {
-      "import": "./dist/laws/index.js",
-      "types": "./dist/laws/index.d.ts"
+      "types": "./dist/laws/index.d.ts",
+      "default": "./dist/laws/index.js"
     },
     "./arbitraries": {
-      "import": "./dist/arbitraries/index.js",
-      "types": "./dist/arbitraries/index.d.ts"
+      "types": "./dist/arbitraries/index.d.ts",
+      "default": "./dist/arbitraries/index.js"
     }
   },
   "peerDependencies": {
@@ -53,5 +53,18 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "typesVersions": {
+    "*": {
+      "matchers": [
+        "dist/matchers/index.d.ts"
+      ],
+      "laws": [
+        "dist/laws/index.d.ts"
+      ],
+      "arbitraries": [
+        "dist/arbitraries/index.d.ts"
+      ]
+    }
   }
 }

@@ -1,18 +1,11 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
-    "composite": true,
-    "tsBuildInfoFile": "dist/.tsbuildinfo",
-    "paths": {
-      "@ontologyio/receta": ["../receta/src/index.ts"],
-      "@ontologyio/receta/*": ["../receta/src/*/index.ts"]
-    }
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false
   },
-  "references": [
-    { "path": "../receta" }
-  ],
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }
