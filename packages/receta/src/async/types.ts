@@ -28,13 +28,23 @@ export interface RetryOptions {
   readonly maxDelay?: number
 
   /**
+   * Maximum random jitter in milliseconds. A uniform random value in
+   * `[0, jitter)` is added to each delay before the `maxDelay` clamp, so
+   * concurrent callers do not retry in lockstep:
+   * `min(delay * backoff^n + random(0, jitter), maxDelay)`.
+   * @default 0
+   */
+  readonly jitter?: number
+
+  /**
    * Function to determine if an error should be retried.
    * Return true to retry, false to fail immediately.
    */
   readonly shouldRetry?: (error: unknown, attempt: number) => boolean
 
   /**
-   * Callback invoked on each retry attempt.
+   * Callback invoked on each retry attempt. Receives the actual (jittered,
+   * clamped) delay that will be waited.
    */
   readonly onRetry?: (error: unknown, attempt: number, delay: number) => void
 }

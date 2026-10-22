@@ -291,7 +291,7 @@ START: What async problem are you solving?
 ```
 
 ## Key Functions
-- `retry()` - Retry with exponential backoff, returns Result
+- `retry()` - Retry with exponential backoff (optional `jitter` ms, default 0), returns Result
 - `timeout()` - Add timeout to Promise, returns Result
 - `mapAsync()` - Process array with concurrency control
 - `debounce()` - Delay until quiet period

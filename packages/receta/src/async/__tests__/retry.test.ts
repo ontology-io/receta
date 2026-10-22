@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'bun:test'
+import { describe, it, expect, spyOn } from 'bun:test'
 import { retry, sleep } from '../retry'
 import { isOk, isErr, unwrapOr } from '../../result'
 
@@ -155,6 +155,46 @@ describe('Async.retry', () => {
       delays.forEach((delay) => {
         expect(delay).toBeLessThan(250)
       })
+    })
+  })
+
+  describe('jitter', () => {
+    const run = async (options: Parameters<typeof retry>[1]) => {
+      const delays: number[] = []
+      await retry(
+        async () => {
+          throw new Error('Failed')
+        },
+        { maxAttempts: 3, delay: 1, backoff: 1, ...options, onRetry: (_e, _a, d) => delays.push(d) }
+      )
+      return delays
+    }
+
+    it('adds no randomness by default', async () => {
+      const random = spyOn(Math, 'random').mockReturnValue(0.99)
+      try {
+        expect(await run({})).toEqual([1, 1])
+      } finally {
+        random.mockRestore()
+      }
+    })
+
+    it('adds a uniform 0..jitter ms to the delay and reports it to onRetry', async () => {
+      const random = spyOn(Math, 'random').mockReturnValue(0.5)
+      try {
+        expect(await run({ delay: 10, jitter: 20 })).toEqual([20, 20])
+      } finally {
+        random.mockRestore()
+      }
+    })
+
+    it('adds jitter before the maxDelay clamp', async () => {
+      const random = spyOn(Math, 'random').mockReturnValue(0.99)
+      try {
+        expect(await run({ delay: 10, jitter: 100, maxDelay: 15 })).toEqual([15, 15])
+      } finally {
+        random.mockRestore()
+      }
     })
   })
 
