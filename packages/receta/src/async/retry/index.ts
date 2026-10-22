@@ -48,6 +48,7 @@ export interface RetryError {
  *     delay: 500,
  *     backoff: 2,
  *     maxDelay: 10000,
+ *     jitter: 250, // add 0-250ms of random delay to avoid thundering herds
  *     shouldRetry: (error, attempt) => {
  *       // Only retry on specific errors
  *       return error instanceof NetworkError && attempt < 3
@@ -78,6 +79,7 @@ export async function retry<T>(
     delay: initialDelay = 1000,
     backoff = 2,
     maxDelay = 30000,
+    jitter = 0,
     shouldRetry,
     onRetry,
   } = options
@@ -110,8 +112,9 @@ export async function retry<T>(
         })
       }
 
-      // Calculate delay with exponential backoff using clamp for clarity
-      const delayMs = clamp(currentDelay, 0, maxDelay)
+      // Exponential backoff plus uniform random jitter, clamped to maxDelay
+      // (min(2^n + random, max))
+      const delayMs = clamp(currentDelay + Math.random() * jitter, 0, maxDelay)
 
       // Call onRetry callback if provided
       if (onRetry) {

@@ -58,6 +58,22 @@ const fetchWithCustomRetry = async (url: string) => {
 - Attempt 4: 2000ms delay (1000 × 2)
 - Attempt 5: 4000ms delay (2000 × 2)
 
+**Adding jitter:** when many clients fail at once (e.g. a rate limit), identical
+backoff makes them all retry at the same instant. Set `jitter` to add a uniform
+random 0..`jitter` ms to each delay, before the `maxDelay` cap:
+
+```typescript
+await retry(() => callApi(), {
+  delay: 500,
+  backoff: 2,
+  maxDelay: 10000,
+  jitter: 250, // wait = min(500 × 2^n + random(0, 250), 10000)
+})
+```
+
+`onRetry` receives the jittered delay that will actually be waited. The default
+is `jitter: 0` (no randomness).
+
 ### Conditional Retry with shouldRetry
 
 Only retry specific types of errors:

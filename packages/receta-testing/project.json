@@ -9,7 +9,7 @@
       "outputs": ["{projectRoot}/dist"],
       "dependsOn": ["receta:build"],
       "options": {
-        "command": "tsc --build",
+        "command": "tsup",
         "cwd": "{projectRoot}"
       }
     },

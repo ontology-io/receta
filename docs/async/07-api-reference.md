@@ -334,8 +334,11 @@ function retry<T>(
   - `delay?: number` - Initial delay in ms (default: 1000)
   - `backoff?: number` - Delay multiplier for exponential backoff (default: 2)
   - `maxDelay?: number` - Maximum delay between retries in ms (default: 30000)
+  - `jitter?: number` - Max random jitter in ms added to each delay before the `maxDelay` clamp (default: 0)
   - `shouldRetry?: (error: unknown, attempt: number) => boolean` - Return true to retry
-  - `onRetry?: (error: unknown, attempt: number, delay: number) => void` - Callback on each retry
+  - `onRetry?: (error: unknown, attempt: number, delay: number) => void` - Callback on each retry; `delay` is the jittered, clamped delay
+
+The wait before retry `n` is `min(delay * backoff^(n-1) + random(0, jitter), maxDelay)`.
 
 #### Returns
 
