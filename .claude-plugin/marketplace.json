@@ -13,8 +13,8 @@
     {
       "name": "receta-skills",
       "source": "./plugins/receta-skills",
-      "description": "Core skills for Receta adoption: refactor vanilla code, review for compliance, generate modules, migrate projects, and explain patterns.",
-      "version": "1.0.0",
+      "description": "Core skills for Receta adoption: refactor vanilla code, review for compliance, generate modules, migrate projects, explain patterns, and keep code readable.",
+      "version": "0.1.0",
       "keywords": ["functional-programming", "typescript", "error-handling", "refactoring"],
       "author": {
         "name": "ontology-io"
