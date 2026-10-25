@@ -65,6 +65,9 @@ For each transformation:
 2. Replace the vanilla pattern with the Receta equivalent
 3. Update the function signature/return type if needed
 4. Ensure the refactored code maintains identical behavior
+5. Invoke the `receta-skills:readable` skill on the refactored code and fix what it flags before presenting.
+   A conversion that turns a loop into a pipe of anonymous lambdas passes every rule here and still reads
+   worse than the original. Renaming an export or changing a signature goes back to the user first.
 
 ### Step 4: Verify
 
@@ -260,3 +263,4 @@ const processUser = cond<User, string>([
 6. All functions composed with `R.pipe` where possible
 7. Error handling returns `Result<T, E>`, not exceptions
 8. Optional values return `Option<T>`, not `T | null | undefined`
+9. Refactored code passes the `readable` skill's five levels: named pipe stages, one idea per stage, unwrap once at the edge

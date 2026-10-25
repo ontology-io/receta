@@ -139,6 +139,7 @@ Be prepared to explain any of these topics:
 4. **Runnable examples** — All code should be copy-pasteable into a `.ts` file with correct imports
 5. **Progressive complexity** — Start with the simplest usage, then build up to composed patterns
 6. **Import paths matter** — Always show the correct `@ontologyio/receta/<module>` import path
+7. **Readable examples** — Example code follows the `receta-skills:readable` skill: domain names (not `x`, `res`), named pipe stages, comments only for why. Readers copy the style along with the API
 
 ### Example Explanation: Result
 

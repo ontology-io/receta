@@ -3,9 +3,10 @@ name: readable
 description: >-
   Check and fix the readability of Receta/Remeda TypeScript code at five zoom levels (name, line, flow,
   function, module). Use when the user says "make this readable", "is this readable", "clean this up",
-  "this pipe is hard to follow", "readability review", or asks to polish code before a PR. Also apply it
-  as a self-check whenever you write new Receta code. Complements `review`: review checks that code uses
-  Receta, readable checks that a person can follow it.
+  "this pipe is hard to follow", "readability review", "comment this so a new teammate can follow it", or
+  asks to polish code before a PR. Also apply it as a self-check whenever you write new Receta code; the
+  refactor, generate-module, migrate, explain and review skills run it on the code they produce.
+  Complements `review`: review checks that code uses Receta, readable checks that a person can follow it.
 tags:
   - readability
   - review
@@ -83,6 +84,8 @@ readable.
 ### 5. Module
 
 - Business constants live at the top, named, with a comment saying why the value is what it is.
+- A newcomer finds the entry point from the top: a file header says what the file owns and which function
+  to read first (see [Comments that onboard](#comments-that-onboard)).
 - Each error union is declared once (`types.ts` in a Receta module), not rebuilt as literals per call.
 - Public function first, helpers below in the order it calls them. This matches Receta's own layout:
   overloads → `purry` → `*Implementation`.
@@ -92,15 +95,33 @@ readable.
 
 ## What holds the levels together
 
-- **Comments explain why.** The code already says what it does. A comment is for a business rule, a
-  workaround, or a trade-off the code can't express. JSDoc on exports is different: it is the API
-  reference this repo requires, so keep it.
+- **Comments explain why, and show newcomers where to start.** The code already says what it does. A
+  comment is for a business rule, a workaround, a trade-off the code can't express, or for orienting a
+  reader who is new to the file (below). JSDoc on exports is the API reference this repo requires, so
+  keep it.
 - **Locality.** Things that change together sit together. A pipe's stage functions live next to the pipe
   unless something else reuses them. In the library, each function's folder holds its code and tests.
 - **Honesty.** A function does what its name says and nothing more: no hidden writes, no surprise
   mutation, no hidden throws. This is where names and functions meet.
 - **Consistency.** One pattern used everywhere beats a better pattern used in some places. If a module
   returns `Result`, every fallible function in it does. Each surprise costs the reader a working-memory slot.
+
+## Comments that onboard
+
+A newcomer reads a file top to bottom once, to learn where things are and what they can rely on. Three
+comments serve them, each in a fixed place. Any other comment is a why-comment or gets deleted.
+
+| Comment           | Where                    | Says                                                                 | Skip when |
+|-------------------|--------------------------|----------------------------------------------------------------------|-----------|
+| File header       | first lines of the file  | what the file owns, who calls it, which function to read first      | the path already says it, as in a library `src/<module>/<fn>/index.ts` |
+| Entry-point JSDoc | the exported function    | what it does, each failure it can return, what happens on failure   | never: every export gets one (in the library, keep the `@example`) |
+| Why-comment       | the line it explains     | the business rule, workaround or trade-off behind that line         | the code already says it |
+
+- Explain what a pattern guarantees in domain words, not how the pattern works. "Nothing is saved when
+  either check fails" onboards a reader who has never seen a Result chain; "flatMap short-circuits on Err"
+  only helps one who already knows. How Result works lives in the module docs and the `explain` skill.
+- Name the failures by their error codes, so a reader can search from a log line straight to the check.
+- Never narrate pipe stages (`// filter out gifts`), record history (git has it), or keep commented-out code.
 
 ## Receta-specific smells
 
@@ -152,12 +173,20 @@ const proc = (o: any) =>
 
 ```typescript
 // After
+// Checkout pricing: turns a submitted order into a priced, saved order.
+// Called by the checkout handler. Start at saveOrderWithTotal.
 import * as R from 'remeda'
 import { ok, err, map, flatMap, tap, type Result } from '@ontologyio/receta/result'
 
 // Loyalty program: VIPs pay 90% of list price on every line.
 const VIP_DISCOUNT = 0.9
 
+/**
+ * Prices an order and saves it.
+ *
+ * Fails with EMPTY_ORDER when the order has no items, or ZERO_TOTAL when every item is a gift.
+ * Nothing is saved when either check fails.
+ */
 export function saveOrderWithTotal(order: Order): Result<PricedOrder, OrderError> {
   return R.pipe(
     requireItems(order),
@@ -218,13 +247,16 @@ What changed at each level:
         │
         ▼
  MODULE
- magic 0.9 buried ──▶ VIP_DISCOUNT named at top,
- errors anonymous      OrderError declared once
+ magic 0.9 buried, ──▶ VIP_DISCOUNT named at top,
+ errors anonymous,      OrderError declared once,
+ no way in              header says where to start
 ```
 
-Two things the example shows. The `if (o)` guard disappears because `Order` is typed, so the type rules
-out the missing order. And `(item) => !item.isGift` stays inline: it is already one idea, and naming it
-would add a jump without adding meaning.
+Three things the example shows. The `if (o)` guard disappears because `Order` is typed, so the type rules
+out the missing order. `(item) => !item.isGift` stays inline: it is already one idea, and naming it would
+add a jump without adding meaning. And the comments onboard without narrating: the header says where the
+file sits, and the JSDoc names each failure and says nothing is saved when one happens, so a reader new
+to Result chains knows the guarantee without knowing the pattern.
 
 ## Steps
 

@@ -286,3 +286,4 @@ After generating the module, remind the user to:
 4. **One file per operation** in its own directory with `index.ts`
 5. **JSDoc with `@example`** on every exported function
 6. **Both data-first and data-last** tests for every transformer
+7. **Readable output** — before handing over, invoke the `receta-skills:readable` skill on the generated files: `*Implementation` functions named for what they do, one idea per line, the error union declared once in `types.ts`

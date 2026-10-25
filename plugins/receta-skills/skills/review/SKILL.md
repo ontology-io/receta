@@ -136,7 +136,7 @@ Then provide detailed reports for files scoring below 80, starting with the lowe
 
 ### Quick Fix Suggestions
 
-For each violation, always suggest the minimal change needed. Use the correct imports:
+For each violation, always suggest the minimal change needed. Suggested fixes must also pass the `receta-skills:readable` skill: replacing a try/catch with a pipe nobody can follow is not a fix. For a full readability pass on the reviewed code, recommend running `readable` after this review. Use the correct imports:
 
 ```typescript
 // Result - error handling

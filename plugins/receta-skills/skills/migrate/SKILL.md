@@ -74,6 +74,11 @@ Recommend a wave-based approach, ordering by risk (lowest first) and impact (hig
 - Introduce `lens` for complex immutable state updates
 - Use function combinators (`cond`, `ifElse`, `when`) for conditional logic
 
+#### Every Wave: Readability Pass
+- A file is done when it passes the `receta-skills:readable` skill, not when the vanilla patterns are gone
+- Mechanical conversions (Wave 1 especially) can leave pipes of anonymous lambdas that read worse than the loops they replaced
+- Add a file header and entry-point JSDoc as each file is migrated, so the team can find their way through code written in the new style
+
 ### Phase 3: Generate Migration Checklist
 
 Produce a file-by-file checklist grouped by wave:
