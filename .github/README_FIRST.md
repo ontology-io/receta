@@ -24,7 +24,7 @@ This directory contains GitHub Actions workflows and reusable composite actions 
 Sets up the build environment with Node.js, Bun, and dependencies.
 
 **Inputs:**
-- `node-version` (default: `'20'`) - Node.js version
+- `node-version` (default: `'24'`) - Node.js version
 - `bun-version` (default: `'latest'`) - Bun version
 - `registry-url` (default: `'https://registry.npmjs.org'`) - npm registry URL
 - `scope` (optional) - npm scope for registry configuration

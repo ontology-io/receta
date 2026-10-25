@@ -32,7 +32,7 @@ runs:
       env:
         NODE_AUTH_TOKEN: ""
       run: |
-        npm install -g npm@latest
+        npm install -g npm@11
         printf 'registry=https://registry.npmjs.org/\n' > /tmp/npm-isolated.npmrc
         cd ${{ inputs.package-path }}
         VERSION=$(node -p "require('./package.json').version")
