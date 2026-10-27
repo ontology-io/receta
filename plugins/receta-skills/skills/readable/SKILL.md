@@ -3,9 +3,10 @@ name: readable
 description: >-
   Check and fix the readability of Receta/Remeda TypeScript code at five zoom levels (name, line, flow,
   function, module). Use when the user says "make this readable", "is this readable", "clean this up",
-  "this pipe is hard to follow", "readability review", "comment this so a new teammate can follow it", or
-  asks to polish code before a PR. Also apply it as a self-check whenever you write new Receta code; the
-  refactor, generate-module, migrate, explain and review skills run it on the code they produce.
+  "this pipe is hard to follow", "too many spreads", "readability review", "comment this so a new teammate
+  can follow it", or asks to polish code before a PR. Also apply it as a self-check whenever you write new
+  Receta code; the refactor, generate-module, migrate, explain and review skills run it on the code they
+  produce.
   Complements `review`: review checks that code uses Receta, readable checks that a person can follow it.
 tags:
   - readability
@@ -56,6 +57,9 @@ readable.
   nests another pipe gets extracted into a named function.
 - Pull magic numbers and sub-expressions into named consts (`discount`, `VIP_DISCOUNT`).
 - No inline pipe inside a lambda (`map((x) => R.pipe(x, ...))`): give the inner pipe a name.
+- A pipe stage that only copies an object to change it (`(u) => ({ ...u, role })`), or a spread nested two
+  levels deep, becomes a named update: `R.set`, `R.evolve`, `R.setPath`. See
+  [Spread and immutable updates](#spread-and-immutable-updates).
 - A `where({ ... })` with more than about four keys becomes a named predicate const.
 
 ### 3. Flow
@@ -130,10 +134,77 @@ comments serve them, each in a fixed place. Any other comment is a why-comment o
 | Lambda soup        | every pipe stage is an anonymous multi-line lambda     | name the stages; the pipe becomes a sentence     |
 | Context threading  | `map((x) => ({ x, t }))` carrying a tuple between stages | compute it in a named stage that returns the domain type |
 | Nested pipes       | `map((x) => R.pipe(x, ...))` inside a pipe             | extract the inner pipe into a named function     |
+| Spread pyramid     | `{ ...a, b: { ...a.b, c: { ...a.b.c, d } } }`          | `R.setPath(a, ['b', 'c', 'd'], d)`: one path, not three copies |
 | Wrapper ping-pong  | Option → Result → Option, or unwrap then re-wrap       | pick the wrapper once; convert at one boundary   |
 | Match everywhere   | `match` after each step to keep going                  | `map` / `flatMap` through; `match` once at the edge |
 | Combinator puzzle  | `converge`, `juxt`, `flip` where two lines would say it | write the plain function; use a combinator only when it names the intent |
 | Over-extraction    | one-use helpers shorter than their own names           | inline it; one idea on one line needs no name    |
+
+## Spread and immutable updates
+
+Receta doesn't ban spread, and neither does readability. Every spread has a function that makes the same
+update. Use the function where it reads better, and keep the spread where it doesn't.
+
+| Situation                                              | Write                                                   |
+|--------------------------------------------------------|---------------------------------------------------------|
+| One flat field, outside a pipe                         | keep the spread: `{ ...order, total }`                  |
+| A pipe stage whose only job is the update              | the data-last helper: `R.set('role', 'admin')`          |
+| A field computed from its old value                    | `R.evolve({ loginCount: (count) => count + 1 })`        |
+| A spread nested two or more levels deep                | `R.setPath(['settings', 'theme'], 'dark')`              |
+| The same nested field read and written in many places  | a lens from `@ontologyio/receta/lens` (`view` / `set` / `over`) |
+
+Each spread and its function:
+
+| Spread                                              | Function                                               |
+|-----------------------------------------------------|--------------------------------------------------------|
+| `{ ...a, ...b }`                                    | `R.merge(a, b)`                                        |
+| `{ ...a, ...b, ...c }`                              | `R.mergeAll([a, b, c])`                                |
+| `{ ...user, role: 'admin' }`                        | `R.set(user, 'role', 'admin')`                         |
+| `{ ...user, age: user.age + 1 }`                    | `R.evolve(user, { age: (age) => age + 1 })`            |
+| `{ ...cfg, db: { ...cfg.db, port } }`               | `R.setPath(cfg, ['db', 'port'], port)`                 |
+| `const { password, ...rest } = user`                | `R.omit(user, ['password'])`                           |
+| `{ ...a, nested: { ...a.nested, ...b.nested } }`    | `R.mergeDeep(a, b)`; Receta's `deepMerge([a, b], options)` when arrays should concat or conflicts need a rule |
+| `[...a, ...b]`, `[...items, item]`                  | `R.concat(a, b)`, `R.concat(items, [item])`            |
+| `[...items.slice(0, i), item, ...items.slice(i)]`   | Receta's `insertAt(items, i, item)`                    |
+| `[...items.slice(0, i), item, ...items.slice(i + 1)]` | Receta's `updateAt(items, i, item)`                  |
+| `[...items.slice(0, i), ...items.slice(i + 1)]`     | Receta's `removeAtIndex(items, i)`                     |
+
+In a pipe, the update stages become a list of named changes:
+
+```typescript
+// Before: every stage copies the user to change one thing
+R.pipe(
+  user,
+  (u) => ({ ...u, role: 'admin' as const }),
+  (u) => ({ ...u, loginCount: u.loginCount + 1 }),
+  (u) => ({ ...u, settings: { ...u.settings, theme: 'dark' as const } }),
+  ({ password, ...rest }) => rest,
+)
+
+// After
+R.pipe(
+  user,
+  R.set('role', 'admin'),
+  R.evolve({ loginCount: (count) => count + 1 }),
+  R.setPath(['settings', 'theme'], 'dark'),
+  R.omit(['password']),
+)
+```
+
+The helpers also check more. `R.set` rejects a value outside the field's type and `R.setPath` rejects a
+path the type doesn't have, while a spread lambda widens `'admin'` to `string` unless you add `as const`.
+
+- **There are two `setPath`s.** Remeda's `R.setPath(obj, path, value)` takes the object first and
+  type-checks the path. Receta's `setPath(path, value, obj)` and `updatePath(path, fn, obj)` take it last,
+  create missing intermediate objects, accept any path, and return the input type unchanged. Use Remeda's
+  unless the intermediate objects may not exist.
+- **`updateAt` and `removeAtIndex` return the array unchanged when the index is out of bounds.** Where an
+  out-of-range index is a bug, check it before the update.
+- **Spread in calls and rest parameters stays** (`fn(...args)`, `(...args) => R.purry(impl, args)`). There
+  is nothing to replace.
+
+`withTotal` in the worked example below keeps its spread: one flat field, outside a pipe, and the function
+name already says what the update is.
 
 ## Worked example
 
@@ -303,6 +374,7 @@ give full reports only for files that fail two or more levels.
 - Don't trade a Receta rule for readability. "A try/catch reads better here" is never the fix.
 - Don't add comments that restate the code. If a comment says *what*, rename instead.
 - Don't extract what is already one idea on one line.
+- Don't swap a flat, one-off spread for a helper just to avoid the syntax.
 - Don't rename public exports silently; that breaks callers.
 - Don't introduce a second pattern for something the file already does one way, even a better one.
   Propose the change for the whole module instead.
