@@ -461,8 +461,8 @@ const fetchUser = async (id: string) => {
   )
 
   return match(result, {
-    Ok: (user) => user,
-    Err: (error) => {
+    onOk: (user) => user,
+    onErr: (error) => {
       // Graceful fallback
       logger.error('Failed to fetch user, using cache', {
         id,
@@ -605,8 +605,8 @@ const fetchDataResilient = async (query: string) => {
   )
 
   return match(secondaryResult, {
-    Ok: (data) => data,
-    Err: (error) => {
+    onOk: (data) => data,
+    onErr: (error) => {
       logger.error('Both services failed', {
         primary: primaryResult.error,
         secondary: error
@@ -700,12 +700,12 @@ class ServiceClient {
     )
 
     return match(result, {
-      Ok: (data) => {
+      onOk: (data) => {
         // Reset on success
         this.failures = 0
         return ok(data)
       },
-      Err: (error) => {
+      onErr: (error) => {
         // Track failures
         this.failures++
         if (this.failures >= this.threshold) {

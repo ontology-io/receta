@@ -115,11 +115,11 @@ function SearchBox() {
     const result = await debouncedSearch(value)
 
     Result.match(result, {
-      ok: (data) => {
+      onOk: (data) => {
         setResults(data)
         setLoading(false)
       },
-      err: (error) => {
+      onErr: (error) => {
         console.error(error)
         setResults([])
         setLoading(false)
@@ -192,8 +192,8 @@ function createAutoSave(
       const result = await saveDocument(content)
 
       Result.match(result, {
-        ok: (doc) => options.onSaved?.(doc),
-        err: (error) => options.onError?.(error)
+        onOk: (doc) => options.onSaved?.(doc),
+        onErr: (error) => options.onError?.(error)
       })
     },
 
@@ -607,12 +607,12 @@ const createSearchManager = () => {
       const result = await performSearch(query)
 
       Result.match(result, {
-        ok: (results) => {
+        onOk: (results) => {
           state.results = results
           state.loading = false
           updateUI(state)
         },
-        err: (error) => {
+        onErr: (error) => {
           state.error = error
           state.loading = false
           state.results = []
@@ -679,11 +679,11 @@ const createAutoSaveManager = (documentId: string) => {
       const result = await saveDocument(content, currentVersion)
 
       return Result.match(result, {
-        ok: (doc) => ({
+        onOk: (doc) => ({
           success: true,
           message: `Saved at ${doc.lastModified.toLocaleTimeString()}`
         }),
-        err: (error) => ({
+        onErr: (error) => ({
           success: false,
           message: error
         })
@@ -729,7 +729,7 @@ const createInfiniteScroll = <T>(
         const result = await fetchPage(cursor)
 
         Result.match(result, {
-          ok: (response) => {
+          onOk: (response) => {
             // Append new items to DOM
             renderItems(response.items)
 
@@ -737,7 +737,7 @@ const createInfiniteScroll = <T>(
             hasMore = response.hasMore
             loading = false
           },
-          err: (error) => {
+          onErr: (error) => {
             console.error('Failed to load more:', error)
             loading = false
           }
@@ -871,11 +871,11 @@ const searchWithFeedback = debounce(
 
     // Show results or error
     Result.match(result, {
-      ok: (data) => {
+      onOk: (data) => {
         setResults(data)
         setSearching(false)
       },
-      err: (error) => {
+      onErr: (error) => {
         setError(error)
         setSearching(false)
       }

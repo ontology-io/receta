@@ -458,10 +458,10 @@ import { match } from 'receta/option'
 const result = pipe(
   value,
   cond(pairs),
-  match(
-    (value) => `Matched: ${value}`,
-    () => 'No condition matched'
-  )
+  match({
+    onSome: (value) => `Matched: ${value}`,
+    onNone: () => 'No condition matched'
+  })
 )
 ```
 

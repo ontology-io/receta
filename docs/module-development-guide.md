@@ -1244,8 +1244,8 @@ const exampleName = (params) =>
 // Usage
 const result = exampleName(input)
 match(result, {
-  onSuccess: (data) => handleSuccess(data),
-  onFailure: (error) => handleError(error)
+  onOk: (data) => handleSuccess(data),
+  onErr: (error) => handleError(error)
 })
 ​```
 

@@ -63,10 +63,10 @@ import { createParseNumberError, type ParseNumberError } from './types'
  * // Use with pattern matching
  * pipe(
  *   parseInt('FF', 16),
- *   Result.match(
- *     (n) => `Decimal: ${n}`,
- *     (e) => `Error: ${e.message}`
- *   )
+ *   Result.match({
+ *     onOk: (n) => `Decimal: ${n}`,
+ *     onErr: (e) => `Error: ${e.message}`
+ *   })
  * )
  * // => 'Decimal: 255'
  * ```

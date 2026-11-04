@@ -2,11 +2,13 @@
 
 > **Practical FP recipes built on Remeda** — Higher-level patterns for real-world TypeScript applications
 
-[![npm version](https://img.shields.io/npm/v/receta.svg)](https://www.npmjs.com/package/receta)
+[![npm version](https://img.shields.io/npm/v/@ontologyio/receta.svg)](https://www.npmjs.com/package/@ontologyio/receta)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
 
 ---
+
+![gemini-2 5-flash-image_remove_the_text_Typescript_Package_Library-0](https://github.com/user-attachments/assets/706475dc-3c32-439f-a6c1-460bcaa15e24)
 
 ## What is Receta?
 
@@ -53,8 +55,8 @@ async function getUserProfile(userId: string) {
 ```typescript
 // ✅ RECETA: Type-safe, composable, self-documenting
 import * as R from 'remeda'
-import { Result, tryCatchAsync } from 'receta/result'
-import { Option, fromNullable } from 'receta/option'
+import { Result, tryCatchAsync } from '@ontologyio/receta/result'
+import { Option, fromNullable } from '@ontologyio/receta/option'
 
 async function getUserProfile(
   userId: string
@@ -77,8 +79,8 @@ async function getUserProfile(
 R.pipe(
   await getUserProfile('123'),
   Result.match({
-    Ok: (email) => console.log('Email:', email),
-    Err: (error) => {
+    onOk: (email) => console.log('Email:', email),
+    onErr: (error) => {
       if (error.type === 'network_error') showNetworkError()
       if (error.type === 'email_not_found') showEmailMissing()
     }
@@ -97,11 +99,11 @@ R.pipe(
 ## Installation
 
 ```bash
-npm install receta remeda
+npm install @ontologyio/receta remeda
 # or
-bun add receta remeda
+bun add @ontologyio/receta remeda
 # or
-yarn add receta remeda
+yarn add @ontologyio/receta remeda
 ```
 
 ---
@@ -111,7 +113,7 @@ yarn add receta remeda
 ### Result: Type-Safe Error Handling
 
 ```typescript
-import { Result, ok, err, tryCatch } from 'receta/result'
+import { Result, ok, err, tryCatch } from '@ontologyio/receta/result'
 import * as R from 'remeda'
 
 // Parse JSON safely
@@ -135,7 +137,7 @@ console.log(result) // "Alice"
 ### Option: No More Null/Undefined Bugs
 
 ```typescript
-import { Option, fromNullable } from 'receta/option'
+import { Option, fromNullable } from '@ontologyio/receta/option'
 import * as R from 'remeda'
 
 type User = { settings?: { theme?: string } }
@@ -154,7 +156,7 @@ getUserTheme({ settings: { theme: 'dark' } }) // "dark"
 ### Async: Concurrency Control + Retry
 
 ```typescript
-import { mapAsync, retry } from 'receta/async'
+import { mapAsync, retry } from '@ontologyio/receta/async'
 
 // Fetch URLs with concurrency limit
 const results = await mapAsync(
@@ -177,7 +179,7 @@ const response = await retry(
 ### Predicate: Composable Filters
 
 ```typescript
-import { where, between, oneOf, gte } from 'receta/predicate'
+import { where, between, oneOf, gte } from '@ontologyio/receta/predicate'
 import * as R from 'remeda'
 
 const products = [
@@ -200,8 +202,8 @@ const filtered = R.filter(
 ### Validation: Form Validation with Error Accumulation
 
 ```typescript
-import { validate, combine, field } from 'receta/validation'
-import { isEmail, minLength } from 'receta/string'
+import { validate, combine, field } from '@ontologyio/receta/validation'
+import { isEmail, minLength } from '@ontologyio/receta/string'
 
 const validateRegistration = combine({
   email: field('email', [

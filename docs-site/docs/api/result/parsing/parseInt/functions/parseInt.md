@@ -2,7 +2,7 @@
 
 > **parseInt**(`str`, `radix?`): [`Result`](../../../types/type-aliases/Result.md)\<`number`, [`ParseNumberError`](../../types/interfaces/ParseNumberError.md)\>
 
-Defined in: [result/parsing/parseInt.ts:77](https://github.com/maxios/receta/blob/da901099eeb29f836fd8b01eba35f097a9c6cdba/src/result/parsing/parseInt.ts#L77)
+Defined in: [result/parsing/parseInt.ts:77](https://github.com/ontology-io/receta/blob/02fbe356e8c32bcb001957b19f4d822930add2d7/packages/receta/src/result/parsing/parseInt.ts#L77)
 
 Safely parses a string into an integer with optional radix.
 
@@ -81,10 +81,10 @@ parseInt('123', 37)
 // Use with pattern matching
 pipe(
   parseInt('FF', 16),
-  Result.match(
-    (n) => `Decimal: ${n}`,
-    (e) => `Error: ${e.message}`
-  )
+  Result.match({
+    onOk: (n) => `Decimal: ${n}`,
+    onErr: (e) => `Error: ${e.message}`
+  })
 )
 // => 'Decimal: 255'
 ```

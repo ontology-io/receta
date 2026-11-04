@@ -770,10 +770,10 @@ const waitForJobResult = async (jobId: string) => {
 const result = await waitForJobResult('job-123')
 pipe(
   result,
-  match(
-    (status) => console.log('Job completed:', status),
-    (error) => console.error('Job failed:', error.type)
-  )
+  match({
+    onOk: (status) => console.log('Job completed:', status),
+    onErr: (error) => console.error('Job failed:', error.type)
+  })
 )
 ```
 
@@ -883,12 +883,12 @@ const result = await processPaymentResult('pay-123')
 
 pipe(
   result,
-  match(
-    (payment) => {
+  match({
+    onOk: (payment) => {
       console.log('Payment succeeded:', payment.id)
       // Continue with success flow
     },
-    (error) => {
+    onErr: (error) => {
       // Type-safe error handling
       switch (error.type) {
         case 'fetch_failed':
@@ -905,7 +905,7 @@ pipe(
           break
       }
     }
-  )
+  })
 )
 ```
 

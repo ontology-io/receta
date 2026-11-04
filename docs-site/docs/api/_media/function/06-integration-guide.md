@@ -617,10 +617,10 @@ const processUser = pipe(
 // ✅ Always handle both cases
 const result = pipe(
   fetchData(),
-  match(
-    (data) => `Success: ${data}`,
-    (error) => `Error: ${error}`
-  )
+  match({
+    onOk: (data) => `Success: ${data}`,
+    onErr: (error) => `Error: ${error}`
+  })
 )
 
 // ❌ Don't unwrap without default

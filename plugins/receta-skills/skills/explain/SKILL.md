@@ -107,7 +107,7 @@ Be prepared to explain any of these topics:
 **match**
 - Exhaustive pattern matching — forces handling both success and failure
 - Safer than `if/else` because the compiler ensures all cases are covered
-- Example: `match(result, { Ok: v => ..., Err: e => ... })`
+- Example: `match(result, { onOk: v => ..., onErr: e => ... })`
 
 #### Modules
 
@@ -184,8 +184,8 @@ async function getUser(id: string): Promise<Result<User, string>> {
 // Now the caller MUST handle both cases
 const result = await getUser('123')
 const greeting = match(result, {
-  Ok: (user) => `Hello, ${user.name}!`,
-  Err: (error) => `Error: ${error}`,
+  onOk: (user) => `Hello, ${user.name}!`,
+  onErr: (error) => `Error: ${error}`,
 })
 \`\`\`
 

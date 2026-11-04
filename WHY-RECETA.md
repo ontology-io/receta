@@ -592,13 +592,13 @@ import { cond } from 'receta/function'
 R.pipe(
   await processPayment('order_123', 5000),
   Result.match({
-    Ok: (intent) =>
+    onOk: (intent) =>
       R.pipe(
         intent,
         R.tap(i => console.log('Payment successful:', i.id)),
         () => showSuccessToast('Payment processed!')
       ),
-    Err: (error) =>
+    onErr: (error) =>
       cond([
         [(e) => e.type === 'order_not_found', (e) => show404Error(e.orderId)],
         [(e) => e.type === 'order_already_processed', (e) => showWarning(`Order already ${e.status}`)],
@@ -692,12 +692,12 @@ async function getGitHubUserEmail(
 R.pipe(
   await getGitHubUserEmail('torvalds'),
   Result.match({
-    Ok: (optionalEmail) =>
+    onOk: (optionalEmail) =>
       Option.match(optionalEmail, {
-        Some: (email) => R.tap(() => console.log('Email:', email))(email),
-        None: () => console.log('User has hidden their email')
+        onSome: (email) => R.tap(() => console.log('Email:', email))(email),
+        onNone: () => console.log('User has hidden their email')
       }),
-    Err: (error) => R.tap(() => console.error('Failed to fetch user:', error))(error)
+    onErr: (error) => R.tap(() => console.error('Failed to fetch user:', error))(error)
   })
 )
 ```
@@ -850,9 +850,9 @@ async function sendWebhook(
 R.pipe(
   await sendWebhook('https://api.example.com/webhooks', data),
   Result.match({
-    Ok: (response) =>
+    onOk: (response) =>
       R.tap(() => logger.info('Webhook sent successfully'))(response),
-    Err: (error) =>
+    onErr: (error) =>
       R.pipe(
         error,
         when(
@@ -951,13 +951,13 @@ R.pipe(
   formData,
   validateRegistration,
   Validation.match({
-    Valid: async (data) =>
+    onValid: async (data) =>
       R.pipe(
         data,
         async (d) => await createUser(d),
         () => showSuccess('Account created!')
       ),
-    Invalid: (errors) =>
+    onInvalid: (errors) =>
       R.pipe(
         [
           errors.email && ['email', errors.email.join(', ')],

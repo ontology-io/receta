@@ -128,8 +128,8 @@ R.pipe(
   result,
   Result.map(
     Option.match({
-      Some: applySettings,
-      None: applyDefaults
+      onSome: applySettings,
+      onNone: applyDefaults
     })
   ),
   Result.mapErr(err => console.error('Config error:', err))
@@ -309,8 +309,8 @@ function validateUser(data: unknown): Validation<User> {
 const result = validateUser(unknownData)
 
 Validation.match(result, {
-  Valid: user => console.log('Valid user:', user),
-  Invalid: errors => console.error('Validation errors:', errors)
+  onValid: user => console.log('Valid user:', user),
+  onInvalid: errors => console.error('Validation errors:', errors)
 })
 ```
 

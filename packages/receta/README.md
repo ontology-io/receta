@@ -79,8 +79,8 @@ async function getUserProfile(
 R.pipe(
   await getUserProfile('123'),
   Result.match({
-    Ok: (email) => console.log('Email:', email),
-    Err: (error) => {
+    onOk: (email) => console.log('Email:', email),
+    onErr: (error) => {
       if (error.type === 'network_error') showNetworkError()
       if (error.type === 'email_not_found') showEmailMissing()
     }
