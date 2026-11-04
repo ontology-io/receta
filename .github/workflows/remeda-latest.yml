@@ -1,0 +1,44 @@
+name: Remeda latest
+
+# CI installs from the lockfile, but a fresh consumer install gets the newest
+# Remeda in our declared range. This job tests that version, on a schedule as
+# well as on PRs, because Remeda can release while this repo is quiet.
+on:
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  remeda-latest:
+    name: Newest Remeda in range
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+          no-cache: true
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Run inside the package: at the repo root, `bun update` adds Remeda to
+      # the root package.json instead of updating the workspace dependency.
+      - name: Update Remeda to the newest version in range
+        working-directory: packages/receta
+        run: bun update remeda
+
+      - name: Build all packages
+        run: bunx nx run-many --target=build --all
+
+      - name: Type check
+        run: bunx nx run-many --target=typecheck --all
+
+      - name: Run tests
+        run: bunx nx run-many --target=test --all

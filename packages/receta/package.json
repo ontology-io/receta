@@ -176,7 +176,7 @@
     "error-handling"
   ],
   "dependencies": {
-    "remeda": "^2.19.1"
+    "remeda": "^2.58.0"
   },
   "devDependencies": {
     "@ontologyio/eslint-plugin-receta": "workspace:*"
