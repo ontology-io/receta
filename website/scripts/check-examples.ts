@@ -14,7 +14,7 @@
 // A fence marked `nocheck` is skipped and counted. Pass parts of page paths to see only
 // those pages' problems. Run `bun run check:examples`. Start at check.
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { join, relative } from 'node:path'
 import { mapAsync } from '@ontologyio/receta/async'
 import { isOk } from '@ontologyio/receta/result'
 import { $, Glob } from 'bun'
@@ -32,6 +32,9 @@ import {
 
 const WEBSITE = join(import.meta.dir, '..')
 const CONTENT = join(WEBSITE, 'content/docs')
+
+// The READMEs are the first examples most people see, on GitHub and on npm.
+const READMES = ['../../../README.md', '../../../packages/receta/README.md']
 const VIRTUAL_DIR = join(WEBSITE, '.examples')
 // Each run gets its own folder, so two checks can run side by side.
 const RUN_DIR = join(VIRTUAL_DIR, `run-${process.pid}`)
@@ -236,7 +239,7 @@ const problemsIn = (program: ts.Program, file: VirtualFile): readonly Problem[] 
     }),
     R.filter(({ code, message, line }) => isRealProblem(code, message) && line < lastLine),
     R.map(({ line, code, message }) => ({
-      at: `content/docs/${example.page}:${example.line + line}`,
+      at: `${relative(WEBSITE, join(CONTENT, example.page))}:${example.line + line}`,
       code: `TS${code}`,
       message,
     })),
@@ -274,7 +277,7 @@ const claimProblems = ({ example }: VirtualFile, lines: readonly RunLine[]): rea
     lines,
     R.filter(({ kind }) => kind === 'failed'),
     R.map(({ line, expected, actual }) => ({
-      at: `content/docs/${example.page}:${example.line + line}`,
+      at: `${relative(WEBSITE, join(CONTENT, example.page))}:${example.line + line}`,
       code: 'CLAIM',
       message: `says ${expected}, got ${actual}`,
     })),
@@ -316,7 +319,8 @@ const report = (problems: readonly Problem[], summary: string): void => {
 }
 
 const check = async (): Promise<void> => {
-  const pagePaths = await Array.fromAsync(new Glob('**/*.mdx').scan({ cwd: CONTENT }))
+  const guides = await Array.fromAsync(new Glob('**/*.mdx').scan({ cwd: CONTENT }))
+  const pagePaths = [...guides, ...READMES]
   const pages = await Promise.all(
     R.map(pagePaths, async (page) => ({ page, text: await readFile(join(CONTENT, page), 'utf8') })),
   )

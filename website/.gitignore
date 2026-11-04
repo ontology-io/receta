@@ -6,3 +6,7 @@ next-env.d.ts
 .source/
 .examples/
 content/docs/reference/
+public/docs/
+public/docs.md
+public/llms.txt
+public/llms-full.txt

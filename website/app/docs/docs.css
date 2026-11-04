@@ -3,3 +3,87 @@
 @import 'fumadocs-ui/css/preset.css';
 
 @source '../../src/components/docs';
+
+/* The site's two voices: serif for people, mono for the machine. No sans anywhere. */
+@theme inline {
+  --font-sans: var(--font-newsreader), Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+/* Paper by day, ink by night: the same tokens as the site in app/(site)/globals.css. */
+:root {
+  --stop: #e2461c;
+  --color-fd-background: #f3ede2;
+  --color-fd-foreground: #16130f;
+  --color-fd-muted: #e8e0d1;
+  --color-fd-muted-foreground: #574e43;
+  --color-fd-popover: #f3ede2;
+  --color-fd-popover-foreground: #16130f;
+  --color-fd-card: #e8e0d1;
+  --color-fd-card-foreground: #16130f;
+  --color-fd-border: #cfc4b1;
+  --color-fd-primary: #17694a;
+  --color-fd-primary-foreground: #f3ede2;
+  --color-fd-secondary: #e8e0d1;
+  --color-fd-secondary-foreground: #16130f;
+  --color-fd-accent: #cfe5da;
+  --color-fd-accent-foreground: #16130f;
+  --color-fd-ring: #17694a;
+}
+
+.dark {
+  --color-fd-background: #14110e;
+  --color-fd-foreground: #f3ede2;
+  --color-fd-muted: #1f1a16;
+  --color-fd-muted-foreground: #b5aa9b;
+  --color-fd-popover: #1f1a16;
+  --color-fd-popover-foreground: #f3ede2;
+  --color-fd-card: #1f1a16;
+  --color-fd-card-foreground: #f3ede2;
+  --color-fd-border: #453c33;
+  --color-fd-primary: #5cc595;
+  --color-fd-primary-foreground: #14110e;
+  --color-fd-secondary: #2b2520;
+  --color-fd-secondary-foreground: #f3ede2;
+  --color-fd-accent: #2b2520;
+  --color-fd-accent-foreground: #f3ede2;
+  --color-fd-ring: #5cc595;
+}
+
+.dark #nd-sidebar {
+  --color-fd-muted: #1f1a16;
+  --color-fd-secondary: #2b2520;
+  --color-fd-muted-foreground: #b5aa9b;
+}
+
+/* Navigation is the machine's voice, so it speaks mono, a size down. */
+#nd-sidebar,
+#nd-toc,
+#nd-subnav,
+#nd-nav {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+#nd-toc a {
+  font-size: 0.8125rem;
+}
+
+/* Newsreader has a small x-height, so reading sizes run larger than a sans would need. */
+.prose {
+  font-size: 1.1875rem;
+  line-height: 1.6;
+}
+
+.prose :where(h1, h2, h3, h4) {
+  font-weight: 500;
+  letter-spacing: -0.012em;
+}
+
+.prose :where(code):not(:where(pre code)) {
+  font-size: 0.82em;
+}
+
+.prose :where(pre) {
+  font-size: 0.875rem;
+}

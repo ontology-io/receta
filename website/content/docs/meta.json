@@ -1,0 +1,23 @@
+{
+  "pages": [
+    "---Get started---",
+    "index",
+    "installation",
+    "choose-a-module",
+    "agents",
+    "---Modules---",
+    "result",
+    "option",
+    "async",
+    "validation",
+    "predicate",
+    "collection",
+    "object",
+    "memo",
+    "lens",
+    "compare",
+    "function",
+    "---Reference---",
+    "...reference"
+  ]
+}

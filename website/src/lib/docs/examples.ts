@@ -17,7 +17,7 @@ const SIGNATURE_TITLE = /title="(Signature|Data-first|Data-last|Overload \d+)"/
 /** Marks a fence as deliberately wrong or not TypeScript at all, such as a broken "before". */
 const OPT_OUT = /\bnocheck\b/
 
-const FENCE = /^```(ts|typescript|tsx)([^\n]*)\n([\s\S]*?)^```[ \t]*$/gm
+const FENCE = /^```(tsx|typescript|ts)([^\n]*)\n([\s\S]*?)^```[ \t]*$/gm
 
 const lineOf = (text: string, index: number): number => text.slice(0, index).split('\n').length
 
@@ -65,11 +65,15 @@ export const pageModule = (page: string): string => {
  */
 const FRAGMENT_CODES = new Set([2300, 2323, 2391, 2393, 2451, 2484, 2440, 18046])
 
+const NO_OVERLOAD_MATCHES = 2769
+
 const OWN_MODULE = /'(@ontologyio\/[^']+|remeda(?:\/[^']*)?)'/
 
 /** Whether a compiler complaint is about the docs being wrong. */
 export const isRealProblem = (code: number, message: string): boolean => {
-  if (FRAGMENT_CODES.has(code) || /\bunknown\b/.test(message)) return false
+  if (FRAGMENT_CODES.has(code)) return false
+  // "No overload matches" prints `value is unknown` even when the example is fully typed.
+  if (code !== NO_OVERLOAD_MATCHES && /\bunknown\b/.test(message)) return false
   if (code === 2307) return OWN_MODULE.test(message)
   return true
 }

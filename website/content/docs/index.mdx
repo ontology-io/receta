@@ -1,6 +1,51 @@
 ---
 title: Introduction
-description: Placeholder while the guides move in.
+description: Receta makes failure, absence and flow visible in your types.
 ---
 
-Hello.
+Receta is a TypeScript library of recipes built on [Remeda](https://remedajs.com). Remeda gives you `map` and `pipe`. Receta gives you what real code needs on top of them: errors as values, absence as a type, retries with limits, and validation that reports every problem at once.
+
+The point isn't style. When a failure is in the signature, a person can check code they didn't write by reading it, and that includes code an agent wrote.
+
+## A first pipe
+
+This function can fail in two ways, and both are in its return type. Nothing throws behind the reader's back.
+
+```ts
+import * as R from 'remeda'
+import { err, flatMap, map, ok, parseJSON, type Result } from '@ontologyio/receta/result'
+
+type Order = { readonly id: string; readonly items: readonly string[] }
+
+const requireItems = (order: Order): Result<Order, string> =>
+  order.items.length > 0 ? ok(order) : err('EMPTY_ORDER')
+
+const countItems = (raw: string) =>
+  R.pipe(
+    parseJSON<Order>(raw),
+    flatMap(requireItems),
+    map((order) => order.items.length),
+  )
+
+countItems('{"id":"a1","items":["tea"]}') // => Ok(1)
+countItems('{"id":"a2","items":[]}') // => Err('EMPTY_ORDER')
+```
+
+Read it top to bottom. Each line is one step, and the happy path is the only path on the page. If `parseJSON` or `requireItems` fails, the steps after it don't run and the failure comes out the end as a value.
+
+## Where to go next
+
+| You want to | Read |
+| --- | --- |
+| Install it and see how imports work | [Installation](./installation.mdx) |
+| Find the right tool for a problem | [Choose a module](./choose-a-module.mdx) |
+| Stop throwing exceptions | [Result](./result/index.mdx) |
+| Stop passing `null` around | [Option](./option/index.mdx) |
+| Retry, limit and time out async work | [Async](./async/index.mdx) |
+| Report every form error at once | [Validation](./validation/index.mdx) |
+| Look up an exact signature | [Reference](./reference/result.mdx) |
+| Point an agent at these docs | [Use with agents](./agents.mdx) |
+
+## Every example here runs
+
+The examples in these docs are compiled against the published package on every change, and each `// => value` comment is checked against what the code really returns. If an example is wrong, the build fails. A few blocks show deliberately broken code, and those are the only ones left out.

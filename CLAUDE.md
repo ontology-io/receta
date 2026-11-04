@@ -168,7 +168,7 @@ START: Need to implement something?
 
 Before completing ANY implementation, verify:
 
-- [ ] No bare try/catch blocks (use `Result.tryCatch` instead)
+- [ ] No bare try/catch blocks (use `tryCatch` instead)
 - [ ] No null/undefined returns (use `Option` instead)
 - [ ] No `.filter().map().reduce()` chains (use `R.pipe` instead)
 - [ ] No manual `Promise.all` (use `Async.parallel` or `mapAsync`)
@@ -201,8 +201,8 @@ async function processUsers(ids: string[]) {
 
 // AFTER: Receta + Remeda implementation
 import * as R from 'remeda'
-import { Result, tryCatchAsync } from '@ontologyio/receta/result'
-import { Option, fromNullable } from '@ontologyio/receta/option'
+import { collect, map, tryCatchAsync, type Result } from '@ontologyio/receta/result'
+import { collect as collectOption, fromNullable } from '@ontologyio/receta/option'
 import { mapAsync } from '@ontologyio/receta/async'
 import { where, gte } from '@ontologyio/receta/predicate'
 
@@ -211,11 +211,11 @@ async function processUsers(
 ): Promise<Result<string[], Error>> {
   return R.pipe(
     await mapAsync(ids, (id) => tryCatchAsync(() => fetchUser(id))),
-    Result.collect,
-    Result.map(
+    collect,
+    map(
       R.pipe(
         R.map(fromNullable),
-        Option.collect,
+        collectOption,
         R.filter(where({ age: gte(18) })),
         R.map(u => u.name.toUpperCase())
       )
@@ -271,7 +271,7 @@ All code contributions MUST follow these rules. During code review, check:
 
 ### 6. Practical Over Academic
 - Solve real problems, not theoretical exercises
-- API should read like intent: `Result.tryCatch(() => JSON.parse(str))`
+- API should read like intent: `tryCatch(() => JSON.parse(str))`
 - Optimize for the 90% use case, escape hatch for the 10%
 
 ### 7. Tree-Shakeable
@@ -305,6 +305,17 @@ bun run build
 
 # Clean build artifacts
 bun run clean
+```
+
+### Docs
+
+Guides live in `website/content/docs`. The reference under `reference/` is generated from JSDoc, so edit the source, never those pages.
+
+```bash
+cd website
+bun run dev             # site and docs on localhost
+bun run check:examples  # compile every docs example and run its // => claims
+bun run deploy          # build, upload to R2, deploy the Worker
 ```
 
 ### Development Workflow
@@ -404,13 +415,13 @@ import { ok, err, isOk } from './constructors'
  * @example
  * ```typescript
  * // Data-first
- * Result.map(ok(5), x => x * 2) // => Ok(10)
- * Result.map(err('fail'), x => x * 2) // => Err('fail')
+ * map(ok(5), x => x * 2) // => Ok(10)
+ * map(err('fail'), x => x * 2) // => Err('fail')
  * 
  * // Data-last (in pipe)
  * pipe(
  *   ok(5),
- *   Result.map(x => x * 2)
+ *   map(x => x * 2)
  * ) // => Ok(10)
  * ```
  */
@@ -934,8 +945,8 @@ import { Result, ok, err } from '@ontologyio/receta/result'
 // Parsing with Result
 const parseConfig = (json: string): Result<Config, ParseError> =>
   pipe(
-    Result.tryCatch(() => JSON.parse(json)),
-    Result.flatMap(validate)
+    tryCatch(() => JSON.parse(json)),
+    flatMap(validate)
   )
 ​```
 ```
@@ -1008,36 +1019,12 @@ const parseConfig = (json: string): Result<Config, ParseError> =>
 
 ## Publishing
 
-Receta is published to multiple registries for maximum compatibility:
-
-### Registries
-
-1. **npm** (primary) - `receta`
-   - Works with npm, Yarn, pnpm, and Bun
-   - https://www.npmjs.com/package/receta
-
-2. **JSR** (Deno) - `@receta/receta`
-   - Native TypeScript support for Deno
-   - https://jsr.io/@receta/receta
-
-3. **GitHub Packages** (secondary) - `@ontology-io/receta`
-   - Backup registry
-   - https://github.com/ontology-io/receta/packages
-
-### Installation
+Receta is published to npm and JSR. There is no root import: use a module path such as `@ontologyio/receta/result`. `Result`, `Option` and `Validation` are types, so `Result.map(...)` doesn't exist. Import the functions by name.
 
 ```bash
-# npm / Node.js
-npm install receta
-
-# Bun (uses npm registry)
-bun add receta
-
-# Deno / JSR
-deno add @receta/receta
-
-# GitHub Packages (requires authentication)
-npm install @ontology-io/receta --registry=https://npm.pkg.github.com
+bun add @ontologyio/receta remeda
+npm install @ontologyio/receta remeda
+deno add jsr:@ontologyio/receta
 ```
 
 ### Publishing Workflow
@@ -1205,7 +1192,7 @@ High-value functions from the original brainstorming that could be added to exis
 
 These modules are **intentionally excluded** as they are too opinionated or better handled by existing libraries:
 
-- **fetch** — Too opinionated about HTTP clients and error handling. Users should wrap their chosen HTTP client with `Result.tryCatchAsync()` instead.
+- **fetch** — Too opinionated about HTTP clients and error handling. Users should wrap their chosen HTTP client with `tryCatchAsync()` instead.
 - **id** — Just thin wrappers around existing libraries. Use `crypto.randomUUID()`, `nanoid`, `ulid`, or other ID generation packages directly.
 - **date** — Extremely opinionated territory with many library choices (date-fns, dayjs, luxon, Temporal). Users should choose their preferred date library and use it directly.
 - **Event/Stream patterns** — Better handled by RxJS, xstate, or native EventTarget
@@ -1222,16 +1209,16 @@ Statistical utilities (median, mode, variance, standardDeviation, percentile) co
 
 ```typescript
 // Result pattern
-import { Result, ok, err, tryCatch } from '@ontologyio/receta/result'
+import { ok, err, tryCatch, unwrapOr, type Result } from '@ontologyio/receta/result'
 
 const result = tryCatch(() => JSON.parse(str))
-const value = Result.unwrapOr(result, {})
+const value = unwrapOr(result, {})
 
 // Option pattern  
-import { Option, some, none, fromNullable } from '@ontologyio/receta/option'
+import { some, none, fromNullable, unwrapOr, type Option } from '@ontologyio/receta/option'
 
 const opt = fromNullable(maybeValue)
-const value = Option.unwrapOr(opt, 'default')
+const value = unwrapOr(opt, 'default')
 
 // Async with Result
 import { mapAsync, retry } from '@ontologyio/receta/async'
@@ -1258,10 +1245,10 @@ import * as fc from 'fast-check'
 expect.extend(recetaMatchers)
 expect(ok(5)).toBeOk(5)
 
-testFunctorLaws({ type: 'Result', of: ok, map: Result.map })
+testFunctorLaws({ type: 'Result', of: ok, map })
 
 fc.assert(fc.property(result(fc.integer(), fc.string()), (r) => {
-  expect(Result.map(r, x => x)).toEqualResult(r)
+  expect(map(r, x => x)).toEqualResult(r)
 }))
 ```
 

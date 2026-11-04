@@ -40,9 +40,23 @@ Newsreader must load with its `opsz` axis and `font-optical-sizing: none`. At `a
 
 Samples are files in `src/samples`, marked with `// #region sample`. They compile against the published package, and `samples.test.ts` checks every result the page claims. A broken sample fails the build, not the reader.
 
+## The docs
+
+The docs are the same Next app at `/docs`, built with [Fumadocs](https://fumadocs.dev). They have their own root layout and stylesheet in `app/docs`, because the site's design-pixel `--spacing` would shrink Fumadocs' spacing to a quarter. Moving between the site and the docs is a full page load for the same reason.
+
+- **Guides** are in `content/docs`. The order comes from each folder's `meta.json`.
+- **Reference** pages are generated from the JSDoc in `packages/receta/src` by `scripts/generate-reference.ts`. They aren't in git, so edit the source.
+- **Agent files** (`/llms.txt`, `/llms-full.txt` and a `.md` beside every page) are written into `public/` by `scripts/export-markdown.ts`.
+
+### Examples are checked
+
+`bun run check:examples` compiles every example in the docs and the READMEs against the published package, then runs the ones with no imaginary helpers and compares each `// => value` with what came back. CI fails on any problem.
+
+Examples can be fragments. A name nobody declared resolves to an earlier import on the page, then the module the page teaches, then any Receta module, and anything else becomes `any`. Use `ts nocheck` only for code that is deliberately wrong, and `title="Signature"` for a signature with no body.
+
 ## Deploying
 
-The export lives in the `receta-website` R2 bucket on Cloudflare. A bucket can't answer `/` with `index.html`, so a small Worker (`worker/index.ts`) maps URLs to objects. `src/lib/hosting/objects.ts` holds the rules both sides share: content types, cache lifetimes and the URL mapping.
+The export lives in the `receta-website` R2 bucket on Cloudflare. A bucket can't answer `/` with `index.html` or `/docs/result` with its page, so a small Worker (`worker/index.ts`) maps URLs to objects, and serves a docs page as markdown to a reader that sends `Accept: text/markdown`. `src/lib/hosting/objects.ts` holds the rules both sides share: content types, cache lifetimes and the URL mapping.
 
 ```bash
 bunx wrangler login   # once

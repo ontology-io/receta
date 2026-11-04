@@ -1,7 +1,7 @@
 // Serves the static export from R2. A bucket can't answer "/" with index.html on its
 // own, so this Worker maps URLs to objects and does nothing else. Start at serveSite.
 import { fromNullable, match } from '@ontologyio/receta/option'
-import { NOT_FOUND_KEY, objectKey } from '../src/lib/hosting/objects'
+import { isDocsPage, NOT_FOUND_KEY, objectKey } from '../src/lib/hosting/objects'
 
 type Env = { readonly SITE: R2Bucket }
 
@@ -9,10 +9,10 @@ const READ_METHODS = new Set(['GET', 'HEAD'])
 
 const serveSite = async (request: Request, env: Env): Promise<Response> => {
   if (!READ_METHODS.has(request.method)) return methodNotAllowed()
-  const key = objectKey(new URL(request.url).pathname)
+  const key = objectKey(new URL(request.url).pathname, request.headers.get('accept') ?? '')
   const stored = await env.SITE.get(key, { onlyIf: request.headers })
   return match(fromNullable(stored), {
-    onSome: async (object) => toResponse(object, 200),
+    onSome: async (object) => withVary(toResponse(object, 200), key),
     onNone: () => notFound(env),
   })
 }
@@ -25,6 +25,12 @@ const notFound = async (env: Env): Promise<Response> =>
     onSome: (page) => toResponse(page, 404),
     onNone: () => new Response(null, { status: 404 }),
   })
+
+/** A docs address answers with HTML or markdown, so caches have to keep both apart. */
+const withVary = (response: Response, key: string): Response => {
+  if (isDocsPage(key)) response.headers.set('vary', 'accept')
+  return response
+}
 
 /** R2 leaves the body out when the reader's copy is still current. */
 const toResponse = (object: R2Object | R2ObjectBody, status: number): Response => {

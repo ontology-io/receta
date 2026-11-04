@@ -4,15 +4,16 @@
   "description": "The official Receta website",
   "type": "module",
   "scripts": {
-    "dev": "bun run generate:reference && next dev",
-    "build": "bun run generate:reference && next build",
+    "dev": "bun run generate:docs && next dev",
+    "build": "bun run generate:docs && next build",
     "typecheck": "tsc --noEmit && tsc --noEmit -p worker",
     "test": "bun test src",
     "preview": "bunx serve out",
     "deploy": "bun run build && bun scripts/deploy.ts",
-    "generate:reference": "bun scripts/generate-reference.ts",
-    "check:examples": "bun run generate:reference && bun scripts/check-examples.ts",
-    "postinstall": "fumadocs-mdx"
+    "check:examples": "bun scripts/generate-reference.ts && bun scripts/check-examples.ts",
+    "postinstall": "fumadocs-mdx",
+    "generate:docs": "bun scripts/generate-reference.ts && bun scripts/export-markdown.ts",
+    "check:links": "bun scripts/check-links.ts"
   },
   "dependencies": {
     "@ontologyio/receta": "^0.4.1",

@@ -1,0 +1,39 @@
+---
+title: Use with agents
+description: Plain-text docs for coding agents, plus skills and lint rules that keep their output honest.
+---
+
+Receta was built for code that a person has to verify and an agent may have written. These docs are published in forms an agent can read directly.
+
+## Docs as plain text
+
+| Address | What it holds |
+| --- | --- |
+| [`/llms.txt`](/llms.txt) | An index of every page, one line each |
+| [`/llms-full.txt`](/llms-full.txt) | All the docs in one file |
+| `/docs/result.md` | Any page as markdown: add `.md` to its address |
+
+Tools that ask for markdown get it from the normal address too:
+
+```bash
+curl -H 'Accept: text/markdown' https://receta-website.khaled-mailhub.workers.dev/docs/result
+```
+
+Point an agent at `/llms.txt` when it should find its own way, and at `/llms-full.txt` when it should read everything first.
+
+## Skills for Claude Code
+
+The `receta-skills` plugin teaches Claude Code the patterns. It can explain a concept, refactor vanilla code, review code for Receta patterns, migrate a codebase, scaffold a module and check readability.
+
+```text
+/plugin marketplace add ontology-io/receta
+/plugin install receta-skills@receta-tools
+```
+
+## Lint rules
+
+`@ontologyio/eslint-plugin-receta` catches try/catch, null returns and array method chains in code that was meant to use Receta, so an agent gets the same feedback a reviewer would give.
+
+```bash
+bun add -d @ontologyio/eslint-plugin-receta
+```

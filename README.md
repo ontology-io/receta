@@ -32,7 +32,7 @@
 
 TypeScript gives you compile-time safety, but **runtime is still the Wild West**:
 
-```typescript
+```typescript nocheck
 // ❌ THE VANILLA NIGHTMARE
 async function getUserProfile(userId: string) {
   try {
@@ -55,36 +55,37 @@ async function getUserProfile(userId: string) {
 ```typescript
 // ✅ RECETA: Type-safe, composable, self-documenting
 import * as R from 'remeda'
-import { Result, tryCatchAsync } from '@ontologyio/receta/result'
-import { Option, fromNullable } from '@ontologyio/receta/option'
+import { flatMap, match, tryCatchAsync, type Result } from '@ontologyio/receta/result'
+import { fromNullable, toResult } from '@ontologyio/receta/option'
 
-async function getUserProfile(
-  userId: string
-): Promise<Result<string, FetchError>> {
+type FetchError =
+  | { readonly type: 'network_error'; readonly cause: unknown }
+  | { readonly type: 'email_not_found'; readonly userId: string }
+
+type User = { readonly profile?: { readonly email?: string } }
+
+async function getUserEmail(userId: string): Promise<Result<string, FetchError>> {
   return R.pipe(
     await tryCatchAsync(
-      () => fetch(`/api/users/${userId}`).then(r => r.json()),
-      (e): FetchError => ({ type: 'network_error', cause: e })
+      () => fetch(`/api/users/${userId}`).then((r) => r.json() as Promise<User>),
+      (e): FetchError => ({ type: 'network_error', cause: e }),
     ),
-    Result.flatMap(user =>
-      Option.toResult(
-        fromNullable(user?.profile?.email),
-        { type: 'email_not_found', userId }
-      )
-    )
+    flatMap((user): Result<string, FetchError> =>
+      toResult(fromNullable(user.profile?.email), { type: 'email_not_found', userId }),
+    ),
   )
 }
 
 // Caller knows EXACTLY what can fail
 R.pipe(
-  await getUserProfile('123'),
-  Result.match({
+  await getUserEmail('123'),
+  match({
     onOk: (email) => console.log('Email:', email),
     onErr: (error) => {
       if (error.type === 'network_error') showNetworkError()
       if (error.type === 'email_not_found') showEmailMissing()
-    }
-  })
+    },
+  }),
 )
 ```
 
@@ -113,44 +114,31 @@ yarn add @ontologyio/receta remeda
 ### Result: Type-Safe Error Handling
 
 ```typescript
-import { Result, ok, err, tryCatch } from '@ontologyio/receta/result'
 import * as R from 'remeda'
+import { map, parseJSON, unwrapOr } from '@ontologyio/receta/result'
 
-// Parse JSON safely
-const parseJSON = <T>(str: string): Result<T, SyntaxError> =>
-  tryCatch(
-    () => JSON.parse(str) as T,
-    (e) => e as SyntaxError
-  )
-
-// Compose with pipe
-const result = R.pipe(
-  '{"name": "Alice"}',
-  parseJSON,
-  Result.map((user: any) => user.name),
-  Result.unwrapOr('Unknown')
+const name = R.pipe(
+  parseJSON<{ name: string }>('{"name": "Alice"}'),
+  map((user) => user.name),
+  unwrapOr('Unknown'),
 )
 
-console.log(result) // "Alice"
+console.log(name) // => 'Alice'
 ```
 
 ### Option: No More Null/Undefined Bugs
 
 ```typescript
-import { Option, fromNullable } from '@ontologyio/receta/option'
 import * as R from 'remeda'
+import { fromNullable, unwrapOr } from '@ontologyio/receta/option'
 
 type User = { settings?: { theme?: string } }
 
 const getUserTheme = (user: User): string =>
-  R.pipe(
-    user.settings?.theme,
-    fromNullable,
-    Option.unwrapOr('light')
-  )
+  R.pipe(fromNullable(user.settings?.theme), unwrapOr('light'))
 
-getUserTheme({}) // "light"
-getUserTheme({ settings: { theme: 'dark' } }) // "dark"
+getUserTheme({}) // => 'light'
+getUserTheme({ settings: { theme: 'dark' } }) // => 'dark'
 ```
 
 ### Async: Concurrency Control + Retry
@@ -171,7 +159,7 @@ const response = await retry(
   {
     maxAttempts: 3,
     delay: 1000,
-    backoff: 'exponential' // 1s, 2s, 4s
+    backoff: 2 // 1s, 2s, 4s
   }
 )
 ```
@@ -202,23 +190,18 @@ const filtered = R.filter(
 ### Validation: Form Validation with Error Accumulation
 
 ```typescript
-import { validate, combine, field } from '@ontologyio/receta/validation'
-import { isEmail, minLength } from '@ontologyio/receta/string'
+import { email, minLength, schema } from '@ontologyio/receta/validation'
 
-const validateRegistration = combine({
-  email: field('email', [
-    validate(isEmail, 'Must be a valid email')
-  ]),
-  password: field('password', [
-    validate(minLength(8), 'Must be at least 8 characters')
-  ])
+const validateRegistration = schema({
+  email: email('Must be a valid email'),
+  password: minLength(8, 'Must be at least 8 characters'),
 })
 
-const result = validateRegistration({
-  email: 'invalid',
-  password: '123'
-})
-// Invalid({ email: ['Must be a valid email'], password: ['Must be at least 8 characters'] })
+validateRegistration({ email: 'invalid', password: '123' })
+// => Invalid([
+//   { field: 'email', errors: ['Must be a valid email'] },
+//   { field: 'password', errors: ['Must be at least 8 characters'] },
+// ])
 ```
 
 ---
@@ -227,19 +210,19 @@ const result = validateRegistration({
 
 | Module | Purpose | Key Functions |
 |--------|---------|---------------|
-| **[result](./docs/result/)** | Type-safe error handling | `ok`, `err`, `tryCatch`, `match`, `unwrapOr` |
-| **[option](./docs/option/)** | Nullable value handling | `some`, `none`, `fromNullable`, `unwrapOr` |
-| **[async](./docs/async/)** | Async utilities | `mapAsync`, `retry`, `timeout`, `debounce`, `throttle` |
-| **[predicate](./docs/predicate/)** | Composable predicates | `where`, `gt`, `lt`, `between`, `oneOf`, `and`, `or` |
-| **[validation](./docs/validation/)** | Form/data validation | `validate`, `combine`, `field`, error accumulation |
-| **[collection](./docs/collection/)** | Advanced collections | `nest`, `diff`, `paginate`, `setOps` |
-| **[object](./docs/object/)** | Object manipulation | `flatten`, `unflatten`, `getPath`, `mask`, `deepMerge` |
-| **[string](./docs/string/)** | String utilities | `slugify`, `template`, `truncate`, `isEmail`, `sanitize` |
-| **[number](./docs/number/)** | Number formatting | `toCurrency`, `toBytes`, `clamp`, `percentage` |
-| **[memo](./docs/memo/)** | Memoization | `memoize`, `memoizeAsync`, TTL/LRU caches |
-| **[lens](./docs/lens/)** | Immutable updates | `prop`, `path`, `over`, `set`, `view` |
-| **[compare](./docs/compare/)** | Comparator builders | `ascending`, `descending`, `natural`, `compose` |
-| **[function](./docs/function/)** | Function combinators | `ifElse`, `when`, `cond`, `compose`, `partial` |
+| **[result](https://receta-website.khaled-mailhub.workers.dev/docs/result)** | Type-safe error handling | `ok`, `err`, `tryCatch`, `match`, `unwrapOr` |
+| **[option](https://receta-website.khaled-mailhub.workers.dev/docs/option)** | Nullable value handling | `some`, `none`, `fromNullable`, `unwrapOr` |
+| **[async](https://receta-website.khaled-mailhub.workers.dev/docs/async)** | Async utilities | `mapAsync`, `retry`, `timeout`, `debounce`, `throttle` |
+| **[predicate](https://receta-website.khaled-mailhub.workers.dev/docs/predicate)** | Composable predicates | `where`, `gt`, `lt`, `between`, `oneOf`, `and`, `or` |
+| **[validation](https://receta-website.khaled-mailhub.workers.dev/docs/validation)** | Form/data validation | `validate`, `combine`, `field`, error accumulation |
+| **[collection](https://receta-website.khaled-mailhub.workers.dev/docs/collection)** | Advanced collections | `nest`, `diff`, `paginate`, `setOps` |
+| **[object](https://receta-website.khaled-mailhub.workers.dev/docs/object)** | Object manipulation | `flatten`, `unflatten`, `getPath`, `mask`, `deepMerge` |
+| **[string](https://receta-website.khaled-mailhub.workers.dev/docs/reference/string)** | String utilities | `slugify`, `template`, `truncate`, `isEmail`, `sanitize` |
+| **[number](https://receta-website.khaled-mailhub.workers.dev/docs/reference/number)** | Number formatting | `toCurrency`, `toBytes`, `clamp`, `percentage` |
+| **[memo](https://receta-website.khaled-mailhub.workers.dev/docs/memo)** | Memoization | `memoize`, `memoizeAsync`, TTL/LRU caches |
+| **[lens](https://receta-website.khaled-mailhub.workers.dev/docs/lens)** | Immutable updates | `prop`, `path`, `over`, `set`, `view` |
+| **[compare](https://receta-website.khaled-mailhub.workers.dev/docs/compare)** | Comparator builders | `ascending`, `descending`, `natural`, `compose` |
+| **[function](https://receta-website.khaled-mailhub.workers.dev/docs/function)** | Function combinators | `ifElse`, `when`, `cond`, `compose`, `partial` |
 
 ---
 
@@ -267,7 +250,7 @@ const result = validateRegistration({
 
 ### 5. Practical Over Academic
 - Solve real problems, not theoretical exercises
-- API reads like intent: `Result.tryCatch(() => JSON.parse(str))`
+- API reads like intent: `tryCatch(() => JSON.parse(str))`
 - Optimize for the 90% use case, escape hatch for the 10%
 
 ### 6. Tree-Shakeable
@@ -279,22 +262,10 @@ const result = validateRegistration({
 
 ## Documentation
 
-- **[Why Receta?](./WHY-RECETA.md)** — Real-world problems and solutions
-- **[Module Development Guide](./docs/module-development-guide.md)** — Contributing new modules
-- **Module Guides:**
-  - [Result](./docs/result/README.md) — Error handling patterns
-  - [Option](./docs/option/README.md) — Nullable value handling
-  - [Async](./docs/async/README.md) — Async utilities and patterns
-  - [Predicate](./docs/predicate/README.md) — Composable predicates
-  - [Validation](./docs/validation/README.md) — Form and data validation
-  - [Collection](./docs/collection/README.md) — Advanced collection operations
-  - [Object](./docs/object/README.md) — Safe object manipulation
-  - [String](./docs/string/README.md) — String utilities
-  - [Number](./docs/number/README.md) — Number formatting and math
-  - [Memo](./docs/memo/README.md) — Memoization strategies
-  - [Lens](./docs/lens/README.md) — Functional lenses
-  - [Compare](./docs/compare/README.md) — Comparator builders
-  - [Function](./docs/function/README.md) — Function combinators
+**[Read the docs](https://receta-website.khaled-mailhub.workers.dev/docs)**: guides for each module, a reference generated from the source, and plain-text versions for agents at [`/llms.txt`](https://receta-website.khaled-mailhub.workers.dev/llms.txt). Every example on the site is compiled and run against the published package.
+
+- **[Why Receta?](https://github.com/ontology-io/receta/blob/main/WHY-RECETA.md)** — Real-world problems and solutions
+- **[Module Development Guide](https://github.com/ontology-io/receta/blob/main/docs/module-development-guide.md)** — Contributing new modules
 
 ---
 

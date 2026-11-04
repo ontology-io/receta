@@ -37,6 +37,48 @@ jobs:
       - name: Run tests
         run: bunx nx run-many --target=test --all
 
+  website:
+    name: Website and docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+          no-cache: true
+
+      # The reference is generated from packages/receta, which needs its own dependencies.
+      - name: Install workspace dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Install website dependencies
+        working-directory: website
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        working-directory: website
+        run: bun run build
+
+      - name: Type check
+        working-directory: website
+        run: bun run typecheck
+
+      - name: Run tests
+        working-directory: website
+        run: bun run test
+
+      - name: Check docs examples
+        working-directory: website
+        run: bun run check:examples
+
+      - name: Check docs links
+        working-directory: website
+        run: bun run check:links
+
   smoke:
     name: Pack smoke (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest

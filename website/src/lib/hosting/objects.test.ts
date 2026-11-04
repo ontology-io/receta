@@ -14,6 +14,22 @@ describe('objectKey', () => {
   it('ignores repeated leading slashes', () => {
     expect(objectKey('//icon.svg')).toBe('icon.svg')
   })
+
+  it('reads a clean address as its page', () => {
+    expect(objectKey('/docs')).toBe('docs.html')
+    expect(objectKey('/docs/result/patterns')).toBe('docs/result/patterns.html')
+    expect(objectKey('/docs/result/')).toBe('docs/result.html')
+  })
+
+  it('serves a docs page as markdown to a reader that asks for it', () => {
+    expect(objectKey('/docs/result', 'text/markdown, */*')).toBe('docs/result.md')
+    expect(objectKey('/docs/result.md')).toBe('docs/result.md')
+  })
+
+  it('only serves markdown for docs pages', () => {
+    expect(objectKey('/pricing', 'text/markdown')).toBe('pricing.html')
+    expect(objectKey('/', 'text/markdown')).toBe('index.html')
+  })
 })
 
 describe('cacheControl', () => {

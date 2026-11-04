@@ -19,16 +19,31 @@ const CONTENT_TYPES: Readonly<Record<string, string>> = {
   css: 'text/css; charset=utf-8',
   html: 'text/html; charset=utf-8',
   js: 'text/javascript; charset=utf-8',
+  json: 'application/json; charset=utf-8',
+  md: 'text/markdown; charset=utf-8',
   svg: 'image/svg+xml',
   txt: 'text/plain; charset=utf-8',
   woff2: 'font/woff2',
 }
 
-/** The object a URL path reads. R2 has no index documents, so "/" is mapped here. */
-export const objectKey = (pathname: string): string => {
-  const key = pathname.replace(/^\/+/, '')
-  return key === '' ? INDEX_KEY : key
+const hasExtension = (key: string): boolean => (R.last(key.split('/')) ?? '').includes('.')
+
+/** Agents ask for markdown with this header. Browsers never list it. */
+const wantsMarkdown = (accept: string): boolean => accept.includes('text/markdown')
+
+/**
+ * The object a URL path reads. R2 has no index documents or clean URLs, so "/" and
+ * "/docs/result" are mapped here. A docs page can also be read as markdown.
+ */
+export const objectKey = (pathname: string, accept = ''): string => {
+  const key = pathname.replace(/^\/+|\/+$/g, '')
+  if (key === '') return INDEX_KEY
+  if (hasExtension(key)) return key
+  return wantsMarkdown(accept) && isDocsPage(key) ? `${key}.md` : `${key}.html`
 }
+
+/** Whether a key is a docs page, so its answer depends on what the reader accepts. */
+export const isDocsPage = (key: string): boolean => key === 'docs' || key.startsWith('docs/')
 
 /** Whether a file's name is unique to its content, so it can be uploaded before the pages. */
 export const isFingerprinted = (key: string): boolean => key.startsWith(FINGERPRINTED_PREFIX)
