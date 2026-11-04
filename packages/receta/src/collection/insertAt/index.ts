@@ -88,7 +88,7 @@ function insertAtImplementation<T>(
   const normalizedIndex = index < 0 ? Math.max(0, length + index) : Math.min(index, length)
 
   // Convert single value to array for uniform handling
-  const valueArray = Array.isArray(values) ? values : [values]
+  const valueArray = R.isArray(values) ? values : [values]
 
   // Use Remeda's splice: splice(array, start, deleteCount, items)
   return R.splice(items, normalizedIndex, 0, valueArray)

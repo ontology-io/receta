@@ -131,7 +131,7 @@ bun add -d typescript @types/bun
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "remeda": "^2.19.1"
+    "remeda": "^2.58.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
