@@ -38,6 +38,8 @@ type Upload = { readonly key: string; readonly type: string; readonly cache: str
  * doesn't reach R2, or WORKER_DEPLOY_FAILED. Running it again is always safe.
  */
 const deploy = async (): Promise<Result<string, DeployError>> => {
+  // An expired login makes parallel uploads race to refresh it, so refresh it once here.
+  await $`bunx wrangler whoami`.nothrow().quiet()
   const planned = planUploads(await listExport())
   if (isErr(planned)) return planned
   const [assets, pages] = R.partition(planned.value, ({ key }) => isFingerprinted(key))

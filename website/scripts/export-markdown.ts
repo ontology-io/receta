@@ -13,11 +13,14 @@ const WEBSITE = join(import.meta.dir, '..')
 const CONTENT = join(WEBSITE, 'content/docs')
 const PUBLIC = join(WEBSITE, 'public')
 
+/** A folder's overview comes before the pages inside it. */
+const readingOrder = (path: string): string => path.replace(/index\.mdx$/, '')
+
 const readPages = async () => {
   const paths = await Array.fromAsync(new Glob('**/*.mdx').scan({ cwd: CONTENT }))
   return R.pipe(
     await Promise.all(
-      R.map(R.sort(paths, (first, second) => first.localeCompare(second)), async (path) =>
+      R.map(R.sortBy(paths, readingOrder), async (path) =>
         parsePage(path, await readFile(join(CONTENT, path), 'utf8')),
       ),
     ),
