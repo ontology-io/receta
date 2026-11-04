@@ -2,7 +2,7 @@
 // it. Fingerprinted files go first and pages last, so a page never points at a file that
 // isn't there yet. Old fingerprinted files stay, so a tab that's already open keeps
 // working. Run `bun run deploy`. Start at deploy.
-import { mapAsync } from '@ontologyio/receta/async'
+import { mapAsync, retry } from '@ontologyio/receta/async'
 import { match as matchOption } from '@ontologyio/receta/option'
 import {
   collect,
@@ -24,6 +24,9 @@ const OUT_DIR = 'out'
 // Each upload starts its own wrangler process, so more than a few just queue for CPU.
 const UPLOADS_AT_ONCE = 6
 
+// Uploads fail now and then, usually while the login refreshes. Running one again is safe.
+const UPLOAD_RETRY = { maxAttempts: 4, delay: 2000 }
+
 type DeployError = {
   readonly code: 'UNKNOWN_FILE_TYPE' | 'UPLOAD_FAILED' | 'WORKER_DEPLOY_FAILED'
   readonly message: string
@@ -38,8 +41,6 @@ type Upload = { readonly key: string; readonly type: string; readonly cache: str
  * doesn't reach R2, or WORKER_DEPLOY_FAILED. Running it again is always safe.
  */
 const deploy = async (): Promise<Result<string, DeployError>> => {
-  // An expired login makes parallel uploads race to refresh it, so one call goes first.
-  await $`bunx wrangler r2 bucket info ${BUCKET}`.nothrow().quiet()
   const planned = planUploads(await listExport())
   if (isErr(planned)) return planned
   const [assets, pages] = R.partition(planned.value, ({ key }) => isFingerprinted(key))
@@ -74,15 +75,20 @@ const toUploadError = ({ item }: { readonly item: unknown }): DeployError => ({
   message: `Could not start the upload of ${JSON.stringify(item)}`,
 })
 
-const uploadFile = async ({ key, type, cache }: Upload): Promise<Result<string, DeployError>> => {
+const uploadOnce = async ({ key, type, cache }: Upload): Promise<string> => {
   const { exitCode, stderr } =
     await $`bunx wrangler r2 object put ${`${BUCKET}/${key}`} --file ${`${OUT_DIR}/${key}`} --content-type ${type} --cache-control ${cache} --remote`
       .nothrow()
       .quiet()
-  return exitCode === 0
-    ? ok(key)
-    : err({ code: 'UPLOAD_FAILED', message: `${key}: ${stderr.toString()}` })
+  if (exitCode !== 0) throw new Error(stderr.toString())
+  return key
 }
+
+const uploadFile = async (upload: Upload): Promise<Result<string, DeployError>> =>
+  mapErr(await retry(() => uploadOnce(upload), UPLOAD_RETRY), () => ({
+    code: 'UPLOAD_FAILED',
+    message: `${upload.key} failed after ${UPLOAD_RETRY.maxAttempts} attempts`,
+  }))
 
 const deployWorker = async (): Promise<Result<string, DeployError>> => {
   const { exitCode, stdout, stderr } = await $`bunx wrangler deploy`.nothrow().quiet()
