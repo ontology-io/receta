@@ -41,7 +41,7 @@ When implementing ANY functionality in this repository, follow this priority ord
 #### Error Handling - ALWAYS use Result
 ```typescript
 // ✅ CORRECT: Use Result for error handling
-import { Result, ok, err, tryCatch } from 'receta/result'
+import { Result, ok, err, tryCatch } from '@ontologyio/receta/result'
 
 function parseJSON<T>(str: string): Result<T, SyntaxError> {
   return tryCatch(
@@ -63,7 +63,7 @@ function parseJSON(str: string) {
 #### Nullable Values - ALWAYS use Option
 ```typescript
 // ✅ CORRECT: Use Option for nullable values
-import { Option, fromNullable } from 'receta/option'
+import { Option, fromNullable } from '@ontologyio/receta/option'
 
 function findUser(id: string): Option<User> {
   return fromNullable(users.find(u => u.id === id))
@@ -97,7 +97,7 @@ const result = data
 #### Async Operations - ALWAYS use Receta Async
 ```typescript
 // ✅ CORRECT: Use Receta async utilities
-import { mapAsync, retry } from 'receta/async'
+import { mapAsync, retry } from '@ontologyio/receta/async'
 
 const results = await mapAsync(
   urls,
@@ -126,7 +126,7 @@ for (let i = 0; i < 3; i++) {
 #### Predicates/Filtering - ALWAYS use Receta Predicate
 ```typescript
 // ✅ CORRECT: Use Receta predicates with Remeda filter
-import { where, gt, oneOf } from 'receta/predicate'
+import { where, gt, oneOf } from '@ontologyio/receta/predicate'
 import * as R from 'remeda'
 
 const validUsers = R.filter(
@@ -201,10 +201,10 @@ async function processUsers(ids: string[]) {
 
 // AFTER: Receta + Remeda implementation
 import * as R from 'remeda'
-import { Result, tryCatchAsync } from 'receta/result'
-import { Option, fromNullable } from 'receta/option'
-import { mapAsync } from 'receta/async'
-import { where, gte } from 'receta/predicate'
+import { Result, tryCatchAsync } from '@ontologyio/receta/result'
+import { Option, fromNullable } from '@ontologyio/receta/option'
+import { mapAsync } from '@ontologyio/receta/async'
+import { where, gte } from '@ontologyio/receta/predicate'
 
 async function processUsers(
   ids: string[]
@@ -899,7 +899,7 @@ The Result type represents either success (Ok) or failure (Err).
 ## Installation
 
 ​```typescript
-import { Result, ok, err } from 'receta/result'
+import { Result, ok, err } from '@ontologyio/receta/result'
 ​```
 
 ## Why Result?
@@ -1222,24 +1222,24 @@ Statistical utilities (median, mode, variance, standardDeviation, percentile) co
 
 ```typescript
 // Result pattern
-import { Result, ok, err, tryCatch } from 'receta/result'
+import { Result, ok, err, tryCatch } from '@ontologyio/receta/result'
 
 const result = tryCatch(() => JSON.parse(str))
 const value = Result.unwrapOr(result, {})
 
 // Option pattern  
-import { Option, some, none, fromNullable } from 'receta/option'
+import { Option, some, none, fromNullable } from '@ontologyio/receta/option'
 
 const opt = fromNullable(maybeValue)
 const value = Option.unwrapOr(opt, 'default')
 
 // Async with Result
-import { mapAsync, retry } from 'receta/async'
+import { mapAsync, retry } from '@ontologyio/receta/async'
 
 const results = await mapAsync(urls, fetchJSON, { concurrency: 5 })
 
 // Predicates
-import { where, gt, and, oneOf } from 'receta/predicate'
+import { where, gt, and, oneOf } from '@ontologyio/receta/predicate'
 
 const isValidUser = where({
   age: gt(18),
@@ -1250,9 +1250,9 @@ const isValidUser = where({
 R.filter(users, isValidUser)
 
 // Testing utilities
-import { recetaMatchers } from 'receta/testing'
-import { testFunctorLaws } from 'receta/testing/laws'
-import { result, option } from 'receta/testing/arbitraries'
+import { recetaMatchers } from '@ontologyio/receta-testing'
+import { testFunctorLaws } from '@ontologyio/receta-testing/laws'
+import { result, option } from '@ontologyio/receta-testing/arbitraries'
 import * as fc from 'fast-check'
 
 expect.extend(recetaMatchers)

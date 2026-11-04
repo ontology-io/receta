@@ -60,7 +60,7 @@ export type ObjectSchema<T extends PlainObject> = {
  * )
  *
  * // With Predicate module
- * import { isString, isNumber, where } from 'receta/predicate'
+ * import { isString, isNumber, where } from '@ontologyio/receta/predicate'
  *
  * const schema = {
  *   id: isNumber,

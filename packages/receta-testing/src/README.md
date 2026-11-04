@@ -15,9 +15,9 @@ npm install vitest fast-check --save-dev
 
 ```typescript
 import { expect } from 'vitest'
-import { recetaMatchers } from 'receta/testing'
-import { ok, err } from 'receta/result'
-import { some, none } from 'receta/option'
+import { recetaMatchers } from '@ontologyio/receta-testing'
+import { ok, err } from '@ontologyio/receta/result'
+import { some, none } from '@ontologyio/receta/option'
 
 // Extend Vitest with Receta matchers
 expect.extend(recetaMatchers)
@@ -44,7 +44,7 @@ describe('My tests', () => {
 Assert that a Result is Ok, optionally checking the value.
 
 ```typescript
-import { ok, err } from 'receta/result'
+import { ok, err } from '@ontologyio/receta/result'
 
 expect(ok(5)).toBeOk()           // ✅ Pass
 expect(ok(5)).toBeOk(5)          // ✅ Pass
@@ -57,7 +57,7 @@ expect(err('fail')).not.toBeOk() // ✅ Pass
 Assert that a Result is Err, optionally checking the error.
 
 ```typescript
-import { ok, err } from 'receta/result'
+import { ok, err } from '@ontologyio/receta/result'
 
 expect(err('fail')).toBeErr()         // ✅ Pass
 expect(err('fail')).toBeErr('fail')   // ✅ Pass
@@ -69,7 +69,7 @@ expect(ok(5)).not.toBeErr()           // ✅ Pass
 Deep equality check for Result types.
 
 ```typescript
-import { ok, err } from 'receta/result'
+import { ok, err } from '@ontologyio/receta/result'
 
 expect(ok(5)).toEqualResult(ok(5))              // ✅ Pass
 expect(err('fail')).toEqualResult(err('fail'))  // ✅ Pass
@@ -83,7 +83,7 @@ expect(ok(5)).toEqualResult(ok(10))             // ❌ Fail
 Assert that an Option is Some, optionally checking the value.
 
 ```typescript
-import { some, none } from 'receta/option'
+import { some, none } from '@ontologyio/receta/option'
 
 expect(some(5)).toBeSome()       // ✅ Pass
 expect(some(5)).toBeSome(5)      // ✅ Pass
@@ -95,7 +95,7 @@ expect(none()).not.toBeSome()    // ✅ Pass
 Assert that an Option is None.
 
 ```typescript
-import { some, none } from 'receta/option'
+import { some, none } from '@ontologyio/receta/option'
 
 expect(none()).toBeNone()        // ✅ Pass
 expect(some(5)).not.toBeNone()   // ✅ Pass
@@ -106,7 +106,7 @@ expect(some(5)).not.toBeNone()   // ✅ Pass
 Deep equality check for Option types.
 
 ```typescript
-import { some, none } from 'receta/option'
+import { some, none } from '@ontologyio/receta/option'
 
 expect(some(5)).toEqualOption(some(5))   // ✅ Pass
 expect(none()).toEqualOption(none())     // ✅ Pass
@@ -118,9 +118,9 @@ expect(some(5)).toEqualOption(none())    // ❌ Fail
 Automatically verify functor and monad laws for your custom types:
 
 ```typescript
-import { testFunctorLaws, testMonadLaws } from 'receta/testing/laws'
-import { ok } from 'receta/result'
-import * as Result from 'receta/result'
+import { testFunctorLaws, testMonadLaws } from '@ontologyio/receta-testing/laws'
+import { ok } from '@ontologyio/receta/result'
+import * as Result from '@ontologyio/receta/result'
 
 describe('Result Type Laws', () => {
   testFunctorLaws({
@@ -155,8 +155,8 @@ Generate random test data for exhaustive testing with fast-check:
 
 ```typescript
 import * as fc from 'fast-check'
-import { result, option } from 'receta/testing/arbitraries'
-import * as Result from 'receta/result'
+import { result, option } from '@ontologyio/receta-testing/arbitraries'
+import * as Result from '@ontologyio/receta/result'
 
 // Test with 100 random Result values
 fc.assert(
@@ -203,14 +203,14 @@ Import only what you need:
 
 ```typescript
 // Just matchers
-import { resultMatchers } from 'receta/testing/matchers'
+import { resultMatchers } from '@ontologyio/receta-testing/matchers'
 expect.extend(resultMatchers)
 
 // Just laws
-import { testFunctorLaws } from 'receta/testing/laws'
+import { testFunctorLaws } from '@ontologyio/receta-testing/laws'
 
 // Just arbitraries
-import { result } from 'receta/testing/arbitraries'
+import { result } from '@ontologyio/receta-testing/arbitraries'
 ```
 
 ## Examples
@@ -218,7 +218,7 @@ import { result } from 'receta/testing/arbitraries'
 ### Testing API Responses
 
 ```typescript
-import { ok, err, tryCatchAsync } from 'receta/result'
+import { ok, err, tryCatchAsync } from '@ontologyio/receta/result'
 
 describe('fetchUser', () => {
   it('returns Ok for valid user', async () => {
@@ -236,7 +236,7 @@ describe('fetchUser', () => {
 ### Testing Parsers
 
 ```typescript
-import { parseJSON } from 'receta/result'
+import { parseJSON } from '@ontologyio/receta/result'
 
 describe('parseJSON', () => {
   it('parses valid JSON', () => {
@@ -253,8 +253,8 @@ describe('parseJSON', () => {
 
 ```typescript
 import * as fc from 'fast-check'
-import { result } from 'receta/testing/arbitraries'
-import * as Result from 'receta/result'
+import { result } from '@ontologyio/receta-testing/arbitraries'
+import * as Result from '@ontologyio/receta/result'
 
 describe('Result.map', () => {
   it('satisfies functor identity law', () => {
@@ -288,7 +288,7 @@ describe('Result.map', () => {
 All utilities are fully typed and integrate with Vitest's type system:
 
 ```typescript
-import type { Result } from 'receta/result'
+import type { Result } from '@ontologyio/receta/result'
 
 const result: Result<number, string> = ok(5)
 

@@ -34,7 +34,7 @@ import { lens } from '../lens'
  * @example
  * ```typescript
  * // Setting through optional lens
- * import { some, none } from 'receta/option'
+ * import { some, none } from '@ontologyio/receta/option'
  *
  * const user = { name: 'Alice' }
  *

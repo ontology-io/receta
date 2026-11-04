@@ -30,7 +30,7 @@ export interface MapAsyncError {
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { unwrapOr, mapErr } from 'receta/result'
+ * import { unwrapOr, mapErr } from '@ontologyio/receta/result'
  *
  * // Data-first: Fetch users with concurrency limit
  * const result = await mapAsync(

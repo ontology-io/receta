@@ -3,8 +3,11 @@
 
 const INSTALL_COMMAND = 'bun add @ontologyio/receta remeda'
 
+/** Where the site lives. Change this one line when the domain is ready. */
+export const SITE_URL = 'https://receta-website.khaled-mailhub.workers.dev'
+
 const links = {
-  docs: 'https://receta.dev/docs',
+  docs: '/docs',
   github: 'https://github.com/ontology-io/receta',
   npm: 'https://www.npmjs.com/package/@ontologyio/receta',
   jsr: 'https://jsr.io/@ontologyio/receta',
@@ -311,4 +314,12 @@ export const okContent = {
   wordmark: 'receta',
   package: '@ontologyio/receta 0.4.1 · MIT',
   signOff: 'This page is a pipe. You just ran it.',
+} as const
+
+export const notFoundContent = {
+  title: 'Not found · Receta',
+  value: "Err({ code: 'PAGE_NOT_FOUND' })",
+  headline: 'That page is an Err.',
+  home: 'Back to the site',
+  docs: 'Read the docs',
 } as const

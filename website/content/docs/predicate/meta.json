@@ -1,0 +1,12 @@
+{
+  "title": "Predicate",
+  "pages": [
+    "index",
+    "comparison",
+    "combinators",
+    "builders",
+    "guards",
+    "patterns",
+    "migration"
+  ]
+}

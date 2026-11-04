@@ -26,7 +26,7 @@ export interface SequentialError {
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { unwrapOr, mapErr } from 'receta/result'
+ * import { unwrapOr, mapErr } from '@ontologyio/receta/result'
  *
  * // Execute tasks one at a time in order
  * const result = await sequential([

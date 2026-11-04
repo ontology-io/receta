@@ -40,8 +40,8 @@ function getDefaultTestCases<M, A>(of: (a: A) => M, baseValue: A): Array<MonadTe
  * @example
  * ```typescript
  * import { testMonadLaws } from 'receta-test/laws'
- * import { ok, err } from 'receta/result'
- * import * as Result from 'receta/result'
+ * import { ok, err } from '@ontologyio/receta/result'
+ * import * as Result from '@ontologyio/receta/result'
  *
  * describe('Result', () => {
  *   testMonadLaws({

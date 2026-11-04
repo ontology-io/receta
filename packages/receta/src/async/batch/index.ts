@@ -31,7 +31,7 @@ export interface BatchError {
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { unwrapOr, mapErr } from 'receta/result'
+ * import { unwrapOr, mapErr } from '@ontologyio/receta/result'
  *
  * // Process users in batches of 50
  * const result = await batch(

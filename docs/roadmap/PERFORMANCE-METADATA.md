@@ -320,8 +320,8 @@ export async function benchmark<T, U>(
 ### Example 1: Analyze Pipeline Complexity
 
 ```typescript
-import { analyzeComplexity } from 'receta/types/analyze-complexity'
-import { mapMetadata } from 'receta/result/map'
+import { analyzeComplexity } from '@ontologyio/receta/types'
+import { mapMetadata } from '@ontologyio/receta/result'
 import { flatMapMetadata } from 'receta/result/flatMap'
 import { mapAsyncMetadata } from 'receta/async/mapAsync'
 
@@ -352,7 +352,7 @@ console.log(complexity)
 ### Example 2: Enforce Performance Budget
 
 ```typescript
-import { validateBudget } from 'receta/types/performance-guard'
+import { validateBudget } from '@ontologyio/receta/types'
 
 const budget = {
   maxTimeComplexity: 'O(n)' as const,

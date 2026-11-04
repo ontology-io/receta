@@ -1,0 +1,12 @@
+{
+  "title": "Compare",
+  "pages": [
+    "index",
+    "basic-comparators",
+    "combinators",
+    "type-specific",
+    "advanced",
+    "patterns",
+    "migration"
+  ]
+}

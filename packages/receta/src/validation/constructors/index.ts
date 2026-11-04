@@ -73,7 +73,7 @@ export function invalid<E>(errors: E | readonly E[]): Invalid<E> {
  *
  * @example
  * ```typescript
- * import { gt } from 'receta/predicate'
+ * import { gt } from '@ontologyio/receta/predicate'
  *
  * // Simple predicate validator
  * const isPositive = fromPredicate(
@@ -153,7 +153,7 @@ export function fromPredicateWithError<T, E>(
  *
  * @example
  * ```typescript
- * import { ok, err } from 'receta/result'
+ * import { ok, err } from '@ontologyio/receta/result'
  *
  * fromResult(ok(42))
  * // => Valid(42)

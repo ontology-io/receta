@@ -7,7 +7,7 @@
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { gt, lt, and, where } from 'receta/predicate'
+ * import { gt, lt, and, where } from '@ontologyio/receta/predicate'
  *
  * // Basic filtering
  * const numbers = [1, 5, 10, 15, 20]

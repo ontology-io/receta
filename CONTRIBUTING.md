@@ -403,7 +403,7 @@ When contributing, please adhere to Receta's design principles:
 
 ```typescript
 // ✅ CORRECT: Use Result for error handling
-import { Result, tryCatch } from 'receta/result'
+import { Result, tryCatch } from '@ontologyio/receta/result'
 
 function parseJSON<T>(str: string): Result<T, SyntaxError> {
   return tryCatch(

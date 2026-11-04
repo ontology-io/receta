@@ -14,7 +14,7 @@ interface CacheEntry<V> {
  *
  * @example
  * ```typescript
- * import { memoize, ttlCache } from 'receta/memo'
+ * import { memoize, ttlCache } from '@ontologyio/receta/memo'
  *
  * // Cache weather data for 5 minutes
  * const getWeather = memoize(fetchWeather, {

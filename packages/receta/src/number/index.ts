@@ -8,7 +8,7 @@
  *
  * @example
  * ```typescript
- * import * as N from 'receta/number'
+ * import * as N from '@ontologyio/receta/number'
  *
  * // Currency formatting
  * N.toCurrency(1234.56, { currency: 'USD' }) // => "$1,234.56"

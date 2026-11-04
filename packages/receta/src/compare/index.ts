@@ -8,7 +8,7 @@
  *
  * @example
  * ```typescript
- * import { ascending, compose, byDate } from 'receta/compare'
+ * import { ascending, compose, byDate } from '@ontologyio/receta/compare'
  *
  * interface Issue {
  *   status: string

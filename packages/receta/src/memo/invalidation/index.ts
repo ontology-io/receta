@@ -13,7 +13,7 @@ type AnyMemoized = MemoizedFunction<any, any> | MemoizedAsyncFunction<any, any>
  *
  * @example
  * ```typescript
- * import { memoize, invalidateMany } from 'receta/memo'
+ * import { memoize, invalidateMany } from '@ontologyio/receta/memo'
  *
  * const getUser = memoize(fetchUser)
  *
@@ -42,7 +42,7 @@ export function invalidateMany<K>(memoized: AnyMemoized, keys: K[]): void {
  *
  * @example
  * ```typescript
- * import { memoize, invalidateWhere } from 'receta/memo'
+ * import { memoize, invalidateWhere } from '@ontologyio/receta/memo'
  *
  * const getUser = memoizeBy(
  *   fetchUser,
@@ -97,7 +97,7 @@ export function invalidateWhere<K = unknown, V = unknown>(
  *
  * @example
  * ```typescript
- * import { memoize, memoizeAsync, invalidateAll } from 'receta/memo'
+ * import { memoize, memoizeAsync, invalidateAll } from '@ontologyio/receta/memo'
  *
  * const getUser = memoize(fetchUser)
  * const getUserPosts = memoizeAsync(fetchUserPosts)

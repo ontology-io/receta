@@ -25,7 +25,7 @@ export interface FilterAsyncError {
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { unwrapOr, mapErr } from 'receta/result'
+ * import { unwrapOr, mapErr } from '@ontologyio/receta/result'
  *
  * // Data-first: Filter users who exist
  * const result = await filterAsync(

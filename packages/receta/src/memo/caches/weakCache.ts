@@ -16,7 +16,7 @@ import type { Cache } from '../types'
  *
  * @example
  * ```typescript
- * import { memoizeBy, weakCache } from 'receta/memo'
+ * import { memoizeBy, weakCache } from '@ontologyio/receta/memo'
  *
  * interface Node {
  *   id: string

@@ -27,8 +27,8 @@ type OrThrowVersion<F extends (...args: any[]) => Promise<Result<any, any>>> =
  *
  * @example
  * ```typescript
- * import { mapAsync } from 'receta/async'
- * import { orThrow } from 'receta/result'
+ * import { mapAsync } from '@ontologyio/receta/async'
+ * import { orThrow } from '@ontologyio/receta/result'
  *
  * // Create throwing variant
  * const mapAsyncOrThrow = orThrow(mapAsync)

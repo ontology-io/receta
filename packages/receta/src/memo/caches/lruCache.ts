@@ -9,7 +9,7 @@ import type { Cache } from '../types'
  *
  * @example
  * ```typescript
- * import { memoize, lruCache } from 'receta/memo'
+ * import { memoize, lruCache } from '@ontologyio/receta/memo'
  *
  * // Cache up to 100 users
  * const getUser = memoize(fetchUser, {

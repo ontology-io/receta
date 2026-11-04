@@ -57,7 +57,7 @@ START: What kind of predicate do you need?
 
 ### Filter Array
 ```typescript
-import { where, gt, includes } from 'receta/predicate'
+import { where, gt, includes } from '@ontologyio/receta/predicate'
 R.filter(users, where({
   age: gt(18),
   role: includes(['admin', 'user'])

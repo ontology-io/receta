@@ -26,6 +26,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "collections/*": [
+        "./.source/*"
       ]
     },
     "allowJs": true
@@ -35,6 +38,8 @@
     "app",
     "src",
     "scripts",
+    "source.config.ts",
+    ".source/**/*.ts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],

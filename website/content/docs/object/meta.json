@@ -1,0 +1,12 @@
+{
+  "title": "Object",
+  "pages": [
+    "index",
+    "core-operations",
+    "safe-access",
+    "validation",
+    "transformation",
+    "patterns",
+    "migration"
+  ]
+}

@@ -39,7 +39,7 @@
  * @example
  * ```typescript
  * // Error handling with Result pattern
- * import { tryCatchAsync, map, unwrapOr } from 'receta/result'
+ * import { tryCatchAsync, map, unwrapOr } from '@ontologyio/receta/result'
  *
  * const safeResult = await pipeAsync(
  *   userId,

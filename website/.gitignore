@@ -3,3 +3,6 @@ out/
 next-env.d.ts
 *.tsbuildinfo
 .wrangler/
+.source/
+.examples/
+content/docs/reference/

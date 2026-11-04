@@ -46,7 +46,7 @@ import { ok, err, type Result } from '../../result'
  * ```typescript
  * // Convert to Result pattern for composability
  * import * as R from 'remeda'
- * import { map, unwrapOr } from 'receta/result'
+ * import { map, unwrapOr } from '@ontologyio/receta/result'
  *
  * const results = await promiseAllSettled([
  *   fetchUser(1),
@@ -171,7 +171,7 @@ export function extractRejected<T = unknown>(
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { map, unwrapOr } from 'receta/result'
+ * import { map, unwrapOr } from '@ontologyio/receta/result'
  *
  * const results = await promiseAllSettled([
  *   fetchUser(1),
@@ -189,7 +189,7 @@ export function extractRejected<T = unknown>(
  *
  * @example
  * ```typescript
- * import { partition } from 'receta/result'
+ * import { partition } from '@ontologyio/receta/result'
  *
  * const results = await promiseAllSettled([
  *   fetchUser(1),
@@ -204,8 +204,8 @@ export function extractRejected<T = unknown>(
  * @example
  * ```typescript
  * // Compose with validation
- * import { flatMap } from 'receta/result'
- * import { validate } from 'receta/validation'
+ * import { flatMap } from '@ontologyio/receta/result'
+ * import { validate } from '@ontologyio/receta/validation'
  *
  * const results = await promiseAllSettled(
  *   urls.map((url) => fetch(url).then(r => r.json()))

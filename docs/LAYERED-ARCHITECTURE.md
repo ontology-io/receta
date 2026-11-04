@@ -60,7 +60,7 @@ const getUsers = endpoint({
 #### **receta-forms**
 Form state management and validation workflows
 ```typescript
-import { Validation } from 'receta/validation'
+import { Validation } from '@ontologyio/receta/validation'
 import { createForm, field } from 'receta-forms'
 
 // Built on Receta's Validation
@@ -242,7 +242,7 @@ const checkAccess = (
 #### **receta-analytics**
 Analytics and metrics
 ```typescript
-import { collect, nest } from 'receta/collection'
+import { collect, nest } from '@ontologyio/receta/collection'
 import { track, aggregate, metric } from 'receta-analytics'
 
 // Built on Receta's collection patterns

@@ -9,7 +9,7 @@
  *
  * @example
  * ```typescript
- * import { valid, invalid, validate, schema } from 'receta/validation'
+ * import { valid, invalid, validate, schema } from '@ontologyio/receta/validation'
  *
  * // Single field validation with multiple rules
  * const validatePassword = (password: string) =>

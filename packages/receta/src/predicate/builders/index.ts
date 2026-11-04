@@ -20,7 +20,7 @@ import { eq } from '../comparison'
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { where, gt, eq } from 'receta/predicate'
+ * import { where, gt, eq } from '@ontologyio/receta/predicate'
  *
  * interface User {
  *   age: number
@@ -81,7 +81,7 @@ export const where = <T extends Record<string, unknown>>(
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { oneOf } from 'receta/predicate'
+ * import { oneOf } from '@ontologyio/receta/predicate'
  *
  * const numbers = [1, 2, 3, 4, 5]
  * R.filter(numbers, oneOf([1, 3, 5])) // => [1, 3, 5]
@@ -99,7 +99,7 @@ export const where = <T extends Record<string, unknown>>(
  * ) // => pending and shipped orders
  *
  * // More concise with prop
- * import { prop } from 'receta/predicate'
+ * import { prop } from '@ontologyio/receta/predicate'
  * R.filter(orders, prop('status', oneOf(['pending', 'shipped'])))
  * ```
  *
@@ -121,7 +121,7 @@ export const oneOf =
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { prop, gt, oneOf } from 'receta/predicate'
+ * import { prop, gt, oneOf } from '@ontologyio/receta/predicate'
  *
  * const users = [
  *   { name: 'Alice', age: 25 },
@@ -167,7 +167,7 @@ export const prop =
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { matchesShape } from 'receta/predicate'
+ * import { matchesShape } from '@ontologyio/receta/predicate'
  *
  * const events = [
  *   { type: 'click', x: 100, y: 200 },
@@ -212,7 +212,7 @@ export const matchesShape =
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { hasProperty } from 'receta/predicate'
+ * import { hasProperty } from '@ontologyio/receta/predicate'
  *
  * const objects = [
  *   { name: 'Alice', age: 25 },
@@ -251,7 +251,7 @@ export const hasProperty =
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { satisfies } from 'receta/predicate'
+ * import { satisfies } from '@ontologyio/receta/predicate'
  *
  * const numbers = [1, 2, 3, 4, 5]
  * R.filter(numbers, satisfies((n) => n % 2 === 0)) // => [2, 4]
@@ -284,7 +284,7 @@ export const satisfies = <T>(predicate: Predicate<T>): Predicate<T> => predicate
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { by, gt } from 'receta/predicate'
+ * import { by, gt } from '@ontologyio/receta/predicate'
  *
  * const users = [
  *   { name: 'Alice', tags: ['admin', 'user'] },

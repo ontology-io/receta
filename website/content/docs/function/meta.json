@@ -1,0 +1,12 @@
+{
+  "title": "Function",
+  "pages": [
+    "index",
+    "conditionals",
+    "composition",
+    "partial-application",
+    "control-flow",
+    "integration",
+    "real-world-patterns"
+  ]
+}
