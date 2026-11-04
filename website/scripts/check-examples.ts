@@ -43,6 +43,9 @@ const RUN_DIR = join(VIRTUAL_DIR, `run-${process.pid}`)
 const RUN_TIMEOUT_SECONDS = 4
 const RUNS_AT_ONCE = 8
 
+// Examples are untrusted text from the docs, so they never see this machine's secrets.
+const EXAMPLE_ENVIRONMENT = { PATH: process.env.PATH ?? '' }
+
 const HARNESS = `import { deepEquals } from 'bun'
 import { ok as __ok, err as __err } from '@ontologyio/receta/result'
 import { some as __some, none as __none } from '@ontologyio/receta/option'
@@ -81,6 +84,12 @@ const COMPILER_OPTIONS: ts.CompilerOptions = {
   noEmit: true,
   allowJs: false,
 }
+
+// What fetch returns depends on the reader's platform, and no example should really call it.
+const NETWORK_IS_IMAGINARY = 'declare const fetch: any'
+
+/** A comment saying an example throws means ending in an exception is what it shows. */
+const THROWS_ON_PURPOSE = /\/\/.*\bthrows?\b/i
 
 type Export = { readonly module: string; readonly isValue: boolean }
 type Exports = ReadonlyMap<string, readonly Export[]>
@@ -212,7 +221,8 @@ const withDeclarations = (
     R.unique(),
     R.join('\n'),
   )
-  return { ...file, source: `${file.source}\n${declarations}\nexport {}\n` }
+  const network = /\bfetch\(/.test(file.source) ? NETWORK_IS_IMAGINARY : ''
+  return { ...file, source: `${file.source}\n${declarations}\n${network}\nexport {}\n` }
 }
 
 const earlierImportsFor = (example: Example, all: readonly Example[]): readonly string[] =>
@@ -227,6 +237,7 @@ const problemsIn = (program: ts.Program, file: VirtualFile): readonly Problem[] 
   if (!sourceFile) return []
   const { example } = file
   const lastLine = example.code.split('\n').length
+  const hasHelpers = file.source.includes('declare const ') || / = any$/m.test(file.source)
   return R.pipe(
     [...program.getSyntacticDiagnostics(sourceFile), ...program.getSemanticDiagnostics(sourceFile)],
     R.map((diagnostic) => {
@@ -237,7 +248,9 @@ const problemsIn = (program: ts.Program, file: VirtualFile): readonly Problem[] 
         message: ts.flattenDiagnosticMessageText(diagnostic.messageText, ' '),
       }
     }),
-    R.filter(({ code, message, line }) => isRealProblem(code, message) && line < lastLine),
+    R.filter(
+      ({ code, message, line }) => isRealProblem(code, message, hasHelpers) && line < lastLine,
+    ),
     R.map(({ line, code, message }) => ({
       at: `${relative(WEBSITE, join(CONTENT, example.page))}:${example.line + line}`,
       code: `TS${code}`,
@@ -257,19 +270,25 @@ const isRunnable = (program: ts.Program, file: VirtualFile): boolean => {
   return diagnostics.length === 0
 }
 
-const runOne = async (file: VirtualFile): Promise<{ lines: readonly RunLine[]; ran: boolean }> => {
+type Run = { readonly lines: readonly RunLine[]; readonly ran: boolean; readonly crash: string }
+
+const runOne = async (file: VirtualFile): Promise<Run> => {
   const { code, claims } = withClaims(file.source)
-  if (claims === 0) return { lines: [], ran: false }
+  if (claims === 0) return { lines: [], ran: false, crash: '' }
   const path = join(RUN_DIR, `${file.path.split('/').at(-1)}`)
   await writeFile(path, `import './harness.ts'\n${code}\n`)
-  const { stdout, exitCode } =
-    await $`timeout ${RUN_TIMEOUT_SECONDS} bun run ${path}`.nothrow().quiet()
+  const { stdout, stderr, exitCode } = await $`timeout ${RUN_TIMEOUT_SECONDS} bun run ${path}`
+    .env(EXAMPLE_ENVIRONMENT)
+    .nothrow()
+    .quiet()
   const lines = R.pipe(
     stdout.toString().split('\n'),
     R.filter((line) => line.startsWith('{"kind"')),
     R.map((line) => JSON.parse(line) as RunLine),
   )
-  return { lines, ran: exitCode !== 124 }
+  const crashed = exitCode !== 0 && exitCode !== 124 && !THROWS_ON_PURPOSE.test(file.source)
+  const crash = crashed ? (stderr.toString().match(/^.*(?:error|Error).*$/m)?.[0] ?? 'crashed') : ''
+  return { lines, ran: exitCode !== 124, crash }
 }
 
 const claimProblems = ({ example }: VirtualFile, lines: readonly RunLine[]): readonly Problem[] =>
@@ -282,6 +301,17 @@ const claimProblems = ({ example }: VirtualFile, lines: readonly RunLine[]): rea
       message: `says ${expected}, got ${actual}`,
     })),
   )
+
+const crashProblems = ({ example }: VirtualFile, crash: string): readonly Problem[] =>
+  crash === ''
+    ? []
+    : [
+        {
+          at: `${relative(WEBSITE, join(CONTENT, example.page))}:${example.line}`,
+          code: 'CRASH',
+          message: crash.trim(),
+        },
+      ]
 
 const runExamples = async (
   files: readonly VirtualFile[],
@@ -297,7 +327,10 @@ const runExamples = async (
   const runs = isOk(outcome) ? outcome.value : []
   const allLines = R.flatMap(runs, ({ lines }) => lines)
   return {
-    problems: R.flatMap(runs, ({ file, lines }) => claimProblems(file, lines)),
+    problems: R.flatMap(runs, ({ file, lines, crash }) => [
+      ...claimProblems(file, lines),
+      ...crashProblems(file, crash),
+    ]),
     totals: {
       ran: R.pipe(runs, R.filter(({ ran }) => ran), R.length()),
       passed: R.pipe(allLines, R.filter(({ kind }) => kind === 'passed'), R.length()),

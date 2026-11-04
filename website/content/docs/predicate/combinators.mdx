@@ -17,7 +17,7 @@ title: "Predicate Combinators"
 
 **Key Properties:**
 - ✅ **Short-circuit**: `and` stops on first false, `or` stops on first true
-- ✅ **Type-safe**: Composable with type guards for narrowing
+- ✅ **Type-safe**: Predicates of one type combine into a predicate of that type. Type guards can take part, but the result is a plain `Predicate`, so it doesn't narrow
 - ✅ **Pure**: No side effects, same input = same output
 - ✅ **Nestable**: Combinators can be nested infinitely
 
@@ -27,7 +27,7 @@ title: "Predicate Combinators"
 
 ### Signature
 
-```typescript
+```typescript title="Signature"
 const and = <T>(...predicates: Predicate<T>[]): Predicate<T>
 ```
 
@@ -37,10 +37,10 @@ Returns true only if **all** predicates return true. Short-circuits on first fal
 
 ```typescript
 import * as R from 'remeda'
-import { and, gt, lt } from '@ontologyio/receta/predicate'
+import { and, gte, lt } from '@ontologyio/receta/predicate'
 
 // Age range: 18 ≤ age < 65
-const workingAge = and(gt(18), lt(65))
+const workingAge = and(gte<number>(18), lt<number>(65))
 
 const users = [
   { name: 'Teen', age: 16 },
@@ -57,7 +57,7 @@ R.filter(users, (u) => workingAge(u.age))
 #### E-Commerce Product Filtering
 
 ```typescript
-import { and, where, gt, eq, oneOf } from '@ontologyio/receta/predicate'
+import { and, where, gt, lt, eq } from '@ontologyio/receta/predicate'
 
 interface Product {
   id: number
@@ -70,18 +70,18 @@ interface Product {
 
 // Available quality products under $200
 const affordableQuality = where({
-  price: and(gt(50), lt(200)),
-  rating: gt(4.0),
+  price: and(gt<number>(50), lt<number>(200)),
+  rating: gt<number>(4.0),
   inStock: eq(true)
 })
 
 R.filter(products, affordableQuality)
 
 // Electronics on sale that are in stock
-const saleElectronics = and(
+const saleElectronics = and<Product>(
   where({ category: eq('electronics') }),
   where({ inStock: eq(true) }),
-  where({ price: lt(100) })
+  where({ price: lt<number>(100) })
 )
 ```
 
@@ -96,13 +96,13 @@ interface User {
 }
 
 // Must be verified AND (admin OR experienced moderator)
-const canAccessModPanel = and(
+const canAccessModPanel = and<User>(
   where({ verified: eq(true) }),
-  or(
+  or<User>(
     where({ role: eq('admin') }),
-    and(
+    and<User>(
       where({ role: eq('moderator') }),
-      where({ accountAgeDays: gt(90) })
+      where({ accountAgeDays: gt<number>(90) })
     )
   )
 )
@@ -118,7 +118,7 @@ if (canAccessModPanel(currentUser)) {
 // GitHub Issues: Open bugs assigned to someone
 const openAssignedBugs = where({
   state: eq('open'),
-  assignee: isDefined,
+  assignee: not(isNull),
   labels: (labels: string[]) => labels.includes('bug')
 })
 
@@ -176,7 +176,7 @@ and(
 
 ### Signature
 
-```typescript
+```typescript title="Signature"
 const or = <T>(...predicates: Predicate<T>[]): Predicate<T>
 ```
 
@@ -234,8 +234,8 @@ const isActive2 = oneOf(['pending', 'processing', 'shipped'])
 ```typescript
 // Either budget (< $50) or premium (> $500)
 const budgetOrPremium = or(
-  lt(50),
-  gt(500)
+  lt<number>(50),
+  gt<number>(500)
 )
 
 const products = [
@@ -253,16 +253,10 @@ R.filter(products, (p) => budgetOrPremium(p.price))
 ```typescript
 // Can edit if: owner OR verified admin OR senior moderator
 const canEdit = (user: User, resource: Resource) =>
-  or(
-    eq(resource.ownerId)(user.id),
-    and(
-      eq('admin')(user.role),
-      eq(true)(user.verified)
-    ),
-    and(
-      eq('moderator')(user.role),
-      gt(1000)(user.reputation)
-    )
+  or<User>(
+    where({ id: eq(resource.ownerId) }),
+    where({ role: eq('admin'), verified: eq(true) }),
+    where({ role: eq('moderator'), reputation: gt<number>(1000) })
   )(user)
 ```
 
@@ -272,7 +266,7 @@ const canEdit = (user: User, resource: Resource) =>
 
 ### Signature
 
-```typescript
+```typescript title="Signature"
 const not = <T>(predicate: Predicate<T>): Predicate<T>
 ```
 
@@ -316,14 +310,14 @@ R.filter(orders, (o) => neq('cancelled')(o.status))
 ```typescript
 // Users who are NOT (verified AND premium)
 const notPremiumVerified = not(
-  and(
+  and<User>(
     where({ verified: eq(true) }),
     where({ tier: eq('premium') })
   )
 )
 
 // Same as: unverified OR non-premium
-const equivalent = or(
+const equivalent = or<User>(
   where({ verified: eq(false) }),
   where({ tier: neq('premium') })
 )
@@ -350,7 +344,7 @@ const realUsers = R.filter(
 
 ### Signature
 
-```typescript
+```typescript title="Signature"
 const xor = <T>(...predicates: Predicate<T>[]): Predicate<T>
 ```
 
@@ -362,7 +356,7 @@ Returns true if **exactly one** predicate returns true.
 import { xor, lt, gt } from '@ontologyio/receta/predicate'
 
 // Numbers outside range 8-12 (< 8 OR > 12, but not both)
-const outsideRange = xor(lt(8), gt(12))
+const outsideRange = xor(lt<number>(8), gt<number>(12))
 
 const numbers = [1, 5, 10, 15, 20]
 R.filter(numbers, outsideRange)
@@ -382,7 +376,7 @@ interface User {
 }
 
 // Valid if premium XOR trial (one but not both)
-const validSubscription = xor(
+const validSubscription = xor<User>(
   where({ premium: eq(true) }),
   where({ trial: eq(true) })
 )
@@ -402,7 +396,7 @@ R.filter(users, validSubscription)
 
 ```typescript
 // Product should have EITHER physical shipping OR digital download
-const validProduct = xor(
+const validProduct = xor<Product>(
   where({ requiresShipping: eq(true) }),
   where({ isDigital: eq(true) })
 )
@@ -414,7 +408,7 @@ const validProduct = xor(
 
 ### Signatures
 
-```typescript
+```typescript title="Signature"
 const always = <T>(): Predicate<T> // Always returns true
 const never = <T>(): Predicate<T>  // Always returns false
 ```
@@ -548,7 +542,7 @@ const inRange = (min: number, max: number) =>
 
 // Or use between()
 import { between } from '@ontologyio/receta/predicate'
-const inRange2 = between(18, 65) // Cleaner!
+const inRange2 = between<number>(18, 65) // Cleaner!
 ```
 
 ### Pattern 2: Multi-Status Check
@@ -565,9 +559,9 @@ oneOf(['pending', 'processing', 'shipped'])
 
 ```typescript
 const hasPermission = (user: User, permission: string) =>
-  or(
-    eq('admin')(user.role),                    // Admins can do anything
-    (u: User) => u.permissions.includes(permission) // Or has specific permission
+  or<User>(
+    where({ role: eq('admin') }),               // Admins can do anything
+    (u) => u.permissions.includes(permission)   // Or has specific permission
   )(user)
 ```
 
@@ -576,7 +570,7 @@ const hasPermission = (user: User, permission: string) =>
 ```typescript
 const validOrder = where({
   status: oneOf(['pending', 'processing']),
-  amount: and(gt(0), lt(10000)),
+  amount: and(gt<number>(0), lt<number>(10000)),
   customer: where({
     verified: eq(true),
     country: oneOf(['US', 'CA', 'UK'])
@@ -590,18 +584,18 @@ const validOrder = where({
 
 ```typescript
 import { describe, it, expect } from 'vitest'
-import { and, or, not, gt, lt } from '@ontologyio/receta/predicate'
+import { and, or, not, eq, gt, lt } from '@ontologyio/receta/predicate'
 
 describe('Predicate combinators', () => {
   it('and - all must pass', () => {
-    const inRange = and(gt(10), lt(20))
+    const inRange = and(gt<number>(10), lt<number>(20))
     expect(inRange(15)).toBe(true)
     expect(inRange(5)).toBe(false)
     expect(inRange(25)).toBe(false)
   })
 
   it('or - any can pass', () => {
-    const extremes = or(lt(10), gt(90))
+    const extremes = or(lt<number>(10), gt<number>(90))
     expect(extremes(5)).toBe(true)
     expect(extremes(95)).toBe(true)
     expect(extremes(50)).toBe(false)

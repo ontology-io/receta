@@ -8,6 +8,9 @@ import { lens } from '../lens'
  * Allows deep access into nested objects using string paths like 'user.address.city'.
  * The lens handles immutable updates at any depth.
  *
+ * Paths step through plain objects, so use `index` for array elements. The path
+ * string isn't checked against `S`, and the type `A` is taken on trust.
+ *
  * @param pathStr - Dot-separated path to the nested property
  * @returns A Lens focusing on the value at the specified path
  *

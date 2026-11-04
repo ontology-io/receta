@@ -1,9 +1,9 @@
 ---
 title: "Built-in Validators"
-description: "Receta provides 25+ ready-to-use validators for common validation scenarios. All validators return `Validation<T, string>` with descriptive error messages."
+description: "Receta provides 22 ready-to-use validators for common validation scenarios. All validators return `Validation<T, string>` with descriptive error messages."
 ---
 
-Receta provides 25+ ready-to-use validators for common validation scenarios. All validators return `Validation<T, string>` with descriptive error messages.
+Receta provides 22 ready-to-use validators for common validation scenarios. All validators return `Validation<T, string>` with descriptive error messages.
 
 ## Overview
 
@@ -34,8 +34,9 @@ required('Name is required')('John')
 required('Name is required')('')
 // => Invalid(['Name is required'])
 
+// Whitespace only
 required('Name is required')('   ')
-// => Invalid(['Name is required'])  // Whitespace only
+// => Invalid(['Name is required'])
 ```
 
 ### minLength
@@ -383,7 +384,7 @@ equals(true, 'You must agree to the terms')(true)
 ### User Registration
 
 ```typescript
-import { validate, required, email, minLength, between, oneOf } from '@ontologyio/receta/validation'
+import { schema, validate, required, email, minLength, maxLength, matches, min, max, integer, oneOf } from '@ontologyio/receta/validation'
 
 const validateRegistration = (data: RegistrationForm) => {
   return schema({
@@ -442,7 +443,7 @@ const validateProduct = (data: ProductForm) => {
 
     price: (p: number) =>
       validate(p, [
-        min(0, 'Price must be positive'),
+        min(0, 'Price cannot be negative'),
         finite('Price must be finite')
       ]),
 
@@ -463,7 +464,7 @@ const validateProduct = (data: ProductForm) => {
 const validateCreateUser = (body: unknown) => {
   // Type narrowing first
   if (typeof body !== 'object' || body === null) {
-    return invalid('Request body must be an object')
+    return invalid({ field: 'body', errors: ['Request body must be an object'] })
   }
 
   return schema({
@@ -554,11 +555,14 @@ export const validators = {
       fromPredicate((s: string) => s.startsWith('https://'), 'Must use HTTPS')
     ])
 }
+```
 
-// Usage
+Then import it wherever you validate:
+
+```typescript
 import { validators } from './validators/common'
 
-const result = validators.username('john_doe')
+const result = validators.username('johndoe')
 ```
 
 ## Next Steps

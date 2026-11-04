@@ -199,10 +199,11 @@ divideBy10(100) // => 10
 import { pipe, map } from 'remeda'
 import { flip, partial } from '@ontologyio/receta/function'
 
-const appendTo = flip((item: string, arr: string[]) => [...arr, item])
+const append = (lines: string[], line: string) => [...lines, line]
+const prepend = (lines: string[], line: string) => [line, ...lines]
 
-const addFooter = partial(appendTo, '---End---')
-const addHeader = partial(appendTo, '---Start---')
+const addFooter = partial(flip(append), '---End---')
+const addHeader = partial(flip(prepend), '---Start---')
 
 const processLines = pipe(
   ['line 1', 'line 2', 'line 3'],
@@ -222,20 +223,22 @@ Forces a function to accept only its first argument.
 import { unary } from '@ontologyio/receta/function'
 
 // The classic parseInt bug
-['1', '2', '3'].map(parseInt)         // => [1, NaN, NaN]
-['1', '2', '3'].map(unary(parseInt))  // => [1, 2, 3]
+const digits = ['1', '2', '3']
+
+digits.map(parseInt)         // => [1, NaN, NaN]
+digits.map(unary(parseInt))  // => [1, 2, 3]
 ```
 
 **Why does this happen?**
 
 ```typescript
 // Array.map passes (element, index, array)
-// parseInt(string, radix)
+// parseInt reads the first two as (string, radix)
 
 // Without unary:
-parseInt('1', 0, [...]) // => 1 (radix 0 defaults to 10)
-parseInt('2', 1, [...]) // => NaN (radix 1 is invalid)
-parseInt('3', 2, [...]) // => NaN (3 is invalid in base 2)
+parseInt('1', 0) // => 1 (radix 0 defaults to 10)
+parseInt('2', 1) // => NaN (radix 1 is invalid)
+parseInt('3', 2) // => NaN (3 is invalid in base 2)
 
 // With unary:
 parseInt('1') // => 1
@@ -250,8 +253,11 @@ import { binary } from '@ontologyio/receta/function'
 
 const sum = (...nums: number[]) => nums.reduce((a, b) => a + b, 0)
 
-sum(1, 2, 3, 4)          // => 10
-binary(sum)(1, 2, 3, 4)  // => 3 (only uses first two)
+sum(1, 2, 3, 4)  // => 10
+
+// reduce also passes the index and the array, which binary drops
+const numbers = [1, 2, 3, 4]
+numbers.reduce(binary(sum))  // => 10
 ```
 
 ### nAry - Limit to N Arguments
@@ -294,12 +300,12 @@ You can chain partial applications:
 const formatLog = (timestamp: string, level: string, module: string, msg: string) =>
   `${timestamp} [${level}] ${module}: ${msg}`
 
-const withTimestamp = partial(formatLog, new Date().toISOString())
+const withTimestamp = partial(formatLog, '2026-01-22T10:00:00Z')
 const errorLog = partial(withTimestamp, 'ERROR')
 const userErrorLog = partial(errorLog, 'UserModule')
 
 userErrorLog('Failed authentication')
-// => '2026-01-22T... [ERROR] UserModule: Failed authentication'
+// => '2026-01-22T10:00:00Z [ERROR] UserModule: Failed authentication'
 ```
 
 ## Best Practices
@@ -308,11 +314,11 @@ userErrorLog('Failed authentication')
 
 ```typescript
 // ✅ Good: Config/context first, data last
-const query = (config: Config, sql: string, params: any[]) => { ... }
+const query = (config: Config, sql: string, params: any[]) => runQuery(config, sql, params)
 const dbQuery = partial(query, productionConfig)
 
 // ❌ Bad: Data first makes partial application awkward
-const query = (sql: string, params: any[], config: Config) => { ... }
+const query = (sql: string, params: any[], config: Config) => runQuery(config, sql, params)
 ```
 
 ### 2. Name Partially Applied Functions Clearly
@@ -352,15 +358,15 @@ items.forEach((item) => processItem(item))
 
 ## Type Safety
 
-Partial application preserves type safety:
+Partial application keeps the return type. The remaining arguments are typed `any[]`, so TypeScript won't check them:
 
-```typescript
+```ts nocheck
 const greet = (greeting: string, name: string): string =>
   `${greeting}, ${name}!`
 
 const sayHello = partial(greet, 'Hello')
 
-// TypeScript knows sayHello expects string and returns string
+// TypeScript knows sayHello returns string
 const result: string = sayHello('Alice')
 
 // ❌ Type error

@@ -1375,9 +1375,9 @@ import * as R from 'remeda'
 ```
 
 **Read the guides:**
-- [Result Guide](./docs/result/README.md)
-- [Option Guide](./docs/option/README.md)
-- [Async Guide](./docs/async/README.md)
+- [Result Guide](https://receta-website.khaled-mailhub.workers.dev/docs/result)
+- [Option Guide](https://receta-website.khaled-mailhub.workers.dev/docs/option)
+- [Async Guide](https://receta-website.khaled-mailhub.workers.dev/docs/async)
 - [All Modules](./CLAUDE.md#module-structure)
 
 ---

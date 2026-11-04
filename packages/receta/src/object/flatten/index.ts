@@ -33,10 +33,11 @@ import type { FlatObject, FlattenOptions, PlainObject } from '../types'
  * flatten({ a: { b: { c: 1 } } }, { maxDepth: 1 })
  * // => { 'a.b': { c: 1 } }
  *
- * // Data-last (in pipe)
+ * // In a pipe, wrap it. flatten() returns {} instead of a function, and
+ * // TypeScript reads flatten({ separator: '_' }) as the data-first call.
  * pipe(
  *   nested,
- *   flatten({ separator: '_' })
+ *   (obj) => flatten(obj, { separator: '_' })
  * )
  * ```
  *

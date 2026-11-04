@@ -17,6 +17,8 @@ import { createParseNumberError, type ParseNumberError } from './types'
  *
  * @example
  * ```typescript
+ * import { parseInt } from '@ontologyio/receta/result'
+ *
  * // Decimal (default radix 10)
  * parseInt('123')
  * // => Ok(123)
@@ -47,23 +49,23 @@ import { createParseNumberError, type ParseNumberError } from './types'
  *
  * // Failed parsing - not a number
  * parseInt('abc')
- * // => Err({ _tag: 'ParseNumberError', reason: 'not_a_number', ... })
+ * // Err with reason 'not_a_number'
  *
  * // Failed parsing - has decimal point
  * parseInt('123.45')
- * // => Err({ _tag: 'ParseNumberError', reason: 'invalid_integer', ... })
+ * // Err with reason 'invalid_integer'
  *
  * // Failed parsing - invalid radix
  * parseInt('123', 1)
- * // => Err({ _tag: 'ParseNumberError', reason: 'out_of_radix_range', ... })
+ * // Err with reason 'out_of_radix_range'
  *
  * parseInt('123', 37)
- * // => Err({ _tag: 'ParseNumberError', reason: 'out_of_radix_range', ... })
+ * // Err with reason 'out_of_radix_range'
  *
  * // Use with pattern matching
  * pipe(
  *   parseInt('FF', 16),
- *   Result.match({
+ *   match({
  *     onOk: (n) => `Decimal: ${n}`,
  *     onErr: (e) => `Error: ${e.message}`
  *   })
@@ -71,8 +73,7 @@ import { createParseNumberError, type ParseNumberError } from './types'
  * // => 'Decimal: 255'
  * ```
  *
- * @see {@link parseNumber} - For parsing floating-point numbers
- * @see {@link global.parseInt} - The underlying native function
+ * @see parseNumber - For parsing floating-point numbers
  */
 export function parseInt(str: string, radix: number = 10): Result<number, ParseNumberError> {
   // Validate radix range

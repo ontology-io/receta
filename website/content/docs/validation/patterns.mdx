@@ -23,9 +23,9 @@ Production-ready validation patterns for forms, APIs, bulk operations, and more.
 Complete registration form with all common validations.
 
 ```typescript
-import { schema, validate, required, email, minLength, maxLength, matches, min, max, equals } from '@ontologyio/receta/validation'
+import { schema, validate, required, email, minLength, maxLength, matches, min, max, integer, oneOf, equals, valid, invalid, type Validation, type FieldError } from '@ontologyio/receta/validation'
 
-interface RegistrationForm {
+type RegistrationForm = {
   username: string
   email: string
   password: string
@@ -83,13 +83,18 @@ const validateRegistration = (data: RegistrationForm): Validation<RegistrationFo
 
   return schema(registrationSchema, data)
 }
+```
 
-// Usage in React
-const RegistrationForm: React.FC = () => {
-  const [formData, setFormData] = useState<RegistrationForm>({...})
-  const [errors, setErrors] = useState<FieldError<string>[]>([])
+Use it from a React form. `match` needs both handlers to return the same type, so when `onValid` is async, `onInvalid` is too.
 
-  const handleSubmit = (e: React.FormEvent) => {
+```tsx
+import { useState, type FormEvent } from 'react'
+
+const RegistrationPage = () => {
+  const [formData, setFormData] = useState<RegistrationForm>(emptyForm)
+  const [errors, setErrors] = useState<readonly FieldError<string>[]>([])
+
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
 
     const validation = validateRegistration(formData)
@@ -100,7 +105,7 @@ const RegistrationForm: React.FC = () => {
         await createAccount(data)
         navigate('/welcome')
       },
-      onInvalid: (fieldErrors) => {
+      onInvalid: async (fieldErrors) => {
         // Show all errors at once
         setErrors(fieldErrors)
         fieldErrors.forEach(({ field, errors }) => {
@@ -126,7 +131,7 @@ const RegistrationForm: React.FC = () => {
 Simple contact form with email and message validation.
 
 ```typescript
-interface ContactForm {
+type ContactForm = {
   name: string
   email: string
   subject: string
@@ -169,7 +174,7 @@ const validateContactForm = (data: ContactForm) => {
 Payment form with conditional validation based on payment method.
 
 ```typescript
-interface PaymentForm {
+type PaymentForm = {
   paymentMethod: 'card' | 'bank'
   cardNumber?: string
   cardExpiry?: string
@@ -182,7 +187,7 @@ interface PaymentForm {
 const validatePayment = (data: PaymentForm): Validation<PaymentForm, FieldError<string>> => {
   if (data.paymentMethod === 'card') {
     return schema({
-      paymentMethod: (m: string) => valid(m),
+      paymentMethod: valid,
       cardNumber: (n: string | undefined) =>
         n
           ? validate(n, [
@@ -211,10 +216,10 @@ const validatePayment = (data: PaymentForm): Validation<PaymentForm, FieldError<
           min(0.01, 'Amount must be positive'),
           finite('Amount must be a valid number')
         ])
-    }, data as any)
+    }, data)
   } else {
     return schema({
-      paymentMethod: (m: string) => valid(m),
+      paymentMethod: valid,
       accountNumber: (n: string | undefined) =>
         n
           ? validate(n, [
@@ -234,7 +239,7 @@ const validatePayment = (data: PaymentForm): Validation<PaymentForm, FieldError<
           min(0.01, 'Amount must be positive'),
           finite('Amount must be a valid number')
         ])
-    }, data as any)
+    }, data)
   }
 }
 ```
@@ -243,8 +248,10 @@ const validatePayment = (data: PaymentForm): Validation<PaymentForm, FieldError<
 
 ### Create User Endpoint
 
+A request body can hold anything, and `required` and the other string validators throw on a missing field. So each field here checks its type before validating.
+
 ```typescript
-interface CreateUserRequest {
+type CreateUserRequest = {
   email: string
   name: string
   role: 'admin' | 'user' | 'moderator'
@@ -256,8 +263,6 @@ const validateCreateUser = (body: unknown): Validation<CreateUserRequest, FieldE
   if (typeof body !== 'object' || body === null) {
     return invalid({ field: 'body', errors: ['Request body must be an object'] })
   }
-
-  const data = body as Record<string, unknown>
 
   const createUserSchema = {
     email: (e: unknown) =>
@@ -279,9 +284,7 @@ const validateCreateUser = (body: unknown): Validation<CreateUserRequest, FieldE
         : invalid('Name must be a string'),
 
     role: (r: unknown) =>
-      typeof r === 'string'
-        ? oneOf(['admin', 'user', 'moderator'] as const, 'Invalid role')(r as string)
-        : invalid('Role must be a string'),
+      oneOf(['admin', 'user', 'moderator'] as const, 'Invalid role')(r as CreateUserRequest['role']),
 
     age: (a: unknown) =>
       typeof a === 'number'
@@ -293,7 +296,7 @@ const validateCreateUser = (body: unknown): Validation<CreateUserRequest, FieldE
         : invalid('Age must be a number')
   }
 
-  return schema(createUserSchema, data as CreateUserRequest)
+  return schema(createUserSchema, body as CreateUserRequest)
 }
 
 // Express endpoint
@@ -305,7 +308,7 @@ app.post('/api/users', (req, res) => {
       const created = await db.users.create(user)
       res.status(201).json(created)
     },
-    onInvalid: (errors) => {
+    onInvalid: async (errors) => {
       res.status(400).json({
         error: 'Validation failed',
         fields: errors
@@ -374,13 +377,10 @@ app.post('/api/users/batch', (req, res) => {
         users: created
       })
     },
-    onInvalid: (errors) => {
+    onInvalid: async (errors) => {
       res.status(400).json({
-        message: `Validation failed for ${errors.length} users`,
-        errors: errors.map((err, idx) => ({
-          index: idx,
-          error: err
-        }))
+        message: `${errors.length} validation errors`,
+        errors
       })
     }
   })
@@ -391,57 +391,39 @@ app.post('/api/users/batch', (req, res) => {
 
 ### CSV Import
 
+Rows arrive untyped, so a small `text` helper checks each cell is a string before running its rules. `mapInvalid` then turns each field error into a message that names the row.
+
 ```typescript
-interface ProductRow {
+type ProductRow = {
   name: string
   sku: string
   price: number
   category: string
 }
 
-const validateProduct = (row: unknown, rowIndex: number): Validation<ProductRow, string> => {
-  if (typeof row !== 'object' || row === null) {
-    return invalid(`Row ${rowIndex}: Invalid data format`)
-  }
+const text = (label: string, rules: readonly Validator<string, string, string>[]) =>
+  (value: unknown) =>
+    typeof value === 'string'
+      ? validate(value, rules)
+      : invalid(`${label} must be a string`)
 
-  const data = row as Record<string, unknown>
-
-  return pipe(
-    collectErrors([
-      typeof data.name === 'string'
-        ? validate(data.name, [
-            required('Name required'),
-            minLength(3, 'Name too short')
-          ])
-        : invalid('Name must be a string'),
-
-      typeof data.sku === 'string'
-        ? validate(data.sku, [
-            required('SKU required'),
-            matches(/^[A-Z0-9-]+$/, 'Invalid SKU format')
-          ])
-        : invalid('SKU must be a string'),
-
-      typeof data.price === 'number'
-        ? validate(data.price, [
-            min(0, 'Price must be positive'),
-            finite('Price must be valid')
-          ])
-        : invalid('Price must be a number'),
-
-      typeof data.category === 'string'
-        ? oneOf(['electronics', 'books', 'clothing', 'home'], 'Invalid category')(data.category)
-        : invalid('Category must be a string')
-    ]),
-    map(([name, sku, price, category]) => ({
-      name,
-      sku,
-      price,
-      category
-    })),
-    mapInvalid((errors) => `Row ${rowIndex}: ${errors.join(', ')}`)
-  )
+const productSchema = {
+  name: text('Name', [required('Name required'), minLength(3, 'Name too short')]),
+  sku: text('SKU', [required('SKU required'), matches(/^[A-Z0-9-]+$/, 'Invalid SKU format')]),
+  price: (p: unknown) =>
+    typeof p === 'number'
+      ? validate(p, [min(0, 'Price cannot be negative'), finite('Price must be valid')])
+      : invalid('Price must be a number'),
+  category: text('Category', [oneOf(['electronics', 'books', 'clothing', 'home'], 'Invalid category')])
 }
+
+const validateProduct = (row: unknown, rowNumber: number): Validation<ProductRow, string> =>
+  typeof row === 'object' && row !== null
+    ? pipe(
+        schema(productSchema, row as ProductRow),
+        mapInvalid(({ field, errors }) => `Row ${rowNumber}, ${field}: ${errors.join(', ')}`)
+      )
+    : invalid(`Row ${rowNumber}: Invalid data format`)
 
 const importCSV = (csvData: unknown[]) => {
   const validations = csvData.map((row, idx) => validateProduct(row, idx + 1))
@@ -453,10 +435,11 @@ const importCSV = (csvData: unknown[]) => {
       return {
         success: true,
         imported: products.length,
+        errors: [],
         message: `Successfully imported ${products.length} products`
       }
     },
-    onInvalid: (errors) => {
+    onInvalid: async (errors) => {
       return {
         success: false,
         imported: 0,
@@ -478,13 +461,13 @@ interface ValidationResult<T, E> {
 
 const validateWithPartialSuccess = <T, E>(
   items: unknown[],
-  validator: Validator<unknown, T, E>
+  validator: (item: unknown, rowNumber: number) => Validation<T, E>
 ): ValidationResult<T, E> => {
   const valid: T[] = []
   const invalid: Array<{ index: number; errors: readonly E[] }> = []
 
   items.forEach((item, index) => {
-    const validation = validator(item)
+    const validation = validator(item, index + 1)
 
     if (isValid(validation)) {
       valid.push(validation.value)
@@ -505,8 +488,8 @@ if (result.valid.length > 0) {
 
 if (result.invalid.length > 0) {
   console.log(`Skipped ${result.invalid.length} invalid rows:`)
-  result.invalid.forEach(({ index, errors }) => {
-    console.log(`  Row ${index + 1}: ${errors.join(', ')}`)
+  result.invalid.forEach(({ errors }) => {
+    console.log(`  ${errors.join(', ')}`)
   })
 }
 ```
@@ -515,8 +498,10 @@ if (result.invalid.length > 0) {
 
 ### 5-Step Onboarding Wizard
 
+The steps hold different shapes, which `collectErrors` can't mix. Making each step a `schema` field works, and each error's `field` then names a step that failed.
+
 ```typescript
-interface WizardData {
+type WizardData = {
   step1: PersonalInfo
   step2: AccountSettings
   step3: Preferences
@@ -552,20 +537,24 @@ const validateWizardStep2 = (data: AccountSettings) =>
       ])
   }, data)
 
-const validateCompleteWizard = (data: WizardData) => {
-  return collectErrors([
-    validateWizardStep1(data.step1),
-    validateWizardStep2(data.step2),
-    validateWizardStep3(data.step3),
-    validateWizardStep4(data.step4),
-    validateWizardStep5(data.step5)
-  ])
-}
+const validateCompleteWizard = (data: WizardData) =>
+  schema({
+    step1: validateWizardStep1,
+    step2: validateWizardStep2,
+    step3: validateWizardStep3,
+    step4: validateWizardStep4,
+    step5: validateWizardStep5
+  }, data)
+```
 
-// Usage
-const WizardComponent: React.FC = () => {
+Then, in the component:
+
+```tsx
+import { useState } from 'react'
+
+const WizardComponent = () => {
   const [currentStep, setCurrentStep] = useState(1)
-  const [wizardData, setWizardData] = useState<WizardData>({...})
+  const [wizardData, setWizardData] = useState<WizardData>(emptyWizard)
 
   const handleFinalSubmit = () => {
     const validation = validateCompleteWizard(wizardData)
@@ -575,14 +564,11 @@ const WizardComponent: React.FC = () => {
         await submitWizard(data)
         navigate('/success')
       },
-      onInvalid: (errors) => {
+      onInvalid: async (errors) => {
         // Show which steps have errors
-        const errorSteps = new Set<number>()
-        errors.forEach((err, idx) => {
-          errorSteps.add(Math.floor(idx / 5) + 1)
-        })
+        const errorSteps = errors.map(({ field }) => field)
 
-        alert(`Please fix errors in steps: ${Array.from(errorSteps).join(', ')}`)
+        alert(`Please fix errors in: ${errorSteps.join(', ')}`)
       }
     })
   }
@@ -596,7 +582,7 @@ const WizardComponent: React.FC = () => {
 ### Dynamic Field Validation
 
 ```typescript
-interface OrderForm {
+type OrderForm = {
   orderType: 'pickup' | 'delivery'
   deliveryAddress?: Address
   pickupLocation?: string
@@ -604,8 +590,8 @@ interface OrderForm {
 }
 
 const validateOrder = (data: OrderForm) => {
-  const baseValidation = schema({
-    orderType: oneOf(['pickup', 'delivery']),
+  const baseValidation = schema<OrderForm, string>({
+    orderType: oneOf(['pickup', 'delivery'] as const),
     items: (items: OrderItem[]) =>
       validate(items, [
         nonEmpty('Order must have at least one item'),
@@ -627,10 +613,11 @@ const validateOrder = (data: OrderForm) => {
       : invalid({ field: 'deliveryAddress', errors: ['Delivery address required'] })
   } else {
     return data.pickupLocation
-      ? validate(data.pickupLocation, [
-          required('Pickup location required'),
-          oneOf(['store1', 'store2', 'store3'], 'Invalid pickup location')
-        ]).then(loc => ({ ...data, pickupLocation: loc }))
+      ? pipe(
+          oneOf(['store1', 'store2', 'store3'], 'Invalid pickup location')(data.pickupLocation),
+          map((pickupLocation) => ({ ...data, pickupLocation })),
+          mapInvalid((error) => ({ field: 'pickupLocation', errors: [error] }))
+        )
       : invalid({ field: 'pickupLocation', errors: ['Pickup location required'] })
   }
 }
@@ -640,8 +627,10 @@ const validateOrder = (data: OrderForm) => {
 
 ### Password Confirmation
 
+The error types have to line up for `flatMap`, so these examples name them with `schema<PasswordChangeForm, string>` and `invalid<FieldError<string>>`.
+
 ```typescript
-interface PasswordChangeForm {
+type PasswordChangeForm = {
   currentPassword: string
   newPassword: string
   confirmPassword: string
@@ -649,7 +638,7 @@ interface PasswordChangeForm {
 
 const validatePasswordChange = (data: PasswordChangeForm) => {
   return pipe(
-    schema({
+    schema<PasswordChangeForm, string>({
       currentPassword: (p: string) =>
         required('Current password required')(p),
       newPassword: (p: string) =>
@@ -665,7 +654,7 @@ const validatePasswordChange = (data: PasswordChangeForm) => {
     flatMap((validated) =>
       validated.newPassword === validated.confirmPassword
         ? valid(validated)
-        : invalid({
+        : invalid<FieldError<string>>({
             field: 'confirmPassword',
             errors: ['Passwords do not match']
           })
@@ -673,7 +662,7 @@ const validatePasswordChange = (data: PasswordChangeForm) => {
     flatMap((validated) =>
       validated.currentPassword !== validated.newPassword
         ? valid(validated)
-        : invalid({
+        : invalid<FieldError<string>>({
             field: 'newPassword',
             errors: ['New password must be different from current password']
           })
@@ -685,7 +674,7 @@ const validatePasswordChange = (data: PasswordChangeForm) => {
 ### Date Range Validation
 
 ```typescript
-interface EventForm {
+type EventForm = {
   title: string
   startDate: Date
   endDate: Date
@@ -694,7 +683,7 @@ interface EventForm {
 
 const validateEvent = (data: EventForm) => {
   return pipe(
-    schema({
+    schema<EventForm, string>({
       title: (t: string) =>
         validate(t, [required('Title required'), maxLength(100)]),
       startDate: (d: Date) =>
@@ -709,7 +698,7 @@ const validateEvent = (data: EventForm) => {
     flatMap((validated) =>
       validated.endDate > validated.startDate
         ? valid(validated)
-        : invalid({
+        : invalid<FieldError<string>>({
             field: 'endDate',
             errors: ['End date must be after start date']
           })
@@ -763,8 +752,10 @@ const handleUsernameBlur = async (username: string) => {
 
 ### Environment Variables
 
+`schema` hands back the object it was given, so it can't turn `PORT` into a number or fill in a default. Do that first, then validate the result.
+
 ```typescript
-interface AppConfig {
+type AppConfig = {
   DATABASE_URL: string
   API_KEY: string
   PORT: number
@@ -772,53 +763,34 @@ interface AppConfig {
   LOG_LEVEL: 'debug' | 'info' | 'warn' | 'error'
 }
 
-const validateConfig = (env: NodeJS.ProcessEnv): Validation<AppConfig, FieldError<string>> => {
-  const configSchema = {
-    DATABASE_URL: (v: string | undefined) =>
-      v
-        ? validate(v, [
-            required('DATABASE_URL is required'),
-            url('DATABASE_URL must be a valid URL')
-          ])
-        : invalid('DATABASE_URL environment variable is missing'),
+const readConfig = (env: Record<string, string | undefined>): AppConfig => ({
+  DATABASE_URL: env.DATABASE_URL ?? '',
+  API_KEY: env.API_KEY ?? '',
+  PORT: Number(env.PORT),
+  NODE_ENV: env.NODE_ENV as AppConfig['NODE_ENV'],
+  LOG_LEVEL: (env.LOG_LEVEL ?? 'info') as AppConfig['LOG_LEVEL'] // Default value
+})
 
-    API_KEY: (v: string | undefined) =>
-      v
-        ? validate(v, [
-            required('API_KEY is required'),
-            minLength(32, 'API_KEY must be at least 32 characters')
-          ])
-        : invalid('API_KEY environment variable is missing'),
-
-    PORT: (v: string | undefined) =>
-      v
-        ? pipe(
-            tryCatch(() => Number(v), () => 'PORT must be a number'),
-            flatMap((port) =>
-              validate(port, [
-                integer('PORT must be an integer'),
-                between(1000, 65535, 'PORT must be between 1000 and 65535')
-              ])
-            )
-          )
-        : invalid('PORT environment variable is missing'),
-
-    NODE_ENV: (v: string | undefined) =>
-      v
-        ? oneOf(['development', 'production', 'test'] as const, 'Invalid NODE_ENV')(v as any)
-        : invalid('NODE_ENV environment variable is missing'),
-
-    LOG_LEVEL: (v: string | undefined) =>
-      v
-        ? oneOf(['debug', 'info', 'warn', 'error'] as const, 'Invalid LOG_LEVEL')(v as any)
-        : valid('info' as const) // Default value
-  }
-
-  return schema(configSchema, env as any)
-}
+const validateConfig = (config: AppConfig): Validation<AppConfig, FieldError<string>> =>
+  schema({
+    DATABASE_URL: validate([
+      required('DATABASE_URL is required'),
+      url('DATABASE_URL must be a valid URL')
+    ]),
+    API_KEY: validate([
+      required('API_KEY is required'),
+      minLength(32, 'API_KEY must be at least 32 characters')
+    ]),
+    PORT: validate([
+      integer('PORT must be an integer'),
+      between(1000, 65535, 'PORT must be between 1000 and 65535')
+    ]),
+    NODE_ENV: oneOf(['development', 'production', 'test'] as const, 'Invalid NODE_ENV'),
+    LOG_LEVEL: oneOf(['debug', 'info', 'warn', 'error'] as const, 'Invalid LOG_LEVEL')
+  }, config)
 
 // Usage at app startup
-const configValidation = validateConfig(process.env)
+const configValidation = validateConfig(readConfig(process.env))
 
 if (isInvalid(configValidation)) {
   console.error('Configuration validation failed:')

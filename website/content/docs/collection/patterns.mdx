@@ -9,14 +9,17 @@ Real-world patterns from GitHub, Reddit, Stripe, and more.
 
 ```typescript
 import { nest, paginate } from '@ontologyio/receta/collection'
+import { getPath } from '@ontologyio/receta/object'
+import { unwrapOr as unwrapOptionOr } from '@ontologyio/receta/option'
 import { pipe } from 'remeda'
 
 // Hierarchical comment display
 const displayComments = (comments: Comment[], userId: number, postId: number) =>
   pipe(
     comments,
-    nest(['userId', 'postId']),
-    grouped => grouped[userId]?.[postId] ?? [],
+    nest<Comment>(['userId', 'postId']),
+    getPath<Comment[]>([userId, postId]),
+    unwrapOptionOr<Comment[]>([]),
     paginate({ page: 1, pageSize: 20 })
   )
 ```
@@ -96,13 +99,17 @@ const store = {
 ```typescript
 import { union } from '@ontologyio/receta/collection'
 
+type Permission = { resource: string; action: string }
+
 const getUserPermissions = (userId: string) => {
   const roles = getUserRoles(userId)
-  const permissions = roles.flatMap(role => getRolePermissions(role))
+  const permissions: Permission[] = roles.flatMap(role => getRolePermissions(role))
   
-  return union(
-    permissions,
+  // union checks the second list against what it has kept so far,
+  // so the list to deduplicate goes second
+  return union<Permission>(
     [],
+    permissions,
     (a, b) => a.resource === b.resource && a.action === b.action
   )
 }

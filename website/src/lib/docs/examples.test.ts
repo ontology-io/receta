@@ -50,6 +50,13 @@ describe('isRealProblem', () => {
     expect(isRealProblem(2451, "Cannot redeclare block-scoped variable 'a'.")).toBe(false)
     expect(isRealProblem(2307, "Cannot find module './db'")).toBe(false)
     expect(isRealProblem(2345, "Argument of type 'unknown' is not assignable")).toBe(false)
+    expect(isRealProblem(2339, "Property 'value' does not exist on type 'EventTarget & HTMLInputElement'.")).toBe(false)
+  })
+
+  it('gives a fully typed example no slack over unknown', () => {
+    expect(isRealProblem(18046, "'value' is of type 'unknown'.", false)).toBe(true)
+    expect(isRealProblem(2345, "Argument of type 'unknown' is not assignable", false)).toBe(true)
+    expect(isRealProblem(18046, "'value' is of type 'unknown'.", true)).toBe(false)
   })
 
   it('keeps a wrong import of our own packages', () => {

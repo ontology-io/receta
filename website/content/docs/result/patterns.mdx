@@ -23,7 +23,7 @@ title: "Common Patterns & Recipes"
 
 ```typescript
 import * as R from 'remeda'
-import { Result, tryCatchAsync, fromNullable, map, flatMap, mapErr } from '@ontologyio/receta/result'
+import { type Result, tryCatchAsync, isErr, match } from '@ontologyio/receta/result'
 
 type GitHubError =
   | { type: 'not_found'; resource: string }
@@ -31,9 +31,9 @@ type GitHubError =
   | { type: 'network'; message: string }
 
 const githubApi = {
-  fetchUser: async (username: string): Promise<Result<GitHubUser, GitHubError>> =>
-    R.pipe(
-      await tryCatchAsync(async () => {
+  fetchUser: (username: string): Promise<Result<GitHubUser, GitHubError>> =>
+    tryCatchAsync(
+      async () => {
         const res = await fetch(`https://api.github.com/users/${username}`)
         if (res.status === 404) {
           throw { type: 'not_found', resource: username }
@@ -43,19 +43,17 @@ const githubApi = {
           throw { type: 'rate_limit', resetAt }
         }
         return res.json()
-      }),
-      mapErr((error): GitHubError =>
+      },
+      (error: any): GitHubError =>
         error.type ? error : { type: 'network', message: String(error) }
-      )
     ),
 
-  fetchRepos: async (username: string) =>
-    R.pipe(
-      await githubApi.fetchUser(username),
-      flatMap(user =>
-        tryCatchAsync(() => fetch(user.repos_url).then(r => r.json()))
-      )
-    )
+  fetchRepos: async (username: string) => {
+    const user = await githubApi.fetchUser(username)
+    if (isErr(user)) return user
+
+    return tryCatchAsync(() => fetch(user.value.repos_url).then(r => r.json()))
+  }
 }
 
 // Usage
@@ -92,7 +90,7 @@ const stripeApi = {
         })
         return charge
       },
-      (error): StripeError => {
+      (error: any): StripeError => {
         if (error.type === 'StripeCardError') {
           return {
             type: 'card_error',
@@ -144,7 +142,12 @@ const validateSignup = async (
     : err('must_agree_to_terms' as const)
 
   // Collect sync validations
-  const syncResult = collect([emailValid, passwordValid, passwordsMatch, termsAgreed])
+  const syncResult = collect<string | boolean, ValidationError>([
+    emailValid,
+    passwordValid,
+    passwordsMatch,
+    termsAgreed
+  ])
 
   if (isErr(syncResult)) {
     return syncResult
@@ -154,8 +157,8 @@ const validateSignup = async (
   const emailAvailable = await checkEmailAvailable(form.email)
 
   return R.pipe(
-    collect([syncResult, emailAvailable]),
-    map(([_, email]) => ({
+    emailAvailable,
+    map((email) => ({
       email,
       passwordHash: hashPassword(form.password)
     }))
@@ -185,7 +188,7 @@ const checkEmailAvailable = async (email: string): Promise<Result<string, Valida
 // CSV import with detailed error reporting
 const importUsers = async (rows: CSVRow[]) => {
   const results = rows.map((row, index) =>
-    validateUserRow(row).mapErr(error => ({
+    mapErr(validateUserRow(row), error => ({
       row: index + 1,
       data: row,
       error
@@ -219,15 +222,17 @@ const importUsers = async (rows: CSVRow[]) => {
 const userRepository = {
   findById: async (id: string): Promise<Result<User, 'not_found' | 'db_error'>> =>
     R.pipe(
-      await tryCatchAsync(() => db.user.findUnique({ where: { id } })),
-      flatMap(user => fromNullable(user, 'not_found' as const)),
-      mapErr(() => 'db_error' as const)
+      await tryCatchAsync(
+        () => db.user.findUnique({ where: { id } }),
+        () => 'db_error' as const
+      ),
+      flatMap(user => fromNullable(user, 'not_found' as const))
     ),
 
   create: async (data: CreateUserInput): Promise<Result<User, string>> =>
     tryCatchAsync(
       () => db.user.create({ data }),
-      (error) => {
+      (error: any) => {
         if (error.code === 'P2002') {
           return 'Email already exists'
         }
@@ -235,23 +240,19 @@ const userRepository = {
       }
     ),
 
-  update: async (id: string, data: UpdateUserInput) =>
-    R.pipe(
-      await userRepository.findById(id),
-      flatMap(user =>
-        tryCatchAsync(() =>
-          db.user.update({ where: { id }, data })
-        )
-      )
-    ),
+  update: async (id: string, data: UpdateUserInput) => {
+    const user = await userRepository.findById(id)
+    if (isErr(user)) return user
 
-  delete: async (id: string) =>
-    R.pipe(
-      await userRepository.findById(id),
-      flatMap(() =>
-        tryCatchAsync(() => db.user.delete({ where: { id } }))
-      )
-    )
+    return tryCatchAsync(() => db.user.update({ where: { id }, data }))
+  },
+
+  delete: async (id: string) => {
+    const user = await userRepository.findById(id)
+    if (isErr(user)) return user
+
+    return tryCatchAsync(() => db.user.delete({ where: { id } }))
+  }
 }
 ```
 
@@ -279,7 +280,7 @@ const createOrderWithItems = async (
 
         return order
       }),
-    (error) => `Transaction failed: ${error.message}`
+    (error) => `Transaction failed: ${error}`
   )
 ```
 
@@ -348,6 +349,8 @@ const validateImageFile = (file: File): Result<File, Error> => {
 ### JWT Authentication
 
 ```typescript
+import type { NextFunction, Request, Response } from 'express'
+
 type AuthError =
   | { type: 'invalid_credentials' }
   | { type: 'token_expired' }
@@ -358,7 +361,7 @@ const authService = {
     R.pipe(
       await userRepository.findByEmail(email),
       flatMap(user =>
-        bcrypt.compare(password, user.passwordHash)
+        bcrypt.compareSync(password, user.passwordHash)
           ? ok(user)
           : err({ type: 'invalid_credentials' as const })
       ),
@@ -370,7 +373,7 @@ const authService = {
   verifyToken: (token: string): Result<TokenPayload, AuthError> =>
     tryCatch(
       () => jwt.verify(token, JWT_SECRET) as TokenPayload,
-      (error) => {
+      (error: any) => {
         if (error.name === 'TokenExpiredError') {
           return { type: 'token_expired' as const }
         }
@@ -505,21 +508,15 @@ const user = await withRetry(() => fetchUser(id), 3, 1000)
 ### Fallback Chain
 
 ```typescript
-const fetchWithFallbacks = async (id: string) =>
-  R.pipe(
-    await fetchFromCDN(id),
-    match({
-      onOk: data => ok(data),
-      onErr: async () => R.pipe(
-        await fetchFromDatabase(id),
-        match({
-          onOk: data => ok(data),
-          onErr: async () => fetchFromCache(id)
-        })
-      )
-    }),
-    unwrapOr(defaultData)
-  )
+const fetchWithFallbacks = async (id: string) => {
+  const fromCDN = await fetchFromCDN(id)
+  if (isOk(fromCDN)) return fromCDN.value
+
+  const fromDatabase = await fetchFromDatabase(id)
+  if (isOk(fromDatabase)) return fromDatabase.value
+
+  return unwrapOr(await fetchFromCache(id), defaultData)
+}
 ```
 
 ---

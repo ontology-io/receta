@@ -21,38 +21,42 @@ Safely retrieves a value at a nested path, returning `Option<T>` instead of thro
 
 ### Signature
 
-```typescript
-function getPath<T = unknown>(
-  obj: PlainObject,
-  path: ObjectPath
-): Option<T>
+```typescript title="Signature"
+function getPath<T = unknown>(path: ObjectPath, obj: PlainObject): Option<T>
+function getPath<T = unknown>(path: ObjectPath): (obj: PlainObject) => Option<T>
 
 type ObjectPath = readonly (string | number)[]
 ```
 
+`getPath`, `setPath` and `updatePath` take the path first and the object last, the reverse of `mask` or `rename`. Leave the object out to get a function for `pipe`.
+
 ### Why getPath Over Optional Chaining?
 
 ```typescript
-// ❌ Optional chaining: can still fail on edge cases
-const config = { api: 'not an object' }
-const timeout = config.api?.timeout ?? 5000  // No error, but unsafe!
+import { getPath } from '@ontologyio/receta/object'
+import { unwrapOr } from '@ontologyio/receta/option'
+import { pipe } from 'remeda'
 
-// ✅ getPath: type-safe, composable
+const config: { api?: { timeout?: number } } = {}
+
+// Optional chaining: the path is fixed in the source and you get a bare value
+const fixedTimeout = config.api?.timeout ?? 5000
+// => 5000
+
+// getPath: the path is a value you can pass around, and the Option composes
 const timeout = pipe(
   config,
   getPath<number>(['api', 'timeout']),
   unwrapOr(5000)
 )
+// => 5000
 ```
 
 ### Real-World: Configuration Loading
 
 ```typescript
-import { getPath } from '@ontologyio/receta/object'
-import { isSome, unwrapOr } from '@ontologyio/receta/option'
-
 // Load database config with fallbacks
-const loadDbConfig = (config: unknown) => {
+const loadDbConfig = (config: PlainObject) => {
   const host = pipe(
     config,
     getPath<string>(['database', 'host']),
@@ -78,8 +82,10 @@ const loadDbConfig = (config: unknown) => {
 ### Real-World: API Response Extraction
 
 ```typescript
+import { match, toResult } from '@ontologyio/receta/option'
+
 // GitHub API: extract nested data safely
-const getRepoStars = (apiResponse: unknown) =>
+const getRepoStars = (apiResponse: PlainObject) =>
   pipe(
     apiResponse,
     getPath<number>(['repository', 'stargazers_count']),
@@ -90,7 +96,7 @@ const getRepoStars = (apiResponse: unknown) =>
   )
 
 // Stripe API: extract nested customer email
-const getCustomerEmail = (charge: unknown) =>
+const getCustomerEmail = (charge: PlainObject) =>
   pipe(
     charge,
     getPath<string>(['customer', 'email']),
@@ -109,10 +115,10 @@ const data = {
 }
 
 // Access array elements by index
-const firstUserEmail = getPath<string>(data, ['users', 0, 'email'])
+const firstUserEmail = getPath<string>(['users', 0, 'email'], data)
 // => Some('alice@example.com')
 
-const missingUser = getPath(data, ['users', 99, 'email'])
+const missingUser = getPath(['users', 99, 'email'], data)
 // => None
 ```
 
@@ -122,34 +128,39 @@ const missingUser = getPath(data, ['users', 99, 'email'])
 import { map, flatMap, filter } from '@ontologyio/receta/option'
 
 // Extract and transform nested value
-const getUserAge = (data: unknown) =>
+const getUserAge = (data: PlainObject) =>
   pipe(
     data,
     getPath<number>(['user', 'profile', 'age']),
     filter(age => age >= 18),  // Only adults
     map(age => `${age} years old`)
   )
-// => Some('30 years old') or None
+// Some('30 years old') for an adult, None otherwise
 ```
 
 ### Type Safety
 
+`getPath` can't work out the value's type from the path. The type argument is your claim about the value and nothing checks it at runtime. Without one you get `Option<unknown>`.
+
+Describe your data with `type`, not `interface`. These functions take `PlainObject`, which is `Record<string, unknown>`, and TypeScript won't accept an interface there.
+
 ```typescript
-// getPath preserves type information
-interface Config {
+type Config = {
   database: {
     host: string
     port: number
   }
 }
 
-const config: Config = { /* ... */ }
+const config: Config = { database: { host: 'localhost', port: 5432 } }
 
-// TypeScript knows this is Option<string>
-const host = getPath<string>(config, ['database', 'host'])
+// Option<string>
+const host = getPath<string>(['database', 'host'], config)
+// => Some('localhost')
 
-// TypeScript knows this is Option<number>
-const port = getPath<number>(config, ['database', 'port'])
+// Option<number>
+const port = getPath<number>(['database', 'port'], config)
+// => Some(5432)
 ```
 
 ---
@@ -160,12 +171,9 @@ Immutably sets a value at a nested path, creating intermediate objects as needed
 
 ### Signature
 
-```typescript
-function setPath<T extends PlainObject>(
-  obj: T,
-  path: ObjectPath,
-  value: unknown
-): T
+```typescript title="Signature"
+function setPath<T extends PlainObject>(path: ObjectPath, value: unknown, obj: T): T
+function setPath(path: ObjectPath, value: unknown): <T extends PlainObject>(obj: T) => T
 ```
 
 ### Why setPath Over Mutation?
@@ -178,7 +186,7 @@ function updateConfig(config) {
 }
 
 // ✅ setPath: immutable, predictable
-const updated = setPath(config, ['database', 'host'], 'prod.example.com')
+const updated = setPath(['database', 'host'], 'prod.example.com', config)
 // Original unchanged, new object returned
 ```
 
@@ -189,13 +197,13 @@ const updated = setPath(config, ['database', 'host'], 'prod.example.com')
 const reducer = (state: AppState, action: Action) => {
   switch (action.type) {
     case 'UPDATE_USERNAME':
-      return setPath(state, ['user', 'profile', 'username'], action.payload)
+      return setPath(['user', 'profile', 'username'], action.payload, state)
 
     case 'INCREMENT_VIEWS':
-      return updatePath(state, ['stats', 'views'], (n: number) => n + 1)
+      return updatePath(['stats', 'views'], (n: number) => n + 1, state)
 
     case 'SET_THEME':
-      return setPath(state, ['ui', 'theme'], action.payload)
+      return setPath(['ui', 'theme'], action.payload, state)
 
     default:
       return state
@@ -205,23 +213,26 @@ const reducer = (state: AppState, action: Action) => {
 
 ### Real-World: Form Field Updates
 
-```typescript
+```tsx
 // React form state management
 const FormComponent = () => {
   const [formData, setFormData] = useState(initialData)
 
   const updateField = (path: ObjectPath, value: unknown) => {
-    setFormData(prev => setPath(prev, path, value))
+    setFormData(prev => setPath(path, value, prev))
   }
+
+  const fieldValue = (path: ObjectPath) =>
+    unwrapOr(getPath<string>(path, formData), '')
 
   return (
     <>
       <input
-        value={getPath(formData, ['user', 'firstName'])}
+        value={fieldValue(['user', 'firstName'])}
         onChange={e => updateField(['user', 'firstName'], e.target.value)}
       />
       <input
-        value={getPath(formData, ['user', 'address', 'city'])}
+        value={fieldValue(['user', 'address', 'city'])}
         onChange={e => updateField(['user', 'address', 'city'], e.target.value)}
       />
     </>
@@ -235,14 +246,8 @@ const FormComponent = () => {
 // setPath creates missing intermediate objects
 const empty = {}
 
-const result = setPath(empty, ['api', 'endpoints', 'users'], '/api/v1/users')
-// {
-//   api: {
-//     endpoints: {
-//       users: '/api/v1/users'
-//     }
-//   }
-// }
+const result = setPath(['api', 'endpoints', 'users'], '/api/v1/users', empty)
+// => { api: { endpoints: { users: '/api/v1/users' } } }
 ```
 
 ### Working with Arrays
@@ -253,12 +258,12 @@ const data = {
 }
 
 // Update array element
-const updated = setPath(data, ['items', 1], 'blueberry')
-// { items: ['apple', 'blueberry', 'cherry'] }
+const updated = setPath(['items', 1], 'blueberry', data)
+// => { items: ['apple', 'blueberry', 'cherry'] }
 
-// Add nested array data
-const nested = setPath({}, ['users', 0, 'name'], 'Alice')
-// { users: [{ name: 'Alice' }] }
+// A number in the path creates an array
+const nested = setPath(['users', 0, 'name'], 'Alice', {})
+// => { users: [{ name: 'Alice' }] }
 ```
 
 ### Chaining Multiple Updates
@@ -267,9 +272,9 @@ const nested = setPath({}, ['users', 0, 'name'], 'Alice')
 // Multiple immutable updates in sequence
 const result = pipe(
   config,
-  (c) => setPath(c, ['database', 'host'], 'prod.db.com'),
-  (c) => setPath(c, ['database', 'port'], 5432),
-  (c) => setPath(c, ['api', 'timeout'], 30000)
+  setPath(['database', 'host'], 'prod.db.com'),
+  setPath(['database', 'port'], 5432),
+  setPath(['api', 'timeout'], 30000)
 )
 ```
 
@@ -281,12 +286,9 @@ Updates a value at a path by applying a transformation function.
 
 ### Signature
 
-```typescript
-function updatePath<T extends PlainObject, V>(
-  obj: T,
-  path: ObjectPath,
-  fn: (value: V) => V
-): T
+```typescript title="Signature"
+function updatePath<T extends PlainObject, V>(path: ObjectPath, fn: (value: V) => V, obj: T): T
+function updatePath<V>(path: ObjectPath, fn: (value: V) => V): <T extends PlainObject>(obj: T) => T
 ```
 
 ### Why updatePath?
@@ -294,16 +296,16 @@ function updatePath<T extends PlainObject, V>(
 ```typescript
 // ❌ Without updatePath: verbose and error-prone
 const incrementViews = (state: AppState) => {
-  const currentViews = getPath<number>(state, ['stats', 'views'])
+  const currentViews = getPath<number>(['stats', 'views'], state)
   if (isSome(currentViews)) {
-    return setPath(state, ['stats', 'views'], currentViews.value + 1)
+    return setPath(['stats', 'views'], currentViews.value + 1, state)
   }
   return state
 }
 
 // ✅ With updatePath: concise and safe
 const incrementViews = (state: AppState) =>
-  updatePath(state, ['stats', 'views'], (n: number) => n + 1)
+  updatePath(['stats', 'views'], (n: number) => n + 1, state)
 ```
 
 ### Real-World: Analytics Tracking
@@ -312,26 +314,26 @@ const incrementViews = (state: AppState) =>
 // Increment view counters
 const trackPageView = (analytics: Analytics, pageId: string) =>
   updatePath(
-    analytics,
     ['pages', pageId, 'views'],
-    (views: number) => views + 1
+    (views: number) => views + 1,
+    analytics
   )
 
 // Update last seen timestamp
 const updateLastSeen = (user: User) =>
-  updatePath(user, ['activity', 'lastSeen'], () => Date.now())
+  updatePath(['activity', 'lastSeen'], () => Date.now(), user)
 ```
 
 ### Real-World: Shopping Cart Operations
 
 ```typescript
-interface CartItem {
+type CartItem = {
   id: string
   quantity: number
   price: number
 }
 
-interface Cart {
+type Cart = {
   items: CartItem[]
   total: number
 }
@@ -342,8 +344,8 @@ const incrementQuantity = (cart: Cart, itemId: string) => {
 
   return pipe(
     cart,
-    (c) => updatePath(c, ['items', itemIndex, 'quantity'], (q: number) => q + 1),
-    (c) => updatePath(c, ['total'], (total: number) => recalculateTotal(c))
+    updatePath(['items', itemIndex, 'quantity'], (q: number) => q + 1),
+    (c) => updatePath(['total'], (total: number) => recalculateTotal(c), c)
   )
 }
 ```
@@ -354,9 +356,9 @@ const incrementQuantity = (cart: Cart, itemId: string) => {
 // Update specific todo in nested structure
 const toggleTodo = (state: AppState, listId: string, todoIndex: number) =>
   updatePath(
-    state,
     ['lists', listId, 'todos', todoIndex, 'completed'],
-    (completed: boolean) => !completed
+    (completed: boolean) => !completed,
+    state
   )
 ```
 
@@ -364,16 +366,16 @@ const toggleTodo = (state: AppState, listId: string, todoIndex: number) =>
 
 ```typescript
 // Append to array
-updatePath(state, ['tags'], (tags: string[]) => [...tags, 'new-tag'])
+updatePath(['tags'], (tags: string[]) => [...tags, 'new-tag'], state)
 
 // Transform nested object
-updatePath(state, ['user', 'preferences'], (prefs: Prefs) => ({
+updatePath(['user', 'preferences'], (prefs: Prefs) => ({
   ...prefs,
   notifications: true
-}))
+}), state)
 
 // String manipulation
-updatePath(user, ['profile', 'bio'], (bio: string) => bio.trim().slice(0, 280))
+updatePath(['profile', 'bio'], (bio: string) => bio.trim().slice(0, 280), user)
 ```
 
 ### Path Not Found Behavior
@@ -382,14 +384,14 @@ updatePath(user, ['profile', 'bio'], (bio: string) => bio.trim().slice(0, 280))
 // If path doesn't exist, returns original object unchanged
 const state = { user: { name: 'Alice' } }
 
-const result = updatePath(state, ['user', 'age'], (age: number) => age + 1)
-// => { user: { name: 'Alice' } }  (unchanged)
+const result = updatePath(['user', 'age'], (age: number) => age + 1, state)
+// => { user: { name: 'Alice' } }
 
 // To set instead of update when path might not exist:
 const ensureAge = (state: State) => {
-  const updated = updatePath(state, ['user', 'age'], (age: number) => age + 1)
+  const updated = updatePath(['user', 'age'], (age: number) => age + 1, state)
   return updated === state
-    ? setPath(state, ['user', 'age'], 1)  // Initialize
+    ? setPath(['user', 'age'], 1, state)  // Initialize
     : updated
 }
 ```
@@ -405,16 +407,16 @@ const ensureAge = (state: State) => {
 const value = obj?.deeply?.nested?.value ?? 'default'
 
 // Pros: Native, concise for simple cases
-// Cons: Not composable, no type guard, fails on type mismatches
+// Cons: Path fixed in the source, nothing to chain on the result
 
 // getPath
 const value = pipe(
   obj,
-  getPath(['deeply', 'nested', 'value']),
+  getPath<string>(['deeply', 'nested', 'value']),
   unwrapOr('default')
 )
 
-// Pros: Composable, type-safe, works in pipelines
+// Pros: Composable, paths can be data, works in pipelines
 // Cons: More verbose for simple cases
 ```
 
@@ -431,7 +433,7 @@ _.set(obj, 'deeply.nested.value', 'new')
 _.setWith(_.cloneDeep(obj), 'deeply.nested.value', 'new')
 
 // Receta: immutable by default, type-safe
-setPath(obj, ['deeply', 'nested', 'value'], 'new')
+setPath(['deeply', 'nested', 'value'], 'new', obj)
 ```
 
 ### vs Immer
@@ -446,7 +448,7 @@ produce(obj, draft => {
 // Cons: Magic, runtime overhead, not composable
 
 // Receta
-setPath(obj, ['deeply', 'nested', 'value'], 'new')
+setPath(['deeply', 'nested', 'value'], 'new', obj)
 
 // Pros: Explicit, composable, no magic
 // Cons: More verbose for multiple updates
@@ -470,7 +472,7 @@ setPath(obj, ['deeply', 'nested', 'value'], 'new')
 ### Pattern 1: Safe Config Access with Fallbacks
 
 ```typescript
-const getAppConfig = (rawConfig: unknown): AppConfig => ({
+const getAppConfig = (rawConfig: PlainObject): AppConfig => ({
   apiUrl: pipe(
     rawConfig,
     getPath<string>(['api', 'url']),
@@ -495,19 +497,19 @@ const getAppConfig = (rawConfig: unknown): AppConfig => ({
 
 ```typescript
 // Complete form state manager
-class FormState<T> {
+class FormState<T extends PlainObject> {
   constructor(private data: T) {}
 
   get<V>(path: ObjectPath): Option<V> {
-    return getPath<V>(this.data, path)
+    return getPath<V>(path, this.data)
   }
 
   set(path: ObjectPath, value: unknown): FormState<T> {
-    return new FormState(setPath(this.data, path, value))
+    return new FormState(setPath(path, value, this.data))
   }
 
   update<V>(path: ObjectPath, fn: (value: V) => V): FormState<T> {
-    return new FormState(updatePath(this.data, path, fn))
+    return new FormState(updatePath(path, fn, this.data))
   }
 
   validate(path: ObjectPath, validator: (value: unknown) => boolean): boolean {
@@ -531,14 +533,14 @@ const capitalizeUserName = (state: State) =>
     getPath<string>(['user', 'name']),
     map(name => name.toUpperCase()),
     match({
-      onSome: (upper) => setPath(state, ['user', 'name'], upper),
+      onSome: (upper) => setPath(['user', 'name'], upper, state),
       onNone: () => state
     })
   )
 
 // Simpler with updatePath
 const capitalizeUserName = (state: State) =>
-  updatePath(state, ['user', 'name'], (name: string) => name.toUpperCase())
+  updatePath(['user', 'name'], (name: string) => name.toUpperCase(), state)
 ```
 
 ### Pattern 4: Bulk Updates
@@ -552,13 +554,13 @@ const updateUserProfile = (
   let result = user
 
   if (updates.name) {
-    result = setPath(result, ['profile', 'name'], updates.name)
+    result = setPath(['profile', 'name'], updates.name, result)
   }
   if (updates.email) {
-    result = setPath(result, ['contact', 'email'], updates.email)
+    result = setPath(['contact', 'email'], updates.email, result)
   }
   if (updates.bio) {
-    result = setPath(result, ['profile', 'bio'], updates.bio)
+    result = setPath(['profile', 'bio'], updates.bio, result)
   }
 
   return result
@@ -568,24 +570,18 @@ const updateUserProfile = (
 ### Pattern 5: Conditional Updates
 
 ```typescript
-// Update only if value exists
+// updatePath already skips a missing path, so no check is needed
 const incrementIfExists = (state: State, path: ObjectPath) =>
-  pipe(
-    state,
-    getPath<number>(path),
-    match({
-      onSome: () => updatePath(state, path, (n: number) => n + 1),
-      onNone: () => state
-    })
-  )
+  updatePath(path, (n: number) => n + 1, state)
 ```
 
 ### Pattern 6: API Response Extraction Pipeline
 
 ```typescript
-import { collect } from '@ontologyio/receta/result'
+import { collect, map as mapResult } from '@ontologyio/receta/result'
+
 // Extract multiple values from API response
-const extractUserData = (apiResponse: unknown) => {
+const extractUserData = (apiResponse: PlainObject) => {
   const userId = pipe(
     apiResponse,
     getPath<string>(['data', 'user', 'id']),
@@ -605,11 +601,10 @@ const extractUserData = (apiResponse: unknown) => {
   )
 
   // Combine results
-  return collect([userId, email]).map(([id, email]) => ({
-    id,
-    email,
-    name
-  }))
+  return pipe(
+    collect([userId, email]),
+    mapResult(([id, email]) => ({ id, email, name }))
+  )
 }
 ```
 

@@ -29,7 +29,7 @@ Default string sorting is case-sensitive, with uppercase coming before lowercase
 ```typescript
 // ❌ Case-sensitive (default)
 ['banana', 'Apple', 'cherry', 'BANANA'].sort()
-// => ['BANANA', 'Apple', 'banana', 'cherry']
+// => ['Apple', 'BANANA', 'banana', 'cherry']
 //     ^ Uppercase first (not intuitive for users)
 ```
 
@@ -445,7 +445,7 @@ normalized.sort(ascending(x => x.lowerName))
 const collator = new Intl.Collator('de-DE')
 items.sort((a, b) => collator.compare(a.name, b.name))
 
-// Or use localeCompare() for clarity (wraps Collator internally)
+// Or use localeCompare() for clarity (uses String.prototype.localeCompare)
 items.sort(localeCompare(x => x.name, 'de-DE'))
 ```
 

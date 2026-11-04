@@ -17,11 +17,11 @@ import { isSome } from '../guards'
  * @example
  * ```typescript
  * // Data-first
- * const findUser = (id: string): Option<User> => ...
- * const getEmail = (user: User): Option<string> => ...
+ * declare function findUser(id: string): Option<User>
+ * declare function getEmail(user: User): Option<string>
  *
  * flatMap(findUser('123'), getEmail)
- * // => Some('user@example.com') or None
+ * // Some('user@example.com') or None
  *
  * // Data-last (in pipe)
  * pipe(

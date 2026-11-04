@@ -137,7 +137,7 @@ const result = R.pipe(
   items,
   R.filter(isActive),
   // Can't pass a comparator here easily
-  items => items.sort((a, b) => ...)
+  (items) => [...items].sort((a, b) => a.priority - b.priority)
 )
 
 // ✅ Works seamlessly with Remeda
@@ -150,18 +150,21 @@ const result = R.pipe(
 )
 ```
 
-### Problem 4: Array.sort() Has Inconsistent Null Handling
+### Problem 4: Array.sort() Hides Null Handling
 
 ```typescript
-// ❌ Nulls behave unpredictably
+// ❌ A null quietly counts as 0, so it lands among the real values
 items.sort((a, b) => (a.value ?? 0) - (b.value ?? 0))
-// Where do nulls end up? Depends on JS engine!
 
-// ✅ Explicit null handling
-import { ascending, nullsFirst } from '@ontologyio/receta/compare'
+// ✅ Say where nulls go: false sorts before true
+import { ascending, byBoolean, compose } from '@ontologyio/receta/compare'
 
-items.sort(nullsFirst(ascending(i => i.value ?? 0))) // Nulls first
-items.sort(nullsLast(ascending(i => i.value ?? 0)))  // Nulls last
+items.sort(
+  compose(
+    byBoolean(i => i.value === null), // Items with no value go last
+    ascending(i => i.value ?? 0)
+  )
+)
 ```
 
 ## Real-World Use Cases
@@ -299,14 +302,14 @@ Think of comparators as **Lego bricks** for sorting:
 **Combinators** connect blocks:
 - `compose(a, b, c)` - Multi-level sorting
 - `reverse(comparator)` - Flip the order
-- `nullsFirst(comparator)` - Handle nulls
+- `nullsFirst(comparator)` - Put null items first
 
 **Combine them** to solve complex problems:
 ```typescript
 compose(
-  ascending(statusOrder),
+  ascending(x => statusOrder[x.status]),
   reverse(byDate(x => x.createdAt)),
-  nullsFirst(ascending(x => x.assignee))
+  ascending(x => x.assignee ?? '')
 )
 ```
 
@@ -345,8 +348,8 @@ All Compare functions either **create** or **modify** comparators.
 ### 2. Ascending vs Descending
 
 ```typescript
-ascending(x => x.value)  // Low to high:  1, 2, 3
-descending(x => x.value) // High to low:  3, 2, 1
+ascending((x: Item) => x.value)  // Low to high:  1, 2, 3
+descending((x: Item) => x.value) // High to low:  3, 2, 1
 ```
 
 ### 3. Composition
@@ -366,6 +369,8 @@ compose(
 nullsFirst(comparator)  // null, null, 1, 2, 3
 nullsLast(comparator)   // 1, 2, 3, null, null
 ```
+
+These check the items being sorted, not a field inside them. For a nullable field, see [Sorting by a Nullable Field](./combinators.mdx#sorting-by-a-nullable-field).
 
 ### 5. Type-Specific Comparators
 
@@ -410,7 +415,7 @@ names.sort((a, b) => collator.compare(a, b))
 
 // ❌ Only works for strings, verbose for objects
 
-// Compare (wraps Collator internally)
+// Compare (uses String.prototype.localeCompare)
 names.sort(localeCompare(x => x, 'de-DE'))
 
 // ✅ Works with objects, composable, cleaner syntax
@@ -420,7 +425,9 @@ names.sort(localeCompare(x => x, 'de-DE'))
 
 ```typescript
 // Ramda
-R.sortBy(R.prop('age'), users)
+import { sortBy, prop } from 'ramda'
+
+sortBy(prop('age'), users)
 
 // ❌ Can only sort by one property
 // ❌ Always ascending
@@ -440,7 +447,7 @@ users.sort(ascending(u => u.age))
 
 All basic comparators take an **extraction function**:
 
-```typescript
+```text
 ascending((user: User) => user.age)
          └──────┬──────────────────┘
                 │
@@ -463,15 +470,15 @@ compose(
 
 ### Null Safety Layer
 
-`nullsFirst` and `nullsLast` wrap comparators to handle nulls before delegating:
+`nullsFirst` and `nullsLast` wrap comparators to handle null items before delegating. `nullsFirst(innerComparator)` behaves like this:
 
 ```typescript
-nullsFirst((a, b) => {
+(a, b) => {
   if (a == null && b == null) return 0
   if (a == null) return -1  // a comes first
   if (b == null) return 1   // b comes first
   return innerComparator(a, b)
-})
+}
 ```
 
 ## What's Next?

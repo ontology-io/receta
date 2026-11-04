@@ -8,7 +8,7 @@ description: "From Nullable to Option"
 ## Why Migrate?
 
 **Before: Nullable types**
-```typescript
+```typescript nocheck
 function getUserEmail(id: string): string | undefined {
   const user = users.find(u => u.id === id)
   return user?.email
@@ -191,7 +191,7 @@ Migrate leaf functions first:
 
 ```typescript
 // Start here ✓
-function findUser(id: string): Option<User>
+declare function findUser(id: string): Option<User>
 
 // Then here
 function getTeamLead(userId: string): Option<User> {
@@ -208,7 +208,7 @@ Bridge between old and new code:
 
 ```typescript
 // New code using Option
-function findUserOption(id: string): Option<User>
+declare function findUserOption(id: string): Option<User>
 
 // Legacy wrapper
 function findUser(id: string): User | undefined {
@@ -222,7 +222,7 @@ function findUser(id: string): User | undefined {
 
 ```typescript
 // database.ts - fully migrated
-export function findById(id: string): Option<User>
+export declare function findById(id: string): Option<User>
 
 // api.ts - partially migrated, uses conversion
 import { findById } from './database'

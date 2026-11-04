@@ -130,7 +130,7 @@ export function extractFulfilled<T>(
  *   Promise.reject(new Error('Timeout')),
  * ])
  *
- * const errors = extractRejected(results)
+ * const errors = extractRejected<Error>(results)
  * // => [Error('Network error'), Error('Timeout')]
  *
  * errors.forEach((err) => console.error('Failed:', err.message))

@@ -1,5 +1,5 @@
 ---
-title: "Receta Function Selection Guide"
+title: "Choose a module"
 ---
 
 ## Root Decision Tree: Which Module Do I Need?
@@ -49,9 +49,9 @@ START: What are you trying to do?
 │  │
 │  ├─ Format/transform (case, slugify)? ───────────────────► string/
 │  │
-│  ├─ Validate (email, URL)? ──────────────────────────────► string/validators
+│  ├─ Validate (email, URL)? ──────────────────────────────► string/isEmail, isUrl
 │  │
-│  └─ Sanitize (HTML escape, trim)? ───────────────────────► string/sanitize
+│  └─ Sanitize (HTML escape, trim)? ───────────────────────► string/escapeHtml, trim
 │
 ├─ Work with NUMBERS?
 │  │
@@ -92,6 +92,8 @@ START: What are you trying to do?
 
 ## Quick Reference by Problem Type
 
+Entries read as `module/function`: `result/tryCatch` is `tryCatch` from `@ontologyio/receta/result`.
+
 ### Error Handling
 - **Known to fail, need error details** → `result/tryCatch`, `result/map`, `result/flatMap`
 - **Optional/nullable values** → `option/fromNullable`, `option/map`
@@ -111,7 +113,7 @@ START: What are you trying to do?
 
 ### Formatting
 - **Currency** → `number/toCurrency`
-- **Dates** → Use date library (not yet in Receta)
+- **Dates** → Use a date library (out of scope for Receta)
 - **File sizes** → `number/toBytes`
 - **URLs/slugs** → `string/slugify`
 
@@ -131,7 +133,7 @@ Core Types (Always Available):
      └──────┬───────────┘
             │
     ┌───────▼────────┐
-    │  Validation    │  (Extends Result with error accumulation)
+    │  Validation    │  (Like Result, with error accumulation)
     └────────────────┘
 
 Functional Utilities:
@@ -156,7 +158,7 @@ Performance:
 
 ## Decision Tree Usage Tips
 
-1. **Start broad, narrow down**: Use this root tree first, then dive into module-specific trees
+1. **Start broad, narrow down**: Use this root tree first, then read the module's guide
 2. **Multiple modules**: Complex problems often need 2-3 modules together
 3. **Remeda first**: If Remeda has it, use Remeda. Receta builds on top
 4. **Result by default**: When in doubt about error handling, use Result pattern
@@ -164,17 +166,17 @@ Performance:
 
 ## Next Steps
 
-For detailed function selection within each module, see:
-- [result/_module.md](result/_module.md)
-- [option/_module.md](option/_module.md)
-- [async/_module.md](async/_module.md)
-- [predicate/_module.md](predicate/_module.md)
-- [validation/_module.md](validation/_module.md)
-- [collection/_module.md](collection/_module.md)
-- [object/_module.md](object/_module.md)
-- [string/_module.md](string/_module.md)
-- [number/_module.md](number/_module.md)
-- [memo/_module.md](memo/_module.md)
-- [lens/_module.md](lens/_module.md)
-- [compare/_module.md](compare/_module.md)
-- [function/_module.md](function/_module.md)
+For the functions in each module, see:
+- [Result](./result/index.mdx)
+- [Option](./option/index.mdx)
+- [Async](./async/index.mdx)
+- [Predicate](./predicate/index.mdx)
+- [Validation](./validation/index.mdx)
+- [Collection](./collection/index.mdx)
+- [Object](./object/index.mdx)
+- [String](./reference/string.mdx)
+- [Number](./reference/number.mdx)
+- [Memo](./memo/index.mdx)
+- [Lens](./lens/index.mdx)
+- [Compare](./compare/index.mdx)
+- [Function](./function/index.mdx)

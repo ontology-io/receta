@@ -126,8 +126,9 @@ const mobilePrefs = {
 
 ### Stripe API Normalization
 
-```typescript
-// Stripe payment_intent object (actual response structure)
+A Stripe `payment_intent` response:
+
+```json
 {
   "id": "pi_123",
   "object": "payment_intent",
@@ -147,18 +148,20 @@ const mobilePrefs = {
     ]
   }
 }
-
-// Stripe's internal normalization (conceptual):
-// 1. Flatten nested metadata
-// 2. Extract deeply nested payment details
-// 3. Rename keys to match internal schema
-// 4. Validate structure before processing
 ```
+
+Normalizing a response like this usually means:
+
+1. Flatten the nested metadata
+2. Extract the deeply nested payment details
+3. Rename keys to match your schema
+4. Validate the structure before processing
 
 ### GitHub API Transformation
 
-```typescript
-// GitHub repository object (partial)
+A GitHub repository object (partial):
+
+```json
 {
   "name": "receta",
   "full_name": "company/receta",
@@ -169,13 +172,14 @@ const mobilePrefs = {
   "created_at": "2024-01-01T00:00:00Z",
   "pushed_at": "2024-01-20T15:30:00Z"
 }
-
-// GitHub's frontend transformation:
-// 1. Rename snake_case → camelCase
-// 2. Flatten owner data
-// 3. Parse ISO dates
-// 4. Add computed fields (e.g., isStale)
 ```
+
+A frontend consuming it usually wants to:
+
+1. Rename snake_case → camelCase
+2. Flatten the owner data
+3. Parse the ISO dates
+4. Add computed fields (e.g., isStale)
 
 ### Next.js Configuration Merging
 
@@ -203,7 +207,7 @@ const userConfig = {
 
 ## The Solution: Receta Object Module
 
-The Object module provides **15 functions** across 4 categories:
+The Object module provides **17 functions** across 4 categories:
 
 ### 1. Core Operations (5 functions)
 
@@ -232,46 +236,51 @@ Obj.mask(user, ['id', 'email'])
 // => { id: 1, email: 'alice@example.com' }
 
 // DeepMerge: Intelligent deep merging
+const defaults = { tags: ['a'], theme: 'light' }
+const userConfig = { tags: ['b'] }
 Obj.deepMerge([defaults, userConfig], { arrayStrategy: 'concat' })
+// => { tags: ['a', 'b'], theme: 'light' }
 ```
 
 ### 2. Safe Access (3 functions)
 
 ```typescript
 import { getPath, setPath, updatePath } from '@ontologyio/receta/object'
-import { isSome, unwrapOr } from '@ontologyio/receta/option'
+import { unwrapOr } from '@ontologyio/receta/option'
 
+// The path comes first and the object last
 // GetPath: Returns Option<T> (no runtime errors!)
 const config = { database: { host: 'localhost' } }
-const host = getPath(config, ['database', 'host'])
+const host = getPath(['database', 'host'], config)
 // => Some('localhost')
 
-const missing = getPath(config, ['api', 'key'])
-// => None (safe!)
+const missing = getPath(['api', 'key'], config)
+// => None
 
 // SetPath: Immutable updates
-const updated = setPath(config, ['database', 'port'], 5432)
+const updated = setPath(['database', 'port'], 5432, config)
 // => { database: { host: 'localhost', port: 5432 } }
 // Original config unchanged!
 
-// UpdatePath: Transform in place
-updatePath(user, ['profile', 'views'], (n: number) => n + 1)
+// UpdatePath: Transform the value at a path, returning a new object
+const user = { profile: { views: 10 } }
+updatePath(['profile', 'views'], (n: number) => n + 1, user)
 // => { profile: { views: 11 } }
 ```
 
-### 3. Validation (3 functions)
+### 3. Validation (4 functions)
 
 ```typescript
-import { validateShape, stripUndefined, compact } from '@ontologyio/receta/object'
+import { validateShape, stripUndefined, compact, stripEmpty } from '@ontologyio/receta/object'
 import { isOk } from '@ontologyio/receta/result'
 
 // ValidateShape: Runtime type checking
-const schema = {
-  id: (v): v is number => typeof v === 'number',
-  email: (v): v is string => typeof v === 'string' && v.includes('@')
+const userSchema = {
+  id: (v: unknown): v is number => typeof v === 'number',
+  email: (v: unknown): v is string => typeof v === 'string' && v.includes('@')
 }
 
-const result = validateShape(input, schema)
+const result = validateShape(input, userSchema)
 if (isOk(result)) {
   // TypeScript knows this is validated!
   console.log(result.value.email)
@@ -285,15 +294,24 @@ stripUndefined(payload)
 // Compact: Remove nullish values
 compact({ name: 'Alice', age: null, email: undefined })
 // => { name: 'Alice' }
+
+// StripEmpty: Also remove empty strings, arrays and objects, at any depth
+stripEmpty({ name: 'Alice', bio: '', tags: [], address: { city: '' } })
+// => { name: 'Alice' }
 ```
 
-### 4. Transformation (4 functions)
+### 4. Transformation (5 functions)
 
 ```typescript
-import { mapKeys, mapValues, filterKeys, filterValues } from '@ontologyio/receta/object'
+import { mapKeys, mapValues, filterKeys, filterValues, transformKeys } from '@ontologyio/receta/object'
 
 // MapKeys: Transform all keys
-mapKeys(snakeCase, (key) => toCamelCase(key))
+mapKeys({ name: 'Alice' }, (key) => key.toUpperCase())
+// => { NAME: 'Alice' }
+
+// TransformKeys: Change the naming convention, nested objects included
+transformKeys({ first_name: 'Alice', home_address: { zip_code: '10001' } }, 'camelCase')
+// => { firstName: 'Alice', homeAddress: { zipCode: '10001' } }
 
 // MapValues: Transform all values
 mapValues(prices, (price) => price * 1.1)
@@ -320,24 +338,22 @@ const updated = _.set(_.cloneDeep(original), 'a.b', 2)
 // Verbose, error-prone, easy to forget cloneDeep
 
 // ✅ Receta: Immutable by default
-const updated = setPath(original, ['a', 'b'], 2)
+const updated = setPath(['a', 'b'], 2, original)
 // Original unchanged, no cloning needed
 ```
 
-### Problem 2: Vanilla JS Has No Safe Access
+### Problem 2: Optional Chaining Doesn't Compose
 
 ```typescript
-// ❌ Vanilla: Optional chaining still throws on edge cases
+// ❌ Vanilla: The path is fixed in the source and you get a bare value
 const value = obj?.deeply?.nested?.value ?? 'default'
-// What if 'deeply' is a string? Runtime error!
 
-// ✅ Receta: Type-safe with Option
+// ✅ Receta: The path is a value, and the Option works in pipes
 const value = pipe(
   obj,
-  getPath(['deeply', 'nested', 'value']),
+  getPath<string>(['deeply', 'nested', 'value']),
   unwrapOr('default')
 )
-// Guaranteed safe, works in pipes
 ```
 
 ### Problem 3: No Pipeline Integration
@@ -358,7 +374,7 @@ const result = pipe(
   apiResponse,
   Obj.rename(keyMapping),
   Obj.stripUndefined,
-  Obj.validateShape(schema),
+  Obj.validateShape(apiSchema),
   map(processValidData)
 )
 ```
@@ -372,7 +388,7 @@ if (typeof obj.id === 'number' && typeof obj.email === 'string') {
 }
 
 // ✅ Receta: First-class validation
-const result = validateShape(obj, schema)
+const result = validateShape(obj, userSchema)
 // Returns Result<T, ObjectError> with error details
 ```
 
@@ -381,13 +397,13 @@ const result = validateShape(obj, schema)
 | Feature | Vanilla JS | Lodash | Receta Object |
 |---------|-----------|--------|---------------|
 | Immutable | ❌ No | ⚠️ Manual | ✅ Always |
-| Safe access | ⚠️ `?.` only | ❌ No | ✅ `Option<T>` |
+| Safe access | ⚠️ `?.` only | ⚠️ `_.get` | ✅ `Option<T>` |
 | Pipeline | ❌ No | ⚠️ chain() | ✅ Native |
 | Validation | ❌ No | ❌ No | ✅ Built-in |
 | Type-safe | ⚠️ Partial | ❌ No | ✅ Full |
 | Tree-shakeable | N/A | ❌ No | ✅ Yes |
 | Deep merge | ❌ Shallow | ✅ Yes | ✅ Configurable |
-| Flatten | ❌ No | ✅ Yes | ✅ Yes |
+| Flatten objects | ❌ No | ❌ Arrays only | ✅ Yes |
 
 ---
 
@@ -402,7 +418,7 @@ const normalizePayment = (stripePayment: unknown) =>
   pipe(
     stripePayment,
     validateShape(stripePaymentSchema),
-    map(Obj.flatten),
+    map((payment) => Obj.flatten(payment)),
     map(Obj.rename(keyMapping)),
     map(stripUndefined),
     flatMap(saveToDatabase)
@@ -426,7 +442,7 @@ const mergedConfig = pipe(
 
 ```typescript
 // Clean form data before API call
-const sanitizeForm = (formData: FormData) =>
+const sanitizeForm = (formData: Record<string, unknown>) =>
   pipe(
     formData,
     Obj.stripUndefined,
@@ -444,7 +460,7 @@ const buildWhere = (filters: Record<string, unknown>) =>
   pipe(
     filters,
     Obj.compact,
-    Obj.flatten({ separator: '_' }),
+    (active) => Obj.flatten(active, { separator: '_' }),
     Obj.mapKeys((key) => `table.${key}`),
     Obj.filterValues((v) => v != null)
   )

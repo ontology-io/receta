@@ -20,7 +20,7 @@ Type guards are special predicates that narrow TypeScript types at runtime. When
 | `isNullish` | `null \| undefined` | Nullish values |
 | `isDefined` | `NonNullable<T>` | Not null or undefined |
 | `isArray` | `unknown[]` | Any array |
-| `isObject` | `Record<string, unknown>` | Plain objects |
+| `isObject` | `Record<string, unknown>` | Non-null, non-array objects |
 | `isFunction` | `Function` | Functions |
 | `isDate` | `Date` | Date instances |
 | `isRegExp` | `RegExp` | RegExp instances |
@@ -144,8 +144,8 @@ import { isBoolean } from '@ontologyio/receta/predicate'
 
 const mixed: unknown[] = [true, 1, false, 'yes', 0]
 const booleans = R.filter(mixed, isBoolean)
-// Type: boolean[]
 // => [true, false]
+// Type: boolean[]
 ```
 
 ---
@@ -183,8 +183,8 @@ const values: Array<string | null | undefined> = ['hello', null, 'world', undefi
 
 // Remove nullish values
 const defined = R.filter(values, not(isNullish))
-// Type: string[]
 // => ['hello', 'world']
+// Type: (string | null | undefined)[], because not() drops the narrowing. Use isDefined to keep it.
 ```
 
 **Real-world: Clean API responses**
@@ -213,8 +213,8 @@ import { isDefined } from '@ontologyio/receta/predicate'
 
 const values: Array<string | null | undefined> = ['hello', null, 'world', undefined]
 const defined = R.filter(values, isDefined)
-// Type: string[]
 // => ['hello', 'world']
+// Type: string[]
 
 // Type narrowing
 const value: string | null = getValueFromAPI()
@@ -242,8 +242,8 @@ const emails = R.pipe(
   R.map((u) => u.email),
   R.filter(isDefined)
 )
-// Type: string[]
 // => ['alice@example.com', 'charlie@example.com']
+// Type: string[]
 ```
 
 ---
@@ -270,7 +270,7 @@ if (isArray(config.hosts)) {
 
 ### isObject
 
-Checks for plain objects (not arrays, not null, not functions).
+Checks for non-null objects that aren't arrays. Functions fail, but class instances such as `Date` and `Map` pass.
 
 ```typescript
 import { isObject } from '@ontologyio/receta/predicate'
@@ -280,6 +280,7 @@ isObject({ a: 1 })     // => true
 isObject([])           // => false (array)
 isObject(null)         // => false
 isObject(() => {})     // => false (function)
+isObject(new Date())   // => true (any non-array object)
 ```
 
 **Real-world: Validate JSON**
@@ -448,13 +449,13 @@ const apiResponse: unknown[] = [
 
 // Extract strings
 const userIds = R.filter(apiResponse, isString)
-// Type: string[]
 // => ['user-123', 'admin-456']
+// Type: string[]
 
 // Extract numbers
 const counts = R.filter(apiResponse, isNumber)
-// Type: number[]
 // => [42, 100]
+// Type: number[]
 ```
 
 **Real-world: Parse webhook payloads**
@@ -478,8 +479,8 @@ const parseEvents = (payload: WebhookPayload) => {
 ### With Result
 
 ```typescript
-import { Result, ok, err } from '@ontologyio/receta/result'
-import { isString, isNumber } from '@ontologyio/receta/predicate'
+import { type Result, ok, err } from '@ontologyio/receta/result'
+import { isObject, isString, isNumber } from '@ontologyio/receta/predicate'
 
 const parseUser = (data: unknown): Result<User, string> => {
   if (!isObject(data)) {
@@ -501,13 +502,13 @@ const parseUser = (data: unknown): Result<User, string> => {
 ### With Option
 
 ```typescript
-import { Option, some, none } from '@ontologyio/receta/option'
+import { type Option, some, none } from '@ontologyio/receta/option'
 import { isNumber } from '@ontologyio/receta/predicate'
 
 const parsePort = (value: unknown): Option<number> => {
   return isNumber(value) && value > 0 && value < 65536
     ? some(value)
-    : none
+    : none()
 }
 ```
 
@@ -515,15 +516,14 @@ const parsePort = (value: unknown): Option<number> => {
 
 ## Combining Guards with Predicates
 
+`and` returns a plain `Predicate`, so it checks a value without narrowing it. To keep the narrowing, combine guards with `&&` in a guard of your own:
+
 ```typescript
-import { and, or, where, isString, isNumber, gt } from '@ontologyio/receta/predicate'
+import { isObject, isString, isNumber } from '@ontologyio/receta/predicate'
 
 // Filter for valid users (objects with string name and number age > 18)
-const isValidUser = and(
-  isObject,
-  (obj): obj is { name: string; age: number } =>
-    isString(obj.name) && isNumber(obj.age) && obj.age > 18
-)
+const isValidUser = (value: unknown): value is { name: string; age: number } =>
+  isObject(value) && isString(value.name) && isNumber(value.age) && value.age > 18
 
 // Mixed array
 const data: unknown[] = [
@@ -534,8 +534,8 @@ const data: unknown[] = [
 ]
 
 const validUsers = R.filter(data, isValidUser)
-// Type: { name: string; age: number }[]
 // => [{ name: 'Alice', age: 25 }, { name: 'Charlie', age: 30 }]
+// Type: { name: string; age: number }[]
 ```
 
 ---
@@ -591,12 +591,12 @@ const MAX_CONNECTIONS = getEnvNumber('MAX_CONNECTIONS') ?? 100
 
 ```typescript
 const parseGitHubUser = (data: unknown): Option<GitHubUser> => {
-  if (!isObject(data)) return none
+  if (!isObject(data)) return none()
 
   const { login, id, avatar_url } = data
 
   if (!isString(login) || !isNumber(id) || !isString(avatar_url)) {
-    return none
+    return none()
   }
 
   return some({ login, id, avatar_url })
@@ -609,9 +609,9 @@ const parseGitHubUser = (data: unknown): Option<GitHubUser> => {
 const safeJsonParse = <T>(json: string): Option<T> => {
   try {
     const parsed = JSON.parse(json)
-    return isDefined(parsed) ? some(parsed) : none
+    return isDefined(parsed) ? some(parsed) : none()
   } catch {
-    return none
+    return none()
   }
 }
 ```
@@ -628,7 +628,7 @@ isString(value)
 isNumber(value)
 isBoolean(value)
 
-// ✅ Fast - instanceof check
+// ✅ Fast - instanceof or Array.isArray check
 isDate(value)
 isError(value)
 isArray(value)
@@ -643,6 +643,7 @@ isObject(value)
 
 ```typescript
 import { describe, it, expect } from 'vitest'
+import * as R from 'remeda'
 import { isString, isNumber, isDefined } from '@ontologyio/receta/predicate'
 
 describe('Type guards', () => {

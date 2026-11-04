@@ -34,7 +34,7 @@ function validateForm(data) {
 ### How Modern Products Handle This
 
 **Stripe Checkout** (actual behavior):
-```
+```text
 When you submit invalid payment info, Stripe shows:
 ❌ Email address is invalid
 ❌ Card number is incomplete
@@ -45,7 +45,7 @@ All at once. You fix everything, then submit.
 ```
 
 **GitHub Pull Request** (actual behavior):
-```
+```text
 When PR validation fails:
 ❌ Title cannot be empty
 ❌ At least one reviewer is required
@@ -56,7 +56,7 @@ All errors shown immediately.
 ```
 
 **Vercel Deployment** (actual behavior):
-```
+```text
 Build validation errors:
 ❌ Missing environment variable: DATABASE_URL
 ❌ Missing environment variable: API_KEY
@@ -68,7 +68,7 @@ All configuration errors at once.
 ## The Solution: Validation with Error Accumulation
 
 ```typescript
-import { validate, schema, collectErrors } from '@ontologyio/receta/validation'
+import { validate, fromPredicate } from '@ontologyio/receta/validation'
 
 // Validation accumulates ALL errors
 const validatePassword = (password: string) =>
@@ -91,18 +91,28 @@ validatePassword('weak')
 
 ### Multi-Field Forms
 
+Give `schema` one validator per field. Passing `validate` only a list of validators returns a validator, which is how several rules share a field.
+
 ```typescript
-const userSchema = schema({
-  email: pipe(required, email),
-  password: validatePassword,
-  age: pipe(required, min(18)),
-  country: oneOf(['US', 'UK', 'CA', 'AU'])
-})
+type SignupForm = {
+  email: string
+  password: string
+  age: number
+  country: string
+}
+
+const validateForm = (form: SignupForm) =>
+  schema({
+    email: validate([required('Email is required'), email()]),
+    password: minLength(8, 'At least 8 characters'),
+    age: min(18),
+    country: oneOf(['US', 'UK', 'CA', 'AU'], 'Invalid country')
+  }, form)
 
 validateForm({ email: '', password: 'weak', age: 15, country: 'XX' })
 // => Invalid([
-//   { field: 'email', errors: ['Email is required'] },
-//   { field: 'password', errors: ['At least 8 characters', ...] },
+//   { field: 'email', errors: ['Email is required', 'Invalid email address'] },
+//   { field: 'password', errors: ['At least 8 characters'] },
 //   { field: 'age', errors: ['Must be at least 18'] },
 //   { field: 'country', errors: ['Invalid country'] }
 // ])
@@ -114,7 +124,7 @@ validateForm({ email: '', password: 'weak', age: 15, country: 'XX' })
 ### Result: Fail-Fast (Stop at First Error)
 
 ```typescript
-import { collect } from '@ontologyio/receta/result'
+import { collect, ok, err } from '@ontologyio/receta/result'
 
 // collect stops at first error
 collect([
@@ -146,7 +156,7 @@ pipe(
 ### Validation: Error Accumulation (Collect All Errors)
 
 ```typescript
-import { Validation } from '@ontologyio/receta/validation'
+import { collectErrors, invalid } from '@ontologyio/receta/validation'
 
 // collectErrors accumulates all errors
 collectErrors([
@@ -169,10 +179,10 @@ collectErrors([
 collectErrors([
   validateEmail(form.email),     // Check all fields
   validatePassword(form.password),
-  validateAge(form.age),
+  validateUsername(form.username),
   validateCountry(form.country)
 ])
-// => All errors at once, better UX!
+// All errors at once, better UX!
 ```
 
 ## Comparison Table
@@ -193,16 +203,22 @@ collectErrors([
 **Solution**: Show all validation errors at once.
 
 ```typescript
-const registrationSchema = schema({
-  username: pipe(required, minLength(3), maxLength(20)),
-  email: pipe(required, email),
-  password: pipe(required, minLength(8), hasUppercase, hasNumber),
-  age: pipe(required, min(18), max(120)),
-  terms: equals(true, 'You must accept the terms')
-})
+const validateRegistration = (form: RegistrationForm) =>
+  schema({
+    username: validate([required('Username is required'), minLength(3), maxLength(20)]),
+    email: validate([required('Email is required'), email()]),
+    password: validate([
+      required('Password is required'),
+      minLength(8),
+      matches(/[A-Z]/, 'Need an uppercase letter'),
+      matches(/[0-9]/, 'Need a number')
+    ]),
+    age: validate([min(18), max(120)]),
+    terms: equals(true, 'You must accept the terms')
+  }, form)
 
 // Shows all invalid fields immediately
-validateForm(formData)
+validateRegistration(formData)
 ```
 
 ### 2. API Request Validation
@@ -233,8 +249,8 @@ app.post('/api/users', (req, res) => {
 **Solution**: Get complete error report for all invalid rows.
 
 ```typescript
-const validateAll(csvRows, validateProduct)
-// => Invalid([...all errors from all rows...])
+validateAll(csvRows, validateProduct)
+// One run returns the errors from every invalid row
 
 // Show user: "Rows 5, 23, 157, 892 have errors"
 // Instead of: "Row 5 has error" (then rerun to find row 23...)
@@ -246,15 +262,22 @@ const validateAll(csvRows, validateProduct)
 **Solution**: Show all missing/invalid config at once.
 
 ```typescript
-const configSchema = schema({
-  DATABASE_URL: pipe(required, url),
-  API_KEY: pipe(required, minLength(32)),
-  PORT: pipe(required, integer, between(1000, 65535)),
-  NODE_ENV: oneOf(['development', 'production', 'test'])
-})
+const validateConfig = (config: AppConfig) =>
+  schema({
+    DATABASE_URL: validate([required('DATABASE_URL is required'), url()]),
+    API_KEY: validate([required('API_KEY is required'), minLength(32)]),
+    PORT: validate([integer(), between(1000, 65535)]),
+    NODE_ENV: oneOf(['development', 'production', 'test'])
+  }, config)
 
-validateConfig(process.env)
-// => Shows ALL missing env vars, not just first one
+// Environment variables can be missing and are always strings
+validateConfig({
+  DATABASE_URL: process.env.DATABASE_URL ?? '',
+  API_KEY: process.env.API_KEY ?? '',
+  PORT: Number(process.env.PORT),
+  NODE_ENV: process.env.NODE_ENV ?? ''
+})
+// Shows ALL missing env vars, not just first one
 ```
 
 ### 5. Multi-Step Wizards
@@ -263,13 +286,17 @@ validateConfig(process.env)
 **Solution**: Accumulate errors across all steps.
 
 ```typescript
-const validateWizard = collectErrors([
-  validateStep1(data.step1),
-  validateStep2(data.step2),
-  validateStep3(data.step3),
-  validateStep4(data.step4),
-  validateStep5(data.step5)
-])
+const validateWizard = (data: WizardData) =>
+  schema({
+    step1: validateStep1,
+    step2: validateStep2,
+    step3: validateStep3,
+    step4: validateStep4,
+    step5: validateStep5
+  }, data)
+
+validateWizard(wizardData)
+// Each error's `field` names a step that failed
 
 // Show: "Steps 2 and 4 have errors"
 // User can jump directly to those steps
@@ -280,7 +307,7 @@ const validateWizard = collectErrors([
 Think of Validation like a quality control inspector checking products on an assembly line:
 
 **Result (Fail-Fast Inspector)**:
-```
+```text
 Inspector checks products one by one:
 ✓ Product 1: OK
 ❌ Product 2: Defect found! STOP LINE!
@@ -290,7 +317,7 @@ Good when: One defect means stop everything
 ```
 
 **Validation (Thorough Inspector)**:
-```
+```text
 Inspector checks ALL products first:
 ✓ Product 1: OK
 ❌ Product 2: Defect A
@@ -333,13 +360,13 @@ schema(userSchema, userData)
 
 ```typescript
 // Build complex validators from simple ones
-const strongPassword = pipe(
-  required,
+const strongPassword = validate([
+  required('Password is required'),
   minLength(8),
-  hasUppercase,
-  hasNumber,
-  hasSpecialChar
-)
+  matches(/[A-Z]/, 'Need an uppercase letter'),
+  matches(/[0-9]/, 'Need a number'),
+  matches(/[^A-Za-z0-9]/, 'Need a special character')
+])
 
 // Reuse across your app
 ```
@@ -395,11 +422,10 @@ pipe(
 Now that you understand **why** Validation exists, learn **how** to use it:
 
 1. **[Constructors](./constructors.mdx)** - Creating validations with `valid`, `invalid`, `fromPredicate`
-2. **[Transformers](./02-transformers.md)** - Transforming values with `map`, `flatMap`
-3. **[Validators](./validators.mdx)** - Built-in validators for common cases
-4. **[Combinators](./combinators.mdx)** - Combining validations with `collectErrors`, `validate`, `schema`
-5. **[Patterns](./patterns.mdx)** - Real-world recipes for forms, APIs, bulk validation
-6. **[Migration](./migration.mdx)** - Moving from try-catch, Zod, or Yup
-7. **[API Reference](../reference/validation.mdx)** - Complete function reference
+2. **[Validators](./validators.mdx)** - Built-in validators for common cases
+3. **[Combinators](./combinators.mdx)** - Combining validations with `collectErrors`, `validate`, `schema`
+4. **[Patterns](./patterns.mdx)** - Real-world recipes for forms, APIs, bulk validation
+5. **[Migration](./migration.mdx)** - Moving from try-catch, Zod, or Yup
+6. **[API Reference](../reference/validation.mdx)** - Complete function reference, including the transformers `map`, `mapInvalid` and `flatMap`
 
 Or jump straight to **[Common Patterns](./patterns.mdx)** for copy-paste examples!

@@ -28,7 +28,7 @@ import { isValid } from '../guards'
  * // Data-last (in pipe)
  * pipe(
  *   valid(valid(5)),
- *   flatten
+ *   flatten()
  * ) // => Valid(5)
  *
  * // Real-world: Flatten result of mapping with validator
@@ -38,7 +38,7 @@ import { isValid } from '../guards'
  * pipe(
  *   valid('user@example.com'),
  *   map(validateEmail),  // => Valid(Valid('user@example.com'))
- *   flatten              // => Valid('user@example.com')
+ *   flatten()            // => Valid('user@example.com')
  * )
  *
  * // Note: Usually you'd use flatMap instead

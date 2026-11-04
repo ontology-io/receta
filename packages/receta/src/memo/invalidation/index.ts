@@ -40,9 +40,12 @@ export function invalidateMany<K>(memoized: AnyMemoized, keys: K[]): void {
  *
  * Useful for conditional invalidation based on key patterns or cached values.
  *
+ * Works with the default cache and custom caches that have a `forEach` method.
+ * Throws for `ttlCache`, `lruCache` and `weakCache`.
+ *
  * @example
  * ```typescript
- * import { memoize, invalidateWhere } from '@ontologyio/receta/memo'
+ * import { memoizeBy, invalidateWhere } from '@ontologyio/receta/memo'
  *
  * const getUser = memoizeBy(
  *   fetchUser,
@@ -50,12 +53,10 @@ export function invalidateMany<K>(memoized: AnyMemoized, keys: K[]): void {
  * )
  *
  * // Invalidate all admin users
- * invalidateWhere(getUser, (key) => key.startsWith('admin:'))
+ * invalidateWhere<string>(getUser, (key) => key.startsWith('admin:'))
  *
  * // Invalidate by value condition
- * invalidateWhere(getUser, (key, value) => {
- *   return value && value.deleted === true
- * })
+ * invalidateWhere<string, User>(getUser, (_key, user) => user?.deleted === true)
  * ```
  *
  * @param memoized - The memoized function to invalidate entries from

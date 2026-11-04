@@ -24,23 +24,21 @@ import { map } from '../map'
  * @example
  * ```typescript
  * // Define validators
- * const minLength = (min: number): Validator<string, string, string> =>
- *   (s) => s.length >= min ? valid(s) : invalid(`Min ${min} chars`)
- *
- * const maxLength = (max: number): Validator<string, string, string> =>
- *   (s) => s.length <= max ? valid(s) : invalid(`Max ${max} chars`)
- *
- * const noSpaces: Validator<string, string, string> =
- *   (s) => /^\S+$/.test(s) ? valid(s) : invalid('No spaces allowed')
+ * const rules = [minLength(5), maxLength(10), matches(/^\S+$/, 'No spaces allowed')]
  *
  * // Apply all validators
- * validate('hi', [minLength(5), maxLength(10), noSpaces])
- * // => Invalid(['Min 5 chars'])
+ * validate('hi', rules)
+ * // => Invalid(['Must be at least 5 characters'])
  *
- * validate('hello world', [minLength(5), maxLength(10), noSpaces])
- * // => Invalid(['No spaces allowed'])
+ * validate('hello world', rules)
+ * // => Invalid(['Must be at most 10 characters', 'No spaces allowed'])
  *
- * validate('hello', [minLength(5), maxLength(10), noSpaces])
+ * validate('hello', rules)
+ * // => Valid('hello')
+ *
+ * // Data-last: returns a validator, ready for a schema field
+ * const validateName = validate(rules)
+ * validateName('hello')
  * // => Valid('hello')
  *
  * // Real-world: Password validation with multiple rules
@@ -64,7 +62,7 @@ import { map } from '../map'
  * const validateEmail = (email: string) =>
  *   validate(email, [
  *     fromPredicate(s => s.length > 0, 'Email required'),
- *     fromPredicate(s => s.includes('@'), 'Must contain @'),
+ *     fromPredicate(s => s.includes('@'), 'Must be an email address'),
  *     fromPredicate(s => s.length <= 254, 'Email too long'),
  *     fromPredicate(s => !/\s/.test(s), 'No whitespace allowed')
  *   ])

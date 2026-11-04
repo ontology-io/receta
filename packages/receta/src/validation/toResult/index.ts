@@ -23,6 +23,8 @@ import { isValid } from '../guards'
  *
  * @example
  * ```typescript
+ * import { mapErr, flatMap as flatMapResult, unwrapOr as unwrapOrResult } from '@ontologyio/receta/result'
+ *
  * // Data-first
  * toResult(valid(42))
  * // => Ok(42)
@@ -33,27 +35,27 @@ import { isValid } from '../guards'
  * // Data-last (in pipe)
  * pipe(
  *   validateEmail(email),
- *   toResult
+ *   toResult()
  * )
  *
  * // Real-world: Convert to Result for API that expects Result
  * const validateForAPI = (data: unknown) =>
  *   pipe(
  *     validateData(data),
- *     toResult,
- *     Result.mapErr((errors) => ({
+ *     toResult(),
+ *     mapErr((errors) => ({
  *       code: 'VALIDATION_ERROR',
  *       messages: errors
  *     }))
  *   )
  *
  * // Real-world: Use Result's error handling
- * const process = (input: unknown) =>
+ * const handleInput = (input: unknown) =>
  *   pipe(
  *     validateInput(input),
- *     toResult,
- *     Result.flatMap(processValidData),
- *     Result.unwrapOr(defaultValue)
+ *     toResult(),
+ *     flatMapResult(processValidData),
+ *     unwrapOrResult(defaultValue)
  *   )
  * ```
  *
@@ -105,7 +107,7 @@ function toResultImplementation<T, E>(validation: Validation<T, E>): Result<T, r
  *   }))
  *
  * // Real-world: Format for display
- * const toDisplayResult = (validation: Validation<Data, FieldError>) =>
+ * const toDisplayResult = (validation: Validation<Data, FieldError<string>>) =>
  *   toResultWith(validation, (errors) => ({
  *     title: 'Please fix the following errors:',
  *     items: errors.map(e => `${e.field}: ${e.errors.join(', ')}`)

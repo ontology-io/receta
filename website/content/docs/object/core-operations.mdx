@@ -23,7 +23,7 @@ Converts nested objects into flat objects with dot-notation keys.
 
 ### Signature
 
-```typescript
+```typescript title="Signature"
 function flatten(obj: PlainObject, options?: FlattenOptions): FlatObject
 
 interface FlattenOptions {
@@ -52,10 +52,10 @@ const searchQuery = {
   }
 }
 
-// Flatten for logging/debugging
+// Flatten for logging/debugging. Arrays stay whole unless you set flattenArrays.
 const flat = flatten(searchQuery)
 // {
-//   'query.bool.must.0.match.title': 'receta',
+//   'query.bool.must': [{ match: { title: 'receta' } }],
 //   'query.bool.filter.range.date.gte': '2024-01-01'
 // }
 ```
@@ -77,40 +77,46 @@ const filters = {
 }
 
 const params = new URLSearchParams(
-  flatten(filters, { separator: '_' })
+  mapValues(flatten(filters, { separator: '_' }), String)
 )
-// ?category=electronics&price_min=100&price_max=500&features_wireless=true...
+// category=electronics&price_min=100&price_max=500&features_wireless=true...
 ```
 
 ### Options Examples
 
 ```typescript
+const nested = { user: { profile: { name: 'Alice', age: 30 } } }
+
 // Custom separator
 flatten(nested, { separator: '_' })
-// { user_profile_name: 'Alice' }
+// => { user_profile_name: 'Alice', user_profile_age: 30 }
 
 // Max depth
-flatten(deep, { maxDepth: 1 })
-// { 'user.profile': { name: 'Alice', age: 30 } }
+flatten(nested, { maxDepth: 1 })
+// => { 'user.profile': { name: 'Alice', age: 30 } }
 
 // Flatten arrays
 const data = { items: ['a', 'b', 'c'] }
 flatten(data, { flattenArrays: true })
-// { 'items.0': 'a', 'items.1': 'b', 'items.2': 'c' }
+// => { 'items.0': 'a', 'items.1': 'b', 'items.2': 'c' }
 ```
 
 ### In Pipelines
 
+Wrap `flatten` and `unflatten` in an arrow function inside `pipe`. The data-last forms don't work in the current release: `flatten()` with no arguments returns `{}` instead of a function, and TypeScript reads `flatten({ separator: '_' })` as the data-first call.
+
 ```typescript
 import { pipe } from 'remeda'
+
+const config = { database: { host: 'localhost', port: '5432' } }
 
 // Prepare nested config for environment variables
 const envVars = pipe(
   config,
-  flatten({ separator: '__' }),
+  (c) => flatten(c, { separator: '__' }),
   mapKeys((key) => key.toUpperCase())
 )
-// { DATABASE__HOST: 'localhost', DATABASE__PORT: '5432' }
+// => { DATABASE__HOST: 'localhost', DATABASE__PORT: '5432' }
 ```
 
 ---
@@ -121,7 +127,7 @@ Converts flat objects with dot-notation keys back into nested structures.
 
 ### Signature
 
-```typescript
+```typescript title="Signature"
 function unflatten(obj: FlatObject, options?: UnflattenOptions): PlainObject
 
 interface UnflattenOptions {
@@ -144,7 +150,7 @@ const env = {
 const config = pipe(
   env,
   mapKeys((key) => key.toLowerCase()),
-  unflatten({ separator: '_' })
+  (flat) => unflatten(flat, { separator: '_' })
 )
 // {
 //   database: { host: 'localhost', port: '5432' },
@@ -195,14 +201,14 @@ unflatten(flat)
 // }
 ```
 
-### Round-Trip Guarantee
+### Round-Trip
+
+`unflatten` restores what `flatten` produced, as long as no key contains the separator. A key like `'a.b'` comes back nested.
 
 ```typescript
-// flatten → unflatten preserves structure
 const original = { a: { b: { c: 1 } } }
-const restored = pipe(original, flatten(), unflatten())
-
-expect(restored).toEqual(original) // ✅
+const restored = unflatten(flatten(original))
+// => { a: { b: { c: 1 } } }
 ```
 
 ---
@@ -214,7 +220,7 @@ Renames object keys according to a mapping, preserving unmapped keys.
 ### Signature
 
 ```typescript title="Signature"
-function rename<T>(obj: T, mapping: Record<string, string>): PlainObject
+function rename<T extends PlainObject>(obj: T, mapping: Record<string, string>): PlainObject
 ```
 
 ### Real-World: API Response Normalization
@@ -276,7 +282,7 @@ rename(data, { oldName: 'name' })
 
 ```typescript
 // Normalize responses from different APIs
-const normalizeStripeCustomer = (customer: unknown) =>
+const normalizeStripeCustomer = (customer: PlainObject) =>
   pipe(
     customer,
     rename({
@@ -285,7 +291,7 @@ const normalizeStripeCustomer = (customer: unknown) =>
       created: 'createdAt',
       metadata: 'meta'
     }),
-    validateShape(schema)
+    validateShape(customerSchema)
   )
 ```
 
@@ -298,7 +304,7 @@ Security-focused filtering that keeps only explicitly allowed keys (allowlist ap
 ### Signature
 
 ```typescript title="Signature"
-function mask<T>(obj: T, allowedKeys: readonly string[]): Partial<T>
+function mask<T extends PlainObject>(obj: T, allowedKeys: readonly string[]): Partial<T>
 ```
 
 ### Real-World: Sanitize Before Logging
@@ -392,7 +398,7 @@ Deep merge multiple objects with configurable array handling strategies.
 
 ### Signature
 
-```typescript
+```typescript title="Signature"
 function deepMerge(
   objects: readonly PlainObject[],
   options?: DeepMergeOptions
@@ -451,22 +457,27 @@ const finalConfig = deepMerge([defaultConfig, userConfig])
 const obj1 = { tags: ['javascript', 'typescript'] }
 const obj2 = { tags: ['react'] }
 
+// Source replaces target
 deepMerge([obj1, obj2])
-// { tags: ['react'] }  ← Source replaces target
+// => { tags: ['react'] }
 ```
 
 ### Array Strategy: concat
 
 ```typescript
+const obj1 = { tags: ['javascript', 'typescript'] }
+const obj2 = { tags: ['react'] }
+
 // Useful for accumulating arrays
 deepMerge([obj1, obj2], { arrayStrategy: 'concat' })
-// { tags: ['javascript', 'typescript', 'react'] }
+// => { tags: ['javascript', 'typescript', 'react'] }
 ```
 
 ### Array Strategy: merge
 
+Merges arrays of objects by index. The result is as long as the source array, so target items past its end are dropped. Use it with arrays of objects only: primitive items come back as objects such as `{ 0: 'c' }`.
+
 ```typescript
-// Merge arrays by index (useful for configs)
 const defaults = {
   plugins: [
     { name: 'plugin-a', enabled: true },
@@ -480,13 +491,9 @@ const overrides = {
   ]
 }
 
+// plugin-b is gone: the source array has one item
 deepMerge([defaults, overrides], { arrayStrategy: 'merge' })
-// {
-//   plugins: [
-//     { name: 'plugin-a', enabled: false },  ← Merged
-//     { name: 'plugin-b', enabled: true }
-//   ]
-// }
+// => { plugins: [{ name: 'plugin-a', enabled: false }] }
 ```
 
 ### Custom Merge Function
@@ -509,7 +516,7 @@ deepMerge([obj1, obj2], {
     return source  // Default: source wins
   }
 })
-// { count: 8, views: 20 }
+// => { count: 8, views: 20 }
 ```
 
 ### Real-World: Merge User Preferences Across Devices
@@ -617,10 +624,10 @@ Need to transform object structure?
 // Pattern 1: API response → DB schema
 pipe(
   apiResponse,
-  flatten(),
+  (response) => flatten(response),
   rename(keyMapping),
-  unflatten(),
-  validateShape(schema)
+  (flat) => unflatten(flat),
+  validateShape(dbSchema)
 )
 
 // Pattern 2: Sanitize for logging
@@ -628,7 +635,7 @@ pipe(
   request,
   mask(safeFields),
   stripUndefined,
-  flatten({ separator: '.' })
+  (safe) => flatten(safe)
 )
 
 // Pattern 3: Config merging

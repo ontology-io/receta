@@ -114,8 +114,7 @@ function isEmpty(value: unknown, options: Required<StripEmptyOptions>): boolean 
  * }
  *
  * stripEmpty(nested)
- * // => { user: { name: 'Alice', settings: {} } }
- * // Note: settings is empty but kept because stripEmptyObjects applies to top-level
+ * // => { user: { name: 'Alice' } }
  *
  * // Customize what to strip
  * stripEmpty(
@@ -133,11 +132,8 @@ function isEmpty(value: unknown, options: Required<StripEmptyOptions>): boolean 
  *   publishedAt: null
  * }
  *
- * pipe(
- *   formData,
- *   stripEmpty,
- *   (clean) => fetch('/api/posts', { method: 'POST', body: JSON.stringify(clean) })
- * )
+ * const clean = stripEmpty(formData)
+ * fetch('/api/posts', { method: 'POST', body: JSON.stringify(clean) })
  * // Sends: { title: 'New Post', body: 'Content here', draft: false }
  *
  * // Shallow stripping (not recursive)
@@ -150,10 +146,10 @@ function isEmpty(value: unknown, options: Required<StripEmptyOptions>): boolean 
  * )
  * // => { name: 'Alice', nested: { bio: '', age: null } }
  *
- * // Data-last (in pipe)
+ * // In a pipe, wrap it. stripEmpty() returns {} instead of a function.
  * pipe(
  *   apiPayload,
- *   stripEmpty()
+ *   (payload) => stripEmpty(payload)
  * )
  * ```
  *

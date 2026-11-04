@@ -50,20 +50,20 @@ memoFib(40) // Takes <1ms (cached!)
 
 ## Installation
 
-Receta is built on Remeda and requires it as a peer dependency:
+Receta is built on Remeda and installs it as a dependency. Add `remeda` yourself if your own code imports it:
 
 ```bash
 # Using bun (recommended)
-bun add receta remeda
+bun add @ontologyio/receta remeda
 
 # Using npm
-npm install receta remeda
+npm install @ontologyio/receta remeda
 
 # Using yarn
-yarn add receta remeda
+yarn add @ontologyio/receta remeda
 
 # Using pnpm
-pnpm add receta remeda
+pnpm add @ontologyio/receta remeda
 ```
 
 **TypeScript Configuration**
@@ -454,10 +454,10 @@ import {
 const fast = memoize(slow)
 
 // Multi-arg
-const add = memoizeBy((a, b) => a + b, (a, b) => `${a},${b}`)
+const add = memoizeBy((a: number, b: number) => a + b, (a, b) => `${a},${b}`)
 
 // Async
-const fetch = memoizeAsync(async (id) => await api.get(id))
+const fetch = memoizeAsync(async (id: string) => await api.get(id))
 
 // TTL
 const weather = memoize(getWeather, { cache: ttlCache(60000) })

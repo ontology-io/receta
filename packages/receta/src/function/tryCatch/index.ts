@@ -11,15 +11,19 @@ import type { Result } from '../../result/types'
  * **Note**: This wraps the Result module's `tryCatch`. For one-off executions,
  * use `Result.tryCatch` directly.
  *
+ * It only catches synchronous throws. An async function comes back as an `Ok`
+ * holding its promise, and a rejection isn't caught. Use `tryCatchAsync` from
+ * the Result module for async code.
+ *
  * @example
  * ```typescript
  * const parseJSON = tryCatch(
  *   (str: string) => JSON.parse(str),
- *   (error) => new Error(`Parse failed: ${error}`)
+ *   () => 'Invalid JSON'
  * )
  *
  * parseJSON('{"valid": "json"}')  // => Ok({ valid: 'json' })
- * parseJSON('invalid json')       // => Err(Error('Parse failed: ...'))
+ * parseJSON('invalid json')       // => Err('Invalid JSON')
  * ```
  *
  * @example
@@ -38,12 +42,14 @@ import type { Result } from '../../result/types'
  *
  * @example
  * ```typescript
+ * import { flatMap, map } from '@ontologyio/receta/result'
+ *
  * // In a pipe with Result operations
  * pipe(
  *   getUserInput(),
  *   tryCatch((input: string) => JSON.parse(input)),
- *   Result.map(data => data.userId),
- *   Result.flatMap(fetchUser)
+ *   map(data => data.userId),
+ *   flatMap(fetchUser)
  * )
  * ```
  *

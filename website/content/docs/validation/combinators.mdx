@@ -18,14 +18,14 @@ Combinators are the **key feature** of the Validation module. They allow you to 
 ## The Core Difference: Error Accumulation
 
 ```typescript
-import { collect } from '@ontologyio/receta/result'
+import { collect, err } from '@ontologyio/receta/result'
 // collect: STOPS at first error (fail-fast)
 collect([err('e1'), err('e2'), err('e3')])
-// => Err('e1')  ← Only first error!
+// => Err('e1')
 
 // collectErrors: ACCUMULATES all errors (fail-slow)
 collectErrors([invalid('e1'), invalid('e2'), invalid('e3')])
-// => Invalid(['e1', 'e2', 'e3'])  ← All errors!
+// => Invalid(['e1', 'e2', 'e3'])
 ```
 
 This is **why Validation exists**: better UX by showing users ALL problems at once.
@@ -34,7 +34,7 @@ This is **why Validation exists**: better UX by showing users ALL problems at on
 
 Accumulates ALL errors from an array of validations.
 
-```typescript
+```typescript title="Signature"
 collectErrors<T, E>(
   validations: readonly Validation<T, E>[]
 ): Validation<T[], E>
@@ -69,12 +69,12 @@ collectErrors([
 ### Real-World: Form Validation
 
 ```typescript
-const validateForm = (data: FormData) =>
+const validateForm = (data: SignupForm) =>
   collectErrors([
     validateName(data.name),
     validateEmail(data.email),
     validatePassword(data.password),
-    validateAge(data.age)
+    validateCountry(data.country)
   ])
 
 // Returns ALL field errors at once:
@@ -82,35 +82,25 @@ const validateForm = (data: FormData) =>
 //   'Name too short',
 //   'Invalid email',
 //   'Password needs uppercase',
-//   'Age must be 18+'
+//   'Unsupported country'
 // ])
 ```
 
-### Real-World: Multi-Step Wizard
-
-```typescript
-const validateWizard = (wizardData: WizardData) =>
-  collectErrors([
-    validateStep1(wizardData.step1),
-    validateStep2(wizardData.step2),
-    validateStep3(wizardData.step3),
-    validateStep4(wizardData.step4),
-    validateStep5(wizardData.step5)
-  ])
-
-// Shows user: "Errors in steps 2 and 4"
-// User can jump directly to problematic steps
-```
+Every validation in the array must hold the same value type, so this suits a list of string fields. When a form mixes strings and numbers, use [`schema`](#schema).
 
 ## validate
 
-Applies multiple validators to a single value, accumulating all errors.
+Applies multiple validators to a single value, accumulating all errors. Pass only the validators and you get a validator back, ready to use as a `schema` field.
 
-```typescript
+```typescript title="Signature"
 validate<T, E>(
   value: T,
   validators: readonly Validator<T, T, E>[]
 ): Validation<T, E>
+
+validate<T, E>(
+  validators: readonly Validator<T, T, E>[]
+): (value: T) => Validation<T, E>
 ```
 
 ### Examples
@@ -149,13 +139,11 @@ const validateUsername = (username: string) =>
     required('Username required'),
     minLength(3, 'Min 3 characters'),
     maxLength(20, 'Max 20 characters'),
-    matches(/^[a-zA-Z0-9_]+$/, 'Only letters, numbers, underscores'),
-    fromPredicate(
-      async (u) => !(await usernameExists(u)),
-      'Username already taken'
-    )
+    matches(/^[a-zA-Z0-9_]+$/, 'Only letters, numbers, underscores')
   ])
 ```
+
+Validators are synchronous, so a check that has to wait on a database runs after this one. See [Async Validation](./patterns.mdx#async-validation).
 
 ### Real-World: Age Validation
 
@@ -176,7 +164,7 @@ const validateAge = (age: number) =>
 
 Validates each element in an array with a single validator, accumulating errors.
 
-```typescript
+```typescript title="Signature"
 validateAll<T, U, E>(
   values: readonly T[],
   validator: Validator<T, U, E>
@@ -186,7 +174,7 @@ validateAll<T, U, E>(
 ### Examples
 
 ```typescript
-import { validateAll, fromPredicate } from '@ontologyio/receta/validation'
+import { validateAll, valid, invalid } from '@ontologyio/receta/validation'
 
 const isPositive = (n: number) =>
   n > 0 ? valid(n) : invalid(`${n} is not positive`)
@@ -202,27 +190,27 @@ validateAll([1, -2, 3, -4, 5], isPositive)
 
 ### Real-World: CSV Import
 
+The errors come back as one flat list, so each message has to say which row it's about.
+
 ```typescript
-interface ProductRow {
+type ProductRow = {
   name: string
   price: number
   sku: string
 }
 
-const validateProduct = (row: unknown): Validation<ProductRow, string> => {
-  // ... validation logic
-}
+const validateProduct = (row: ProductRow): Validation<ProductRow, string> =>
+  row.price > 0 ? valid(row) : invalid(`${row.sku}: price must be positive`)
 
-const validateCSVImport = (rows: unknown[]) =>
+const validateCSVImport = (rows: ProductRow[]) =>
   validateAll(rows, validateProduct)
 
-// Returns ALL invalid rows with errors
+// Returns the errors from ALL invalid rows
 const result = validateCSVImport(csvData)
 if (isInvalid(result)) {
-  // Show user: "Errors in rows 5, 23, 157, 892"
   console.log(`Found ${result.errors.length} errors`)
-  result.errors.forEach((error, idx) => {
-    console.log(`Row ${idx}: ${error}`)
+  result.errors.forEach((error) => {
+    console.log(error)
   })
 }
 ```
@@ -256,7 +244,7 @@ app.post('/api/users/batch', (req, res) => {
 
 Validates object fields independently, tracking which fields failed.
 
-```typescript
+```typescript title="Signature"
 schema<T extends Record<string, unknown>, E>(
   schemaObj: ValidationSchema<T, E>,
   value: T
@@ -266,13 +254,7 @@ schema<T extends Record<string, unknown>, E>(
 ### Examples
 
 ```typescript
-import { schema } from '@ontologyio/receta/validation'
-
-interface User {
-  name: string
-  email: string
-  age: number
-}
+import { schema, validate, required, minLength, email, min, max } from '@ontologyio/receta/validation'
 
 const userSchema = {
   name: (n: string) =>
@@ -299,15 +281,25 @@ schema(userSchema, {
 })
 // => Invalid([
 //   { field: 'name', errors: ['Must be at least 2 characters'] },
-//   { field: 'email', errors: ['Invalid email format'] },
+//   { field: 'email', errors: ['Invalid email address'] },
 //   { field: 'age', errors: ['Must be 18+'] }
 // ])
 ```
 
+### What schema Expects
+
+- **Always pass the value.** The data-last forms `schema(rules)` and `partial(rules)` compile, but they crash in 0.4.1 with `validator is not a function`. For a reusable validator, wrap the call: `(form: Form) => schema(rules, form)`.
+- **Declare shapes with `type`, not `interface`.** `schema` requires a `Record<string, unknown>`, and TypeScript won't accept an interface as one.
+- **Cover every required key.** Once the value has a declared type, each required key needs a validator. Optional keys can be left out.
+- **Name the error type when you need it.** `schema` can't infer it from the validators. Without a return type annotation, errors come back as `FieldError<unknown>`. Annotate the return type or write `schema<User, string>(...)`.
+- **A validator sees only its own field.** To compare fields, build the schema inside a function that closes over the form, or use `flatMap` after `schema`.
+- **The result is the object you passed in.** A validator can't convert a field or fill in a default, so shape the data first.
+- **Check the type of untrusted input first.** `required` and the other string validators throw on `undefined`. See [Create User Endpoint](./patterns.mdx#create-user-endpoint) for `unknown` input.
+
 ### Real-World: Registration Form
 
 ```typescript
-interface RegistrationForm {
+type RegistrationForm = {
   username: string
   email: string
   password: string
@@ -315,7 +307,8 @@ interface RegistrationForm {
   terms: boolean
 }
 
-const registrationSchema = {
+// A function, so confirmPassword can see the form
+const registrationSchema = (form: RegistrationForm) => ({
   username: (u: string) =>
     validate(u, [
       required('Username required'),
@@ -335,7 +328,7 @@ const registrationSchema = {
       matches(/[0-9]/, 'Need number')
     ]),
 
-  confirmPassword: (c: string, form: RegistrationForm) =>
+  confirmPassword: (c: string) =>
     c === form.password
       ? valid(c)
       : invalid('Passwords must match'),
@@ -344,10 +337,10 @@ const registrationSchema = {
     t === true
       ? valid(t)
       : invalid('You must accept the terms')
-}
+})
 
 const handleSubmit = (formData: RegistrationForm) => {
-  const validation = schema(registrationSchema, formData)
+  const validation = schema(registrationSchema(formData), formData)
 
   match(validation, {
     onValid: (data) => {
@@ -372,7 +365,7 @@ app.post('/api/products', (req, res) => {
     name: (n: string) =>
       validate(n, [required('Name required'), maxLength(100)]),
     price: (p: number) =>
-      validate(p, [min(0, 'Price must be positive'), finite()]),
+      validate(p, [min(0, 'Price cannot be negative'), finite()]),
     category: oneOf(['electronics', 'books', 'clothing']),
     tags: (t: string[]) =>
       validate(t, [nonEmpty('At least one tag'), maxItems(10)])
@@ -392,11 +385,30 @@ app.post('/api/products', (req, res) => {
 })
 ```
 
+### Real-World: Multi-Step Wizard
+
+Wizard steps hold different shapes, which `collectErrors` can't mix. As `schema` fields they fit, and each error's `field` names a failed step.
+
+```typescript
+const validateWizard = (data: WizardData) =>
+  schema({
+    step1: validateStep1,
+    step2: validateStep2,
+    step3: validateStep3,
+    step4: validateStep4,
+    step5: validateStep5
+  }, data)
+
+validateWizard(wizardData)
+// Shows user: "Errors in steps 2 and 4"
+// User can jump directly to problematic steps
+```
+
 ## partial
 
 Validates partial objects (only present fields).
 
-```typescript
+```typescript title="Signature"
 partial<T extends Record<string, unknown>, E>(
   schemaObj: ValidationSchema<T, E>,
   value: Partial<T>
@@ -406,7 +418,7 @@ partial<T extends Record<string, unknown>, E>(
 ### Examples
 
 ```typescript
-import { partial } from '@ontologyio/receta/validation'
+import { partial, validate, required, minLength, email, min, max } from '@ontologyio/receta/validation'
 
 const userSchema = {
   name: (n: string) => validate(n, [required('Name required'), minLength(2)]),
@@ -421,7 +433,7 @@ partial(userSchema, { name: 'John' })
 partial(userSchema, { name: 'J', email: 'invalid' })
 // => Invalid([
 //   { field: 'name', errors: ['Must be at least 2 characters'] },
-//   { field: 'email', errors: ['Invalid email format'] }
+//   { field: 'email', errors: ['Invalid email address'] }
 // ])
 
 // Missing fields not validated
@@ -454,7 +466,7 @@ app.patch('/api/users/:id', (req, res) => {
 ### Real-World: Settings Update
 
 ```typescript
-interface UserSettings {
+type UserSettings = {
   notifications: boolean
   theme: 'light' | 'dark'
   language: string
@@ -463,7 +475,7 @@ interface UserSettings {
 
 const settingsSchema = {
   notifications: (n: boolean) => valid(n),
-  theme: oneOf(['light', 'dark']),
+  theme: oneOf(['light', 'dark'] as const),
   language: oneOf(['en', 'es', 'fr', 'de']),
   timezone: (tz: string) =>
     validate(tz, [
@@ -484,7 +496,7 @@ const updateSettings = (userId: string, updates: Partial<UserSettings>) => {
 
 ## Comparison with Result
 
-| Feature | Result.collect | Validation.collectErrors |
+| Feature | `collect` (Result) | `collectErrors` (Validation) |
 |---------|---------------|------------------------|
 | Behavior | **Fail-fast** (stops at first error) | **Error accumulation** (checks all) |
 | Use case | Sequential operations | Independent validations |
@@ -495,12 +507,12 @@ const updateSettings = (userId: string, updates: Partial<UserSettings>) => {
 ### When to Use Which
 
 ```typescript
-import { flatMap } from '@ontologyio/receta/result'
+import { flatMap as flatMapResult } from '@ontologyio/receta/result'
 // ✅ Use Result for sequential operations
 pipe(
   validateToken(token),
-  flatMap(getUser),           // Stop if token invalid
-  flatMap(checkPermissions)   // Stop if user not found
+  flatMapResult(getUser),           // Stop if token invalid
+  flatMapResult(checkPermissions)   // Stop if user not found
 )
 
 // ✅ Use Validation for independent checks
@@ -529,6 +541,11 @@ const validateUser = (user: User) =>
     email: (e: string) => validate(e, [required('Email required'), email()]),
     address: validateAddress  // Nested validation!
   }, user)
+
+// An invalid ZIP nests under its parent field:
+// Invalid([
+//   { field: 'address', errors: [{ field: 'zip', errors: ['Invalid ZIP'] }] }
+// ])
 ```
 
 ### Pattern 2: Conditional Validation
@@ -537,13 +554,13 @@ const validateUser = (user: User) =>
 const validatePayment = (payment: Payment) => {
   if (payment.method === 'card') {
     return schema({
-      cardNumber: (c: string) => validate(c, [required('Card required'), ...]),
-      cvv: (c: string) => validate(c, [required('CVV required'), ...])
+      cardNumber: (c: string) => validate(c, [required('Card required'), matches(/^\d{16}$/, 'Must be 16 digits')]),
+      cvv: (c: string) => validate(c, [required('CVV required'), matches(/^\d{3,4}$/, 'Must be 3 or 4 digits')])
     }, payment)
   } else {
     return schema({
-      accountNumber: (a: string) => validate(a, [required('Account required'), ...]),
-      routingNumber: (r: string) => validate(r, [required('Routing required'), ...])
+      accountNumber: (a: string) => validate(a, [required('Account required'), matches(/^\d{8,17}$/, 'Must be 8-17 digits')]),
+      routingNumber: (r: string) => validate(r, [required('Routing required'), matches(/^\d{9}$/, 'Must be 9 digits')])
     }, payment)
   }
 }
@@ -552,16 +569,21 @@ const validatePayment = (payment: Payment) => {
 ### Pattern 3: Cross-Field Validation
 
 ```typescript
+type PasswordChange = {
+  newPassword: string
+  confirmPassword: string
+}
+
 const validatePasswordChange = (data: PasswordChange) =>
   R.pipe(
-    schema({
-      newPassword: (p: string) => validateStrongPassword(p),
-      confirmPassword: (c: string) => required('Confirmation required')(c)
+    schema<PasswordChange, string>({
+      newPassword: minLength(8),
+      confirmPassword: required('Confirmation required')
     }, data),
     flatMap((validated) =>
       validated.newPassword === validated.confirmPassword
         ? valid(validated)
-        : invalid({ field: 'confirmPassword', errors: ['Passwords must match'] })
+        : invalid<FieldError<string>>({ field: 'confirmPassword', errors: ['Passwords must match'] })
     )
   )
 ```

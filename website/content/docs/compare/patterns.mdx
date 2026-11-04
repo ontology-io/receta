@@ -8,7 +8,7 @@ Production-ready sorting patterns for real-world applications.
 ## GitHub Issues Management
 
 ```typescript
-import { compose, ascending, descending, byDate, nullsFirst } from '@ontologyio/receta/compare'
+import { compose, ascending, descending, byBoolean, byDate } from '@ontologyio/receta/compare'
 
 interface GitHubIssue {
   number: number
@@ -34,7 +34,7 @@ export const sortIssuesDefault = compose(
 
 // Pattern 2: Triage view (unassigned → high priority → oldest)
 export const sortIssuesTriage = compose(
-  nullsFirst(ascending((i: GitHubIssue) => i.assignee ?? '')),
+  byBoolean((i: GitHubIssue) => i.assignee !== null),
   ascending((i: GitHubIssue) => priorityOrder[i.priority]),
   byDate((i: GitHubIssue) => i.createdAt)
 )
@@ -236,15 +236,15 @@ const statusOrder = { in_progress: 0, todo: 1, done: 2 }
 export const sortTasksMine = compose(
   ascending((t: Task) => statusOrder[t.status]),
   descending((t: Task) => t.priority),
-  nullsLast(ascending((t: Task) => t.dueDate ?? new Date(9999, 0))),
+  ascending((t: Task) => t.dueDate ?? new Date(9999, 0)),
   ascending((t: Task) => t.createdAt)
 )
 
 // Pattern 2: Team view (unassigned → priority → due date)
 export const sortTasksTeam = compose(
-  nullsFirst(ascending((t: Task) => t.assignee ?? '')),
+  byBoolean((t: Task) => t.assignee !== null),
   descending((t: Task) => t.priority),
-  nullsLast(ascending((t: Task) => t.dueDate ?? new Date(9999, 0)))
+  ascending((t: Task) => t.dueDate ?? new Date(9999, 0))
 )
 
 // Pattern 3: Overdue tasks (past due → highest priority)
@@ -423,7 +423,7 @@ async function handleListRequest(req: PaginatedRequest) {
     items = items.sort(comparator)
   }
 
-  return paginate(items, req.page, req.pageSize)
+  return paginate(items, { page: req.page, pageSize: req.pageSize })
 }
 ```
 

@@ -17,6 +17,9 @@ export interface RetryError {
  * Useful for handling transient failures like network errors, rate limits,
  * or temporary service unavailability. Returns Result for explicit error handling.
  *
+ * `fn` runs again when it throws or rejects. A function that returns an Err has
+ * succeeded as far as retry can tell, so throw to ask for another attempt.
+ *
  * @param fn - Async function to retry
  * @param options - Retry options
  * @returns Promise resolving to Result containing either the value or retry error
@@ -24,7 +27,7 @@ export interface RetryError {
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { unwrapOr, mapErr } from '@ontologyio/receta/result'
+ * import { map, tapErr, unwrapOr } from '@ontologyio/receta/result'
  *
  * // Basic retry with defaults (3 attempts, exponential backoff)
  * const result = await retry(async () => {
@@ -36,7 +39,7 @@ export interface RetryError {
  * // Handle with Result pattern
  * const data = R.pipe(
  *   result,
- *   mapErr(error => console.error('Failed after retries:', error)),
+ *   tapErr(error => console.error('Failed after retries:', error)),
  *   unwrapOr({ default: 'data' })
  * )
  *

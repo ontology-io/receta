@@ -83,6 +83,10 @@ class CommentManager {
   private updateIndices(comment: Comment) {
     // 50+ lines of manual index management...
   }
+
+  private rebuildIndices() {
+    // ...and a full pass over every comment
+  }
 }
 ```
 
@@ -126,7 +130,7 @@ class CommentManager {
 
 ```typescript
 // Shows exactly what changed in your state
-{
+const stateDiff = {
   added: [{ type: 'todos', id: 3 }],
   updated: [{
     path: ['todos', 0, 'completed'],
@@ -188,14 +192,14 @@ nest(items, ['category', 'subcategory', 'type'])
 
 ```typescript
 // ❌ Just arrays - no context about what changed
-const added = newItems.filter(...)
-const removed = oldItems.filter(...)
+const added = newItems.filter(isNew)
+const removed = oldItems.filter(isGone)
 // Lost: WHICH item changed? What was the old value?
 
 // ✅ Full change context
 const changes = diff(oldItems, newItems, i => i.id)
-changes.updated.forEach(({ old, new }) => {
-  console.log(`Item ${old.id} changed from ${old.name} to ${new.name}`)
+changes.updated.forEach(({ old, new: updated }) => {
+  console.log(`Item ${old.id} changed from ${old.name} to ${updated.name}`)
 })
 ```
 
@@ -207,9 +211,9 @@ const start = (page - 1) * pageSize
 const end = start + pageSize
 const items = allItems.slice(start, end)
 const hasNext = end < allItems.length
-// What about page 0? Last page? Empty arrays?
+// And you still have to build the metadata yourself
 
-// ✅ Handles all edge cases
+// ✅ One call, consistent metadata
 paginate(allItems, { page, pageSize })
 // => { items, page, pageSize, total, hasNext, hasPrevious }
 ```
@@ -234,8 +238,8 @@ if (isErr(byIdResult)) {
 
 ```typescript
 // ❌ Doesn't work with objects
-const union = [...set1, ...set2] // Duplicates!
-const uniqueUnion = [...new Set([...set1, ...set2])] // Still duplicates!
+const merged = [...set1, ...set2] // Duplicates!
+const uniqueMerged = [...new Set([...set1, ...set2])] // Still duplicates!
 
 // ✅ Works with objects + custom equality
 union(users1, users2, (a, b) => a.id === b.id)
@@ -250,7 +254,7 @@ intersect(assigned, completed, (a, b) => a.taskId === b.taskId)
 // Group posts by user, then by date
 const feed = pipe(
   posts,
-  nest(['userId', (p) => p.createdAt.slice(0, 10)]) // Group by day
+  nest<Post>(['userId', (p) => p.createdAt.slice(0, 10)]) // Group by day
 )
 // => { user_1: { '2024-01-01': [posts], '2024-01-02': [posts] } }
 ```
@@ -327,16 +331,16 @@ const allPermissions = union(
 Think of collections as flowing through a pipeline of transformations:
 
 ```
-Raw Data → Group → Filter → Paginate → Index → Ready for Use
+Raw Data → Group → Pick a Group → Paginate → Index → Ready for Use
 
 [1000 items]
-    ↓ nest(['category', 'priority'])
-{ electronics: { high: [10], medium: [50] }, books: {...} }
     ↓ groupByPath('payment.status')
-{ paid: [100], pending: [50] }
+{ paid: [100 items], pending: [50 items], ... }
+    ↓ grouped.paid
+[100 items]
     ↓ paginate({ page: 1, pageSize: 20 })
-{ items: [20], page: 1, hasNext: true }
-    ↓ indexByUnique(i => i.id)
+{ items: [20 items], page: 1, hasNext: true, ... }
+    ↓ page.items, then indexByUnique(i => i.id)
 Ok({ item_1: {...}, item_2: {...} })
 ```
 
@@ -362,8 +366,8 @@ Ok({ item_1: {...}, item_2: {...} })
 - **[Grouping](./grouping.mdx)** - `nest()` and `groupByPath()`
 - **[Change Detection](./change-detection.mdx)** - `diff()` with custom equality
 - **[Pagination](./pagination.mdx)** - Offset and cursor-based
-- **[Indexing](./04-indexing.md)** - Safe indexing with `indexByUnique()`
-- **[Set Operations](./05-set-operations.md)** - `union()`, `intersect()`, `symmetricDiff()`
+- **[Indexing](../reference/collection.mdx#indexbyunique)** - Safe indexing with `indexByUnique()`
+- **[Set Operations](../reference/collection.mdx#union)** - `union()`, `intersect()`, `symmetricDiff()`
 - **[Patterns](./patterns.mdx)** - Production recipes
 - **[Migration Guide](./migration.mdx)** - From manual operations
 - **[API Reference](../reference/collection.mdx)** - Complete function reference

@@ -26,7 +26,7 @@ import { ok, err } from '../constructors'
  *   map(user => user.name)
  * )
  *
- * // With error function
+ * // With a config lookup
  * pipe(
  *   config.get('apiKey'),
  *   fromNullable('Missing API key in config')

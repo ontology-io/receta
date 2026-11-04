@@ -34,13 +34,14 @@ _.set(_.cloneDeep(obj), 'deeply.nested.value', 'new')
 
 // ✅ Receta
 import { getPath, setPath } from '@ontologyio/receta/object'
+import { unwrapOr } from '@ontologyio/receta/option'
 
 const value = pipe(
   obj,
-  getPath(['deeply', 'nested', 'value']),
+  getPath<string>(['deeply', 'nested', 'value']),
   unwrapOr('default')
 )
-const updated = setPath(obj, ['deeply', 'nested', 'value'], 'new')
+const updated = setPath(['deeply', 'nested', 'value'], 'new', obj)
 ```
 
 ### Step 2: Replace Pick/Omit with Mask
@@ -60,7 +61,7 @@ const safe = mask(user, ['id', 'email'])
 _.mapKeys(obj, (value, key) => key.toUpperCase())
 _.mapValues(obj, (value) => value * 2)
 
-// ✅ Receta (same API)
+// ✅ Receta (mapKeys passes the key first)
 mapKeys(obj, (key, value) => key.toUpperCase())
 mapValues(obj, (value) => value * 2)
 ```
@@ -78,7 +79,8 @@ deepMerge([obj1, obj2, obj3])
 ### Step 5: Add Validation
 
 ```typescript
-import { flatMap, map } from '@ontologyio/receta/option'
+import { flatMap, fromResult } from '@ontologyio/receta/option'
+
 // ❌ Lodash (no validation)
 const config = _.get(data, 'config', {})
 // Hope it's the right shape!
@@ -87,8 +89,7 @@ const config = _.get(data, 'config', {})
 const config = pipe(
   data,
   getPath(['config']),
-  map((c) => validateShape(c, configSchema)),
-  flatMap(Result.toOption),
+  flatMap((c) => fromResult(validateShape(c, configSchema))),
   unwrapOr(defaultConfig)
 )
 ```
@@ -101,12 +102,15 @@ const config = pipe(
 
 ```typescript
 // ❌ Before
-const updated = _.cloneDeep(state)
-_.set(updated, 'user.profile.name', 'Alice')
-return updated
+const renameUser = (state: State) => {
+  const updated = _.cloneDeep(state)
+  _.set(updated, 'user.profile.name', 'Alice')
+  return updated
+}
 
 // ✅ After
-return setPath(state, ['user', 'profile', 'name'], 'Alice')
+const renameUser = (state: State) =>
+  setPath(['user', 'profile', 'name'], 'Alice', state)
 ```
 
 ### Pattern: Safe Access
@@ -139,8 +143,8 @@ result = _.mapValues(result, (v) => typeof v === 'string' ? v.trim() : v)
 // ✅ After
 const result = pipe(
   apiResponse,
-  mapKeys((key) => toCamelCase(key)),
   filterKeys((key) => !key.startsWith('_')),
+  transformKeys('camelCase', { deep: false }),
   mapValues((v) => typeof v === 'string' ? v.trim() : v)
 )
 ```
@@ -163,8 +167,7 @@ const result = pipe(
 
 ## Performance Notes
 
-- Receta is ~equivalent performance to Lodash
-- No `cloneDeep` needed = faster
+- No `cloneDeep` needed: only the objects along a path are copied
 - Tree-shakeable = smaller bundles
 - Type-safe = fewer runtime errors
 

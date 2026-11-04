@@ -21,25 +21,27 @@ Runtime validation that checks if an object conforms to a schema, returning `Res
 
 ### Signature
 
-```typescript
+```typescript title="Signature"
 function validateShape<T extends PlainObject>(
   obj: unknown,
   schema: ObjectSchema<T>
 ): Result<T, ObjectError>
 
-type ObjectSchema<T> = {
-  [K in keyof T]: Validator<T[K]> | ObjectSchema<any>
+type ObjectSchema<T extends PlainObject> = {
+  readonly [K in keyof T]: Validator<T[K]> | ObjectSchema<any>
 }
 
 type Validator<T> = (value: unknown) => value is T
 
 interface ObjectError {
-  code: 'VALIDATION_ERROR' | 'PATH_NOT_FOUND' | 'INVALID_PATH'
-  message: string
-  path?: ObjectPath
-  cause?: unknown
+  readonly code: 'PATH_NOT_FOUND' | 'INVALID_PATH' | 'VALIDATION_ERROR' | 'CIRCULAR_REFERENCE'
+  readonly message: string
+  readonly path?: ObjectPath
+  readonly cause?: unknown
 }
 ```
+
+`validateShape` stops at the first failure, and the error it returns always has the code `VALIDATION_ERROR`.
 
 ### Why validateShape?
 
@@ -54,16 +56,17 @@ function processConfig(config: unknown) {
 // ✅ With validateShape: safe, typed
 const configSchema = {
   database: {
-    host: (v): v is string => typeof v === 'string',
-    port: (v): v is number => typeof v === 'number'
+    host: (v: unknown): v is string => typeof v === 'string',
+    port: (v: unknown): v is number => typeof v === 'number'
   }
 }
 
 const result = validateShape(config, configSchema)
 if (isOk(result)) {
-  // TypeScript knows result.value is typed!
+  // Fields with a validator get its type. A nested schema's type is unknown,
+  // so pass a type argument to validateShape when you need it.
   const { database } = result.value
-  console.log(database.host, database.port)
+  console.log(database)
 }
 ```
 
@@ -73,10 +76,10 @@ if (isOk(result)) {
 import { map } from '@ontologyio/receta/result'
 // GitHub API response validation
 const githubUserSchema = {
-  login: (v): v is string => typeof v === 'string',
-  id: (v): v is number => typeof v === 'number',
-  avatar_url: (v): v is string => typeof v === 'string' && v.startsWith('http'),
-  public_repos: (v): v is number => typeof v === 'number' && v >= 0
+  login: (v: unknown): v is string => typeof v === 'string',
+  id: (v: unknown): v is number => typeof v === 'number',
+  avatar_url: (v: unknown): v is string => typeof v === 'string' && v.startsWith('http'),
+  public_repos: (v: unknown): v is number => typeof v === 'number' && v >= 0
 }
 
 const validateGitHubUser = (response: unknown) =>
@@ -96,10 +99,10 @@ const validateGitHubUser = (response: unknown) =>
 
 ```typescript
 const envSchema = {
-  NODE_ENV: (v): v is string => ['development', 'production', 'test'].includes(v as string),
-  PORT: (v): v is number => typeof v === 'number' && v > 0 && v < 65536,
-  DATABASE_URL: (v): v is string => typeof v === 'string' && v.length > 0,
-  API_KEY: (v): v is string => typeof v === 'string' && v.length === 32
+  NODE_ENV: (v: unknown): v is string => ['development', 'production', 'test'].includes(v as string),
+  PORT: (v: unknown): v is string => typeof v === 'string' && /^\d+$/.test(v),
+  DATABASE_URL: (v: unknown): v is string => typeof v === 'string' && v.length > 0,
+  API_KEY: (v: unknown): v is string => typeof v === 'string' && v.length === 32
 }
 
 const loadEnv = () => {
@@ -120,27 +123,29 @@ const loadEnv = () => {
 ```typescript
 // Validate nested structures
 const userSchema = {
-  id: (v): v is number => typeof v === 'number',
+  id: (v: unknown): v is number => typeof v === 'number',
   profile: {
-    name: (v): v is string => typeof v === 'string' && v.length > 0,
-    email: (v): v is string => typeof v === 'string' && v.includes('@'),
-    age: (v): v is number => typeof v === 'number' && v >= 0 && v <= 150
+    name: (v: unknown): v is string => typeof v === 'string' && v.length > 0,
+    email: (v: unknown): v is string => typeof v === 'string' && v.includes('@'),
+    age: (v: unknown): v is number => typeof v === 'number' && v >= 0 && v <= 150
   },
   settings: {
-    theme: (v): v is string => ['light', 'dark'].includes(v as string),
-    notifications: (v): v is boolean => typeof v === 'boolean'
+    theme: (v: unknown): v is string => ['light', 'dark'].includes(v as string),
+    notifications: (v: unknown): v is boolean => typeof v === 'boolean'
   }
 }
 
 const result = validateShape(unknownData, userSchema)
 // Returns Err with path if nested validation fails:
-// { code: 'VALIDATION_ERROR', path: ['profile', 'email'], message: '...' }
+// { code: 'VALIDATION_ERROR', path: ['profile', 'email'], message: 'Validation failed for key "email"' }
 ```
 
 ### Integration with Predicate Module
 
 ```typescript
-import { isString, isNumber, isEmail } from '@ontologyio/receta/predicate'
+import { isString, isNumber } from '@ontologyio/receta/predicate'
+
+const isEmail = (v: unknown): v is string => isString(v) && v.includes('@')
 
 const userSchema = {
   name: isString,
@@ -174,20 +179,10 @@ const apiSchema = {
 ### Error Handling
 
 ```typescript
-const handleValidationError = (error: ObjectError) => {
-  switch (error.code) {
-    case 'VALIDATION_ERROR':
-      return `Validation failed at ${error.path?.join('.')}: ${error.message}`
+const handleValidationError = (error: ObjectError) =>
+  `Validation failed at ${error.path?.join('.')}: ${error.message}`
 
-    case 'PATH_NOT_FOUND':
-      return `Required path not found: ${error.path?.join('.')}`
-
-    default:
-      return `Unknown error: ${error.message}`
-  }
-}
-
-const result = validateShape(data, schema)
+const result = validateShape(data, userSchema)
 if (isErr(result)) {
   console.error(handleValidationError(result.error))
 }
@@ -208,21 +203,19 @@ function stripUndefined<T extends PlainObject>(obj: T): Partial<T>
 ### Why stripUndefined?
 
 ```typescript
-// ❌ Sending undefined to API can cause issues
+// ❌ An undefined field is still a key: spreads and Object.keys see it
 const payload = {
   name: 'Alice',
-  email: undefined,  // API might reject or misinterpret
+  email: undefined,
   phone: undefined
 }
 
-fetch('/api/users', {
-  method: 'POST',
-  body: JSON.stringify(payload)  // Includes undefined!
-})
+Object.keys(payload)
+// => ['name', 'email', 'phone']
 
 // ✅ Clean payload before sending
 const cleanPayload = stripUndefined(payload)
-// { name: 'Alice' }
+// => { name: 'Alice' }
 ```
 
 ### Real-World: Form Data Sanitization
@@ -301,20 +294,20 @@ const data = {
 }
 
 stripUndefined(data)
-// { count: 0, active: false, name: '', email: null }
+// => { count: 0, active: false, name: '', email: null }
 ```
 
 ### In Pipelines
 
 ```typescript
 // Complete sanitization pipeline
-const sanitizeFormData = (formData: FormData) =>
+const sanitizeFormData = (formData: Record<string, unknown>) =>
   pipe(
     formData,
     stripUndefined,              // Remove undefined
     filterValues((v) => v !== ''),  // Remove empty strings
     mask(allowedFields),         // Only allowed fields
-    validateShape(schema)        // Validate structure
+    validateShape(formSchema)    // Validate structure
   )
 ```
 
@@ -343,7 +336,7 @@ const userData = {
 
 // ✅ Remove all nullish values
 const clean = compact(userData)
-// { name: 'Alice', age: 30 }
+// => { name: 'Alice', age: 30 }
 ```
 
 ### stripUndefined vs compact
@@ -357,11 +350,13 @@ const data = {
   e: ''
 }
 
+// Keeps null
 stripUndefined(data)
-// { b: null, c: 0, d: false, e: '' }  ← Keeps null
+// => { b: null, c: 0, d: false, e: '' }
 
+// Removes both null and undefined
 compact(data)
-// { c: 0, d: false, e: '' }  ← Removes both null and undefined
+// => { c: 0, d: false, e: '' }
 ```
 
 ### Real-World: Database Query Building
@@ -436,7 +431,7 @@ const data = {
 }
 
 compact(data)
-// { count: 0, enabled: false, title: '' }
+// => { count: 0, enabled: false, title: '' }
 ```
 
 ### In Pipelines
@@ -447,7 +442,7 @@ const prepareAnalytics = (rawData: RawAnalytics) =>
   pipe(
     rawData,
     compact,                      // Remove nullish
-    flatten(),                    // Flatten for storage
+    (data) => flatten(data),      // Flatten for storage
     filterKeys((k) => !k.includes('_internal')) // Remove internal keys
   )
 ```
@@ -492,7 +487,7 @@ import { flatMap, map, unwrapOr } from '@ontologyio/receta/result'
 pipe(
   formData,
   stripUndefined,
-  validateShape(schema),
+  validateShape(formSchema),
   flatMap(submitToApi)
 )
 
@@ -534,39 +529,40 @@ const result = validateShape(apiResponse, userSchema)
 // => Result<User, ObjectError> (fail-fast)
 
 // ✅ Runtime type guards
-if (isOk(validateShape(data, schema))) {
-  // TypeScript now knows the shape!
+const checked = validateShape(data, userSchema)
+if (isOk(checked)) {
+  // checked.value has the schema's shape
 }
 ```
 
 ### When to Use Validation Module
 
 ```typescript
-import { schema, required, email, minLength } from '@ontologyio/receta/validation'
+import { schema, validate, required, email, minLength, min } from '@ontologyio/receta/validation'
 
 // ✅ Business rules with error accumulation (fail-slow)
-const validateUserForm = schema({
-  name: pipe(required, minLength(3)),
-  email: pipe(required, email),
-  age: pipe(required, min(18))
-})
+const userFormSchema = {
+  name: validate([required('Name is required'), minLength(3, 'Name too short')]),
+  email: validate([required('Email is required'), email('Invalid email')]),
+  age: min(18, 'Must be 18+')
+}
 
-const result = validateUserForm(formData)
-// => Invalid(['Name too short', 'Invalid email', 'Must be 18+'])
-//    ↑ All errors at once
+// All errors at once
+const result = schema(userFormSchema, { name: 'Al', email: 'nope', age: 17 })
+// => Invalid([{ field: 'name', errors: ['Name too short'] }, { field: 'email', errors: ['Invalid email'] }, { field: 'age', errors: ['Must be 18+'] }])
 ```
 
 ### Using Both Together
 
 ```typescript
-import { flatMap } from '@ontologyio/receta/validation'
+import { flatMap, fromResult } from '@ontologyio/receta/validation'
+
 // Step 1: Structural validation (fail-fast)
 const structuralCheck = validateShape(unknownData, typeSchema)
 
 // Step 2: Business validation (fail-slow)
 const businessCheck = pipe(
-  structuralCheck,
-  Result.toValidation,
+  fromResult(structuralCheck),
   flatMap(validateBusinessRules)
 )
 ```

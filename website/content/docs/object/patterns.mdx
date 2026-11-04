@@ -29,54 +29,55 @@ const normalizeGitHubRepo = (apiResponse: unknown) =>
   pipe(
     apiResponse,
     Obj.validateShape({
-      name: (v): v is string => typeof v === 'string',
-      full_name: (v): v is string => typeof v === 'string',
+      name: (v: unknown): v is string => typeof v === 'string',
+      full_name: (v: unknown): v is string => typeof v === 'string',
       owner: {
-        login: (v): v is string => typeof v === 'string',
-        avatar_url: (v): v is string => typeof v === 'string'
+        login: (v: unknown): v is string => typeof v === 'string',
+        avatar_url: (v: unknown): v is string => typeof v === 'string'
       },
-      stargazers_count: (v): v is number => typeof v === 'number',
-      created_at: (v): v is string => typeof v === 'string'
+      stargazers_count: (v: unknown): v is number => typeof v === 'number',
+      created_at: (v: unknown): v is string => typeof v === 'string'
     }),
     map(Obj.rename({
       full_name: 'fullName',
       stargazers_count: 'stars',
       created_at: 'createdAt'
     })),
-    map(Obj.flatten()),
+    map((repo) => Obj.flatten(repo)),
     map((flat) => Obj.rename(flat, {
       'owner.login': 'ownerUsername',
       'owner.avatar_url': 'ownerAvatar'
     })),
-    map(Obj.unflatten())
+    map((renamed) => Obj.unflatten(renamed))
   )
 ```
 
 ### Pattern: Stripe Payment Intent Processing
 
 ```typescript
-import { flatMap, ok } from '@ontologyio/receta/result'
+import { toResult } from '@ontologyio/receta/option'
+import { map as mapResult } from '@ontologyio/receta/result'
+
+const cardBrandKey = 'charges.data.0.payment_method_details.card.brand'
+
 // Stripe API → Your database schema
-const processPaymentIntent = (stripeResponse: unknown) =>
+const processPaymentIntent = (stripeResponse: Obj.PlainObject) =>
   pipe(
     stripeResponse,
     Obj.getPath(['id']),
     toResult({ code: 'MISSING_ID' }),
-    flatMap((id) =>
+    mapResult(() =>
       pipe(
-        stripeResponse,
-        Obj.flatten(),
+        Obj.flatten(stripeResponse, { flattenArrays: true }),
         Obj.filterKeys((key) =>
-          ['id', 'amount', 'currency', 'status', 'customer.email'].some(
+          ['id', 'amount', 'currency', 'status', 'customer.email', cardBrandKey].some(
             (allowed) => key.startsWith(allowed)
           )
         ),
         Obj.rename({
           'customer.email': 'customerEmail',
-          'charges.data.0.payment_method_details.card.brand': 'cardBrand'
-        }),
-        Obj.unflatten(),
-        (normalized) => ok(normalized)
+          [cardBrandKey]: 'cardBrand'
+        })
       )
     )
   )
@@ -89,38 +90,35 @@ const processPaymentIntent = (stripeResponse: unknown) =>
 ### Pattern: React Form State Manager
 
 ```typescript
+import { type Option } from '@ontologyio/receta/option'
+import { type Result } from '@ontologyio/receta/result'
+
 interface FormState<T> {
   data: T
   errors: Record<string, string>
   touched: Record<string, boolean>
 }
 
-class Form<T extends PlainObject> {
+class Form<T extends Obj.PlainObject> {
   constructor(private state: FormState<T>) {}
 
   // Get field value
-  getValue<V>(path: ObjectPath): Option<V> {
-    return Obj.getPath<V>(this.state.data, path)
+  getValue<V>(path: Obj.ObjectPath): Option<V> {
+    return Obj.getPath<V>(path, this.state.data)
   }
 
   // Update field
-  updateField(path: ObjectPath, value: unknown): Form<T> {
+  updateField(path: Obj.ObjectPath, value: unknown): Form<T> {
     return new Form({
       ...this.state,
-      data: Obj.setPath(this.state.data, path, value),
-      touched: Obj.setPath(this.state.touched, path, true)
+      data: Obj.setPath(path, value, this.state.data),
+      touched: Obj.setPath(path, true, this.state.touched)
     })
   }
 
   // Validate and submit
-  submit(schema: ObjectSchema<T>): Result<T, ObjectError[]> {
-    const cleanData = pipe(
-      this.state.data,
-      Obj.stripUndefined,
-      Obj.compact
-    )
-
-    return Obj.validateShape(cleanData, schema)
+  submit(schema: Obj.ObjectSchema<T>): Result<T, Obj.ObjectError> {
+    return Obj.validateShape(Obj.compact(this.state.data), schema)
   }
 }
 
@@ -143,7 +141,7 @@ userForm
 import { flatMap } from '@ontologyio/receta/result'
 const multiStepForm = {
   // Step 1: Personal Info
-  validateStep1: (data: unknown) =>
+  validateStep1: (data: Obj.PlainObject) =>
     pipe(
       data,
       Obj.mask(['name', 'email', 'phone']),
@@ -152,7 +150,7 @@ const multiStepForm = {
     ),
 
   // Step 2: Address
-  validateStep2: (data: unknown) =>
+  validateStep2: (data: Obj.PlainObject) =>
     pipe(
       data,
       Obj.mask(['street', 'city', 'state', 'zip']),
@@ -161,7 +159,7 @@ const multiStepForm = {
     ),
 
   // Final: Combine and validate all
-  submitAll: (formData: unknown) =>
+  submitAll: (formData: Obj.PlainObject) =>
     pipe(
       formData,
       Obj.compact,
@@ -197,7 +195,7 @@ const loadConfig = () => {
     process.env,
     Obj.filterKeys((key) => key.startsWith('APP_')),
     Obj.mapKeys((key) => key.replace(/^APP_/, '').toLowerCase()),
-    Obj.unflatten({ separator: '__' })
+    (flat) => Obj.unflatten(flat, { separator: '__' })
   )
 
   const userConfig = loadUserConfig()  // From file
@@ -205,7 +203,7 @@ const loadConfig = () => {
   return pipe(
     [base, envConfig, userConfig],
     Obj.deepMerge({ arrayStrategy: 'concat' }),
-    (merged) => Obj.validateShape(merged, configSchema),
+    (merged) => Obj.validateShape<typeof base>(merged, configSchema),
     unwrapOr(base)
   )
 }
@@ -214,8 +212,9 @@ const loadConfig = () => {
 ### Pattern: Feature Flags with Fallbacks
 
 ```typescript
-import { map } from '@ontologyio/receta/option'
-const getFeatureFlags = (remoteConfig: unknown) => {
+import { map, unwrapOr } from '@ontologyio/receta/option'
+
+const getFeatureFlags = (remoteConfig: Obj.PlainObject) => {
   const defaults = {
     newDashboard: false,
     betaFeatures: false,
@@ -224,7 +223,7 @@ const getFeatureFlags = (remoteConfig: unknown) => {
 
   return pipe(
     remoteConfig,
-    Obj.getPath(['features']),
+    Obj.getPath<Record<string, boolean>>(['features']),
     map(Obj.compact),
     map((flags) => ({ ...defaults, ...flags })),
     unwrapOr(defaults)
@@ -239,22 +238,21 @@ const getFeatureFlags = (remoteConfig: unknown) => {
 ### Pattern: Sanitize Before Logging
 
 ```typescript
-const sanitizeForLogging = <T extends PlainObject>(
-  obj: T,
+const sanitizeForLogging = (
+  obj: Obj.PlainObject,
   sensitiveFields: string[] = ['password', 'apiKey', 'creditCard', 'ssn']
-): Partial<T> =>
+) =>
   pipe(
-    obj,
-    Obj.flatten(),
+    Obj.flatten(obj, { flattenArrays: true }),
     Obj.filterKeys((key) =>
       !sensitiveFields.some((sensitive) => key.toLowerCase().includes(sensitive.toLowerCase()))
     ),
-    Obj.unflatten()
+    (safe) => Obj.unflatten(safe)
   )
 
 // Usage
 logger.info('User login', sanitizeForLogging(request))
-// Automatically removes password, tokens, etc.
+// Removes every key that contains a sensitive name, at any depth
 ```
 
 ### Pattern: GDPR-Compliant Data Minimization
@@ -283,10 +281,9 @@ const gdprMinimize = {
   exportUserData: (userId: string) =>
     fetchAllUserData(userId).then((data) =>
       pipe(
-        data,
-        Obj.flatten(),
+        Obj.flatten(data),
         Obj.filterKeys((key) => !key.includes('_internal')),
-        Obj.unflatten()
+        (kept) => Obj.unflatten(kept)
       )
     )
 }
@@ -317,11 +314,12 @@ const filterByRole = (user: User, role: UserRole) => {
 ### Pattern: Query Builder
 
 ```typescript
+// A sketch of the data flow. Use parameterized queries with real user input.
 const buildWhereClause = (filters: Record<string, unknown>) =>
   pipe(
     filters,
     Obj.compact,
-    Obj.flatten({ separator: '.' }),
+    (active) => Obj.flatten(active),
     Obj.mapKeys((key) => `table.${key}`),
     Obj.mapValues((value) =>
       Array.isArray(value) ? `IN (${value.join(',')})` : `= '${value}'`
@@ -336,7 +334,7 @@ const sql = `SELECT * FROM users WHERE ${buildWhereClause({
   role: ['admin', 'moderator'],
   'profile.verified': true
 })}`
-// => WHERE table.status = 'active' AND table.role IN (admin,moderator) AND table.profile.verified = 'true'
+// => "SELECT * FROM users WHERE table.status = 'active' AND table.role IN (admin,moderator) AND table.profile.verified = 'true'"
 ```
 
 ### Pattern: Prisma-Style Nested Updates
@@ -345,7 +343,7 @@ const sql = `SELECT * FROM users WHERE ${buildWhereClause({
 const updateNestedUser = (userId: string, updates: DeepPartial<User>) =>
   pipe(
     updates,
-    Obj.flatten(),
+    (partial) => Obj.flatten(partial),
     Obj.filterKeys((key) => !key.includes('id')),  // Protect ID fields
     Obj.stripUndefined,
     (flat) =>
@@ -361,7 +359,8 @@ const updateNestedUser = (userId: string, updates: DeepPartial<User>) =>
 ## Complete Real-World Example: Payment Processing
 
 ```typescript
-import { flatMap, mapErr, tapErr } from '@ontologyio/receta/result'
+import { isErr, isOk, mapErr, tapErr } from '@ontologyio/receta/result'
+
 // Complete payment processing pipeline
 const processPayment = async (stripeWebhook: unknown) => {
   // 1. Validate webhook structure
@@ -376,14 +375,13 @@ const processPayment = async (stripeWebhook: unknown) => {
   )
 
   if (isErr(validated)) {
-    logger.error('Invalid webhook', sanitizeForLogging(stripeWebhook))
+    logger.error('Invalid webhook', validated.error)
     return validated
   }
 
   // 2. Extract payment data
   const paymentData = pipe(
-    validated.value,
-    Obj.flatten(),
+    Obj.flatten(validated.value),
     Obj.filterKeys((key) =>
       ['data.object.id', 'data.object.amount', 'data.object.customer'].some((prefix) =>
         key.startsWith(prefix)
@@ -394,18 +392,15 @@ const processPayment = async (stripeWebhook: unknown) => {
       'data.object.amount': 'amount',
       'data.object.customer': 'customerId'
     }),
-    Obj.unflatten(),
     Obj.compact
   )
 
-  // 3. Update database
-  const dbResult = await pipe(
-    paymentData,
-    Obj.validateShape(dbPaymentSchema),
-    flatMap(savePaymentToDb),
-    tapErr((error) =>
-      logger.error('DB save failed', { paymentData: sanitizeForLogging(paymentData), error })
-    )
+  // 3. Update database. flatMap can't await, so the async save sits outside the pipe.
+  const payment = Obj.validateShape(paymentData, dbPaymentSchema)
+  const dbResult = isOk(payment) ? await savePaymentToDb(payment.value) : payment
+
+  tapErr(dbResult, (error) =>
+    logger.error('DB save failed', { paymentData: sanitizeForLogging(paymentData), error })
   )
 
   // 4. Send notification

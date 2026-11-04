@@ -8,9 +8,9 @@ title: "Real-World Patterns"
 
 ```typescript
 import { pipe } from 'remeda'
-import { tryCatch, tap, when, partial } from '@ontologyio/receta/function'
-import { retry } from '@ontologyio/receta/async'
-import { flatMap, mapErr, unwrapOr } from '@ontologyio/receta/result'
+import { partial } from '@ontologyio/receta/function'
+import { retry, type RetryError } from '@ontologyio/receta/async'
+import { mapErr, unwrapOr } from '@ontologyio/receta/result'
 
 interface FetchConfig {
   baseUrl: string
@@ -20,32 +20,36 @@ interface FetchConfig {
 
 const createHttpClient = (config: FetchConfig) => {
   const fetchWithRetry = async (endpoint: string, options?: RequestInit) => {
-    return pipe(
-      endpoint,
-      tap((url) => logger.debug('Fetching', { url: `${config.baseUrl}${url}` })),
-      (url) => retry(
-        async () => {
-          const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), config.timeout)
-          
-          try {
-            const response = await fetch(`${config.baseUrl}${url}`, {
-              ...options,
-              signal: controller.signal
-            })
-            
-            if (!response.ok) {
-              throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-            }
-            
-            return await response.json()
-          } finally {
-            clearTimeout(timeoutId)
+    const url = `${config.baseUrl}${endpoint}`
+    logger.debug('Fetching', { url })
+
+    // retry returns a promise, so await it before handing the Result to pipe
+    const result = await retry(
+      async () => {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), config.timeout)
+
+        try {
+          const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+          })
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
-        },
-        { maxAttempts: config.maxRetries, delay: 1000 }
-      ),
-      mapErr((error) => ({
+
+          return await response.json()
+        } finally {
+          clearTimeout(timeoutId)
+        }
+      },
+      { maxAttempts: config.maxRetries, delay: 1000 }
+    )
+
+    return pipe(
+      result,
+      mapErr((error: RetryError) => ({
         code: 'FETCH_ERROR',
         message: error.lastError instanceof Error 
           ? error.lastError.message 
@@ -84,7 +88,7 @@ import * as R from 'remeda'
 import { when, unless, tap, converge, juxt } from '@ontologyio/receta/function'
 import { where, and } from '@ontologyio/receta/predicate'
 
-interface RawEvent {
+type RawEvent = {
   id: string
   timestamp: string
   userId: string
@@ -99,9 +103,9 @@ interface ProcessedEvent extends RawEvent {
 }
 
 // Define predicates for validation
-const hasUserId = where({ userId: (x: string) => x.length > 0 })
-const hasEventType = where({ eventType: (x: string) => x.length > 0 })
-const hasTimestamp = where({ timestamp: (x: string) => x.length > 0 })
+const hasUserId = where<RawEvent>({ userId: (x) => x.length > 0 })
+const hasEventType = where<RawEvent>({ eventType: (x) => x.length > 0 })
+const hasTimestamp = where<RawEvent>({ timestamp: (x) => x.length > 0 })
 const isValidEvent = and(hasUserId, hasEventType, hasTimestamp)
 
 // Multi-stage processing pipeline with Remeda
@@ -281,7 +285,7 @@ const transitionOrder = async (order: Order, action: string): Promise<Result<Ord
 ```typescript
 import { pipe } from 'remeda'
 import { when, unless, converge } from '@ontologyio/receta/function'
-import { ok, err, collect, flatMap } from '@ontologyio/receta/result'
+import { ok, err, flatMap, isOk, map } from '@ontologyio/receta/result'
 
 interface UserRegistrationForm {
   email: string
@@ -376,19 +380,24 @@ const normalizeForm = (form: UserRegistrationForm): UserRegistrationForm =>
   )
 
 // Validate entire form
-const validateRegistrationForm = (form: UserRegistrationForm): Result<ValidatedForm, ValidationError[]> =>
+// Each field has its own type, so chain them. The first failure stops the chain.
+const validateRegistrationForm = (form: UserRegistrationForm): Result<ValidatedForm, ValidationError> =>
   pipe(
     form,
     normalizeForm,
-    (normalized) => collect([
-      validateEmail(normalized.email),
-      validatePassword(normalized.password, normalized.confirmPassword),
-      validateAge(normalized.age),
-      validateTerms(normalized.agreedToTerms)
-    ]),
-    flatMap(([email, password, age, agreedToTerms]) =>
-      ok({ email, password, age, agreedToTerms })
-    )
+    (normalized) =>
+      flatMap(validateEmail(normalized.email), (email) =>
+        flatMap(validatePassword(normalized.password, normalized.confirmPassword), (password) =>
+          flatMap(validateAge(normalized.age), (age) =>
+            map(validateTerms(normalized.agreedToTerms), (agreedToTerms) => ({
+              email,
+              password,
+              age,
+              agreedToTerms
+            }))
+          )
+        )
+      )
   )
 
 // Usage
@@ -406,8 +415,8 @@ if (isOk(result)) {
   console.log('Valid:', result.value)
   // Proceed with registration
 } else {
-  console.error('Validation errors:', result.error)
-  // Show errors to user
+  console.error('Validation error:', result.error)
+  // Show the error to the user
 }
 ```
 

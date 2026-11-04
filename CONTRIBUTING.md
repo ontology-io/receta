@@ -123,7 +123,7 @@ Read [docs/module-development-guide.md](./docs/module-development-guide.md) for 
 Use the `result` module as a reference implementation:
 - **File structure**: `src/result/`
 - **Tests**: `src/result/__tests__/`
-- **Documentation**: `docs/result/`
+- **Documentation**: `website/content/docs/result/`
 
 ### 3. Key Module Structure
 
@@ -172,16 +172,9 @@ describe('Result.map', () => {
 
 ### 5. Documentation Requirements
 
-Each module needs **8 documentation files** (see `docs/result/` for examples):
-1. `00-overview.md` — High-level introduction
-2. `01-constructors.md` — Creating instances
-3. `02-transformers.md` — Transforming values
-4. `03-extractors.md` — Getting values out
-5. `04-combinators.md` — Combining multiple values
-6. `05-patterns.md` — Real-world usage patterns
-7. `06-migration.md` — Migration from vanilla patterns
-8. `07-api-reference.md` — Complete API reference
-9. `README.md` — Module landing page
+Each module's guides live in `website/content/docs/<module>/` (see `result/` for examples): an `index.mdx` overview, one page per topic, then `patterns.mdx` and `migration.mdx`. Their order comes from the folder's `meta.json`.
+
+The API reference is generated from your JSDoc, so don't write one by hand. Run `bun run check:examples` in `website/` before committing: it compiles every example and runs its `// =>` claims.
 
 ---
 

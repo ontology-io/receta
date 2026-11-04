@@ -1,19 +1,19 @@
 ---
 title: "Lens Constructors"
-description: "Lens constructors create the \"focusing glasses\" that let you zoom into specific parts of your data. This guide covers all four ways to create lenses."
+description: "Lens constructors create the \"focusing glasses\" that let you zoom into specific parts of your data. This guide covers all five ways to create lenses."
 ---
 
-Lens constructors create the "focusing glasses" that let you zoom into specific parts of your data. This guide covers all four ways to create lenses.
+Lens constructors create the "focusing glasses" that let you zoom into specific parts of your data. This guide covers all five ways to create lenses.
 
 ## Quick Reference
 
-| Constructor | Use For                              | Example                            |
-| ----------- | ------------------------------------ | ---------------------------------- |
-| `prop`      | Single object property               | `prop<User>('name')`               |
-| `path`      | Nested properties (dot notation)     | `path<User>('address.city')`       |
-| `index`     | Array element at specific position   | `index<Todo>(0)`                   |
-| `lens`      | Custom logic (advanced)              | `lens(getter, setter)`             |
-| `optional`  | Nullable/optional fields with Option | `optional(prop<User>('email?'))`   |
+| Constructor | Use For                              | Example                                  |
+| ----------- | ------------------------------------ | ---------------------------------------- |
+| `prop`      | Single object property               | `prop<User, 'name'>('name')`             |
+| `path`      | Nested properties (dot notation)     | `path<User, string>('address.city')`     |
+| `index`     | Array element at specific position   | `index<Todo>(0)`                         |
+| `lens`      | Custom logic (advanced)              | `lens(getter, setter)`                   |
+| `optional`  | Nullable/optional fields with Option | `optional(prop<User, 'email'>('email'))` |
 
 ---
 
@@ -26,7 +26,7 @@ Lens constructors create the "focusing glasses" that let you zoom into specific 
 function prop<S, K extends keyof S>(key: K): Lens<S, S[K]>
 ```
 
-**When to use**: You need to access/update a direct property of an object.
+**When to use**: You need to access/update a direct property of an object. Pass both type arguments, the object and the key: TypeScript can't infer one and take the other.
 
 ### Basic Usage
 
@@ -46,9 +46,9 @@ const user: User = {
 }
 
 // Create lenses for each property
-const nameLens = prop<User>('name')
-const emailLens = prop<User>('email')
-const ageLens = prop<User>('age')
+const nameLens = prop<User, 'name'>('name')
+const emailLens = prop<User, 'email'>('email')
+const ageLens = prop<User, 'age'>('age')
 
 // Read
 view(nameLens, user) // 'Alice'
@@ -64,25 +64,24 @@ over(ageLens, (age) => age + 1, user)
 
 ### Real-World: React Form Field
 
-```typescript
+```tsx
+import { useState } from 'react'
+
 interface FormState {
   username: string
   password: string
   rememberMe: boolean
 }
 
-const usernameLens = prop<FormState>('username')
-const passwordLens = prop<FormState>('password')
-const rememberMeLens = prop<FormState>('rememberMe')
+const usernameLens = prop<FormState, 'username'>('username')
+const passwordLens = prop<FormState, 'password'>('password')
+const rememberMeLens = prop<FormState, 'rememberMe'>('rememberMe')
 
 // In React component
 const LoginForm = () => {
   const [form, setForm] = useState<FormState>(initialForm)
 
-  const updateField = <K extends keyof FormState>(
-    lens: Lens<FormState, FormState[K]>,
-    value: FormState[K]
-  ) => {
+  const updateField = <A,>(lens: Lens<FormState, A>, value: A) => {
     setForm((state) => set(lens, value, state))
   }
 
@@ -97,7 +96,8 @@ const LoginForm = () => {
         value={form.password}
         onChange={(e) => updateField(passwordLens, e.target.value)}
       />
-      <checkbox
+      <input
+        type="checkbox"
         checked={form.rememberMe}
         onChange={(e) => updateField(rememberMeLens, e.target.checked)}
       />
@@ -115,9 +115,9 @@ interface AppState {
   isLoading: boolean
 }
 
-const counterLens = prop<AppState>('counter')
-const themeLens = prop<AppState>('theme')
-const loadingLens = prop<AppState>('isLoading')
+const counterLens = prop<AppState, 'counter'>('counter')
+const themeLens = prop<AppState, 'theme'>('theme')
+const loadingLens = prop<AppState, 'isLoading'>('isLoading')
 
 // Reducer with lenses - no nested spreads!
 const reducer = (state: AppState, action: Action): AppState => {
@@ -152,7 +152,7 @@ const reducer = (state: AppState, action: Action): AppState => {
 function path<S, A = unknown>(pathStr: string): Lens<S, A>
 ```
 
-**When to use**: You need to access/update properties multiple levels deep.
+**When to use**: You need to access/update properties multiple levels deep. Paths step through plain objects, so use `index` for array elements. The path string isn't checked against the type, and the value type you pass is taken on trust.
 
 ### Basic Usage
 
@@ -301,6 +301,8 @@ function index<A>(idx: number): Lens<readonly A[], A | undefined>
 
 **When to use**: You need to update a specific array element immutably.
 
+The focus is `A | undefined`, because the index may be out of bounds. There, `view` returns `undefined` and `set` changes nothing. Setting `undefined` also changes nothing, so `index` can't remove an element. The lens works on `readonly A[]`, so declare an array field as `readonly` to compose `index` with `prop`.
+
 ### Basic Usage
 
 ```typescript
@@ -323,8 +325,8 @@ set(firstLens, 100, numbers)
 set(thirdLens, 300, numbers)
 // => [10, 20, 300, 40, 50]
 
-// Transform element
-over(firstLens, (n) => n * 2, numbers)
+// Transform element (n is undefined when the index is out of bounds)
+over(firstLens, (n) => (n ?? 0) * 2, numbers)
 // => [20, 20, 30, 40, 50]
 ```
 
@@ -339,10 +341,10 @@ interface Todo {
 }
 
 interface TodoListState {
-  todos: Todo[]
+  todos: readonly Todo[]
 }
 
-const todosLens = prop<TodoListState>('todos')
+const todosLens = prop<TodoListState, 'todos'>('todos')
 const firstTodoLens = index<Todo>(0)
 const secondTodoLens = index<Todo>(1)
 
@@ -381,11 +383,11 @@ interface CartItem {
 }
 
 interface Cart {
-  items: CartItem[]
+  items: readonly CartItem[]
   total: number
 }
 
-const itemsLens = prop<Cart>('items')
+const itemsLens = prop<Cart, 'items'>('items')
 
 // Update quantity of specific cart item
 const updateItemQuantity = (
@@ -403,7 +405,7 @@ const updateItemQuantity = (
   )
 }
 
-// Remove item (set to undefined doesn't work, so filter instead)
+// Remove item (setting undefined changes nothing, so filter instead)
 const removeItem = (cart: Cart, itemIndex: number): Cart => {
   return over(
     itemsLens,
@@ -420,7 +422,7 @@ const removeItem = (cart: Cart, itemIndex: number): Cart => {
 **Purpose**: Create a lens with custom get/set logic for complex scenarios.
 
 **Signature**:
-```typescript
+```typescript title="Signature"
 function lens<S, A>(
   get: (source: S) => A,
   set: (value: A) => (source: S) => S
@@ -540,7 +542,7 @@ interface User {
   phone?: string
 }
 
-const emailLens = prop<User>('email')
+const emailLens = prop<User, 'email'>('email')
 const optionalEmailLens = optional(emailLens)
 
 const user1 = { name: 'Alice', email: 'alice@example.com' }
@@ -576,7 +578,7 @@ interface Profile {
   location?: string
 }
 
-const bioLens = prop<Profile>('bio')
+const bioLens = prop<Profile, 'bio'>('bio')
 const optionalBioLens = optional(bioLens)
 
 // Provide default bio if missing
@@ -607,7 +609,7 @@ const truncateBio = (profile: Profile, maxLength: number): Profile => {
 
 ### Decision Tree
 
-```
+```text
 Do you need custom logic (e.g., computed values)?
 ├─ Yes → use lens()
 └─ No
@@ -626,7 +628,7 @@ Do you need custom logic (e.g., computed values)?
 
 ```typescript
 // ✅ prop - single required field
-const nameLens = prop<User>('name')
+const nameLens = prop<User, 'name'>('name')
 
 // ✅ path - nested field
 const cityLens = path<User, string>('address.city')
@@ -635,14 +637,12 @@ const cityLens = path<User, string>('address.city')
 const firstLens = index<Todo>(0)
 
 // ✅ prop + optional - nullable field
-const emailLens = optional(prop<User>('email'))
+const emailLens = optional(prop<User, 'email'>('email'))
 
 // ✅ lens - custom logic needed
-const fullNameLens = lens(
+const fullNameLens = lens<User, string>(
   (user) => `${user.firstName} ${user.lastName}`,
-  (name) => (user) => {
-    /* split and update */
-  }
+  (name) => (user) => ({ ...user, ...splitName(name) })
 )
 ```
 

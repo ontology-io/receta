@@ -23,7 +23,7 @@ import type { Cache, MemoizeOptions, MemoizedFunction } from '../types'
  * const getUser = memoize(fetchUser, { maxSize: 100 })
  *
  * // With TTL
- * const getWeather = memoize(fetchWeather, { ttl: 5 * 60 * 1000 }) // 5 min
+ * const getWeather = memoize(fetchWeather, { cache: ttlCache(5 * 60 * 1000) }) // 5 min
  * ```
  *
  * @see memoizeBy - for custom key extraction

@@ -25,7 +25,7 @@ import { isSome } from '../guards'
  * // => None
  *
  * // Real-world: validating multiple fields
- * const validateForm = (data: FormData) => {
+ * const validateForm = (data: SignupForm) => {
  *   const fields = collect([
  *     validateEmail(data.email),
  *     validatePassword(data.password),

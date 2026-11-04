@@ -75,18 +75,21 @@ Best for: Social feeds, messaging apps, real-time data, infinite scroll.
 ```typescript
 import { paginateCursor } from '@ontologyio/receta/collection'
 
-const messages = [/* ... */]
+const messages = Array.from({ length: 50 }, (_, i) => ({ id: `msg_${i + 1}` }))
 
 // First page
 const page1 = paginateCursor(messages, m => m.id, { limit: 20 })
 // { items: [first 20], nextCursor: 'msg_20', hasMore: true }
 
-// Next page
+// Next page. Omit the cursor key, or pass undefined, to start at the beginning.
 const page2 = paginateCursor(messages, m => m.id, {
   cursor: page1.nextCursor,
   limit: 20
 })
+// { items: [messages 21-40], nextCursor: 'msg_40', hasMore: true }
 ```
+
+On the last page `nextCursor` is `undefined` and `hasMore` is `false`. A cursor that isn't in the list starts again from the beginning.
 
 ### Real-World: GitHub-Style API
 
@@ -122,7 +125,9 @@ app.get('/api/events', async (req, res) => {
 
 ### Real-World: Infinite Scroll
 
-```typescript
+```tsx
+import { useState } from 'react'
+
 // React component with infinite scroll
 function MessageList() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -163,16 +168,16 @@ function MessageList() {
 
 ```typescript
 // Offset: Items can shift between pages
-const page1 = paginate(items, { page: 1, pageSize: 10 })
+const offsetPage1 = paginate(items, { page: 1, pageSize: 10 })
 // New item added at position 5
-const page2 = paginate(items, { page: 2, pageSize: 10 })
+const offsetPage2 = paginate(items, { page: 2, pageSize: 10 })
 // Item 10 from page 1 appears again in page 2!
 
 // Cursor: Stable pagination
-const page1 = paginateCursor(items, getId, { limit: 10 })
+const cursorPage1 = paginateCursor(items, getId, { limit: 10 })
 // New item added - doesn't affect next page
-const page2 = paginateCursor(items, getId, {
-  cursor: page1.nextCursor,
+const cursorPage2 = paginateCursor(items, getId, {
+  cursor: cursorPage1.nextCursor,
   limit: 10
 })
 // No duplicates!
@@ -182,7 +187,7 @@ const page2 = paginateCursor(items, getId, {
 
 ### Pattern 1: Page Navigation UI
 
-```typescript
+```tsx
 function PaginationControls({ result }: { result: PaginatedResult<any> }) {
   const totalPages = Math.ceil(result.total / result.pageSize)
 
@@ -198,7 +203,7 @@ function PaginationControls({ result }: { result: PaginatedResult<any> }) {
 
 ### Pattern 2: Load More Button
 
-```typescript
+```tsx
 function LoadMoreButton({ hasMore, onLoad }: { hasMore: boolean, onLoad: () => void }) {
   return hasMore ? (
     <button onClick={onLoad}>Load More</button>
@@ -221,5 +226,5 @@ const filteredAndPaginated = pipe(
 
 ## Next Steps
 
-- **[Indexing](./04-indexing.md)** - Safe indexing with collision handling
+- **[Indexing](../reference/collection.mdx#indexbyunique)** - Safe indexing with collision handling
 - **[Patterns](./patterns.mdx)** - More production recipes

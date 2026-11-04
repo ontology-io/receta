@@ -58,9 +58,9 @@ export function isValid<T, E>(validation: Validation<T, E>): validation is Valid
  * const validation = validateForm(formData)
  * if (isInvalid(validation)) {
  *   validation.errors.forEach(err => displayError(err))
- *   return
+ * } else {
+ *   processForm(validation.value)
  * }
- * processForm(validation.value)
  * ```
  *
  * @see isValid - for checking if validation succeeded

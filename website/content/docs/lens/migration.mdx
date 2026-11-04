@@ -63,7 +63,7 @@ const updateName = (user: User, name: string) => ({
 })
 
 // ✅ After
-const nameLens = prop<User>('name')
+const nameLens = prop<User, 'name'>('name')
 const updateName = (user: User, name: string) => set(nameLens, name, user)
 ```
 
@@ -105,7 +105,7 @@ const incrementCounter = (state: State) => ({
 })
 
 // ✅ After
-const counterLens = prop<State>('counter')
+const counterLens = prop<State, 'counter'>('counter')
 const incrementCounter = (state: State) => over(counterLens, (n) => n + 1, state)
 ```
 
@@ -121,7 +121,7 @@ const updateFirstTodo = (state: TodoState) => ({
 })
 
 // ✅ After
-const todosLens = prop<TodoState>('todos')
+const todosLens = prop<TodoState, 'todos'>('todos')
 const updateFirstTodo = (state: TodoState) =>
   over(todosLens, (todos) =>
     todos.map((todo, idx) => (idx === 0 ? { ...todo, done: true } : todo))
@@ -163,11 +163,11 @@ const partialMigration = (state: State) => {
 
 ```typescript
 // ❌ Bad: Creating lenses inline repeatedly
-setState((s) => set(prop<State>('counter'), 10, s))
-setState((s) => set(prop<State>('counter'), 20, s))
+setState((s) => set(prop<State, 'counter'>('counter'), 10, s))
+setState((s) => set(prop<State, 'counter'>('counter'), 20, s))
 
 // ✅ Good: Define once, reuse
-const counterLens = prop<State>('counter')
+const counterLens = prop<State, 'counter'>('counter')
 setState((s) => set(counterLens, 10, s))
 setState((s) => set(counterLens, 20, s))
 ```

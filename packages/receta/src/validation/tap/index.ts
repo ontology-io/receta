@@ -122,7 +122,7 @@ function tapImplementation<T, E>(validation: Validation<T, E>, fn: (value: T) =>
  *         context: { data }
  *       })
  *     }),
- *     flatMap(process)
+ *     flatMap(handleData)
  *   )
  *
  * // Real-world: User feedback
@@ -144,7 +144,7 @@ function tapImplementation<T, E>(validation: Validation<T, E>, fn: (value: T) =>
  *     validateData(data),
  *     tap((valid) => logger.info('Validation passed', { data: valid })),
  *     tapInvalid((errors) => logger.error('Validation failed', { errors })),
- *     flatMap(process)
+ *     flatMap(handleData)
  *   )
  * ```
  *

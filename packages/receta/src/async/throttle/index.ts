@@ -9,6 +9,9 @@ import type { ThrottleOptions } from '../types'
  * Unlike debounce (which delays execution until calls stop), throttle
  * guarantees execution at regular intervals regardless of call frequency.
  *
+ * Calls made during the delay share one promise for the next trailing run, which
+ * uses the latest arguments. There is no `cancel` or `flush`.
+ *
  * @param fn - Async function to throttle
  * @param options - Throttle options
  * @returns Throttled function
@@ -28,10 +31,9 @@ import type { ThrottleOptions } from '../types'
  *
  * // User scrolls rapidly
  * trackEvent('scroll') // Executes immediately
- * trackEvent('scroll') // Ignored (within 1s)
- * trackEvent('scroll') // Ignored (within 1s)
- * // ... 1 second passes
- * trackEvent('scroll') // Executes
+ * trackEvent('scroll') // Waits for the trailing run
+ * trackEvent('scroll') // Shares that run, which uses the latest arguments
+ * // ... 1 second passes, and the trailing run executes
  *
  * // Throttle with trailing edge only
  * const saveProgress = throttle(

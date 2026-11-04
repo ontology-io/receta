@@ -18,8 +18,8 @@ import { lens } from '../lens'
  *   age: number
  * }
  *
- * const nameLens = prop<User>('name')
- * const emailLens = prop<User>('email')
+ * const nameLens = prop<User, 'name'>('name')
+ * const emailLens = prop<User, 'email'>('email')
  *
  * const user = { name: 'Alice', email: 'alice@example.com', age: 30 }
  *

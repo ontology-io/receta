@@ -31,8 +31,8 @@ interface Address {
   city: string
 }
 
-const addressLens = prop<User>('address')
-const cityLens = prop<Address>('city')
+const addressLens = prop<User, 'address'>('address')
+const cityLens = prop<Address, 'city'>('city')
 
 // Compose to access user's city
 const userCityLens = compose(addressLens, cityLens)
@@ -54,8 +54,8 @@ set(userCityLens, 'NYC', user)
 
 // Using composition
 const cityLens1 = compose(
-  prop<User>('address'),
-  prop<Address>('city')
+  prop<User, 'address'>('address'),
+  prop<Address, 'city'>('city')
 )
 
 // Using path
@@ -83,10 +83,10 @@ interface State {
 }
 
 // Build up step by step
-const userLens = prop<State>('user')
-const profileLens = prop<State['user']>('profile')
-const settingsLens = prop<State['user']['profile']>('settings')
-const themeLens = prop<State['user']['profile']['settings']>('theme')
+const userLens = prop<State, 'user'>('user')
+const profileLens = prop<State['user'], 'profile'>('profile')
+const settingsLens = prop<State['user']['profile'], 'settings'>('settings')
+const themeLens = prop<State['user']['profile']['settings'], 'theme'>('theme')
 
 // Compose multiple levels
 const themeFromState = compose(
@@ -101,26 +101,37 @@ const themeFromState2 = path<State, string>('user.profile.settings.theme')
 ## Real-World: Shopping Cart Items
 
 ```typescript
+interface CartItem {
+  id: string
+  quantity: number
+}
+
 interface CartState {
   cart: {
-    items: Array<{ id: string; quantity: number }>
+    items: readonly CartItem[]
   }
 }
 
-const cartLens = prop<CartState>('cart')
-const itemsLens = prop<CartState['cart']>('items')
-const firstItemLens = index<CartItem>(0)
+const cartLens = prop<CartState, 'cart'>('cart')
+const itemsLens = prop<CartState['cart'], 'items'>('items')
 
-// Access first item's quantity
-const firstItemQuantityLens = compose(
-  compose(compose(cartLens, itemsLens), firstItemLens),
-  prop<CartItem>('quantity')
+// Access the first item
+const firstItemLens = compose(
+  compose(cartLens, itemsLens),
+  index<CartItem>(0)
 )
 
 // Update first item quantity
 const state = { cart: { items: [{ id: '1', quantity: 2 }] } }
-over(firstItemQuantityLens, (q) => q + 1, state)
+over(
+  firstItemLens,
+  (item) => item && { ...item, quantity: item.quantity + 1 },
+  state
+)
+// => { cart: { items: [{ id: '1', quantity: 3 }] } }
 ```
+
+`index` may find nothing, so its focus is `CartItem | undefined`. A `prop<CartItem, 'quantity'>` lens can't compose onto that, so the update handles the missing item itself.
 
 ## Real-World: Form Field Errors
 
@@ -132,9 +143,9 @@ interface FormState {
   }
 }
 
-const fieldsLens = prop<FormState>('fields')
-const emailFieldLens = prop<FormState['fields']>('email')
-const emailErrorLens = prop<FormState['fields']['email']>('error')
+const fieldsLens = prop<FormState, 'fields'>('fields')
+const emailFieldLens = prop<FormState['fields'], 'email'>('email')
+const emailErrorLens = prop<FormState['fields']['email'], 'error'>('error')
 
 // Compose to access email error
 const emailErrorFromForm = compose(
@@ -165,9 +176,9 @@ view(lens1, data) === view(lens2, data)
 
 ```typescript
 // Build lenses dynamically
-const buildFieldLens = (fieldName: keyof FormFields) => {
-  const fieldsLens = prop<Form>('fields')
-  const fieldLens = prop<FormFields>(fieldName)
+const buildFieldLens = <K extends keyof FormFields>(fieldName: K) => {
+  const fieldsLens = prop<Form, 'fields'>('fields')
+  const fieldLens = prop<FormFields, K>(fieldName)
   return compose(fieldsLens, fieldLens)
 }
 

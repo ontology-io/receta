@@ -40,6 +40,39 @@ export const exampleCode = (example: string): readonly string[] => {
   return fenced.length > 0 ? R.map(fenced, ([, code]) => (code ?? '').trimEnd()) : [example.trim()]
 }
 
+/**
+ * Reads @example blocks from a raw doc comment. The compiler's own parser ends a tag at any
+ * ` @`, so an example holding an email address or a decorator would be cut short.
+ */
+export const commentExamples = (comment: string): readonly string[] =>
+  R.pipe(
+    comment.split('\n'),
+    R.map((line) => line.replace(/^\s*\/?\*{1,2}\/?\s?/, '')),
+    R.reduce(collectExampleLine, { blocks: [] as readonly string[], isInside: false, isInFence: false }),
+    ({ blocks }) => R.map(blocks, (block) => block.trim()),
+    R.filter(Boolean),
+  )
+
+type ExampleScan = {
+  readonly blocks: readonly string[]
+  readonly isInside: boolean
+  readonly isInFence: boolean
+}
+
+const collectExampleLine = (scan: ExampleScan, line: string): ExampleScan => {
+  const isTag = !scan.isInFence && /^@\w+/.test(line)
+  if (isTag) {
+    const rest = line.replace(/^@example\s*/, '')
+    return line.startsWith('@example')
+      ? { ...scan, isInside: true, blocks: R.concat(scan.blocks, [rest]) }
+      : { ...scan, isInside: false }
+  }
+  if (!scan.isInside) return scan
+  const isInFence = line.trimStart().startsWith('```') ? !scan.isInFence : scan.isInFence
+  const last = R.last(scan.blocks) ?? ''
+  return { ...scan, isInFence, blocks: R.concat(R.dropLast(scan.blocks, 1), [`${last}\n${line}`]) }
+}
+
 /** Pulls the error type out of a return type, or an empty string when it isn't a named one. */
 export const failureType = (returnType: string): string => {
   const typeArguments = splitTypeArguments(resultArguments(returnType))

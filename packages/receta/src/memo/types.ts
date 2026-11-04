@@ -35,7 +35,8 @@ export interface MemoizeOptions<K = string> {
 
   /**
    * Time-to-live for cached entries in milliseconds.
-   * Entries are removed after this duration.
+   * Not applied yet: `memoize`, `memoizeBy` and `memoizeAsync` ignore it.
+   * To expire entries, pass `cache: ttlCache(ms)` instead.
    */
   ttl?: number
 }

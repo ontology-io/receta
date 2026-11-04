@@ -72,7 +72,7 @@ match(validation, {
   onValid: async (user) => {
     await saveUser(user)
   },
-  onInvalid: (errors) => {
+  onInvalid: async (errors) => {
     // Shows ALL errors at once!
     errors.forEach(({ field, errors }) => {
       showFieldError(field, errors)
@@ -116,7 +116,7 @@ schema({
 ```typescript
 // Replace:
 try {
-  validate()
+  validateUser(input)
 } catch (e) {
   handleError(e)
 }
@@ -188,7 +188,7 @@ match(validation, {
   onValid: async (user) => {
     await saveUser(user)
   },
-  onInvalid: (errors) => {
+  onInvalid: async (errors) => {
     showErrors(errors)
   }
 })
@@ -202,7 +202,7 @@ match(validation, {
 | **Type Inference** | Schema → Type | Type → Schema |
 | **Pipe Support** | No | Yes (Remeda pipe) |
 | **Error Accumulation** | Yes | Yes |
-| **Async Validation** | `.refine()` method | Native Promise support |
+| **Async Validation** | `.refine()` method | `await` the async check, then validate |
 | **Bundle Size** | ~13kb | Tree-shakeable (smaller) |
 
 ### Migration Steps
@@ -224,7 +224,7 @@ validate(value, [minLength(3), maxLength(20), email()])
 z.object({ field: z.string() })
 
 // Receta
-schema({ field: (v: string) => validate(v, [...]) }, data)
+schema({ field: (v: string) => validate(v, [required('Required')]) }, data)
 ```
 
 **Step 3**: Replace `.parse()` with `match()`
@@ -232,15 +232,15 @@ schema({ field: (v: string) => validate(v, [...]) }, data)
 ```typescript
 // Zod
 try {
-  const data = schema.parse(input)
+  const data = zodSchema.parse(input)
 } catch (error) {
   // handle
 }
 
 // Receta
-match(schema(schemaObj, input), {
-  onValid: (data) => {...},
-  onInvalid: (errors) => {...}
+match(schema(userSchema, input), {
+  onValid: (data) => saveUser(data),
+  onInvalid: (errors) => showErrors(errors)
 })
 ```
 
@@ -315,7 +315,7 @@ match(validation, {
   onValid: async (user) => {
     await saveUser(user)
   },
-  onInvalid: (errors) => {
+  onInvalid: async (errors) => {
     showErrors(errors)
   }
 })
@@ -350,15 +350,17 @@ match(validation, {
 
 ```typescript
 // ❌ Result shows only first error
-import { collect, err, ok, type Result } from '@ontologyio/receta/result'
+import { collect, map as mapResult, type Result } from '@ontologyio/receta/result'
 
-const validateForm = (data: FormData): Result<FormData, string> => {
-  return collect([
-    validateEmail(data.email),      // Stops here if this fails
-    validatePassword(data.password), // Never checked if email fails
-    validateAge(data.age)            // Never checked if email fails
-  ]).map(() => data)
-}
+const validateForm = (data: SignupForm): Result<SignupForm, string> =>
+  pipe(
+    collect([
+      validateEmail(data.email),       // Only this error comes back
+      validatePassword(data.password), // Dropped if email failed
+      validateUsername(data.username)  // Dropped if email failed
+    ]),
+    mapResult(() => data)
+  )
 
 // User sees only: "Invalid email"
 // User fixes email, submits
@@ -370,17 +372,19 @@ const validateForm = (data: FormData): Result<FormData, string> => {
 
 ```typescript
 // ✅ Validation shows ALL errors
-import { collectErrors, valid, invalid } from '@ontologyio/receta/validation'
+import { collectErrors, map, type Validation } from '@ontologyio/receta/validation'
 
-const validateForm = (data: FormData): Validation<FormData, string> => {
-  return collectErrors([
-    validateEmail(data.email),      // Checks all three
-    validatePassword(data.password), // Even if email fails
-    validateAge(data.age)            // Shows all errors at once
-  ]).map(() => data)
-}
+const validateForm = (data: SignupForm): Validation<SignupForm, string> =>
+  pipe(
+    collectErrors([
+      validateEmail(data.email),       // Checks all three
+      validatePassword(data.password), // Even if email fails
+      validateUsername(data.username)  // Shows all errors at once
+    ]),
+    map(() => data)
+  )
 
-// User sees: "Invalid email", "Password too short", "Must be 18+"
+// User sees: "Invalid email", "Password too short", "Username taken"
 // User fixes everything, submits once
 // ✅ Better UX!
 ```
@@ -388,7 +392,7 @@ const validateForm = (data: FormData): Validation<FormData, string> => {
 ### Side-by-Side Comparison
 
 ```typescript
-import { collect } from '@ontologyio/receta/result'
+import { collect, err } from '@ontologyio/receta/result'
 // Result: Fail-fast
 collect([
   err('error1'),
@@ -417,31 +421,31 @@ You can migrate gradually without rewriting everything at once:
 ```typescript
 import { collect } from '@ontologyio/receta/result'
 // New forms: Use Validation
-const validateNewForm = (data) => schema({...}, data)
+const validateNewForm = (data: NewForm) => schema(newFormSchema, data)
 
 // Existing code: Keep Result
-const processData = (data) => collect([...])
+const processData = (data: OldForm) => collect(checksFor(data))
 ```
 
 **Step 2**: Migrate high-traffic forms
 
 ```typescript
 // Forms with user complaints about UX
-const validateRegistration = (data) => schema({...}, data)
-const validateCheckout = (data) => schema({...}, data)
+const validateRegistration = (data: RegistrationForm) => schema(registrationSchema, data)
+const validateCheckout = (data: CheckoutForm) => schema(checkoutSchema, data)
 ```
 
 **Step 3**: Keep Result for business logic
 
 ```typescript
-import { flatMap } from '@ontologyio/receta/result'
+import { flatMap as flatMapResult } from '@ontologyio/receta/result'
 // Keep Result for sequential operations
-const processOrder = (order) =>
+const processOrder = (order: Order) =>
   pipe(
-    validateAuth(token),
-    flatMap(checkInventory),
-    flatMap(chargePayment),
-    flatMap(createShipment)
+    validateAuth(order.token),
+    flatMapResult(checkInventory),
+    flatMapResult(chargePayment),
+    flatMapResult(createShipment)
   )
 ```
 
@@ -450,9 +454,9 @@ const processOrder = (order) =>
 Result and Validation work well together:
 
 ```typescript
-import { flatMap, type Result } from '@ontologyio/receta/result'
+import { err, flatMap as flatMapResult, type Result } from '@ontologyio/receta/result'
 // Validation for input
-const validateInput = (data: unknown): Validation<UserData, FieldError<string>> => {
+const validateInput = (data: UserData): Validation<UserData, FieldError<string>> => {
   return schema(userSchema, data)
 }
 
@@ -460,13 +464,13 @@ const validateInput = (data: unknown): Validation<UserData, FieldError<string>> 
 const processUser = (user: UserData): Result<ProcessedUser, ProcessError> => {
   return pipe(
     saveToDatabase(user),
-    flatMap(sendWelcomeEmail),
-    flatMap(createSession)
+    flatMapResult(sendWelcomeEmail),
+    flatMapResult(createSession)
   )
 }
 
 // Combined workflow
-const handleUserCreation = (data: unknown) => {
+const handleUserCreation = (data: UserData) => {
   const validation = validateInput(data)
 
   return match(validation, {
@@ -516,7 +520,7 @@ function validateForm(data: any) {
 }
 
 // After
-const validateForm = (data: FormData) =>
+const validateForm = (data: SignupForm) =>
   schema({
     email: (e: string) =>
       validate(e, [required('Email required'), email('Invalid email')]),
@@ -582,10 +586,10 @@ Check you're using Validation, not Result:
 ```typescript
 import { collect } from '@ontologyio/receta/result'
 // ❌ Result stops at first error
-collect([...])
+collect(results)
 
 // ✅ Validation accumulates all errors
-collectErrors([...])
+collectErrors(validations)
 ```
 
 ### "Too many errors showing"

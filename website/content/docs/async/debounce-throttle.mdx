@@ -10,7 +10,7 @@ Debounce and throttle are essential techniques for controlling how often functio
 
 **Key differences:**
 - **Debounce**: Wait for a pause in events before executing (last call wins)
-- **Throttle**: Execute at most once per time interval (first call wins)
+- **Throttle**: Execute at most once per delay (the first call runs, then the latest)
 
 Both patterns are critical for production applications dealing with user input, scroll events, window resizing, and API rate limits.
 
@@ -49,7 +49,7 @@ const searchLeading = debounce(
   async (query: string) => {
     return searchAPI(query)
   },
-  { delay: 300, leading: true }
+  { delay: 300, leading: true, trailing: false }
 )
 
 // Both edges - execute on first AND last
@@ -69,14 +69,16 @@ Trailing:               ^          ^              ^
 Leading:     ^                     ^              ^
 Both:        ^          ^          ^          ^   ^
 ```
+**Replaced calls never settle.** When a newer call replaces an older one, the older call's promise stays pending forever, so only the last call of a burst gets past its `await`. With `trailing: false`, calls ignored during the delay stay pending too. Don't rely on a `finally` or other cleanup after awaiting a debounced call.
+
 
 ### Real-World Examples
 
 #### 1. Search Autocomplete (Algolia-style)
 
-```typescript
+```tsx
 import { debounce } from '@ontologyio/receta/async'
-import { match, ok, tryCatch, type Result } from '@ontologyio/receta/result'
+import { match, ok, tryCatchAsync, type Result } from '@ontologyio/receta/result'
 
 interface SearchResult {
   id: string
@@ -92,7 +94,7 @@ const debouncedSearch = debounce(
       return ok([])
     }
 
-    return tryCatch(
+    return tryCatchAsync(
       async () => {
         const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
         if (!response.ok) throw new Error(`Search failed: ${response.statusText}`)
@@ -107,7 +109,7 @@ const debouncedSearch = debounce(
 // React/Vue component usage
 function SearchBox() {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<SearchResult[]>([])
+  const [results, setResults] = useState([] as SearchResult[])
   const [loading, setLoading] = useState(false)
 
   const handleSearch = async (value: string) => {
@@ -146,7 +148,7 @@ function SearchBox() {
 
 ```typescript
 import { debounce } from '@ontologyio/receta/async'
-import { match, tryCatch, type Result } from '@ontologyio/receta/result'
+import { match, tryCatchAsync, type Result } from '@ontologyio/receta/result'
 
 interface Document {
   id: string
@@ -164,33 +166,35 @@ function createAutoSave(
   documentId: string,
   options: AutoSaveOptions = {}
 ) {
+  let latestContent = ''
+
+  const persist = async (content: string): Promise<Result<Document, string>> => {
+    options.onSaving?.()
+
+    return tryCatchAsync(
+      async () => {
+        const response = await fetch(`/api/documents/${documentId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content })
+        })
+
+        if (!response.ok) {
+          throw new Error(`Save failed: ${response.statusText}`)
+        }
+
+        return response.json()
+      },
+      (error) => `Failed to save document: ${error}`
+    )
+  }
+
   // Debounce with 2 second delay - wait for user to pause typing
-  const saveDocument = debounce(
-    async (content: string): Promise<Result<Document, string>> => {
-      options.onSaving?.()
-
-      return tryCatch(
-        async () => {
-          const response = await fetch(`/api/documents/${documentId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content })
-          })
-
-          if (!response.ok) {
-            throw new Error(`Save failed: ${response.statusText}`)
-          }
-
-          return response.json()
-        },
-        (error) => `Failed to save document: ${error}`
-      )
-    },
-    { delay: 2000 }
-  )
+  const saveDocument = debounce(persist, { delay: 2000 })
 
   return {
     save: async (content: string) => {
+      latestContent = content
       const result = await saveDocument(content)
 
       match(result, {
@@ -199,8 +203,9 @@ function createAutoSave(
       })
     },
 
-    // Force immediate save (e.g., on window close)
-    flush: () => saveDocument.flush()
+    // Save right away (e.g., on window close)
+    // debounce has no flush, so this skips it and calls persist directly
+    saveNow: () => persist(latestContent)
   }
 }
 
@@ -214,15 +219,15 @@ const autoSave = createAutoSave('doc-123', {
 // User types - auto-saves after 2s of inactivity
 editor.onChange((content) => autoSave.save(content))
 
-// User closes window - force save immediately
-window.addEventListener('beforeunload', () => autoSave.flush())
+// User closes window - save immediately
+window.addEventListener('beforeunload', () => autoSave.saveNow())
 ```
 
 #### 3. API Call Optimization
 
 ```typescript
 import { debounce } from '@ontologyio/receta/async'
-import { tryCatch, type Result } from '@ontologyio/receta/result'
+import { tryCatchAsync, type Result } from '@ontologyio/receta/result'
 
 // Prevent duplicate API calls when user rapidly changes filters
 interface ProductFilters {
@@ -241,7 +246,7 @@ const fetchProducts = debounce(
     if (filters.priceMax) params.set('price_max', String(filters.priceMax))
     if (filters.inStock) params.set('in_stock', 'true')
 
-    return tryCatch(
+    return tryCatchAsync(
       async () => {
         const response = await fetch(`/api/products?${params}`)
         if (!response.ok) throw new Error('Failed to fetch products')
@@ -284,28 +289,28 @@ Unlike debounce, throttle executes periodically during ongoing events.
 ```typescript
 import { throttle } from '@ontologyio/receta/async'
 
-// Leading edge (default) - execute FIRST call immediately
-const trackScrollLeading = throttle(
-  (position: number) => {
-    analytics.track('scroll', { position })
-  },
-  { interval: 1000 }
-)
-
-// Trailing edge - execute LAST call in interval
-const trackScrollTrailing = throttle(
-  (position: number) => {
-    analytics.track('scroll', { position })
-  },
-  { interval: 1000, trailing: true }
-)
-
-// Both edges - execute first AND last
+// Both edges (default) - execute FIRST call immediately, then LAST call in the delay
 const trackScrollBoth = throttle(
-  (position: number) => {
+  async (position: number) => {
     analytics.track('scroll', { position })
   },
-  { interval: 1000, leading: true, trailing: true }
+  { delay: 1000 }
+)
+
+// Leading edge - execute FIRST call immediately
+const trackScrollLeading = throttle(
+  async (position: number) => {
+    analytics.track('scroll', { position })
+  },
+  { delay: 1000, trailing: false }
+)
+
+// Trailing edge - execute LAST call in the delay
+const trackScrollTrailing = throttle(
+  async (position: number) => {
+    analytics.track('scroll', { position })
+  },
+  { delay: 1000, leading: false }
 )
 ```
 
@@ -317,6 +322,8 @@ Leading:     ^       ^       ^       ^       ^
 Trailing:            ^       ^       ^       ^
 Both:        ^   ^   ^   ^   ^   ^   ^   ^   ^
 ```
+
+Calls made during the delay don't queue up. They share one promise for the next trailing run, which uses the latest arguments, so earlier arguments are dropped.
 
 ### Real-World Examples
 
@@ -334,7 +341,7 @@ interface ScrollMetrics {
 
 // Track scroll position for analytics (Segment/Mixpanel style)
 const trackScrollPosition = throttle(
-  (metrics: ScrollMetrics) => {
+  async (metrics: ScrollMetrics) => {
     // Send to analytics only once per second
     window.analytics?.track('Page Scrolled', {
       scroll_depth: metrics.scrollPercent,
@@ -343,7 +350,7 @@ const trackScrollPosition = throttle(
       document_height: metrics.documentHeight
     })
   },
-  { interval: 1000 }
+  { delay: 1000 }
 )
 
 window.addEventListener('scroll', () => {
@@ -374,13 +381,16 @@ interface UploadProgress {
 
 // Update UI only every 100ms to prevent excessive re-renders
 const updateProgressUI = throttle(
-  (progress: UploadProgress) => {
+  async (progress: UploadProgress) => {
+    const bar = document.querySelector('.progress-bar')
+    const text = document.querySelector('.progress-text')
+
     // Update progress bar
-    document.querySelector('.progress-bar')?.style.width = `${progress.percent}%`
-    document.querySelector('.progress-text')?.textContent =
+    if (bar) bar.style.width = `${progress.percent}%`
+    if (text) text.textContent =
       `${progress.loaded.toLocaleString()} / ${progress.total.toLocaleString()} bytes`
   },
-  { interval: 100 }
+  { delay: 100 }
 )
 
 async function uploadFile(file: File) {
@@ -412,7 +422,7 @@ async function uploadFile(file: File) {
 
 ```typescript
 import { throttle } from '@ontologyio/receta/async'
-import { tryCatch, type Result } from '@ontologyio/receta/result'
+import { tryCatchAsync, type Result } from '@ontologyio/receta/result'
 
 interface WebhookPayload {
   event: string
@@ -423,7 +433,7 @@ interface WebhookPayload {
 // Send webhooks at most once per 5 seconds to respect rate limits
 const sendWebhook = throttle(
   async (payload: WebhookPayload): Promise<Result<void, string>> => {
-    return tryCatch(
+    return tryCatchAsync(
       async () => {
         const response = await fetch(process.env.WEBHOOK_URL!, {
           method: 'POST',
@@ -441,10 +451,11 @@ const sendWebhook = throttle(
       (error) => `Webhook delivery failed: ${error}`
     )
   },
-  { interval: 5000 }
+  { delay: 5000 }
 )
 
 // Events fire rapidly, but webhook sends at most every 5s
+// Events in between are dropped, so use this only when the latest one is enough
 eventEmitter.on('user.updated', (user) => {
   sendWebhook({
     event: 'user.updated',
@@ -473,7 +484,7 @@ const getBreakpoint = (width: number): ViewportSize['breakpoint'] => {
 
 // Recalculate layout only once per 200ms during resize
 const handleResize = throttle(
-  () => {
+  async () => {
     const viewport: ViewportSize = {
       width: window.innerWidth,
       height: window.innerHeight,
@@ -486,7 +497,7 @@ const handleResize = throttle(
     // Re-render charts, grids, etc.
     chartManager.resize(viewport)
   },
-  { interval: 200 }
+  { delay: 200 }
 )
 
 window.addEventListener('resize', handleResize)
@@ -561,7 +572,7 @@ THROTTLE (500ms):
 
 ```typescript
 import { debounce } from '@ontologyio/receta/async'
-import { match, ok, tryCatch, type Result } from '@ontologyio/receta/result'
+import { match, ok, tryCatchAsync, type Result } from '@ontologyio/receta/result'
 
 interface SearchState {
   query: string
@@ -585,7 +596,7 @@ const createSearchManager = () => {
         return ok([])
       }
 
-      const result = await tryCatch(
+      const result = await tryCatchAsync(
         async () => {
           const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`)
           if (!response.ok) throw new Error('Search failed')
@@ -630,7 +641,7 @@ const createSearchManager = () => {
 
 ```typescript
 import { debounce } from '@ontologyio/receta/async'
-import { match, tryCatch, type Result } from '@ontologyio/receta/result'
+import { match, tryCatchAsync, type Result } from '@ontologyio/receta/result'
 
 interface DocumentVersion {
   id: string
@@ -642,39 +653,38 @@ interface DocumentVersion {
 const createAutoSaveManager = (documentId: string) => {
   let currentVersion = 0
 
-  const saveDocument = debounce(
-    async (
-      content: string,
-      expectedVersion: number
-    ): Promise<Result<DocumentVersion, string>> => {
-      return tryCatch(
-        async () => {
-          const response = await fetch(`/api/documents/${documentId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              content,
-              version: expectedVersion
-            })
+  const persist = async (
+    content: string,
+    expectedVersion: number
+  ): Promise<Result<DocumentVersion, string>> => {
+    return tryCatchAsync(
+      async () => {
+        const response = await fetch(`/api/documents/${documentId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content,
+            version: expectedVersion
           })
+        })
 
-          if (response.status === 409) {
-            throw new Error('Document was modified by another user')
-          }
+        if (response.status === 409) {
+          throw new Error('Document was modified by another user')
+        }
 
-          if (!response.ok) {
-            throw new Error('Save failed')
-          }
+        if (!response.ok) {
+          throw new Error('Save failed')
+        }
 
-          const saved: DocumentVersion = await response.json()
-          currentVersion = saved.version
-          return saved
-        },
-        (error) => String(error)
-      )
-    },
-    { delay: 2000 }
-  )
+        const saved: DocumentVersion = await response.json()
+        currentVersion = saved.version
+        return saved
+      },
+      (error) => String(error)
+    )
+  }
+
+  const saveDocument = debounce(persist, { delay: 2000 })
 
   return {
     save: async (content: string) => {
@@ -692,7 +702,7 @@ const createAutoSaveManager = (documentId: string) => {
       })
     },
 
-    forceFlush: () => saveDocument.flush()
+    saveNow: (content: string) => persist(content, currentVersion)
   }
 }
 ```
@@ -746,7 +756,7 @@ const createInfiniteScroll = <T>(
         })
       }
     },
-    { interval: 200 }
+    { delay: 200 }
   )
 
   window.addEventListener('scroll', checkAndLoad)
@@ -796,7 +806,7 @@ window.addEventListener('scroll', () => {
 // WITH throttle (100ms)
 // User scrolls 1000px in 2 seconds
 // = 20 analytics events (one per 100ms)
-const throttledTracker = throttle(trackScrollPosition, { interval: 100 })
+const throttledTracker = throttle(trackScrollPosition, { delay: 100 })
 window.addEventListener('scroll', throttledTracker) // Fires 20 times
 
 // Savings: 95% fewer events, much smoother UI
@@ -804,33 +814,29 @@ window.addEventListener('scroll', throttledTracker) // Fires 20 times
 
 ### Memory and CPU Impact
 
-```typescript
+```tsx
 import { debounce, throttle } from '@ontologyio/receta/async'
 
 // BAD: Creates new debounced function on every render
 function Component() {
-  const handleSearch = debounce((q) => search(q), { delay: 300 })
+  const handleSearch = debounce(async (q: string) => search(q), { delay: 300 })
   // ❌ New instance each render = memory leak
 }
 
 // GOOD: Stable reference
 function Component() {
   const handleSearch = useMemo(
-    () => debounce((q) => search(q), { delay: 300 }),
+    () => debounce(async (q: string) => search(q), { delay: 300 }),
     []
   )
   // ✅ Single instance = efficient
 }
 
-// Or with cleanup
+// Or with a ref
 function Component() {
   const handleSearchRef = useRef(
-    debounce((q) => search(q), { delay: 300 })
+    debounce(async (q: string) => search(q), { delay: 300 })
   )
-
-  useEffect(() => {
-    return () => handleSearchRef.current.cancel()
-  }, [])
 
   return <input onChange={(e) => handleSearchRef.current(e.target.value)} />
 }
@@ -850,13 +856,13 @@ const search = debounce(searchAPI, { delay: 300 })
 const autoSave = debounce(saveDocument, { delay: 2000 })
 
 // Scroll tracking: 100-200ms (smooth but not excessive)
-const trackScroll = throttle(analytics.track, { interval: 100 })
+const trackScroll = throttle(analytics.track, { delay: 100 })
 
 // Window resize: 100-200ms (responsive layout updates)
-const handleResize = throttle(updateLayout, { interval: 150 })
+const handleResize = throttle(updateLayout, { delay: 150 })
 
 // Analytics: 500-1000ms (batch events, reduce data volume)
-const trackEvent = throttle(sendAnalytics, { interval: 1000 })
+const trackEvent = throttle(sendAnalytics, { delay: 1000 })
 ```
 
 ### 2. Provide User Feedback
@@ -892,38 +898,34 @@ const searchWithFeedback = debounce(
 
 ### 3. Handle Cleanup Properly
 
+`debounce` and `throttle` return a plain function, with no `cancel` or `flush`. A pending call still runs after the component is gone, so ignore its result:
+
 ```typescript
-import { debounce, throttle } from '@ontologyio/receta/async'
+import { debounce } from '@ontologyio/receta/async'
 
 // React example
-function useDebounce<T extends (...args: any[]) => any>(
-  fn: T,
-  delay: number
-) {
-  const debouncedFn = useMemo(
-    () => debounce(fn, { delay }),
-    [fn, delay]
-  )
+function useSearch() {
+  const mounted = useRef(true)
 
   useEffect(() => {
-    // Cancel pending calls on unmount
-    return () => debouncedFn.cancel()
-  }, [debouncedFn])
+    mounted.current = true
 
-  return debouncedFn
-}
+    return () => {
+      mounted.current = false
+    }
+  }, [])
 
-// Vue example
-export default {
-  setup() {
-    const handleSearch = debounce(search, { delay: 300 })
-
-    onUnmounted(() => {
-      handleSearch.cancel()
-    })
-
-    return { handleSearch }
-  }
+  return useMemo(
+    () =>
+      debounce(
+        async (query: string) => {
+          const results = await search(query)
+          if (mounted.current) setResults(results)
+        },
+        { delay: 300 }
+      ),
+    []
+  )
 }
 ```
 

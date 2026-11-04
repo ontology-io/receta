@@ -95,7 +95,7 @@ function none<T = never>(): None
 import { none } from '@ontologyio/receta/option'
 
 const missing = none()
-// => { _tag: 'None' }
+// => None
 
 // Type parameter is usually inferred from context
 const noUser: Option<User> = none()
@@ -139,7 +139,7 @@ const searchRepos = (query: string): Option<Repo[]> => {
 }
 
 // No repositories match
-const repos = searchRepos('xyz123notfound')
+const matches = searchRepos('xyz123notfound')
 // => None
 ```
 
@@ -212,7 +212,7 @@ const getCached = (key: string): Option<User> =>
   fromNullable(cache.get(key))
 
 // Record access can be undefined
-const config: Record<string, string> = { ... }
+const config: Record<string, string> = { theme: 'dark' }
 
 const getSetting = (key: string): Option<string> =>
   fromNullable(config[key])
@@ -238,7 +238,7 @@ const getUserDisplay = (user: GitHubUser) => ({
   location: fromNullable(user.location)
 })
 
-// Can now use Option methods on all fields
+// Can now use Option functions on all fields
 pipe(
   getUserDisplay(githubUser),
   display => unwrapOr(display.displayName, display.username)
@@ -270,7 +270,9 @@ import { ok, err } from '@ontologyio/receta/result'
 
 fromResult(ok(42))          // => Some(42)
 fromResult(err('error'))    // => None
-fromResult(err({ code: 'NOT_FOUND' })) // => None (error details discarded)
+
+// Error details are discarded
+fromResult(err({ code: 'NOT_FOUND' })) // => None
 ```
 
 ### Real-World: Parsing When Error Doesn't Matter
@@ -290,7 +292,9 @@ const maybeData = (str: string): Option<unknown> =>
   fromResult(parseJSON(str))
 
 maybeData('{"name":"John"}') // => Some({ name: 'John' })
-maybeData('invalid')          // => None (SyntaxError discarded)
+
+// SyntaxError is discarded
+maybeData('invalid')          // => None
 ```
 
 ### Real-World: Validation Chain
@@ -316,16 +320,16 @@ const hasValidEmail = (email: string): boolean =>
   )
 
 hasValidEmail('user@example.com') // => true
-hasValidEmail('invalid')           // => false (error details not needed)
+
+// Error details not needed
+hasValidEmail('invalid')           // => false
 ```
 
 ### Real-World: Database Query with Error Logging
 
 ```typescript
 // Query returns Result with error details
-const queryUser = async (id: string): Promise<Result<User, DbError>> => {
-  // ... database query that might fail
-}
+declare function queryUser(id: string): Promise<Result<User, DbError>>
 
 // In analytics, you only care about success rate
 const trackUserLookup = async (id: string) => {
@@ -382,7 +386,7 @@ tryCatch(() => {
   if (Math.random() > 0.5) throw new Error('fail')
   return 42
 })
-// => Some(42) or None
+// Some(42) or None
 ```
 
 ### Real-World: JSON Parsing
@@ -427,7 +431,7 @@ parsePositiveInt('abc')   // => None
 const parseURL = (str: string): Option<URL> =>
   tryCatch(() => new URL(str))
 
-parseURL('https://example.com')  // => Some(URL)
+parseURL('https://example.com')  // => Some(new URL('https://example.com'))
 parseURL('not a url')             // => None
 
 // Use in pipeline
@@ -453,7 +457,7 @@ const parseDate = (str: string): Option<Date> =>
     return date
   })
 
-parseDate('2024-01-15')  // => Some(Date)
+parseDate('2024-01-15')  // => Some(new Date('2024-01-15'))
 parseDate('not a date')  // => None
 ```
 
@@ -500,7 +504,7 @@ const parsed = tryCatch(() => JSON.parse(str))
 
 ## Next Steps
 
-- **[Type Guards](./transformers.mdx#type-guards)** - Checking if Option is Some or None
+- **[Type Guards](../reference/option.mdx#issome)** - Checking if Option is Some or None
 - **[Transformers](./transformers.mdx)** - Mapping and transforming Options
 - **[Extractors](./extractors.mdx)** - Getting values out of Options
 - **[Patterns](./patterns.mdx)** - Real-world constructor recipes

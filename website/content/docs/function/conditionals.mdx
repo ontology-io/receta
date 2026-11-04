@@ -50,8 +50,8 @@ const result = age >= 18
 // ✅ ifElse combinator (more reusable)
 const classifyAge = ifElse(
   (age: number) => age >= 18,
-  (age) => ({ status: 'adult' as const, age }),
-  (age) => ({ status: 'minor' as const, age })
+  (age) => ({ status: 'adult', age }),
+  (age) => ({ status: 'minor', age })
 )
 
 const result = classifyAge(age)
@@ -131,9 +131,9 @@ ensurePositive(0)   // => 0
 ### Chaining Multiple `when` Calls
 
 ```typescript
-import { pipe } from 'remeda'
+import { piped } from 'remeda'
 
-const normalizeText = pipe(
+const normalizeText = piped(
   when(
     (s: string) => s.length === 0,
     () => 'default'
@@ -181,7 +181,7 @@ const sanitizeForm = (data: FormData): FormData =>
     ),
     // Truncate long bios
     when(
-      (d) => d.bio && d.bio.length > 500,
+      (d) => d.bio !== undefined && d.bio.length > 500,
       (d) => ({ ...d, bio: d.bio!.slice(0, 497) + '...' })
     )
   )
@@ -261,7 +261,7 @@ interface Config {
   apiKey?: string
 }
 
-const applyDefaults = (config: Config): Required<Config> =>
+const applyDefaults = (config: Config): Config =>
   pipe(
     config,
     unless(
@@ -280,7 +280,7 @@ const applyDefaults = (config: Config): Required<Config> =>
       (c) => 'apiKey' in c && c.apiKey !== undefined,
       (c) => ({ ...c, apiKey: process.env.API_KEY || 'default-key' })
     )
-  ) as Required<Config>
+  )
 
 const userConfig: Config = { timeout: 10000 }
 
@@ -333,7 +333,7 @@ unwrapOr(classifyNumber(100), 'unknown')  // => 'large positive'
 
 ```typescript
 // ❌ Traditional switch
-function getStatusMessage(code: number): string {
+function getStatusMessageSwitch(code: number): string {
   switch (true) {
     case code >= 200 && code < 300:
       return 'Success'
@@ -523,11 +523,11 @@ when((n) => n > 0, transform)
 
 ```typescript
 // ❌ Unclear
-const fn = when((x) => x < 0, (x) => -x)
+const fn = when((x: number) => x < 0, (x) => -x)
 
 // ✅ Clear intent
 const ensurePositive = when(
-  (n) => n < 0,
+  (n: number) => n < 0,
   (n) => Math.abs(n)
 )
 ```
@@ -536,7 +536,7 @@ const ensurePositive = when(
 
 ```typescript
 // ✅ Specific conditions first
-cond([
+cond<number, string>([
   [(n) => n === 0, () => 'zero'],          // Most specific
   [(n) => n > 0 && n < 10, () => 'small'], // More specific
   [(n) => n > 0, () => 'positive'],        // Less specific
@@ -544,7 +544,7 @@ cond([
 ])
 
 // ❌ General conditions first will shadow specific ones
-cond([
+cond<number, string>([
   [(n) => n > 0, () => 'positive'],        // Too general
   [(n) => n > 0 && n < 10, () => 'small'], // Never reached!
 ])
@@ -575,7 +575,7 @@ const result = ifElse(
 
 TypeScript will catch type mismatches:
 
-```typescript
+```ts nocheck
 ifElse(
   (n: number) => n > 0,
   (n) => n.toString(),   // returns string

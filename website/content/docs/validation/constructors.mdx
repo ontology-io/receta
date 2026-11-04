@@ -126,7 +126,7 @@ const validateEmail = (email: string): Validation<string, ApiError> => {
 
 Creates a validator from a predicate function with a static error message.
 
-```typescript
+```typescript title="Signature"
 fromPredicate<T, E>(
   predicate: (value: T) => boolean,
   error: E
@@ -157,10 +157,10 @@ isEmail('user@example.com')  // => Valid('user@example.com')
 isEmail('not-an-email')      // => Invalid(['Invalid email format'])
 
 // With Predicate builders
-import { gt } from '@ontologyio/receta/predicate'
+import { gte } from '@ontologyio/receta/predicate'
 
 const isAdult = fromPredicate(
-  gt(18),
+  gte<number>(18),
   'Must be 18 or older'
 )
 
@@ -207,7 +207,7 @@ const validatePassword = (password: string) =>
 
 Creates a validator with dynamic error messages based on the input value.
 
-```typescript
+```typescript title="Signature"
 fromPredicateWithError<T, E>(
   predicate: (value: T) => boolean,
   getError: (value: T) => E
@@ -296,11 +296,11 @@ fromResult(err('error message'))
 ### Real-World: JSON Parsing
 
 ```typescript
-import { tryCatch, type Result } from '@ontologyio/receta/result'
+import { tryCatch as tryCatchResult, type Result } from '@ontologyio/receta/result'
 
 // Result-based parser
 const parseJSON = <T>(str: string): Result<T, SyntaxError> =>
-  tryCatch(
+  tryCatchResult(
     () => JSON.parse(str) as T,
     (e) => e as SyntaxError
   )
@@ -322,7 +322,7 @@ const parseAndValidate = <T>(
 
 Wraps a potentially throwing function in a Validation.
 
-```typescript
+```typescript title="Signature"
 // Without error mapping
 tryCatch<T>(fn: () => T): Validation<T, unknown>
 
@@ -346,17 +346,17 @@ parseJSON('{"name":"John"}')
 // => Valid({ name: 'John' })
 
 parseJSON('invalid json')
-// => Invalid([SyntaxError: ...])
+// Invalid, holding the SyntaxError that JSON.parse threw
 
 // With error mapping
 const parseJSONSafe = <T>(str: string): Validation<T, string> =>
   tryCatch(
     () => JSON.parse(str) as T,
-    (e) => `JSON parse error: ${(e as Error).message}`
+    () => 'Not valid JSON'
   )
 
 parseJSONSafe('invalid')
-// => Invalid(['JSON parse error: Unexpected token i in JSON at position 0'])
+// => Invalid(['Not valid JSON'])
 ```
 
 ### Real-World: Safe Operations
@@ -400,7 +400,7 @@ const parseNumber = (str: string): Validation<number, string> =>
 
 Async version of tryCatch for Promise-based operations.
 
-```typescript
+```typescript title="Signature"
 // Without error mapping
 tryCatchAsync<T>(fn: () => Promise<T>): Promise<Validation<T, unknown>>
 
@@ -480,7 +480,7 @@ const fetchAndValidate = async (url: string): Promise<Validation<Data, string>> 
 ```typescript
 const validateUserInput = (input: string) =>
   pipe(
-    tryCatch(() => JSON.parse(input)),        // Parse
+    tryCatch(() => JSON.parse(input), () => 'Invalid JSON'),  // Parse
     flatMap(validateUserSchema),              // Validate structure
     flatMap((user) => validate(user, [       // Validate rules
       fromPredicate(u => u.age >= 18, 'Must be adult'),
@@ -530,7 +530,6 @@ const validateUsername = (username: string): Validation<string, ValidationError>
 
 ## Next Steps
 
-- **[Transformers](./02-transformers.md)** - Transform validated values
 - **[Validators](./validators.mdx)** - Built-in validators
 - **[Combinators](./combinators.mdx)** - Combine validations with error accumulation
 - **[Patterns](./patterns.mdx)** - Real-world validation recipes

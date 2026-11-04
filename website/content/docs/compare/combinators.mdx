@@ -11,8 +11,8 @@ Combinators modify and combine comparators to create complex sorting logic from 
 |----------|---------|------------------|
 | `compose(...comparators)` | Multi-level sorting | Sort by status, then priority, then date |
 | `reverse(comparator)` | Flip sort order | Convert ascending to descending |
-| `nullsFirst(comparator)` | Nulls at start | Unassigned items first |
-| `nullsLast(comparator)` | Nulls at end | Active items before inactive |
+| `nullsFirst(comparator)` | Null items at start | Empty slots first |
+| `nullsLast(comparator)` | Null items at end | Empty slots last |
 | `withTiebreaker(primary, tiebreaker)` | Explicit two-level sort | Score, then time |
 
 ## compose()
@@ -120,7 +120,7 @@ files.sort(
     natural(f => f.name)                            // Then natural sort by name
   )
 )
-// => [src/, docs/, README.md, package.json]
+// => [docs/, src/, package.json, README.md]
 ```
 
 ### Real-World: Stripe Transactions
@@ -184,7 +184,7 @@ products.sort(getSortComparator('desc'))
 
 ```typescript
 // Instead of writing descending(), you can reverse ascending()
-const oldestFirst = byDate((e: Event) => e.date)
+const oldestFirst = byDate((e: CalendarEvent) => e.date)
 const newestFirst = reverse(oldestFirst)
 
 events.sort(newestFirst)
@@ -204,8 +204,8 @@ users.sort(zToA)
 
 ```typescript
 // These are equivalent:
-reverse(ascending(x => x.price))
-descending(x => x.price)
+reverse(ascending((x: Product) => x.price))
+descending((x: Product) => x.price)
 
 // Use descending() for clarity when building from scratch
 // Use reverse() when you already have a comparator to invert
@@ -215,11 +215,13 @@ descending(x => x.price)
 
 ## nullsFirst()
 
-Wraps a comparator to place null/undefined values at the beginning.
+Wraps a comparator to place null items at the beginning.
+
+It looks at the items being compared, not at a field inside them. To order objects by a nullable field, see [Sorting by a Nullable Field](#sorting-by-a-nullable-field).
 
 ### Signature
 
-```typescript
+```typescript title="Signature"
 function nullsFirst<T>(
   comparator: Comparator<Nullable<T>>
 ): Comparator<Nullable<T>>
@@ -229,7 +231,7 @@ function nullsFirst<T>(
 
 Checks for null/undefined before delegating to the wrapped comparator:
 
-```typescript
+```text
 // Pseudocode:
 if (a == null && b == null) return 0    // Both null = equal
 if (a == null) return -1                // a is null = a comes first
@@ -237,18 +239,49 @@ if (b == null) return 1                 // b is null = b comes first
 return innerComparator(a, b)            // Neither null = use inner comparator
 ```
 
+The wrapped comparator's type still includes null, so its extractor needs a fallback, even though a null item never reaches it.
+
+`Array.prototype.sort` and `R.sort` move `undefined` to the end without calling the comparator, so this only reorders `null`.
+
 ### When to Use
 
-- Showing unassigned/missing items first
-- "To be determined" items at top of list
-- Incomplete data should appear prominently
+- Lists that hold `null` placeholders, such as empty slots or rows still loading
+- Missing entries should appear prominently
 
 ### Examples
+
+#### Empty Slots First
+
+```typescript
+import { nullsFirst, ascending } from '@ontologyio/receta/compare'
+
+const scores: (number | null)[] = [30, null, 10, null, 20]
+
+scores.sort(nullsFirst(ascending(score => score ?? 0)))
+// => [null, null, 10, 20, 30]
+```
+
+#### Objects That May Be Missing
+
+```typescript
+interface Seat {
+  label: string
+}
+
+const seats: (Seat | null)[] = [{ label: 'B2' }, null, { label: 'A1' }]
+
+seats.sort(nullsFirst(ascending(seat => seat?.label ?? '')))
+// => [null, { label: 'A1' }, { label: 'B2' }]
+```
+
+### Sorting by a Nullable Field
+
+When the items are objects and a field inside them can be null, `nullsFirst` has nothing to do: every item is non-null. Give the extractor a fallback that sorts where you want the nulls to land instead.
 
 #### Unassigned Tasks First
 
 ```typescript
-import { nullsFirst, ascending } from '@ontologyio/receta/compare'
+import { ascending } from '@ontologyio/receta/compare'
 
 interface Task {
   title: string
@@ -262,7 +295,8 @@ const tasks: Task[] = [
   { title: 'Deploy', assignee: null }
 ]
 
-tasks.sort(nullsFirst(ascending(t => t.assignee ?? '')))
+// An empty string sorts before every name
+tasks.sort(ascending(t => t.assignee ?? ''))
 // => [Review PR (null), Deploy (null), Fix bug (alice), Write docs (bob)]
 ```
 
@@ -275,7 +309,7 @@ interface User {
 }
 
 // Show users who never logged in first
-users.sort(nullsFirst(ascending(u => u.lastLogin ?? new Date(0))))
+users.sort(ascending(u => u.lastLogin ?? new Date(0)))
 ```
 
 #### Optional Deadlines
@@ -287,18 +321,20 @@ interface Project {
 }
 
 // Projects without deadlines shown first (need attention)
-projects.sort(nullsFirst(ascending(p => p.deadline ?? new Date(0))))
+projects.sort(ascending(p => p.deadline ?? new Date(0)))
 ```
 
 ---
 
 ## nullsLast()
 
-Wraps a comparator to place null/undefined values at the end.
+Wraps a comparator to place null items at the end.
+
+Like `nullsFirst`, it looks at the items being compared, not at a field inside them.
 
 ### Signature
 
-```typescript
+```typescript title="Signature"
 function nullsLast<T>(
   comparator: Comparator<Nullable<T>>
 ): Comparator<Nullable<T>>
@@ -306,16 +342,30 @@ function nullsLast<T>(
 
 ### When to Use
 
-- Active/valid items before inactive/invalid
-- Required fields before optional fields
+- Lists that hold `null` placeholders you want out of the way
 - Focus on items with data
 
 ### Examples
 
+#### Empty Slots Last
+
+```typescript
+import { nullsLast, ascending } from '@ontologyio/receta/compare'
+
+const scores: (number | null)[] = [30, null, 10, null, 20]
+
+scores.sort(nullsLast(ascending(score => score ?? 0)))
+// => [10, 20, 30, null, null]
+```
+
+### Sorting by a Nullable Field Last
+
+For a nullable field, use a fallback again. With `descending`, the lowest possible value lands at the end.
+
 #### Active Users First
 
 ```typescript
-import { nullsLast, descending } from '@ontologyio/receta/compare'
+import { descending } from '@ontologyio/receta/compare'
 
 interface User {
   name: string
@@ -323,7 +373,7 @@ interface User {
 }
 
 // Active users first, inactive (null) at end
-users.sort(nullsLast(descending(u => u.lastActivity ?? new Date(0))))
+users.sort(descending(u => u.lastActivity ?? new Date(0)))
 // => [Most recent activity ... least recent ... null, null]
 ```
 
@@ -336,7 +386,7 @@ interface Product {
 }
 
 // Products with discounts first, no discount at end
-products.sort(nullsLast(descending(p => p.discount ?? 0)))
+products.sort(descending(p => p.discount ?? 0))
 ```
 
 #### Verified Accounts
@@ -348,10 +398,12 @@ interface Account {
 }
 
 // Verified accounts first, unverified at end
-accounts.sort(nullsLast(descending(a => a.verifiedAt ?? new Date(0))))
+accounts.sort(descending(a => a.verifiedAt ?? new Date(0)))
 ```
 
 ### Real-World: Linear Issues
+
+When the field only decides a group, `byBoolean` says so directly, because false sorts before true:
 
 ```typescript
 interface LinearIssue {
@@ -364,7 +416,7 @@ interface LinearIssue {
 // Assigned issues first, then by priority
 issues.sort(
   compose(
-    nullsLast(ascending(i => i.assignee?.name ?? '')),
+    byBoolean(i => i.assignee === null),
     descending(i => i.priority)
   )
 )
@@ -378,7 +430,7 @@ Combines a primary comparator with a tiebreaker for when values are equal. More 
 
 ### Signature
 
-```typescript
+```typescript title="Signature"
 function withTiebreaker<T>(
   primary: Comparator<T>,
   tiebreaker: Comparator<T>
@@ -478,7 +530,7 @@ interface Task {
 tasks.sort(
   compose(
     ascending(t => t.status === 'open' ? 0 : 1),      // Open first
-    nullsFirst(ascending(t => t.assignee ?? '')),     // Unassigned first within status
+    byBoolean(t => t.assignee !== null),              // Unassigned first within status
     descending(t => t.priority),                      // High priority first
     byDate(t => t.createdAt)                          // Oldest first
   )
@@ -512,7 +564,7 @@ interface Employee {
 employees.sort(
   compose(
     ascending(e => e.department),
-    nullsLast(ascending(e => e.manager ?? '')), // Reports-to at end
+    byBoolean(e => e.manager === null), // No manager goes last
     descending(e => e.salary)
   )
 )
@@ -527,8 +579,8 @@ employees.sort(
 | `compose(a, b, c)` | Multi-level sort | 3+ sort criteria |
 | `withTiebreaker(a, b)` | Primary + tiebreak | Exactly 2 levels (more explicit) |
 | `reverse(comparator)` | Flip order | Toggle asc/desc |
-| `nullsFirst(comparator)` | Nulls at start | Missing data needs attention |
-| `nullsLast(comparator)` | Nulls at end | Focus on valid data first |
+| `nullsFirst(comparator)` | Null items at start | Missing entries need attention |
+| `nullsLast(comparator)` | Null items at end | Focus on entries with data |
 
 ## Common Patterns
 
@@ -542,7 +594,7 @@ interface SortConfig {
 
 function buildComparator(configs: SortConfig[]): Comparator<Item> {
   const comparators = configs.map(cfg => {
-    const base = byKey(cfg.column as keyof Item)
+    const base = byKey<Item, keyof Item>(cfg.column as keyof Item)
     return cfg.direction === 'desc' ? reverse(base) : base
   })
 

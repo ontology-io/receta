@@ -19,8 +19,8 @@ Transformation functions allow you to systematically transform or filter object 
 
 Transform all keys in an object using a mapping function.
 
-```typescript
-function mapKeys<T>(
+```typescript title="Signature"
+function mapKeys<T extends PlainObject>(
   obj: T,
   fn: (key: string, value: T[keyof T]) => string
 ): PlainObject
@@ -44,13 +44,15 @@ const normalized = mapKeys(apiResponse, (key) =>
 // { userId: 123, firstName: 'Alice', lastName: 'Smith', ... }
 ```
 
+For the common conventions, `transformKeys(apiResponse, 'camelCase')` does this for you, nested objects included.
+
 ### Real-World: Prefixing for Namespacing
 
 ```typescript
 // Add namespace to avoid conflicts
 const config = { host: 'localhost', port: 5432 }
 const namespaced = mapKeys(config, (key) => `db_${key}`)
-// { db_host: 'localhost', db_port: 5432 }
+// => { db_host: 'localhost', db_port: 5432 }
 ```
 
 ### Conditional Transformation
@@ -68,8 +70,8 @@ mapKeys(data, (key, value) =>
 
 Transform all values in an object using a mapping function.
 
-```typescript
-function mapValues<T, U>(
+```typescript title="Signature"
+function mapValues<T extends PlainObject, U>(
   obj: T,
   fn: (value: T[keyof T], key: keyof T) => U
 ): Record<keyof T, U>
@@ -88,7 +90,7 @@ const prices = {
 const withTax = mapValues(prices, (price) =>
   Math.round(price * 1.1 * 100) / 100
 )
-// { apple: 1.65, banana: 0.55, orange: 2.20 }
+// => { apple: 1.65, banana: 0.55, orange: 2.2 }
 ```
 
 ### Real-World: Type Conversions
@@ -97,15 +99,17 @@ const withTax = mapValues(prices, (price) =>
 // Convert all values to strings
 const config = { port: 5432, timeout: 30000, retries: 3 }
 const envVars = mapValues(config, (v) => String(v))
-// { port: '5432', timeout: '30000', retries: '3' }
+// => { port: '5432', timeout: '30000', retries: '3' }
 ```
 
 ### Access Key in Transformation
 
 ```typescript
+const user = { name: 'Alice', age: 30 }
+
 // Format with key context
-mapValues(user, (value, key) => `${key}: ${value}`)
-// { name: 'name: Alice', age: 'age: 30' }
+mapValues(user, (value, key) => `${String(key)}: ${value}`)
+// => { name: 'name: Alice', age: 'age: 30' }
 ```
 
 ---
@@ -114,8 +118,8 @@ mapValues(user, (value, key) => `${key}: ${value}`)
 
 Filter object by keeping only keys that match a predicate.
 
-```typescript
-function filterKeys<T>(
+```typescript title="Signature"
+function filterKeys<T extends PlainObject>(
   obj: T,
   predicate: (key: string) => boolean
 ): Partial<T>
@@ -132,8 +136,8 @@ const obj = {
   email: 'alice@example.com'
 }
 
-const public = filterKeys(obj, (key) => !key.startsWith('_'))
-// { id: 1, name: 'Alice', email: 'alice@example.com' }
+const visible = filterKeys(obj, (key) => !key.startsWith('_'))
+// => { id: 1, name: 'Alice', email: 'alice@example.com' }
 ```
 
 ### Real-World: Extract by Pattern
@@ -149,7 +153,7 @@ const config = {
 }
 
 const apiConfig = filterKeys(config, (key) => key.startsWith('api_'))
-// { api_key: 'secret', api_url: 'https://api.com', api_timeout: 30000 }
+// => { api_key: 'secret', api_url: 'https://api.com', api_timeout: 30000 }
 ```
 
 ---
@@ -158,8 +162,8 @@ const apiConfig = filterKeys(config, (key) => key.startsWith('api_'))
 
 Filter object by keeping only entries whose values match a predicate.
 
-```typescript
-function filterValues<T>(
+```typescript title="Signature"
+function filterValues<T extends PlainObject>(
   obj: T,
   predicate: (value: T[keyof T], key: keyof T) => boolean
 ): Partial<T>
@@ -176,7 +180,7 @@ const scores = {
 }
 
 const passing = filterValues(scores, (score) => score >= 70)
-// { alice: 95, charlie: 88, diana: 72 }
+// => { alice: 95, charlie: 88, diana: 72 }
 ```
 
 ### Real-World: Remove Empty Values
@@ -190,7 +194,7 @@ const formData = {
 }
 
 const filled = filterValues(formData, (v) => v !== '')
-// { name: 'Alice', company: 'Acme Inc' }
+// => { name: 'Alice', company: 'Acme Inc' }
 ```
 
 ### With Key Context
@@ -198,7 +202,7 @@ const filled = filterValues(formData, (v) => v !== '')
 ```typescript
 // Filter based on key-value relationship
 filterValues(inventory, (qty, product) =>
-  product.startsWith('premium_') ? qty > 10 : qty > 0
+  String(product).startsWith('premium_') ? qty > 10 : qty > 0
 )
 ```
 
@@ -208,7 +212,8 @@ filterValues(inventory, (qty, product) =>
 
 | Function | Transforms | Use Case |
 |----------|-----------|----------|
-| `mapKeys` | All keys | Normalize naming (camelCase, prefixing) |
+| `mapKeys` | All keys | Custom renames, prefixing |
+| `transformKeys` | All keys, at every depth | Normalize naming (camelCase, snake_case) |
 | `mapValues` | All values | Calculations, type conversions |
 | `filterKeys` | Keys (keep matching) | Remove private/internal fields |
 | `filterValues` | Values (keep matching) | Threshold filtering, remove empty |
@@ -217,11 +222,11 @@ filterValues(inventory, (qty, product) =>
 
 ```typescript
 // Complete transformation pipeline
-const process = (apiData: unknown) =>
+const process = (apiData: PlainObject) =>
   pipe(
     apiData,
-    mapKeys((key) => toCamelCase(key)),     // Normalize keys
     filterKeys((key) => !key.startsWith('_')), // Remove private
+    transformKeys('camelCase'),             // Normalize keys
     mapValues((v) => typeof v === 'string' ? v.trim() : v), // Trim strings
     filterValues((v) => v != null),         // Remove nullish
     compact                                 // Final cleanup

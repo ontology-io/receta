@@ -83,12 +83,14 @@ const processUser = (userId: string) =>
 ### Analytics and Tracking
 
 ```typescript
+import { piped } from 'remeda'
+
 const trackEvent = (event: string, data: any) => {
   // Send to analytics service
   analytics.track(event, data)
 }
 
-const createOrder = pipe(
+const createOrder = piped(
   buildOrder,
   tap((order) => trackEvent('order_created', { orderId: order.id })),
   validateOrder,
@@ -101,6 +103,8 @@ const createOrder = pipe(
 ## tryCatch - Safe Function Execution
 
 The `tryCatch` function wraps a potentially throwing function and returns a Result.
+
+It only catches synchronous throws. An async function comes back as an `Ok` holding its promise, and a rejection isn't caught. For async code, use `tryCatchAsync` from the Result module.
 
 ### Signature
 
@@ -222,9 +226,10 @@ The `memoize` function caches results based on the first argument.
 ### Signature
 
 ```typescript
-function memoize<Args extends readonly any[], R>(
-  fn: (...args: Args) => R
-): (...args: Args) => R
+function memoize<Args extends readonly [unknown, ...unknown[]], R>(
+  fn: (...args: Args) => R,
+  options?: MemoizeOptions
+): MemoizedFunction<Args, R>
 ```
 
 ### Basic Usage
@@ -282,6 +287,8 @@ await fetchUser('user-1')
 await fetchUser('user-2')
 ```
 
+`memoize` also keeps a rejected promise, so a failed request stays failed. `memoizeAsync` from the Memo module drops failures so the next call retries.
+
 ### Cache Invalidation
 
 Note: The basic `memoize` uses the first argument as cache key and never expires.
@@ -298,11 +305,11 @@ const fetchByQuery = memoizeBy(
 )
 
 // TTL cache
-import { ttl } from '@ontologyio/receta/memo'
+import { ttlCache } from '@ontologyio/receta/memo'
 
-const fetchWithTTL = ttl(
+const fetchWithTTL = memoizeAsync(
   async (id: string) => fetchData(id),
-  { ttl: 60000 } // 1 minute
+  { cache: ttlCache(60000) } // 1 minute
 )
 ```
 
@@ -311,10 +318,10 @@ const fetchWithTTL = ttl(
 You can combine these utilities for powerful pipelines:
 
 ```typescript
-import { pipe } from 'remeda'
+import { piped } from 'remeda'
 import { tap, tryCatch, memoize } from '@ontologyio/receta/function'
 
-const processData = pipe(
+const processData = piped(
   tap((input) => logger.debug('Processing', input)),
   tryCatch(parseInput),
   tap((result) => logger.debug('Parsed', result)),
@@ -364,7 +371,7 @@ tryCatch(parse, () => 'Error occurred')
  * ⚠️ Results are cached permanently by user ID.
  * Use `clearCache()` to invalidate.
  */
-const fetchUser = memoize(...)
+const fetchUser = memoize((id: string) => api.getUser(id))
 ```
 
 ### 4. Conditional Logging with tap

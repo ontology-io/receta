@@ -23,13 +23,13 @@ import type { Option } from '../types'
  * pipe(
  *   findUser(id),
  *   map(u => u.name),
- *   toNullable
- * ) // => 'John' or null
+ *   toNullable()
+ * ) // 'John' or null
  *
  * // Interfacing with external API
  * const apiPayload = {
- *   userId: pipe(maybeUserId, toNullable),
- *   metadata: pipe(maybeMetadata, toNullable)
+ *   userId: toNullable(maybeUserId),
+ *   metadata: toNullable(maybeMetadata)
  * }
  * ```
  *

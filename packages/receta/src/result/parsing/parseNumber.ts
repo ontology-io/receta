@@ -32,28 +32,27 @@ import { createParseNumberError, type ParseNumberError } from './types'
  *
  * // Failed parsing - not a number
  * parseNumber('abc')
- * // => Err({ _tag: 'ParseNumberError', reason: 'not_a_number', input: 'abc', ... })
+ * // Err with reason 'not_a_number'
  *
  * parseNumber('')
- * // => Err({ _tag: 'ParseNumberError', reason: 'not_a_number', input: '', ... })
+ * // Err with reason 'not_a_number'
  *
  * // Failed parsing - infinite
  * parseNumber('Infinity')
- * // => Err({ _tag: 'ParseNumberError', reason: 'infinite', input: 'Infinity', ... })
+ * // Err with reason 'infinite'
  *
  * parseNumber('-Infinity')
- * // => Err({ _tag: 'ParseNumberError', reason: 'infinite', input: '-Infinity', ... })
+ * // Err with reason 'infinite'
  *
  * // Use in validation pipelines
  * pipe(
  *   parseNumber('42'),
- *   Result.flatMap(n => n > 0 ? ok(n) : err('Must be positive'))
+ *   flatMap(n => n > 0 ? ok(n) : err('Must be positive'))
  * )
  * // => Ok(42)
  * ```
  *
- * @see {@link parseInt} - For parsing integers with radix support
- * @see {@link Number} - The underlying conversion function
+ * @see parseInt - For parsing integers with radix support
  */
 export function parseNumber(str: string): Result<number, ParseNumberError> {
   const trimmed = str.trim()

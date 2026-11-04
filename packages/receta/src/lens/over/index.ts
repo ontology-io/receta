@@ -17,7 +17,7 @@ import { purryConfig2 } from '../../utils'
  * @example
  * ```typescript
  * // Data-first
- * const ageLens = prop<User>('age')
+ * const ageLens = prop<User, 'age'>('age')
  * const user = { name: 'Alice', age: 30 }
  *
  * over(ageLens, age => age + 1, user)
@@ -31,14 +31,14 @@ import { purryConfig2 } from '../../utils'
  *
  * const updated = R.pipe(
  *   user,
- *   over(prop<User>('age'), age => age + 1)
+ *   over(prop<User, 'age'>('age'), age => age + 1)
  * ) // { name: 'Alice', age: 31 }
  * ```
  *
  * @example
  * ```typescript
  * // String manipulation
- * const nameLens = prop<User>('name')
+ * const nameLens = prop<User, 'name'>('name')
  * const user = { name: 'alice', age: 30 }
  *
  * over(nameLens, name => name.toUpperCase(), user)
@@ -68,7 +68,7 @@ import { purryConfig2 } from '../../utils'
  * @example
  * ```typescript
  * // Incrementing a counter (React state pattern)
- * const countLens = prop<State>('count')
+ * const countLens = prop<State, 'count'>('count')
  * setState(over(countLens, n => n + 1))
  * ```
  *

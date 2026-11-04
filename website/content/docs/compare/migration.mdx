@@ -80,6 +80,8 @@ scores.sort(descending(x => x))
 ### Pattern 3: Object Property
 
 ```typescript
+const users = [{ name: 'Alice', age: 30 }, { name: 'Bob', age: 25 }]
+
 // Before
 users.sort((a, b) => a.age - b.age)
 
@@ -179,9 +181,9 @@ users.sort((a, b) => {
 })
 
 // After
-import { ascending, nullsFirst } from '@ontologyio/receta/compare'
+import { ascending } from '@ontologyio/receta/compare'
 
-users.sort(nullsFirst(ascending(u => u.lastLogin ?? new Date(0))))
+users.sort(ascending(u => u.lastLogin ?? new Date(0)))
 ```
 
 ### Pattern: Explicit Null Checks
@@ -196,9 +198,14 @@ items.sort((a, b) => {
 })
 
 // After
-import { ascending, nullsFirst } from '@ontologyio/receta/compare'
+import { ascending, byBoolean, compose } from '@ontologyio/receta/compare'
 
-items.sort(nullsFirst(ascending(i => i.value ?? 0)))
+items.sort(
+  compose(
+    byBoolean(i => i.value !== null), // false sorts first, so nulls lead
+    ascending(i => i.value ?? 0)
+  )
+)
 ```
 
 ## Step 5: Handle String Case
@@ -319,7 +326,7 @@ For each `Array.sort()` in your codebase:
 
 ### Pitfall 1: Forgetting to Return from Arrow Functions
 
-```typescript
+```ts nocheck
 // ❌ Wrong
 const comparator = ascending(x => { x.value })
 
@@ -331,13 +338,13 @@ const comparator = ascending(x => x.value)
 
 ```typescript
 // ❌ Don't mutate in comparator
-items.sort(ascending(x => {
+items.sort(ascending((x: Item) => {
   x.viewed = true  // Side effect!
   return x.priority
 }))
 
 // ✅ Pure extraction
-items.sort(ascending(x => x.priority))
+items.sort(ascending((x: Item) => x.priority))
 ```
 
 ### Pitfall 3: Wrong compose() Order
@@ -345,14 +352,14 @@ items.sort(ascending(x => x.priority))
 ```typescript
 // ❌ Wrong order (priority before status)
 compose(
-  ascending(x => x.priority),
-  ascending(x => x.status)
+  ascending((x: Item) => x.priority),
+  ascending((x: Item) => x.status)
 )
 
 // ✅ Correct (status before priority)
 compose(
-  ascending(x => x.status),
-  ascending(x => x.priority)
+  ascending((x: Item) => x.status),
+  ascending((x: Item) => x.priority)
 )
 
 // compose() applies in order: first has highest priority
@@ -362,10 +369,10 @@ compose(
 
 ```typescript
 // ❌ Mixing types
-ascending(x => x.date ?? 'never')  // Date | string
+ascending((x: Item) => x.date ?? 'never')  // Date | string
 
 // ✅ Consistent types
-ascending(x => x.date ?? new Date(0))  // Always Date
+ascending((x: Item) => x.date ?? new Date(0))  // Always Date
 ```
 
 ## Testing Your Migration
@@ -378,10 +385,10 @@ import { yourComparator } from './comparators'
 
 describe('Migration: Product sorting', () => {
   it('maintains same order as original implementation', () => {
-    const products = [/* test data */]
+    const products = [{ price: 20 }, { price: 10 }]
 
     // Original implementation
-    const originalSort = [...products].sort((a, b) => /* old logic */)
+    const originalSort = [...products].sort((a, b) => a.price - b.price)
 
     // New implementation
     const newSort = [...products].sort(yourComparator)
@@ -390,7 +397,7 @@ describe('Migration: Product sorting', () => {
   })
 
   it('handles edge cases', () => {
-    const edgeCases = [/* null, empty, duplicates */]
+    const edgeCases = [{ price: 0 }, { price: 10 }, { price: 10 }]
     const sorted = edgeCases.sort(yourComparator)
     expect(sorted).toBeDefined()
   })

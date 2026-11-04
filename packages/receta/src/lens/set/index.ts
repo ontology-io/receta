@@ -17,7 +17,7 @@ import { purryConfig2 } from '../../utils'
  * @example
  * ```typescript
  * // Data-first
- * const nameLens = prop<User>('name')
+ * const nameLens = prop<User, 'name'>('name')
  * const user = { name: 'Alice', age: 30 }
  *
  * set(nameLens, 'Bob', user)
@@ -32,7 +32,7 @@ import { purryConfig2 } from '../../utils'
  *
  * const updated = R.pipe(
  *   user,
- *   set(prop<User>('name'), 'Bob')
+ *   set(prop<User, 'name'>('name'), 'Bob')
  * ) // { name: 'Bob', age: 30 }
  * ```
  *

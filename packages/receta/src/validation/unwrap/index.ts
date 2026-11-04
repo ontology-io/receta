@@ -23,7 +23,7 @@ import { isValid } from '../guards'
  * unwrap(valid(42)) // => 42
  *
  * unwrap(invalid(['error']))
- * // => throws Error: "Cannot unwrap Invalid validation"
+ * // Throws Error: Cannot unwrap Invalid validation. Errors: ["error"]
  *
  * // Real-world: When you've already checked the validation
  * const validation = validateConfig(config)
@@ -73,7 +73,7 @@ export function unwrap<T, E>(validation: Validation<T, E>): T {
  *   )
  *
  * // Form field with default
- * const getUsername = (form: FormData) =>
+ * const getUsername = (form: SignupForm) =>
  *   pipe(
  *     validateUsername(form.username),
  *     unwrapOr('anonymous')
@@ -132,7 +132,7 @@ function unwrapOrImplementation<T, E>(validation: Validation<T, E>, defaultValue
  *   )
  *
  * // Real-world: Create error report
- * const processForm = (data: FormData) =>
+ * const processForm = (data: SignupForm) =>
  *   pipe(
  *     validateForm(data),
  *     unwrapOrElse((errors) => {

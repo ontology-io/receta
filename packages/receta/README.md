@@ -178,10 +178,10 @@ const products = [
 const filtered = R.filter(
   products,
   where({
-    price: between(10, 100),
-    inStock: true,
+    price: between<number>(10, 100),
+    inStock: Boolean,
     category: oneOf(['electronics', 'books']),
-    rating: gte(4.0)
+    rating: gte<number>(4.0)
   })
 )
 // [{ price: 50, ... }]
@@ -192,12 +192,12 @@ const filtered = R.filter(
 ```typescript
 import { email, minLength, schema } from '@ontologyio/receta/validation'
 
-const validateRegistration = schema({
+const registration = {
   email: email('Must be a valid email'),
   password: minLength(8, 'Must be at least 8 characters'),
-})
+}
 
-validateRegistration({ email: 'invalid', password: '123' })
+schema(registration, { email: 'invalid', password: '123' })
 // => Invalid([
 //   { field: 'email', errors: ['Must be a valid email'] },
 //   { field: 'password', errors: ['Must be at least 8 characters'] },

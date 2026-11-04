@@ -11,7 +11,6 @@ Concurrency control lets you execute multiple async operations efficiently while
 | Function | Purpose | Real-World Analogy |
 |----------|---------|-------------------|
 | `mapAsync(items, fn, { concurrency })` | Transform items in parallel with limit | Processing orders with N workers |
-| `mapAsyncResult(items, fn, { concurrency })` | Transform with Result-returning functions | Type-safe batch operations with error tracking |
 | `filterAsync(items, predicate, { concurrency })` | Filter items using async predicate | Checking inventory across warehouses |
 | `parallel(tasks)` | Run all tasks simultaneously | Fetching data from multiple APIs at once |
 | `sequential(tasks)` | Run tasks one after another | Processing payments in order |
@@ -24,13 +23,15 @@ Concurrency control lets you execute multiple async operations efficiently while
 
 ### Signature
 
-```typescript
+```typescript title="Signature"
 function mapAsync<T, U>(
   items: readonly T[],
   fn: (item: T, index: number) => Promise<U>,
   options?: { concurrency?: number }
-): Promise<U[]>
+): Promise<Result<U[], MapAsyncError>>
 ```
+
+Leave `concurrency` out and every item starts at once.
 
 ### Real-World: GitHub Bulk Repository Fetch
 
@@ -72,6 +73,8 @@ const repos = await fetchRepos([
   'vercel/next.js',
   // ... 997 more repos
 ])
+
+// repos is a Result: Ok with every repo, or Err with the failure
 ```
 
 **Why concurrency: 10?**
@@ -85,6 +88,9 @@ const repos = await fetchRepos([
 **Problem**: Process 500 customer payments, but Stripe limits to 100 requests/second.
 
 ```typescript
+import { mapAsync, type MapAsyncError } from '@ontologyio/receta/async'
+import { isOk, type Result } from '@ontologyio/receta/result'
+
 type Payment = {
   customerId: string
   amount: number
@@ -97,7 +103,9 @@ type PaymentResult = {
   customerId: string
 }
 
-const processPayments = async (payments: Payment[]): Promise<PaymentResult[]> => {
+const processPayments = async (
+  payments: Payment[]
+): Promise<Result<PaymentResult[], MapAsyncError>> => {
   return mapAsync(
     payments,
     async (payment) => {
@@ -124,7 +132,11 @@ const payments: Payment[] = [
 ]
 
 const results = await processPayments(payments)
-console.log(`Processed ${results.filter(r => r.status === 'succeeded').length} payments`)
+
+if (isOk(results)) {
+  const succeeded = results.value.filter(r => r.status === 'succeeded')
+  console.log(`Processed ${succeeded.length} payments`)
+}
 ```
 
 ### Real-World: Image Processing Pipeline
@@ -189,18 +201,19 @@ const updateUsers = async (updates: Array<{ id: string; name: string }>) => {
 ```typescript
 // Benchmark: Fetching 100 URLs
 const urls = Array.from({ length: 100 }, (_, i) => `https://api.example.com/item/${i}`)
+const get = (url: string) => fetch(url)
 
 // No limit (concurrency: Infinity) - 2.3 seconds, might fail
-await mapAsync(urls, fetch) // All 100 at once!
+await mapAsync(urls, get) // All 100 at once!
 
 // concurrency: 50 - 2.5 seconds, stable
-await mapAsync(urls, fetch, { concurrency: 50 })
+await mapAsync(urls, get, { concurrency: 50 })
 
 // concurrency: 10 - 4.1 seconds, very stable
-await mapAsync(urls, fetch, { concurrency: 10 })
+await mapAsync(urls, get, { concurrency: 10 })
 
 // concurrency: 1 - 23 seconds, sequential
-await mapAsync(urls, fetch, { concurrency: 1 })
+await mapAsync(urls, get, { concurrency: 1 })
 ```
 
 **Rule of Thumb**: Start with concurrency = 10, then adjust based on:
@@ -211,44 +224,35 @@ await mapAsync(urls, fetch, { concurrency: 1 })
 
 ---
 
-## `mapAsyncResult()` - Result-Returning Async Mapping
+## Handling Failures with Result
 
-**When to use**: Your mapping function returns `Result<T, E>` and you want type-safe error handling without exceptions.
-
-### Signature
-
-```typescript
-function mapAsyncResult<T, U, E>(
-  items: readonly T[],
-  fn: (item: T, index: number) => Promise<Result<U, E>>,
-  options?: ConcurrencyOptions
-): Promise<Result<U[], MapAsyncError<E>>>
-```
+**When to use**: Every `mapAsync` call. It returns a `Result`, so a failure is a value you handle rather than an exception you catch.
 
 ### Error Type
 
-```typescript
-type MapAsyncError<E> = {
-  type: 'item_failed'
+```typescript title="Signature"
+type MapAsyncError = {
+  type: 'map_async_error'
   index: number
   item: unknown
-  error: E
+  error: unknown
 }
 ```
 
-### When to Use
+`index` and `item` say which item failed, but only when `concurrency` is lower than the number of items. Without a limit the work runs through `Promise.all`, which can't say which promise rejected, so you get `index: -1` and `item: undefined`.
 
-Use `mapAsyncResult()` when:
-- Your mapping function returns `Result<T, E>`
-- You want type-safe error handling without exceptions
-- You need to know which item failed and why
-- You're building composable async pipelines
+### What Counts as a Failure
+
+`mapAsync` fails when the mapper throws or rejects. A mapper that returns a `Result` hasn't failed, whatever that Result holds, so you choose how a failure behaves:
+
+- **Stop at the first failure**: let the mapper throw. Under a limit, no new items start after a failure.
+- **Keep going and see every outcome**: have the mapper return a `Result`, then use `partition` or `collect` on the array.
 
 ### Real-World: Stripe Batch Payments
 
 ```typescript
-import { mapAsyncResult } from '@ontologyio/receta/async'
-import { Result, ok, err, isErr, map, mapErr } from '@ontologyio/receta/result'
+import { mapAsync, retry } from '@ontologyio/receta/async'
+import { type Result, isOk, map, mapErr, partition } from '@ontologyio/receta/result'
 import * as R from 'remeda'
 
 type Payment = { id: string; amount: number; status: 'success' | 'failed' }
@@ -258,42 +262,41 @@ const processPayment = async (
   customerId: string
 ): Promise<Result<Payment, PaymentError>> => {
   // Returns Result instead of throwing
-  const result = await retryResult(() =>
+  const result = await retry(() =>
     stripe.charges.create({ customer: customerId, amount: 1000 })
   )
 
   return R.pipe(
     result,
     map(charge => ({ id: charge.id, amount: charge.amount, status: 'success' as const })),
-    mapErr(error => ({ type: 'network' as const, message: error.lastError }))
+    mapErr(error => ({ type: 'network' as const, message: String(error.lastError) }))
   )
 }
 
 // Process payments with concurrency control
-const result = await mapAsyncResult(
+const outcome = await mapAsync(
   customerIds,
   processPayment,
   { concurrency: 5 }
 )
 
-// Handle result - no exceptions!
-if (isErr(result)) {
-  console.error(`Payment ${result.error.index} failed:`, result.error.error.message)
-  // Retry just the failed payment
-} else {
-  console.log(`Processed ${result.value.length} payments successfully`)
+// processPayment never throws, so every customer gets an answer
+if (isOk(outcome)) {
+  const [paid, failed] = partition(outcome.value)
+  console.log(`${paid.length} paid, ${failed.length} failed`)
+  // Retry just the failed payments
 }
 ```
 
-### Comparison: mapAsync vs mapAsyncResult
+### Comparison: Throwing Mapper vs Result Mapper
 
-| Feature | `mapAsync()` | `mapAsyncResult()` |
-|---------|-------------|-------------------|
-| Error handling | Throws exception | Returns Result |
-| Type safety | `Promise<U[]>` | `Promise<Result<U[], E>>` |
-| Error info | Exception only | Index + item + error |
-| Composable | try-catch | pipe + Result functions |
-| Use case | Simple mapping | Type-safe pipelines |
+| Feature | Mapper throws | Mapper returns `Result` |
+|---------|---------------|-------------------------|
+| After a failure | Stops starting new items | Keeps going |
+| You get | `Err` with the first failure | `Ok` with one `Result` per item |
+| Type | `Result<U[], MapAsyncError>` | `Result<Result<U, E>[], MapAsyncError>` |
+| Error type | `unknown`, in `error.error` | Your own `E` |
+| Use case | All-or-nothing work | Partial success |
 
 ### Real-World: GitHub Repository Validation
 
@@ -332,32 +335,35 @@ const fetchRepo = async (repoName: string): Promise<Result<RepoData, RepoError>>
 }
 
 // Fetch multiple repos with Result handling
-const result = await mapAsyncResult(
+const outcome = await mapAsync(
   ['facebook/react', 'microsoft/typescript', 'invalid/repo'],
   fetchRepo,
   { concurrency: 10 }
 )
 
-if (isErr(result)) {
-  const { index, error } = result.error
-  console.error(`Failed at repo ${index}: ${error.repo} (${error.type})`)
+if (isOk(outcome)) {
+  // collect gives every repo, or the first failure
+  const repos = collect(outcome.value)
 
-  // Continue with partial results or retry specific repo
-} else {
-  console.log(`Successfully fetched ${result.value.length} repositories`)
+  if (isErr(repos)) {
+    const { repo, type } = repos.error
+    console.error(`Failed at ${repo} (${type})`)
+  } else {
+    console.log(`Successfully fetched ${repos.value.length} repositories`)
+  }
 }
 ```
 
 ### Real-World: File Processing Pipeline
 
 ```typescript
-import { tryCatch, type Result } from '@ontologyio/receta/result'
+import { isErr, isOk, ok, partition, tryCatchAsync, type Result } from '@ontologyio/receta/result'
 type ProcessedFile = { path: string; size: number; hash: string }
 type FileError = { type: 'read' | 'parse' | 'write'; path: string; message: string }
 
 const processFile = async (path: string): Promise<Result<ProcessedFile, FileError>> => {
   // Read file
-  const readResult = await tryCatch(
+  const readResult = await tryCatchAsync(
     () => fs.readFile(path),
     (error) => ({ type: 'read' as const, path, message: String(error) })
   )
@@ -365,7 +371,7 @@ const processFile = async (path: string): Promise<Result<ProcessedFile, FileErro
   if (isErr(readResult)) return readResult
 
   // Process file
-  const processResult = await tryCatch(
+  const processResult = await tryCatchAsync(
     () => processData(readResult.value),
     (error) => ({ type: 'parse' as const, path, message: String(error) })
   )
@@ -381,39 +387,38 @@ const processFile = async (path: string): Promise<Result<ProcessedFile, FileErro
 }
 
 // Process files with concurrency
-const result = await mapAsyncResult(
+const outcome = await mapAsync(
   filePaths,
   processFile,
   { concurrency: 4 }
 )
 
 // Handle errors gracefully
-if (isErr(result)) {
-  const { index, item, error } = result.error
-  console.error(`Failed to process file ${item} at index ${index}:`, error.message)
+if (isOk(outcome)) {
+  const [processed, failed] = partition(outcome.value)
 
-  // Log error and continue with remaining files
-  await logError({ file: item, error })
-} else {
-  console.log(`Processed ${result.value.length} files`)
-  console.log(`Total size: ${result.value.reduce((sum, f) => sum + f.size, 0)} bytes`)
+  // Log the failures and keep what worked
+  failed.forEach(({ path, message }) => console.error(`Failed to process ${path}:`, message))
+
+  console.log(`Processed ${processed.length} files`)
+  console.log(`Total size: ${processed.reduce((sum, f) => sum + f.size, 0)} bytes`)
 }
 ```
 
 ### Composing with Result Functions
 
-The power of `mapAsyncResult()` is that it composes naturally with other Result functions:
+Because `mapAsync` returns a Result, it composes naturally with other Result functions:
 
 ```typescript
-import { Result, ok, err, isErr, map, flatMap, collect } from '@ontologyio/receta/result'
-import { mapAsyncResult } from '@ontologyio/receta/async'
+import { collect, flatMap, isErr, map } from '@ontologyio/receta/result'
+import { mapAsync } from '@ontologyio/receta/async'
 import * as R from 'remeda'
 
 // Complex pipeline with Result composition
 const processOrders = async (orderIds: string[]) => {
-  return R.pipe(
+  const payments = R.pipe(
     // Fetch orders (returns Result)
-    await mapAsyncResult(orderIds, fetchOrder, { concurrency: 10 }),
+    await mapAsync(orderIds, fetchOrder, { concurrency: 10 }),
 
     // Validate orders
     flatMap(orders =>
@@ -423,13 +428,13 @@ const processOrders = async (orderIds: string[]) => {
     // Transform to payment requests
     map(orders =>
       orders.map(order => ({ customerId: order.customerId, amount: order.total }))
-    ),
-
-    // Process payments (returns Result)
-    flatMap(async payments =>
-      await mapAsyncResult(payments, processPayment, { concurrency: 5 })
     )
   )
+
+  if (isErr(payments)) return payments
+
+  // Process payments (returns Result)
+  return mapAsync(payments.value, processPayment, { concurrency: 5 })
 }
 
 // Single error-handling point
@@ -442,13 +447,13 @@ if (isErr(result)) {
 }
 ```
 
-### Benefits Over mapAsync
+### Why a Result
 
 1. **No try-catch**: Errors are values, not exceptions
-2. **Type-safe**: `Result<T[], E>` vs `Promise<T[]>`
-3. **Detailed errors**: Know which item failed and why
+2. **Type-safe**: `Result<U[], MapAsyncError>` says the call can fail
+3. **Detailed errors**: Under a limit, know which item failed and why
 4. **Composable**: Works with all Result functions
-5. **Fail-fast**: Stops on first error (configurable)
+5. **Fail-fast**: Under a limit, stops starting new items after a failure
 
 ---
 
@@ -458,13 +463,15 @@ if (isErr(result)) {
 
 ### Signature
 
-```typescript
+```typescript title="Signature"
 function filterAsync<T>(
   items: readonly T[],
   predicate: (item: T, index: number) => Promise<boolean>,
   options?: { concurrency?: number }
-): Promise<T[]>
+): Promise<Result<T[], FilterAsyncError>>
 ```
+
+A predicate that throws gives an `Err` whose `underlyingError` is the `MapAsyncError`.
 
 ### Real-World: Check Inventory Across Warehouses
 
@@ -512,7 +519,10 @@ const allProducts: Product[] = [
 ]
 
 const inStock = await filterInStockProducts(allProducts)
-console.log(`${inStock.length} products available`)
+
+if (isOk(inStock)) {
+  console.log(`${inStock.value.length} products available`)
+}
 ```
 
 ### Real-World: Validate S3 Objects Exist
@@ -595,11 +605,14 @@ const validEmails = await filterValidEmails(emailList)
 
 ### Signature
 
-```typescript
-function parallel<T extends readonly unknown[]>(
-  tasks: { [K in keyof T]: () => Promise<T[K]> }
-): Promise<T>
+```typescript title="Signature"
+function parallel<T>(
+  tasks: ReadonlyArray<() => Promise<T>>,
+  options?: { concurrency?: number }
+): Promise<Result<T[], MapAsyncError>>
 ```
+
+`parallel` is `mapAsync` over a list of functions, so it takes the same `concurrency` limit. Every task shares one type `T`, and the values come back as an array inside the Result.
 
 ### Real-World: Dashboard Data Loading
 
@@ -616,17 +629,21 @@ type DashboardData = {
   systemHealth: { status: 'healthy' | 'degraded' }
 }
 
-const loadDashboard = async (): Promise<DashboardData> => {
-  const [userStats, recentOrders, revenue, notifications, systemHealth] =
-    await parallel([
-      () => fetch('/api/users/stats').then(r => r.json()),
-      () => fetch('/api/orders/recent').then(r => r.json()),
-      () => fetch('/api/revenue').then(r => r.json()),
-      () => fetch('/api/notifications').then(r => r.json()),
-      () => fetch('/api/health').then(r => r.json())
-    ])
+const loadDashboard = async () => {
+  const loaded = await parallel([
+    () => fetch('/api/users/stats').then(r => r.json()),
+    () => fetch('/api/orders/recent').then(r => r.json()),
+    () => fetch('/api/revenue').then(r => r.json()),
+    () => fetch('/api/notifications').then(r => r.json()),
+    () => fetch('/api/health').then(r => r.json())
+  ])
 
-  return { userStats, recentOrders, revenue, notifications, systemHealth }
+  return map(
+    loaded,
+    ([userStats, recentOrders, revenue, notifications, systemHealth]): DashboardData => ({
+      userStats, recentOrders, revenue, notifications, systemHealth
+    })
+  )
 }
 
 // Usage - All 5 APIs load in parallel
@@ -651,11 +668,13 @@ const deployToRegion = async (region: string, artifact: string) => {
 const deployGlobally = async (artifact: string) => {
   const regions = ['us-east-1', 'eu-west-1', 'ap-southeast-1']
 
-  await parallel(
+  const deployed = await parallel(
     regions.map(region => () => deployToRegion(region, artifact))
   )
 
-  console.log('Global deployment complete!')
+  if (isOk(deployed)) {
+    console.log('Global deployment complete!')
+  }
 }
 
 // All regions deploy at the same time
@@ -712,9 +731,12 @@ const checkAllServices = async () => {
 
 // Usage
 const health = await checkAllServices()
-health.forEach(({ name, status, responseTime }) => {
-  console.log(`${name}: ${status} (${responseTime}ms)`)
-})
+
+if (isOk(health)) {
+  health.value.forEach(({ name, status, responseTime }) => {
+    console.log(`${name}: ${status} (${responseTime}ms)`)
+  })
+}
 ```
 
 ### Performance Characteristics
@@ -744,11 +766,13 @@ await fast() // Total: 1 second (all run at once)
 
 ### Signature
 
-```typescript
-function sequential<T extends readonly unknown[]>(
-  tasks: { [K in keyof T]: () => Promise<T[K]> }
-): Promise<T>
+```typescript title="Signature"
+function sequential<T>(
+  tasks: ReadonlyArray<() => Promise<T>>
+): Promise<Result<T[], SequentialError>>
 ```
+
+The first task to fail stops the rest. `SequentialError` holds its `taskIndex`, the `completedTasks` count, and the `error`.
 
 ### Real-World: Payment Processing Flow
 
@@ -767,8 +791,8 @@ type PaymentFlow = {
 const processPayment = async (
   customerId: string,
   amount: number
-): Promise<PaymentFlow> => {
-  const [authorized, captured, receipt, notification] = await sequential([
+) => {
+  const steps = await sequential([
     // Step 1: Authorize card
     async () => {
       console.log('Authorizing...')
@@ -797,7 +821,12 @@ const processPayment = async (
     }
   ])
 
-  return { authorized, captured, receipt, notification }
+  return map(
+    steps,
+    ([authorized, captured, receipt, notification]): PaymentFlow => ({
+      authorized, captured, receipt, notification
+    })
+  )
 }
 
 // Each step waits for previous to complete
@@ -829,10 +858,15 @@ const runMigration = async (migration: Migration) => {
 }
 
 const migrate = async () => {
-  await sequential(
+  const applied = await sequential(
     migrations.map(m => () => runMigration(m))
   )
-  console.log('All migrations complete!')
+
+  if (isErr(applied)) {
+    console.error(`Stopped at migration ${applied.error.taskIndex}`)
+  } else {
+    console.log('All migrations complete!')
+  }
 }
 
 // Runs in exact order: 001 → 002 → 003
@@ -845,7 +879,7 @@ await migrate()
 
 ```typescript
 const processVideo = async (videoId: string) => {
-  const [transcoded, thumbnail, subtitles, uploaded] = await sequential([
+  const stages = await sequential([
     // Step 1: Transcode to different resolutions
     async () => {
       console.log('Transcoding video...')
@@ -871,7 +905,9 @@ const processVideo = async (videoId: string) => {
     }
   ])
 
-  return { transcoded, thumbnail, subtitles, uploaded }
+  return map(stages, ([transcoded, thumbnail, subtitles, uploaded]) => ({
+    transcoded, thumbnail, subtitles, uploaded
+  }))
 }
 ```
 
@@ -971,29 +1007,20 @@ await processBatch(
 **Problem**: API calls sometimes fail - retry with increasing delays.
 
 ```typescript
-const retryWithBackoff = async <T>(
-  fn: () => Promise<T>,
-  maxRetries = 3
-): Promise<T> => {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn()
-    } catch (error) {
-      if (attempt === maxRetries) throw error
+import { mapAsync, retry } from '@ontologyio/receta/async'
 
-      const delay = Math.pow(2, attempt) * 1000 // 1s, 2s, 4s
-      console.log(`Retry ${attempt + 1}/${maxRetries} after ${delay}ms`)
-      await new Promise(resolve => setTimeout(resolve, delay))
-    }
-  }
-  throw new Error('Max retries exceeded')
-}
-
-// Usage with mapAsync
 const fetchWithRetry = async (urls: string[]) => {
   return mapAsync(
     urls,
-    (url) => retryWithBackoff(() => fetch(url).then(r => r.json())),
+    (url) =>
+      retry(() => fetch(url).then(r => r.json()), {
+        maxAttempts: 4,
+        delay: 1000, // 1s, 2s, 4s
+        backoff: 2,
+        onRetry: (_error, attempt, delay) => {
+          console.log(`Retry ${attempt}/3 after ${delay}ms`)
+        }
+      }),
     { concurrency: 10 }
   )
 }
@@ -1028,11 +1055,10 @@ const processByPriority = async (tasks: Task[]) => {
 
 | Function | Execution | Use Case | Concurrency Control | Error Handling |
 |----------|-----------|----------|---------------------|----------------|
-| `mapAsync` | Parallel with limit | Transform many items | ✅ Yes (configurable) | Throws exceptions |
-| `mapAsyncResult` | Parallel with limit | Transform with Result | ✅ Yes (configurable) | Returns Result |
-| `filterAsync` | Parallel with limit | Filter with async check | ✅ Yes (configurable) | Throws exceptions |
-| `parallel` | All at once | Independent tasks | ❌ No (all run together) | Throws exceptions |
-| `sequential` | One by one | Dependent tasks | ❌ No (always sequential) | Throws exceptions |
+| `mapAsync` | Parallel with limit | Transform many items | ✅ Yes (configurable) | `Result<U[], MapAsyncError>` |
+| `filterAsync` | Parallel with limit | Filter with async check | ✅ Yes (configurable) | `Result<T[], FilterAsyncError>` |
+| `parallel` | All at once, or with limit | Independent tasks | ✅ Yes (configurable) | `Result<T[], MapAsyncError>` |
+| `sequential` | One by one | Dependent tasks | ❌ No (always sequential) | `Result<T[], SequentialError>` |
 
 ### When to Use Each
 
@@ -1040,21 +1066,18 @@ const processByPriority = async (tasks: Task[]) => {
 // mapAsync - Transform with rate limit
 const results = await mapAsync(items, fetchData, { concurrency: 10 })
 
-// mapAsyncResult - Transform with Result-returning functions
-const result = await mapAsyncResult(items, fetchDataResult, { concurrency: 10 })
-
 // filterAsync - Filter with async validation
 const valid = await filterAsync(items, isValid, { concurrency: 20 })
 
 // parallel - Load independent data
-const [users, products, orders] = await parallel([
+const loaded = await parallel([
   fetchUsers,
   fetchProducts,
   fetchOrders
 ])
 
 // sequential - Steps depend on each other
-const [auth, data, processed] = await sequential([
+const steps = await sequential([
   authenticate,
   fetchData,
   processData
@@ -1084,20 +1107,20 @@ const b = await fetchB() // 1 second
 const c = await fetchC() // 1 second
 
 // ✅ Good - Fast (1 second total)
-const [a, b, c] = await parallel([fetchA, fetchB, fetchC])
+const results = await parallel([fetchA, fetchB, fetchC])
 ```
 
 ### Pitfall 3: Parallel When Should Sequential
 
 ```typescript
 // ❌ Bad - Might capture before authorization completes!
-const [auth, capture] = await parallel([
+const results = await parallel([
   authorizeCard,
   capturePayment
 ])
 
 // ✅ Good - Capture only after authorization
-const [auth, capture] = await sequential([
+const results = await sequential([
   authorizeCard,
   capturePayment
 ])
@@ -1109,15 +1132,8 @@ const [auth, capture] = await sequential([
 // ❌ Bad - One failure stops everything
 await mapAsync(items, processItem)
 
-// ✅ Good - Handle errors individually
-await mapAsync(items, async (item) => {
-  try {
-    return await processItem(item)
-  } catch (error) {
-    console.error(`Failed to process ${item.id}:`, error)
-    return null // or return error object
-  }
-})
+// ✅ Good - Each item gets its own Result
+await mapAsync(items, (item) => tryCatchAsync(() => processItem(item)))
 ```
 
 ### Pitfall 5: Memory Leak in Long-Running Tasks
@@ -1273,7 +1289,7 @@ type Order = {
 
 const processOrder = async (order: Order) => {
   // Sequential: Must happen in order
-  const [validated, charged, fulfilled] = await sequential([
+  const steps = await sequential([
     // Step 1: Validate inventory
     async () => {
       console.log(`Validating order ${order.id}`)
@@ -1296,16 +1312,24 @@ const processOrder = async (order: Order) => {
       console.log(`Fulfilling order ${order.id}`)
 
       // Parallel: These can happen at the same time
-      const [shipment, receipt, notification] = await parallel([
+      const fulfilled = await parallel([
         () => createShipment(order),
         () => generateReceipt(order),
         () => sendOrderConfirmation(order.customerId)
       ])
 
+      // Throw so sequential sees the failure and stops
+      if (isErr(fulfilled)) throw fulfilled.error
+
+      const [shipment, receipt, notification] = fulfilled.value
       return { shipment, receipt, notification }
     }
   ])
 
+  // Throw so mapAsync sees the failure
+  if (isErr(steps)) throw steps.error
+
+  const [validated, charged, fulfilled] = steps.value
   return { validated, charged, fulfilled }
 }
 
@@ -1321,13 +1345,16 @@ const processOrders = async (orders: Order[]) => {
 // Usage
 const orders: Order[] = [/* ... 100 orders ... */]
 const results = await processOrders(orders)
-console.log(`Processed ${results.length} orders`)
+
+if (isOk(results)) {
+  console.log(`Processed ${results.value.length} orders`)
+}
 ```
 
 ---
 
 ## Next Steps
 
-- **[Error Handling](./02-error-handling.md)**: Handle async errors with Result pattern
-- **[Retry Strategies](./03-retry.md)**: Implement retry logic with exponential backoff
+- **[Retry and Timeout](./retry-timeout.mdx)**: Retry logic with exponential backoff, and timeouts
+- **[Patterns](./patterns.mdx)**: Recipes that combine these with Result
 - **[API Reference](../reference/async.mdx)**: Complete async module API

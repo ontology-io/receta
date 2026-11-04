@@ -34,23 +34,19 @@ async function processPayments(payments: Payment[]) {
 ### The Solution: Controlled Batching
 
 ```typescript
-import { batch } from '@ontologyio/receta/async'
-import * as R from 'remeda'
+import { batch, mapAsync } from '@ontologyio/receta/async'
 
 async function processPayments(payments: Payment[]) {
-  return batch(payments, async (payment) => {
-    return stripe.charges.create({
+  return batch(payments, (group) =>
+    // batch hands over 100 payments at a time, mapAsync limits requests within them
+    mapAsync(group, (payment) => stripe.charges.create({
       amount: payment.amount,
       currency: payment.currency,
       customer: payment.customerId
-    })
-  }, {
-    batchSize: 100,        // Process 100 at a time
-    delayMs: 1000,         // Wait 1s between batches
-    concurrency: 10,       // 10 concurrent requests per batch
-    onBatchComplete: (results, batchIndex) => {
-      console.log(`Batch ${batchIndex + 1} complete: ${results.length} payments`)
-    }
+    }), { concurrency: 10 }), // 10 concurrent requests per batch
+  {
+    batchSize: 100,            // Process 100 at a time
+    delayBetweenBatches: 1000  // Wait 1s between batches
   })
 }
 ```
@@ -61,55 +57,77 @@ async function processPayments(payments: Payment[]) {
 
 ### Basic Usage
 
+`fn` runs once per batch and receives the whole batch, which suits bulk APIs. You get one result per batch:
+
 ```typescript
 import { batch } from '@ontologyio/receta/async'
 
 // Simple batching
 const results = await batch(
   items,
-  async (item) => processItem(item),
+  async (group) => saveAll(group),
   { batchSize: 50 }
 )
 
-// With all options
+// Several batches at once
 const results = await batch(
   items,
-  async (item, index) => processItem(item, index),
+  async (group) => saveAll(group),
   {
     batchSize: 100,
-    concurrency: 5,
-    delayMs: 500,
-    onBatchStart: (batchIndex, batchSize) => {
-      console.log(`Starting batch ${batchIndex + 1} (${batchSize} items)`)
-    },
-    onBatchComplete: (results, batchIndex) => {
-      console.log(`Completed batch ${batchIndex + 1}`)
-    },
-    onProgress: (completed, total) => {
-      console.log(`Progress: ${completed}/${total} (${(completed/total*100).toFixed(1)}%)`)
-    }
+    concurrency: 5
   }
+)
+
+// A pause between batches
+const results = await batch(
+  items,
+  async (group) => saveAll(group),
+  {
+    batchSize: 100,
+    delayBetweenBatches: 500
+  }
+)
+
+// batch has no progress callbacks, so count inside fn
+let completed = 0
+
+const results = await batch(
+  items,
+  async (group) => {
+    const saved = await saveAll(group)
+    completed += group.length
+    console.log(`Progress: ${completed}/${items.length} (${(completed/items.length*100).toFixed(1)}%)`)
+    return saved
+  },
+  { batchSize: 100 }
 )
 ```
 
 ### Type Signature
 
-```typescript
+```typescript title="Signature"
 function batch<T, U>(
   items: readonly T[],
-  fn: (item: T, index: number) => Promise<U>,
+  fn: (batch: readonly T[]) => Promise<U>,
   options?: BatchOptions
-): Promise<U[]>
+): Promise<Result<U[], BatchError>>
 
 interface BatchOptions {
   batchSize?: number           // Items per batch (default: 10)
-  concurrency?: number         // Concurrent operations per batch (default: 5)
-  delayMs?: number            // Delay between batches (default: 0)
-  onBatchStart?: (batchIndex: number, batchSize: number) => void
-  onBatchComplete?: (results: U[], batchIndex: number) => void
-  onProgress?: (completed: number, total: number) => void
+  concurrency?: number         // Batches running at once (default: 1)
+  delayBetweenBatches?: number // Delay between batches in ms (default: 0)
+}
+
+interface BatchError {
+  type: 'batch_error'
+  batchIndex: number
+  itemsInBatch: number
+  underlyingError: unknown
 }
 ```
+
+A `delayBetweenBatches` above 0 runs batches one at a time and ignores `concurrency`. `batchIndex` is `-1` when the failed batch can't be identified: with a delay, or when `concurrency` covers every batch.
 
 ---
 
@@ -136,22 +154,18 @@ for (const batch of batches) {
 
 ```typescript
 import * as R from 'remeda'
-import { chunk } from '@ontologyio/receta/async'
+import { chunk, mapAsync } from '@ontologyio/receta/async'
 
 // Process in chunks with transformation
 const results = await R.pipe(
   largeDataset,
   chunk(100),
-  async (batches) => {
-    const results = []
-    for (const batch of batches) {
-      const batchResults = await Promise.all(
-        batch.map(item => processItem(item))
-      )
-      results.push(...batchResults)
-    }
-    return results
-  }
+  (batches) =>
+    mapAsync(
+      batches,
+      (group) => mapAsync(group, processItem), // Items in a chunk run together
+      { concurrency: 1 }                       // Chunks run one at a time
+    )
 )
 ```
 
@@ -211,16 +225,19 @@ async function adaptiveBatch<T, U>(
 ### Rate Limit Compliance
 
 ```typescript
-import { batch, sleep } from '@ontologyio/receta/async'
+import { batch, mapAsync } from '@ontologyio/receta/async'
 
 // Stripe: 100 requests per second
 async function batchStripeCharges(charges: ChargeRequest[]) {
   return batch(charges,
-    async (charge) => stripe.charges.create(charge),
+    (group) => mapAsync(
+      group,
+      (charge) => stripe.charges.create(charge),
+      { concurrency: 10 }
+    ),
     {
       batchSize: 100,
-      delayMs: 1000,  // 1 second delay = 100 req/sec
-      concurrency: 10
+      delayBetweenBatches: 1000  // 1 second delay = 100 req/sec
     }
   )
 }
@@ -229,16 +246,17 @@ async function batchStripeCharges(charges: ChargeRequest[]) {
 async function batchSendEmails(emails: Email[]) {
   const perBatch = 100
   const batchesPerHour = 10000 / perBatch // 100 batches
-  const delayMs = (60 * 60 * 1000) / batchesPerHour // ~36 seconds
+  const delayBetweenBatches = (60 * 60 * 1000) / batchesPerHour // ~36 seconds
 
   return batch(emails,
-    async (email) => sendgrid.send(email),
+    async (group) => {
+      const sent = await sendgrid.send(group)
+      console.log(`Batch complete. Next batch in ${delayBetweenBatches}ms`)
+      return sent
+    },
     {
       batchSize: perBatch,
-      delayMs,
-      onBatchComplete: (_, index) => {
-        console.log(`Batch ${index + 1} complete. Next batch in ${delayMs}ms`)
-      }
+      delayBetweenBatches
     }
   )
 }
@@ -285,69 +303,52 @@ const result = await poll(
     return job.status === 'completed' ? job : null
   },
   {
-    intervalMs: 1000,     // Check every 1 second
-    timeoutMs: 60000,     // Give up after 60 seconds
-    maxAttempts: 100,     // Or after 100 attempts
+    interval: 1000,   // Check every 1 second
+    timeout: 60000,   // Give up after 60 seconds
+    maxAttempts: 100, // Or after 100 attempts
   }
 )
 ```
 
 ### Type Signature
 
-```typescript
+```typescript title="Signature"
 function poll<T>(
-  fn: () => Promise<T | null | undefined>,
-  options?: PollOptions
-): Promise<Result<T, PollError>>
-
-interface PollOptions {
-  intervalMs?: number       // Time between checks (default: 1000)
-  timeoutMs?: number       // Max total time (default: 30000)
-  maxAttempts?: number     // Max number of attempts
-  backoff?: 'linear' | 'exponential' | 'fibonacci'
-  onAttempt?: (attempt: number) => void
-}
-
-type PollError =
-  | { type: 'timeout'; attempts: number; duration: number }
-  | { type: 'max_attempts'; attempts: number }
-  | { type: 'error'; error: unknown; attempt: number }
-```
-
----
-
-## pollResult()
-
-Type-safe polling with Result pattern instead of throwing exceptions.
-
-### Signature
-
-```typescript
-function pollResult<T>(
   fn: () => Promise<T | null | undefined | false>,
   options?: PollOptions
 ): Promise<Result<T, PollError>>
 
+interface PollOptions {
+  interval?: number      // Time between checks (default: 1000)
+  maxAttempts?: number   // Max number of attempts (default: 10)
+  timeout?: number       // Max total time (no limit by default)
+  shouldContinue?: (attempt: number) => boolean
+  onPoll?: (attempt: number) => void
+}
+
 type PollError =
-  | { readonly type: 'max_attempts'; readonly attempts: number }
-  | { readonly type: 'timeout'; readonly elapsed: number }
-  | { readonly type: 'stopped'; readonly attempt: number }
+  | { type: 'max_attempts'; attempts: number }
+  | { type: 'timeout'; elapsed: number }
+  | { type: 'stopped'; attempt: number }
 ```
 
-### When to Use
+- `null`, `undefined` and `false` mean "not yet". Anything else, including `0` and `''`, stops polling and becomes the `Ok` value.
+- If `fn` throws, `poll` rejects instead of returning an `Err`. Return failures as values, as [the examples below](#job-status-polling) do.
+- `maxAttempts` defaults to 10, so raise it along with a long `timeout`, or the attempts run out first.
+- The wait is `interval` every time. There's no backoff.
+- After a timeout, `poll` returns, but the loop keeps calling `fn` until it runs out of attempts.
 
-Use `pollResult()` when:
-- You want type-safe polling without exceptions
-- Need to distinguish between different failure modes
-- Building composable async workflows
-- Prefer explicit error handling over try-catch
+---
+
+## Working with PollError
+
+`poll` returns a `Result`, so you can tell the failure modes apart without exceptions:
 
 ### Real-World: CI/CD Job Monitoring with Result
 
 ```typescript
-import { pollResult } from '@ontologyio/receta/async'
-import { map, unwrapOr, isOk, isErr } from '@ontologyio/receta/result'
-import * as R from 'remeda'
+import { poll } from '@ontologyio/receta/async'
+import { isErr } from '@ontologyio/receta/result'
 
 type JobStatus = {
   id: string
@@ -357,7 +358,7 @@ type JobStatus = {
 }
 
 const monitorCIJob = async (jobId: string) => {
-  const result = await pollResult(
+  const result = await poll(
     async () => {
       const response = await fetch(`/api/jobs/${jobId}`)
       const job: JobStatus = await response.json()
@@ -368,10 +369,10 @@ const monitorCIJob = async (jobId: string) => {
       return null // Keep polling
     },
     {
-      intervalMs: 5000,
+      interval: 5000,
       maxAttempts: 60, // 5 minutes max
-      timeoutMs: 300000,
-      onAttempt: (attempt) => {
+      timeout: 300000,
+      onPoll: (attempt) => {
         console.log(`Checking job ${jobId} (attempt ${attempt})`)
       }
     }
@@ -388,38 +389,34 @@ const monitorCIJob = async (jobId: string) => {
     return { status: 'stopped', message: 'Polling stopped' }
   }
 
-  return R.pipe(
-    result,
-    map(job => ({ status: job.status, result: job.result })),
-    unwrapOr({ status: 'unknown', result: undefined })
-  )
+  return { status: result.value.status, result: result.value.result }
 }
 ```
 
 ### Real-World: Order Processing with Result
 
 ```typescript
-import { pollResult, retryResult } from '@ontologyio/receta/async'
-import { flatMap, unwrapOrElse, mapErr } from '@ontologyio/receta/result'
+import { poll, retry } from '@ontologyio/receta/async'
+import { type Result, isErr, mapErr } from '@ontologyio/receta/result'
 import * as R from 'remeda'
 
 type Order = { id: string; status: 'processing' | 'complete'; total: number }
 
 const waitForOrder = async (orderId: string): Promise<Result<Order, string>> => {
   // Poll with retry on network failures
-  const pollRes = await pollResult(
+  const pollRes = await poll(
     async () => {
-      const res = await retryResult(
+      const res = await retry(
         () => fetch(`/api/orders/${orderId}`).then(r => r.json()),
-        { maxAttempts: 2, delayMs: 500 }
+        { maxAttempts: 2, delay: 500 }
       )
 
       if (isErr(res)) return null // Retry polling
 
-      const order = res.value
+      const order = res.value as Order
       return order.status === 'complete' ? order : null
     },
-    { intervalMs: 2000, maxAttempts: 30 }
+    { interval: 2000, maxAttempts: 30 }
   )
 
   return R.pipe(
@@ -434,17 +431,6 @@ const waitForOrder = async (orderId: string): Promise<Result<Order, string>> => 
 }
 ```
 
-### Comparison: poll() vs pollResult()
-
-| Feature | `poll()` | `pollResult()` |
-|---------|----------|----------------|
-| Error handling | Throws exception | Returns Result |
-| Error types | String message | Discriminated union |
-| Type safety | `Promise<T>` | `Promise<Result<T, PollError>>` |
-| Error details | Limited | Full (attempts, elapsed, etc.) |
-| Composable | try-catch | pipe + Result functions |
-| Use case | Simple polling | Type-safe workflows |
-
 ### Benefits
 
 ✅ **Discriminated error types** - Know exactly why polling failed
@@ -452,43 +438,43 @@ const waitForOrder = async (orderId: string): Promise<Result<Order, string>> => 
 ✅ **Composable** - Chain with other Result operations
 ✅ **Full context** - Access attempts, elapsed time, etc.
 
----
-
 ## Polling Patterns
 
 ### Job Status Polling
 
 ```typescript
-import { poll, timeout } from '@ontologyio/receta/async'
-import { Result } from '@ontologyio/receta/result'
+import { poll, type PollError } from '@ontologyio/receta/async'
+import { type Result, err, flatten, ok } from '@ontologyio/receta/result'
 
 // AWS Batch job monitoring
 async function waitForBatchJob(
   jobId: string
-): Promise<Result<JobResult, PollError>> {
-  return poll(
+): Promise<Result<JobResult, PollError | string>> {
+  const finished = await poll(
     async () => {
-      const job = await batch.describeJobs({ jobs: [jobId] })
+      const job = await batchClient.describeJobs({ jobs: [jobId] })
       const status = job.jobs[0]?.status
 
       if (status === 'SUCCEEDED') {
-        return { jobId, status, output: job.jobs[0].container.output }
+        return ok({ jobId, status, output: job.jobs[0].container.output })
       }
       if (status === 'FAILED') {
-        throw new Error(`Job failed: ${job.jobs[0].statusReason}`)
+        return err(`Job failed: ${job.jobs[0].statusReason}`)
       }
 
       return null // Still running
     },
     {
-      intervalMs: 5000,      // Check every 5 seconds
-      timeoutMs: 3600000,    // 1 hour timeout
-      backoff: 'exponential',
-      onAttempt: (attempt) => {
+      interval: 5000,    // Check every 5 seconds
+      maxAttempts: 720,  // Enough attempts to reach the timeout
+      timeout: 3600000,  // 1 hour timeout
+      onPoll: (attempt) => {
         console.log(`Checking job status (attempt ${attempt})...`)
       }
     }
   )
+
+  return flatten(finished)
 }
 ```
 
@@ -516,9 +502,10 @@ async function waitForWorkflow(
       return null // Still in progress
     },
     {
-      intervalMs: 10000,  // Check every 10 seconds
-      timeoutMs: 1800000, // 30 minute timeout
-      onAttempt: (attempt) => {
+      interval: 10000,   // Check every 10 seconds
+      maxAttempts: 180,  // Enough attempts to reach the timeout
+      timeout: 1800000,  // 30 minute timeout
+      onPoll: (attempt) => {
         if (attempt % 6 === 0) { // Log every minute
           console.log(`Workflow still running (${attempt * 10}s elapsed)...`)
         }
@@ -534,26 +521,27 @@ async function waitForWorkflow(
 // Stripe charge confirmation polling
 async function waitForChargeConfirmation(
   chargeId: string
-): Promise<Result<Charge, PollError>> {
-  return poll(
+): Promise<Result<Charge, PollError | string>> {
+  const finished = await poll(
     async () => {
       const charge = await stripe.charges.retrieve(chargeId)
 
       if (charge.status === 'succeeded') {
-        return charge
+        return ok(charge)
       }
       if (charge.status === 'failed') {
-        throw new Error(`Charge failed: ${charge.failure_message}`)
+        return err(`Charge failed: ${charge.failure_message}`)
       }
 
       return null // Still pending
     },
     {
-      intervalMs: 2000,
-      maxAttempts: 30,  // 60 seconds max
-      backoff: 'linear'
+      interval: 2000,
+      maxAttempts: 30  // 60 seconds max
     }
   )
+
+  return flatten(finished)
 }
 ```
 
@@ -561,20 +549,23 @@ async function waitForChargeConfirmation(
 
 ## Combining Poll with Timeout
 
-### Race Against Time Limit
+### Time Limit Option
+
+`poll` takes a `timeout` option, so there's no separate promise to race. Give it enough attempts that the timeout is what stops it:
 
 ```typescript
-import { poll, timeout, race } from '@ontologyio/receta/async'
+import { poll, type PollError } from '@ontologyio/receta/async'
 
 async function pollWithTimeout<T>(
   fn: () => Promise<T | null>,
   pollIntervalMs: number,
   timeoutMs: number
-): Promise<Result<T, 'timeout' | 'error'>> {
-  return race([
-    poll(fn, { intervalMs: pollIntervalMs }),
-    timeout(timeoutMs)
-  ])
+): Promise<Result<T, PollError>> {
+  return poll(fn, {
+    interval: pollIntervalMs,
+    maxAttempts: Math.ceil(timeoutMs / pollIntervalMs) + 1,
+    timeout: timeoutMs
+  })
 }
 
 // Usage
@@ -607,23 +598,24 @@ async function exportUsersToCSV(
 
   const csvRows: string[] = ['id,email,name,created_at']
 
-  await batch(users,
-    async (user) => {
-      const row = [
+  const exported = await batch(users,
+    async (group) => {
+      const rows = group.map((user) => [
         user.id,
         user.email,
         user.name,
         user.createdAt.toISOString()
-      ].join(',')
-      csvRows.push(row)
+      ].join(','))
+
+      csvRows.push(...rows)
+      console.log(`Exported ${csvRows.length - 1}/${users.length} users`)
     },
-    {
-      batchSize: 1000,
-      onProgress: (completed, total) => {
-        console.log(`Exported ${completed}/${total} users`)
-      }
-    }
+    { batchSize: 1000 }
   )
+
+  if (isErr(exported)) {
+    return err({ type: 'export_failed' })
+  }
 
   const csv = csvRows.join('\n')
   const filename = `users_export_${Date.now()}.csv`
@@ -653,33 +645,34 @@ async function sendEmailCampaign(
   }
 
   await batch(campaign.recipients,
-    async (recipient) => {
-      const result = await tryCatchAsync(async () => {
-        await sendgrid.send({
-          to: recipient.email,
-          subject: campaign.subject,
-          templateId: campaign.template,
-          dynamicTemplateData: recipient.data
+    async (group) => {
+      const sent = await mapAsync(group, async (recipient) => {
+        const result = await tryCatchAsync(async () => {
+          await sendgrid.send({
+            to: recipient.email,
+            subject: campaign.subject,
+            templateId: campaign.template,
+            dynamicTemplateData: recipient.data
+          })
         })
-      })
 
-      if (isOk(result)) {
-        report.sent++
-      } else {
-        report.failed++
-        report.errors.push({
-          recipient: recipient.email,
-          error: result.error
-        })
-      }
+        if (isOk(result)) {
+          report.sent++
+        } else {
+          report.failed++
+          report.errors.push({
+            recipient: recipient.email,
+            error: result.error
+          })
+        }
+      }, { concurrency: 10 })
+
+      console.log(`Sent batch. Total sent: ${report.sent}`)
+      return sent
     },
     {
-      batchSize: 100,       // SendGrid batch limit
-      delayMs: 1000,        // Rate limit compliance
-      concurrency: 10,
-      onBatchComplete: (_, index) => {
-        console.log(`Sent batch ${index + 1}. Total sent: ${report.sent}`)
-      }
+      batchSize: 100,            // SendGrid batch limit
+      delayBetweenBatches: 1000  // Rate limit compliance
     }
   )
 
@@ -706,30 +699,33 @@ async function backfillUserScores(): Promise<Result<MigrationReport, MigrationEr
   }
 
   await batch(usersWithoutScores,
-    async (user) => {
-      const result = await tryCatchAsync(async () => {
-        const score = await calculateUserScore(user.id)
-        await db.user.update({
-          where: { id: user.id },
-          data: { score }
+    async (group) => {
+      const backfilled = await mapAsync(group, async (user) => {
+        const result = await tryCatchAsync(async () => {
+          const score = await calculateUserScore(user.id)
+          await db.user.update({
+            where: { id: user.id },
+            data: { score }
+          })
         })
-      })
 
-      if (isOk(result)) {
-        report.processed++
-      } else {
-        report.failed++
-        report.errors.push({ userId: user.id, error: result.error })
-      }
+        if (isOk(result)) {
+          report.processed++
+        } else {
+          report.failed++
+          report.errors.push({ userId: user.id, error: result.error })
+        }
+      }, { concurrency: 20 })
+
+      const completed = report.processed + report.failed
+      const percent = ((completed / usersWithoutScores.length) * 100).toFixed(1)
+      console.log(`Migration progress: ${completed}/${usersWithoutScores.length} (${percent}%)`)
+
+      return backfilled
     },
     {
-      batchSize: 500,      // Database can handle larger batches
-      delayMs: 100,        // Small delay to not overwhelm DB
-      concurrency: 20,
-      onProgress: (completed, total) => {
-        const percent = ((completed / total) * 100).toFixed(1)
-        console.log(`Migration progress: ${completed}/${total} (${percent}%)`)
-      }
+      batchSize: 500,           // Database can handle larger batches
+      delayBetweenBatches: 100  // Small delay to not overwhelm DB
     }
   )
 
@@ -760,42 +756,42 @@ const orderProcessor: OrderProcessor = {
     }
 
     await batch(pendingOrders,
-      async (order) => {
-        // Check inventory
-        const inventoryCheck = await checkInventory(order.items)
-        if (!inventoryCheck.available) {
-          report.skipped++
-          return
-        }
+      async (group) => {
+        const handled = await mapAsync(group, async (order) => {
+          // Check inventory
+          const inventoryCheck = await checkInventory(order.items)
+          if (!inventoryCheck.available) {
+            report.skipped++
+            return
+          }
 
-        // Process payment
-        const paymentResult = await processPayment(order)
-        if (isErr(paymentResult)) {
-          report.failed++
+          // Process payment
+          const paymentResult = await processPayment(order)
+          if (isErr(paymentResult)) {
+            report.failed++
+            await db.order.update({
+              where: { id: order.id },
+              data: { status: 'failed', error: paymentResult.error }
+            })
+            return
+          }
+
+          // Update order
           await db.order.update({
             where: { id: order.id },
-            data: { status: 'failed', error: paymentResult.error }
+            data: { status: 'completed', processedAt: new Date() }
           })
-          return
-        }
 
-        // Update order
-        await db.order.update({
-          where: { id: order.id },
-          data: { status: 'completed', processedAt: new Date() }
-        })
+          report.processed++
+          report.totalRevenue += order.total
+        }, { concurrency: 5 })
 
-        report.processed++
-        report.totalRevenue += order.total
+        console.log(`Processed: ${report.processed}, Failed: ${report.failed}, Skipped: ${report.skipped}`)
+        return handled
       },
       {
         batchSize: 50,
-        delayMs: 500,
-        concurrency: 5,
-        onBatchComplete: (_, index) => {
-          console.log(`Batch ${index + 1} complete`)
-          console.log(`Processed: ${report.processed}, Failed: ${report.failed}, Skipped: ${report.skipped}`)
-        }
+        delayBetweenBatches: 500
       }
     )
 
@@ -813,7 +809,7 @@ const orderProcessor: OrderProcessor = {
 ```typescript
 // DON'T: Load all results in memory
 async function processLargeDataset(items: Item[]) {
-  const results = await batch(items, processItem, { batchSize: 1000 })
+  const results = await batch(items, processGroup, { batchSize: 1000 })
   return results // 1M items = huge memory usage
 }
 
@@ -824,11 +820,12 @@ async function processLargeDataset(items: Item[]) {
 
   let first = true
   await batch(items,
-    async (item) => {
-      const result = await processItem(item)
-      const json = JSON.stringify(result)
-      outputStream.write(first ? json : `,${json}`)
-      first = false
+    async (group) => {
+      for (const result of await processGroup(group)) {
+        const json = JSON.stringify(result)
+        outputStream.write(first ? json : `,${json}`)
+        first = false
+      }
     },
     { batchSize: 1000 }
   )
@@ -855,7 +852,7 @@ function getOptimalConcurrency(taskType: 'cpu' | 'io'): number {
 }
 
 // Usage
-await batch(items, processItem, {
+await batch(items, processGroup, {
   batchSize: 100,
   concurrency: getOptimalConcurrency('io')
 })
@@ -868,29 +865,34 @@ await batch(items, processItem, {
 ### Fail Fast vs. Continue on Error
 
 ```typescript
-// Strategy 1: Fail fast (default Promise.all behavior)
+// Strategy 1: Fail fast
 async function batchFailFast<T, U>(items: T[], fn: (item: T) => Promise<U>) {
-  return batch(items, fn, { batchSize: 100 })
-  // First error stops everything
+  return batch(
+    items,
+    // unwrap throws, which is what batch counts as a failure
+    async (group) => unwrap(await mapAsync(group, fn)),
+    { batchSize: 100 }
+  )
+  // The first failed batch stops the rest
 }
 
 // Strategy 2: Collect errors, continue processing
 async function batchContinueOnError<T, U>(
   items: T[],
   fn: (item: T) => Promise<U>
-): Promise<{ results: U[]; errors: Array<{ index: number; error: unknown }> }> {
+): Promise<{ results: U[]; errors: Array<{ item: T; error: unknown }> }> {
   const results: U[] = []
-  const errors: Array<{ index: number; error: unknown }> = []
+  const errors: Array<{ item: T; error: unknown }> = []
 
   await batch(items,
-    async (item, index) => {
+    (group) => mapAsync(group, async (item) => {
       const result = await tryCatchAsync(() => fn(item))
       if (isOk(result)) {
         results.push(result.value)
       } else {
-        errors.push({ index, error: result.error })
+        errors.push({ item, error: result.error })
       }
-    },
+    }),
     { batchSize: 100 }
   )
 
@@ -901,11 +903,13 @@ async function batchContinueOnError<T, U>(
 ### Retry Failed Items
 
 ```typescript
+type BatchFailure = { message: string; failedItems: unknown[] }
+
 async function batchWithRetry<T, U>(
   items: T[],
   fn: (item: T) => Promise<U>,
   maxRetries = 3
-): Promise<Result<U[], BatchError>> {
+): Promise<Result<U[], BatchFailure>> {
   let currentItems = items
   let allResults: U[] = []
 
@@ -920,18 +924,17 @@ async function batchWithRetry<T, U>(
 
     if (attempt === maxRetries) {
       return err({
-        type: 'batch_failed',
         message: `${errors.length} items failed after ${maxRetries} retries`,
         failedItems: errors
       })
     }
 
     // Retry only failed items
-    currentItems = errors.map(e => items[e.index])
+    currentItems = errors.map(e => e.item)
     console.log(`Retrying ${currentItems.length} failed items (attempt ${attempt + 1})`)
   }
 
-  return err({ type: 'unexpected_error' })
+  return err({ message: 'No attempts ran', failedItems: [] })
 }
 ```
 
@@ -942,25 +945,27 @@ async function batchWithRetry<T, U>(
 ### Console Progress Bar
 
 ```typescript
-import { batch } from '@ontologyio/receta/async'
+import { batch, mapAsync } from '@ontologyio/receta/async'
 
 async function processWithProgress<T, U>(
   items: T[],
   fn: (item: T) => Promise<U>
-): Promise<U[]> {
+) {
   const total = items.length
-  let completed = 0
+  let done = 0
 
-  return batch(items, fn, {
-    batchSize: 100,
-    onProgress: (done, total) => {
-      completed = done
+  return batch(items,
+    (group) => mapAsync(group, async (item) => {
+      const result = await fn(item)
+      done++
       const percent = ((done / total) * 100).toFixed(1)
       const bar = '█'.repeat(Math.floor(done / total * 40))
       const empty = '░'.repeat(40 - bar.length)
       process.stdout.write(`\r[${bar}${empty}] ${percent}% (${done}/${total})`)
-    }
-  })
+      return result
+    }),
+    { batchSize: 100 }
+  )
 }
 ```
 
@@ -1011,7 +1016,7 @@ class BatchProgressTracker {
 async function processWithTracking<T, U>(
   items: T[],
   fn: (item: T) => Promise<U>
-): Promise<U[]> {
+) {
   const tracker = new BatchProgressTracker(
     items.length,
     'Processing items',
@@ -1024,13 +1029,15 @@ async function processWithTracking<T, U>(
     }
   )
 
+  let completed = 0
+
   return batch(items,
-    async (item, index) => {
+    (group) => mapAsync(group, async (item) => {
       const result = await tryCatchAsync(() => fn(item))
-      tracker.update(index + 1, isErr(result))
-      if (isErr(result)) throw result.error
-      return result.value
-    },
+      completed++
+      tracker.update(completed, isErr(result))
+      return result
+    }),
     { batchSize: 100 }
   )
 }
@@ -1066,4 +1073,4 @@ Use `poll()` when:
 4. **Respect rate limits**: Add delays between batches
 5. **Track progress**: Keep users informed on long operations
 6. **Test edge cases**: Empty arrays, all failures, timeouts
-7. **Use appropriate backoff**: Exponential for retries, linear for polling
+7. **Use backoff where it exists**: `retry` has it, while `poll` waits a fixed `interval`

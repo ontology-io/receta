@@ -15,14 +15,14 @@ Real-world patterns for async operations using Receta's async module. All exampl
 
 ## Result Integration Patterns
 
-All major async functions have Result-returning variants for type-safe error handling. This section shows how to build production-ready patterns using the Result approach.
+Async functions return a Result for type-safe error handling. This section shows how to build production-ready patterns on that.
 
 ### Pattern: Resilient API Client with Result
 
 ```typescript
 import * as R from 'remeda'
-import { retryResult, timeoutResult, mapAsyncResult } from '@ontologyio/receta/async'
-import { map, mapErr, unwrapOr, flatMap, isOk, isErr, err } from '@ontologyio/receta/result'
+import { retry, timeout, mapAsync } from '@ontologyio/receta/async'
+import { mapErr, partition, tapErr, unwrapOr, isOk, isErr } from '@ontologyio/receta/result'
 import type { Result } from '@ontologyio/receta/result'
 
 type APIError = {
@@ -38,9 +38,9 @@ class ResilientAPIClient {
     endpoint: string,
     options?: RequestInit
   ): Promise<Result<T, APIError>> {
-    const result = await retryResult(
+    const result = await retry(
       async () => {
-        const res = await timeoutResult(
+        const res = await timeout(
           fetch(`${this.baseURL}${endpoint}`, {
             ...options,
             headers: {
@@ -98,7 +98,7 @@ class ResilientAPIClient {
   }
 
   async getUsers(ids: string[]) {
-    return mapAsyncResult(
+    return mapAsync(
       ids,
       (id) => this.getUser(id),
       { concurrency: 5 }
@@ -112,24 +112,25 @@ const client = new ResilientAPIClient('https://api.example.com', 'key')
 const userResult = await client.getUser('123')
 const user = R.pipe(
   userResult,
-  mapErr(err => console.error('Failed to fetch user:', err)),
+  tapErr(err => console.error('Failed to fetch user:', err)),
   unwrapOr({ id: '123', name: 'Unknown' })
 )
 
 const usersResult = await client.getUsers(['1', '2', '3'])
-if (isErr(usersResult)) {
-  console.error(`Failed at user ${usersResult.error.index}`)
+
+// getUser returns a Result, so each user carries its own outcome
+if (isOk(usersResult)) {
+  const [users, failures] = partition(usersResult.value)
+  console.log(`Loaded ${users.length} users, ${failures.length} failed`)
 }
 ```
 
 ### Pattern: Batch Processing with Result
 
 ```typescript
-import { batchResult, retryResult } from '@ontologyio/receta/async'
-import { collect, partition } from '@ontologyio/receta/result'
+import { batch } from '@ontologyio/receta/async'
+import { mapErr, partition } from '@ontologyio/receta/result'
 import type { Result } from '@ontologyio/receta/result'
-
-type ProcessResult<T> = Result<T, { item: T; error: string }>
 
 async function batchProcessWithResult<T, U>(
   items: T[],
@@ -138,17 +139,12 @@ async function batchProcessWithResult<T, U>(
 ): Promise<{ successes: U[]; failures: Array<{ item: T; error: string }> }> {
   const results: Array<Result<U, { item: T; error: string }>> = []
 
-  await batchResult(
+  await batch(
     items,
     async (batchItems) => {
       for (const item of batchItems) {
         const result = await processor(item)
-        results.push(
-          R.pipe(
-            result,
-            mapErr(error => ({ item, error }))
-          )
-        )
+        results.push(mapErr(result, error => ({ item, error })))
       }
     },
     options
@@ -156,10 +152,7 @@ async function batchProcessWithResult<T, U>(
 
   const [successes, failures] = partition(results)
 
-  return {
-    successes: successes.map(r => r.value),
-    failures: failures.map(r => r.error),
-  }
+  return { successes, failures }
 }
 
 // Usage
@@ -176,30 +169,25 @@ console.log(`Failed ${failures.length}:`, failures)
 ### Pattern: Parallel Operations with All Success
 
 ```typescript
-import { allResult } from '@ontologyio/receta/async'
-import { isOk } from '@ontologyio/receta/result'
+import { parallel, type MapAsyncError } from '@ontologyio/receta/async'
+import { isOk, map } from '@ontologyio/receta/result'
 import type { Result } from '@ontologyio/receta/result'
 
 // Fetch all required data in parallel, fail fast if any request fails
-async function loadDashboard(userId: string): Promise<Result<Dashboard, string>> {
-  const result = await allResult([
-    fetchUser(userId),
-    fetchUserPosts(userId),
-    fetchUserStats(userId),
-    fetchUserNotifications(userId),
+async function loadDashboard(userId: string): Promise<Result<Dashboard, MapAsyncError>> {
+  const result = await parallel([
+    () => fetchUser(userId),
+    () => fetchUserPosts(userId),
+    () => fetchUserStats(userId),
+    () => fetchUserNotifications(userId),
   ])
 
-  if (isOk(result)) {
-    const [user, posts, stats, notifications] = result.value
-    return ok({
-      user,
-      posts,
-      stats,
-      notifications,
-    })
-  }
-
-  return result
+  return map(result, ([user, posts, stats, notifications]) => ({
+    user,
+    posts,
+    stats,
+    notifications,
+  }))
 }
 
 // Usage
@@ -214,9 +202,8 @@ if (isOk(dashboardResult)) {
 ### Pattern: Parallel Operations with Partial Success
 
 ```typescript
-import { allSettledResult } from '@ontologyio/receta/async'
+import { promiseAllSettled, toResults } from '@ontologyio/receta/async'
 import { isOk } from '@ontologyio/receta/result'
-import type { Result } from '@ontologyio/receta/result'
 
 // Fetch all data but continue even if some requests fail
 async function loadDashboardResilient(
@@ -227,12 +214,13 @@ async function loadDashboardResilient(
   stats: Stats | null
   notifications: Notification[]
 }> {
-  const results = await allSettledResult([
+  const settled = await promiseAllSettled([
     fetchUser(userId),
     fetchUserPosts(userId),
     fetchUserStats(userId),
     fetchUserNotifications(userId),
   ])
+  const results = toResults(settled)
 
   return {
     user: isOk(results[0]) ? results[0].value : null,
@@ -249,25 +237,22 @@ renderDashboard(dashboard) // Show what we have, handle nulls gracefully
 
 ### Pattern: Race with First Success
 
+Receta has no race helper. `Promise.any` does the racing, and `tryCatchAsync` turns its rejection into an `Err`:
+
 ```typescript
-import { raceResult } from '@ontologyio/receta/async'
-import { isOk } from '@ontologyio/receta/result'
+import { tryCatchAsync } from '@ontologyio/receta/result'
 import type { Result } from '@ontologyio/receta/result'
 
 // Try multiple endpoints, use the first one that succeeds
 async function fetchFromMirrors<T>(
   endpoints: string[]
 ): Promise<Result<T, string>> {
-  const result = await raceResult(
-    endpoints.map(url => fetch(url).then(r => r.json()))
+  return tryCatchAsync(
+    () => Promise.any(
+      endpoints.map(url => fetch(url).then(r => r.json() as Promise<T>))
+    ),
+    () => 'All mirror endpoints failed'
   )
-
-  if (isOk(result)) {
-    return result
-  }
-
-  // All requests failed
-  return err('All mirror endpoints failed')
 }
 
 // Usage
@@ -289,7 +274,7 @@ GitHub API has strict rate limits (5000 requests/hour authenticated). This patte
 ```typescript
 import * as R from 'remeda'
 import { isErr, isOk, ok, type Result } from '@ontologyio/receta/result'
-import { mapAsync, retryWithBackoff } from '@ontologyio/receta/async'
+import { mapAsync, retry, type RetryError } from '@ontologyio/receta/async'
 
 interface GitHubRateLimit {
   limit: number
@@ -315,7 +300,7 @@ class GitHubClient {
    */
   private async fetchWithRateLimit<T>(
     endpoint: string
-  ): Promise<Result<T, string>> {
+  ): Promise<Result<T, RetryError>> {
     // Check if we're rate limited
     if (this.rateLimit && this.rateLimit.remaining === 0) {
       const now = Date.now() / 1000
@@ -326,7 +311,7 @@ class GitHubClient {
       }
     }
 
-    return retryWithBackoff(
+    return retry(
       async () => {
         const response = await fetch(`${this.baseUrl}${endpoint}`, {
           headers: {
@@ -353,12 +338,12 @@ class GitHubClient {
       },
       {
         maxAttempts: 3,
-        initialDelay: 1000,
+        delay: 1000,
         maxDelay: 10000,
         shouldRetry: (error) => {
           // Retry on rate limit and 5xx errors
-          return error.message === 'RATE_LIMIT_EXCEEDED' ||
-                 error.message.includes('5')
+          const { message } = error as Error
+          return message === 'RATE_LIMIT_EXCEEDED' || message.includes('5')
         },
       }
     )
@@ -367,7 +352,7 @@ class GitHubClient {
   /**
    * Fetch all repositories for an organization
    */
-  async getOrgRepos(org: string): Promise<Result<GitHubRepo[], string>> {
+  async getOrgRepos(org: string): Promise<Result<GitHubRepo[], RetryError>> {
     const repos: GitHubRepo[] = []
     let page = 1
 
@@ -393,9 +378,7 @@ class GitHubClient {
   /**
    * Fetch multiple repos in parallel with concurrency control
    */
-  async getReposBatch(
-    repoNames: string[]
-  ): Promise<Array<Result<GitHubRepo, string>>> {
+  async getReposBatch(repoNames: string[]) {
     return mapAsync(
       repoNames,
       async (name) => this.fetchWithRateLimit<GitHubRepo>(`/repos/${name}`),
@@ -428,16 +411,18 @@ const repos = await client.getReposBatch([
   'facebook/jest',
 ])
 
-const successful = repos.filter(isOk)
-console.log(`Successfully fetched ${successful.length}/${repos.length} repos`)
+if (isOk(repos)) {
+  const successful = repos.value.filter(isOk)
+  console.log(`Successfully fetched ${successful.length}/${repos.value.length} repos`)
+}
 ```
 
 #### Result Version
 
 The example above already uses Result extensively. Key benefits:
 - No try-catch blocks needed
-- Type-safe error handling with `Result.isOk` and `Result.isErr`
-- Easy composition with `Result.ok` and `Result.err`
+- Type-safe error handling with `isOk` and `isErr`
+- Easy composition with `ok` and `err`
 - Rate limit errors are values, not exceptions
 
 ### Stripe Payment Processing
@@ -445,8 +430,9 @@ The example above already uses Result extensively. Key benefits:
 Handle payment processing with proper error handling and retry logic for network failures.
 
 ```typescript
-import { err, isErr, isOk, ok, type Result } from '@ontologyio/receta/result'
-import { retryWithBackoff, timeout } from '@ontologyio/receta/async'
+import * as R from 'remeda'
+import { err, flatten, isErr, isOk, mapErr, ok, type Result } from '@ontologyio/receta/result'
+import { poll, retry, type RetryError } from '@ontologyio/receta/async'
 
 interface StripePaymentIntent {
   id: string
@@ -481,8 +467,8 @@ class StripeClient {
    */
   async createPaymentIntent(
     params: CreatePaymentParams
-  ): Promise<Result<StripePaymentIntent, string>> {
-    return retryWithBackoff(
+  ): Promise<Result<StripePaymentIntent, RetryError>> {
+    return retry(
       async () => {
         const body = new URLSearchParams({
           amount: params.amount.toString(),
@@ -510,11 +496,11 @@ class StripeClient {
       },
       {
         maxAttempts: 3,
-        initialDelay: 1000,
+        delay: 1000,
         shouldRetry: (error) => {
           // Retry on network errors, not on payment errors
-          return !error.message.includes('card') &&
-                 !error.message.includes('insufficient')
+          const { message } = error as Error
+          return !message.includes('card') && !message.includes('insufficient')
         },
       }
     )
@@ -527,32 +513,36 @@ class StripeClient {
     paymentIntentId: string,
     maxWaitMs: number = 30000
   ): Promise<Result<StripePaymentIntent, string>> {
-    return timeout(
+    const finished = await poll(
       async () => {
-        while (true) {
-          const result = await this.getPaymentIntent(paymentIntentId)
+        const result = await this.getPaymentIntent(paymentIntentId)
 
-          if (isErr(result)) {
-            return result
-          }
-
-          const intent = result.value
-
-          if (intent.status === 'succeeded') {
-            return ok(intent)
-          }
-
-          if (intent.status === 'canceled' ||
-              intent.status === 'requires_payment_method') {
-            return err(`Payment ${intent.status}`)
-          }
-
-          // Still processing, wait and check again
-          await new Promise(resolve => setTimeout(resolve, 1000))
+        if (isErr(result)) {
+          return err(`Payment check failed after ${result.error.attempts} attempts`)
         }
+
+        const intent = result.value
+
+        if (intent.status === 'succeeded') {
+          return ok(intent)
+        }
+
+        if (intent.status === 'canceled' ||
+            intent.status === 'requires_payment_method') {
+          return err(`Payment ${intent.status}`)
+        }
+
+        return null // Still processing, check again
       },
-      maxWaitMs,
-      `Payment confirmation timeout after ${maxWaitMs}ms`
+      {
+        interval: 1000,
+        maxAttempts: Math.ceil(maxWaitMs / 1000),
+        timeout: maxWaitMs,
+      }
+    )
+
+    return flatten(
+      mapErr(finished, () => `Payment confirmation timeout after ${maxWaitMs}ms`)
     )
   }
 
@@ -561,8 +551,8 @@ class StripeClient {
    */
   private async getPaymentIntent(
     id: string
-  ): Promise<Result<StripePaymentIntent, string>> {
-    return retryWithBackoff(async () => {
+  ): Promise<Result<StripePaymentIntent, RetryError>> {
+    return retry(async () => {
       const response = await fetch(`${this.baseUrl}/payment_intents/${id}`, {
         headers: {
           'Authorization': `Bearer ${this.secretKey}`,
@@ -583,8 +573,8 @@ class StripeClient {
   async refundPayment(
     paymentIntentId: string,
     amount?: number
-  ): Promise<Result<StripeCharge, string>> {
-    return retryWithBackoff(async () => {
+  ): Promise<Result<StripeCharge, RetryError>> {
+    return retry(async () => {
       const body = new URLSearchParams({
         payment_intent: paymentIntentId,
         ...(amount && { amount: amount.toString() }),
@@ -645,19 +635,19 @@ if (isOk(paymentResult)) {
 #### Result Version
 
 The Stripe example already uses Result for type-safe payment processing:
-- Payment failures return `Result.err` instead of throwing
-- `waitForPaymentSuccess` uses `timeout` with Result for safe polling
-- Refunds use `retryWithBackoff` to handle transient failures
-- All operations compose cleanly with pipes and `Result.isOk`
+- Payment failures return `err` instead of throwing
+- `waitForPaymentSuccess` uses `poll` for safe polling with a time limit
+- Refunds use `retry` to handle transient failures
+- All operations compose cleanly with pipes and `isOk`
 
 ### AWS S3 File Operations
 
-Upload and download files from S3 with proper error handling and progress tracking.
+Upload and download files from S3 with proper error handling.
 
 ```typescript
 import * as R from 'remeda'
 import { isErr, isOk, ok, type Result } from '@ontologyio/receta/result'
-import { mapAsync, retryWithBackoff } from '@ontologyio/receta/async'
+import { mapAsync, retry, type RetryError } from '@ontologyio/receta/async'
 import { createHash } from 'crypto'
 
 interface S3Object {
@@ -670,7 +660,6 @@ interface S3Object {
 interface UploadOptions {
   contentType?: string
   metadata?: Record<string, string>
-  onProgress?: (uploaded: number, total: number) => void
 }
 
 class S3Client {
@@ -692,7 +681,7 @@ class S3Client {
     key: string,
     content: Buffer | Blob,
     options: UploadOptions = {}
-  ): Promise<Result<S3Object, string>> {
+  ): Promise<Result<S3Object, RetryError>> {
     const contentBuffer = content instanceof Blob
       ? Buffer.from(await content.arrayBuffer())
       : content
@@ -700,7 +689,7 @@ class S3Client {
     const contentLength = contentBuffer.length
     const contentMD5 = createHash('md5').update(contentBuffer).digest('base64')
 
-    return retryWithBackoff(
+    return retry(
       async () => {
         const response = await fetch(`${this.baseUrl}/${key}`, {
           method: 'PUT',
@@ -729,11 +718,11 @@ class S3Client {
       },
       {
         maxAttempts: 3,
-        initialDelay: 1000,
+        delay: 1000,
         shouldRetry: (error) => {
           // Retry on network errors, not on auth errors
-          return !error.message.includes('403') &&
-                 !error.message.includes('401')
+          const { message } = error as Error
+          return !message.includes('403') && !message.includes('401')
         },
       }
     )
@@ -742,8 +731,8 @@ class S3Client {
   /**
    * Download file with retry
    */
-  async downloadFile(key: string): Promise<Result<Buffer, string>> {
-    return retryWithBackoff(async () => {
+  async downloadFile(key: string): Promise<Result<Buffer, RetryError>> {
+    return retry(async () => {
       const response = await fetch(`${this.baseUrl}/${key}`, {
         headers: this.getAuthHeaders('GET', key),
       })
@@ -763,7 +752,7 @@ class S3Client {
   async uploadBatch(
     files: Array<{ key: string; content: Buffer; options?: UploadOptions }>,
     concurrency: number = 5
-  ): Promise<Array<Result<S3Object, string>>> {
+  ) {
     return mapAsync(
       files,
       async (file) => this.uploadFile(file.key, file.content, file.options),
@@ -774,7 +763,7 @@ class S3Client {
   /**
    * List objects with pagination
    */
-  async listObjects(prefix?: string): Promise<Result<S3Object[], string>> {
+  async listObjects(prefix?: string): Promise<Result<S3Object[], RetryError>> {
     const objects: S3Object[] = []
     let continuationToken: string | undefined
 
@@ -786,7 +775,7 @@ class S3Client {
         url.searchParams.set('continuation-token', continuationToken)
       }
 
-      const result = await retryWithBackoff(async () => {
+      const result = await retry(async () => {
         const response = await fetch(url.toString(), {
           headers: this.getAuthHeaders('GET', '/'),
         })
@@ -859,9 +848,6 @@ const uploadResult = await s3.uploadFile(
       userId: '123',
       originalName: 'photo.png',
     },
-    onProgress: (uploaded, total) => {
-      console.log(`Upload progress: ${(uploaded / total * 100).toFixed(1)}%`)
-    },
   }
 )
 
@@ -877,8 +863,11 @@ const files = [
 ]
 
 const results = await s3.uploadBatch(files, 3)
-const successful = results.filter(isOk)
-console.log(`Uploaded ${successful.length}/${files.length} files`)
+
+if (isOk(results)) {
+  const successful = results.value.filter(isOk)
+  console.log(`Uploaded ${successful.length}/${files.length} files`)
+}
 
 // List and download
 const listResult = await s3.listObjects('uploads/')
@@ -891,17 +880,19 @@ if (isOk(listResult)) {
     { concurrency: 5 }
   )
 
-  console.log(`Downloaded ${downloads.filter(isOk).length} images`)
+  if (isOk(downloads)) {
+    console.log(`Downloaded ${downloads.value.filter(isOk).length} images`)
+  }
 }
 ```
 
 #### Result Version
 
 The S3 example demonstrates Result-based file operations:
-- Upload/download operations return `Result<S3Object, string>` instead of throwing
+- Upload/download operations return `Result<S3Object, RetryError>` instead of throwing
 - `uploadBatch` uses `mapAsync` to process files with concurrency control
 - All network errors become Result errors for consistent handling
-- Batch operations use `filter(Result.isOk)` to count successes
+- Batch operations use `filter(isOk)` to count successes
 
 ## Bulk Operations
 
@@ -994,8 +985,13 @@ async function importUsers(
       { concurrency }
     )
 
+    // The mapper reports failures as values, so this only catches a thrown error
+    if (isErr(results)) {
+      return err('Import stopped by an unexpected error')
+    }
+
     // Collect results
-    for (const res of results) {
+    for (const res of results.value) {
       if ('success' in res) {
         result.successful++
       } else {
@@ -1095,7 +1091,7 @@ if (isOk(importResult)) {
 #### Result Version
 
 The User Import example shows comprehensive Result usage:
-- CSV validation returns `Result.err` for malformed data
+- CSV validation returns `err` for malformed data
 - Each row import returns `Result<void, string>` for tracking failures
 - Validation errors are collected without stopping the entire import
 - Progress reporting works seamlessly with Result-based error tracking
@@ -1107,7 +1103,7 @@ Sync data between systems with conflict resolution and incremental updates.
 
 ```typescript
 import * as R from 'remeda'
-import { isOk, ok, type Result } from '@ontologyio/receta/result'
+import { err, isErr, isOk, ok, type Result } from '@ontologyio/receta/result'
 import { mapAsync } from '@ontologyio/receta/async'
 
 interface SyncRecord {
@@ -1183,7 +1179,9 @@ async function syncData(
     { concurrency }
   )
 
-  for (const { id, result: res } of createResults) {
+  if (isErr(createResults)) return err('Sync stopped while creating records')
+
+  for (const { id, result: res } of createResults.value) {
     if (isOk(res)) {
       result.created++
     } else {
@@ -1219,7 +1217,9 @@ async function syncData(
     { concurrency }
   )
 
-  for (const { id, result: res } of updateResults) {
+  if (isErr(updateResults)) return err('Sync stopped while updating records')
+
+  for (const { id, result: res } of updateResults.value) {
     if (isOk(res)) {
       result.updated++
     } else {
@@ -1237,7 +1237,9 @@ async function syncData(
     { concurrency }
   )
 
-  for (const { id, result: res } of deleteResults) {
+  if (isErr(deleteResults)) return err('Sync stopped while deleting records')
+
+  for (const { id, result: res } of deleteResults.value) {
     if (isOk(res)) {
       result.deleted++
     } else {
@@ -1302,7 +1304,7 @@ Send emails in batches with rate limiting and failure tracking.
 
 ```typescript
 import * as R from 'remeda'
-import { err, isOk, ok, type Result } from '@ontologyio/receta/result'
+import { err, isErr, isOk, ok, type Result } from '@ontologyio/receta/result'
 import { mapAsync } from '@ontologyio/receta/async'
 
 interface Email {
@@ -1376,7 +1378,11 @@ async function sendEmailBatch(
       { concurrency: 10 } // Limit concurrent sends
     )
 
-    results.push(...batchResults)
+    if (isErr(batchResults)) {
+      return err(`Batch ${batchIndex + 1} stopped by an unexpected error`)
+    }
+
+    results.push(...batchResults.value)
 
     // Delay between batches to respect rate limits
     if (batchIndex < batches.length - 1) {
@@ -1451,7 +1457,7 @@ Deliver webhooks with retry and exponential backoff.
 
 ```typescript
 import { isOk, ok, type Result } from '@ontologyio/receta/result'
-import { retryWithBackoff } from '@ontologyio/receta/async'
+import { retry, type RetryError } from '@ontologyio/receta/async'
 
 interface WebhookEvent {
   id: string
@@ -1472,7 +1478,7 @@ interface WebhookEndpoint {
 async function deliverWebhook(
   endpoint: WebhookEndpoint,
   event: WebhookEvent
-): Promise<Result<void, string>> {
+): Promise<Result<void, RetryError>> {
   // Check if endpoint is subscribed to this event
   if (!endpoint.events.includes(event.type)) {
     return ok(undefined) // Skip delivery
@@ -1481,7 +1487,7 @@ async function deliverWebhook(
   const payload = JSON.stringify(event)
   const signature = await generateSignature(payload, endpoint.secret)
 
-  return retryWithBackoff(
+  return retry(
     async () => {
       const response = await fetch(endpoint.url, {
         method: 'POST',
@@ -1502,12 +1508,12 @@ async function deliverWebhook(
     },
     {
       maxAttempts: 5,
-      initialDelay: 1000,
+      delay: 1000,
       maxDelay: 60000,
-      backoffMultiplier: 2,
+      backoff: 2,
       shouldRetry: (error) => {
         // Retry on 5xx errors and timeouts, not on 4xx
-        return !error.message.includes('4')
+        return !(error as Error).message.includes('4')
       },
     }
   )
@@ -1565,8 +1571,8 @@ if (isOk(result)) {
 #### Result Version
 
 The Webhook Delivery example shows Result for reliable delivery:
-- `deliverWebhook` returns `Result<void, string>` for explicit success/failure
-- `retryWithBackoff` wraps network calls with Result-based retry logic
+- `deliverWebhook` returns `Result<void, RetryError>` for explicit success/failure
+- `retry` wraps network calls with Result-based retry logic
 - Signature generation and validation errors are Result values
 - Webhook failures are logged without throwing exceptions
 - Easy to track delivery success rates with Result filtering
@@ -1576,8 +1582,8 @@ The Webhook Delivery example shows Result for reliable delivery:
 Poll for job completion with timeout and progress updates.
 
 ```typescript
-import { err, isErr, isOk, ok, type Result } from '@ontologyio/receta/result'
-import { timeout } from '@ontologyio/receta/async'
+import { err, flatten, isErr, isOk, mapErr, ok, type Result } from '@ontologyio/receta/result'
+import { poll } from '@ontologyio/receta/async'
 
 interface Job {
   id: string
@@ -1604,37 +1610,41 @@ async function waitForJobCompletion(
     onProgress,
   } = options
 
-  return timeout(
+  const finished = await poll(
     async () => {
-      while (true) {
-        const jobResult = await fetchJobStatus(jobId)
+      const jobResult = await fetchJobStatus(jobId)
 
-        if (isErr(jobResult)) {
-          return jobResult
-        }
-
-        const job = jobResult.value
-
-        // Report progress
-        if (onProgress) {
-          onProgress(job)
-        }
-
-        // Check terminal states
-        if (job.status === 'completed') {
-          return ok(job)
-        }
-
-        if (job.status === 'failed') {
-          return err(job.error || 'Job failed')
-        }
-
-        // Wait before next poll
-        await new Promise(resolve => setTimeout(resolve, pollInterval))
+      if (isErr(jobResult)) {
+        return jobResult
       }
+
+      const job = jobResult.value
+
+      // Report progress
+      if (onProgress) {
+        onProgress(job)
+      }
+
+      // Check terminal states
+      if (job.status === 'completed') {
+        return ok(job)
+      }
+
+      if (job.status === 'failed') {
+        return err(job.error || 'Job failed')
+      }
+
+      return null // Not done yet, poll again
     },
-    maxWaitTime,
-    `Job did not complete within ${maxWaitTime}ms`
+    {
+      interval: pollInterval,
+      maxAttempts: Math.ceil(maxWaitTime / pollInterval),
+      timeout: maxWaitTime,
+    }
+  )
+
+  return flatten(
+    mapErr(finished, () => `Job did not complete within ${maxWaitTime}ms`)
   )
 }
 
@@ -1678,8 +1688,8 @@ if (isOk(result)) {
 
 The Job Polling example uses Result for async job tracking:
 - `waitForJobCompletion` returns `Result<Job, string>` when complete or failed
-- `timeout` wraps polling loop with Result-based timeout handling
-- Job status checks use `Result.isErr` for early termination
+- `poll` runs the loop and enforces the time limit
+- Job status checks use `isErr` for early termination
 - Progress callbacks work seamlessly with Result-based flow
 - Terminal states (completed/failed) are distinguished by Result value
 
@@ -1783,7 +1793,7 @@ async function callExternalAPI(): Promise<string> {
 The Circuit Breaker example demonstrates Result for fault tolerance:
 - `execute` method returns `Result<T, string>` for all operations
 - Circuit state transitions are based on Result success/failure
-- Open circuit returns `Result.err` immediately without calling function
+- Open circuit returns `err` immediately without calling function
 - Half-open state tests recovery using Result-based success tracking
 - Fallback logic is explicit and type-safe with Result pattern
 
@@ -1849,8 +1859,8 @@ The patterns in this document demonstrate the power of Result-based async operat
 2. **Type-safe error handling**: TypeScript ensures you handle all error cases
 3. **Explicit error propagation**: See exactly where errors can occur
 4. **Easy composition**: Chain operations with `pipe`, `map`, `flatMap`
-5. **Consistent API**: All async utilities follow the same Result pattern
-6. **Better testing**: Mock errors by returning `Result.err` values
+5. **Consistent API**: `retry`, `mapAsync`, `poll` and `batch` all return a Result
+6. **Better testing**: Mock errors by returning `err` values
 7. **No silent failures**: All errors are explicit and tracked
 
 ### When to Use Result vs Exceptions
@@ -1886,8 +1896,8 @@ async function fetchUser(id: string): Promise<User> {
 }
 
 // After: Result
-async function fetchUser(id: string): Promise<Result<User, string>> {
-  return retryResult(async () => {
+async function fetchUser(id: string): Promise<Result<User, RetryError>> {
+  return retry(async () => {
     const response = await fetch(`/users/${id}`)
     if (!response.ok) throw new Error('Not found')
     return await response.json()

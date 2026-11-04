@@ -29,7 +29,10 @@ import { map } from '@ontologyio/receta/result'
 
 // GitHub API returns full user object
 const fetchUser = async (username: string) =>
-  tryCatchAsync(() => fetch(`https://api.github.com/users/${username}`))
+  tryCatchAsync(async () => {
+    const res = await fetch(`https://api.github.com/users/${username}`)
+    return res.json()
+  })
 
 // Transform for UI (extract only what we need)
 const userForUI = pipe(
@@ -41,7 +44,7 @@ const userForUI = pipe(
   }))
 )
 
-// Type: Result<{ name, avatar, followers }, Error>
+// Type: Result<{ name, avatar, followers }, unknown>
 ```
 
 ### Real-World: Stripe Amount Formatting
@@ -63,10 +66,10 @@ const getChargeAmount = (chargeId: string) =>
 
 ```typescript
 // Prisma returns Date objects, frontend needs ISO strings
-const getPost = (id: string) =>
+const getPost = async (id: string) =>
   pipe(
     await db.post.findUnique({ where: { id } }),
-    fromNullable(_, 'Post not found'),
+    fromNullable('Post not found'),
     map(post => ({
       ...post,
       createdAt: post.createdAt.toISOString(),
@@ -79,7 +82,7 @@ const getPost = (id: string) =>
 
 ```typescript
 map(ok(5), x => x * 2)     // Ok(10) ✅
-map(err('fail'), x => x * 2) // Err('fail') - fn never runs ✅
+map(err('fail'), (x: number) => x * 2) // Err('fail') - fn never runs ✅
 ```
 
 ---
@@ -95,9 +98,9 @@ import { mapErr } from '@ontologyio/receta/result'
 
 const fetchUserPosts = (userId: string) =>
   pipe(
-    fetch(`/api/users/${userId}/posts`),
+    fetchPosts(userId),
     mapErr(error => ({
-      ...error,
+      cause: error,
       context: { userId, endpoint: '/posts' },
       timestamp: Date.now()
     }))
@@ -115,10 +118,10 @@ type AppError = {
   source: 'stripe' | 'aws' | 'github'
 }
 
-const chargeCard = (token: string) =>
+const chargeCard = async (token: string) =>
   pipe(
-    tryCatchAsync(() => stripe.charges.create({ token })),
-    mapErr((stripeError): AppError => ({
+    await tryCatchAsync(() => stripe.charges.create({ token })),
+    mapErr((stripeError: any): AppError => ({
       code: stripeError.code || 'unknown',
       message: stripeError.message,
       source: 'stripe'
@@ -131,7 +134,7 @@ const chargeCard = (token: string) =>
 ```typescript
 const categorizeError = pipe(
   riskyOperation(),
-  mapErr(error => {
+  mapErr((error: ApiError) => {
     const severity = error.status >= 500 ? 'critical' : 'warning'
     return { ...error, severity, retryable: error.status < 500 }
   })
@@ -145,7 +148,7 @@ const categorizeError = pipe(
 const saveProfile = (profile: Profile) =>
   pipe(
     validateProfile(profile),
-    flatMap(valid => db.profile.update(valid)),
+    flatMap(valid => updateProfile(valid)),
     mapErr(dbError => {
       if (dbError.code === 'P2002') {
         return 'That username is already taken'
@@ -199,30 +202,34 @@ const processPayment = (email: string, token: string, amount: number) =>
 // If ANY step fails, pipeline short-circuits to Err
 ```
 
-### Real-World: Database Transaction
+### Real-World: Async Steps
+
+`flatMap` is synchronous: its callback must return a `Result`, not a `Promise` of one. When a step is async, `await` it and return early on `Err`.
 
 ```typescript
 // User signup flow
-const signupUser = (email: string, password: string) =>
-  pipe(
-    // 1. Validate email
-    validateEmail(email),
-    // 2. Hash password (can fail)
-    flatMap(validEmail =>
-      tryCatchAsync(() => bcrypt.hash(password, 10))
-        .map(hash => ({ email: validEmail, hash }))
-    ),
-    // 3. Create user (can fail - duplicate email)
-    flatMap(({ email, hash }) =>
-      tryCatchAsync(() => db.user.create({ email, passwordHash: hash }))
-    ),
-    // 4. Create session
-    flatMap(user =>
-      createSession(user.id)
-    ),
-    // 5. Send welcome email (non-critical - use tap instead)
-    tap(user => sendWelcomeEmail(user.email))
+const signupUser = async (email: string, password: string) => {
+  // 1. Validate email
+  const validEmail = validateEmail(email)
+  if (isErr(validEmail)) return validEmail
+
+  // 2. Hash password (can fail)
+  const hash = await tryCatchAsync(() => bcrypt.hash(password, 10))
+  if (isErr(hash)) return hash
+
+  // 3. Create user (can fail - duplicate email)
+  const user = await tryCatchAsync(() =>
+    db.user.create({ email: validEmail.value, passwordHash: hash.value })
   )
+  if (isErr(user)) return user
+
+  return pipe(
+    // 4. Create session
+    await createSession(user.value.id),
+    // 5. Send welcome email (non-critical - use tap instead)
+    tap(() => sendWelcomeEmail(user.value.email))
+  )
+}
 ```
 
 ### Real-World: API Pagination
@@ -233,10 +240,11 @@ const fetchAllPages = async (url: string) => {
   let nextUrl: string | null = url
 
   while (nextUrl) {
-    const result = await pipe(
-      tryCatchAsync(() => fetch(nextUrl)),
-      flatMap(res => tryCatchAsync(() => res.json()))
-    )
+    const pageUrl: string = nextUrl
+    const result = await tryCatchAsync(async () => {
+      const res = await fetch(pageUrl)
+      return res.json()
+    })
 
     if (isErr(result)) {
       return result // Propagate error
@@ -287,7 +295,7 @@ const validateUser = (user: { age?: number }) =>
     // This returns Result<Result<number, string>, string>
     map(age => validateAge(age)),
     // Flatten to Result<number, string>
-    flatten
+    flatten()
   )
 ```
 
@@ -301,7 +309,7 @@ const getPrimaryEmail = (username: string) =>
     map(user => user.emails),         // Result<Email[], ApiError>
     map(emails => emails.find(e => e.primary)), // Result<Email | undefined, ApiError>
     map(email => fromNullable(email, 'No primary email')), // Result<Result<Email, string>, ApiError>
-    flatten                            // Result<Email, ApiError | string>
+    flatten()                          // Result<Email, ApiError | string>
   )
 ```
 
@@ -376,10 +384,10 @@ pipe(
 )
 
 pipe(
-  err('fail'),
+  err('fail') as Result<number, string>,
   tap(n => console.log(n)),  // Never runs
-  map(n => n * 2)             // Err('fail')
-)
+  map(n => n * 2)
+) // => Err('fail')
 ```
 
 ---
@@ -428,19 +436,15 @@ const criticalOperation = () =>
 ### Real-World: Retry Logic
 
 ```typescript
-const fetchWithRetry = async (url: string, maxRetries = 3) => {
-  let attempt = 0
+import { retry } from '@ontologyio/receta/async'
 
-  return pipe(
-    await tryCatchAsync(() => fetch(url)),
+const fetchWithRetry = async (url: string, maxAttempts = 3) =>
+  pipe(
+    await retry(() => fetch(url), { maxAttempts }),
     tapErr(error => {
-      attempt++
-      if (attempt < maxRetries) {
-        console.log(`Retry ${attempt}/${maxRetries}`)
-      }
+      console.error(`Gave up after ${error.attempts} attempts`, error.lastError)
     })
   )
-}
 ```
 
 ---
@@ -452,7 +456,7 @@ const fetchWithRetry = async (url: string, maxRetries = 3) => {
 map(result, user => user.email)
 
 // ✅ Transform error value
-mapErr(result, err => ({ ...err, timestamp: Date.now() }))
+mapErr(result, error => ({ cause: error, timestamp: Date.now() }))
 
 // ✅ Chain operations that return Results
 flatMap(result, user => fetchPosts(user.id))
@@ -464,7 +468,7 @@ flatten(nestedResult)
 tap(result, data => console.log(data))
 
 // ✅ Monitor errors without changing value
-tapErr(result, err => Sentry.capture(err))
+tapErr(result, error => Sentry.capture(error))
 ```
 
 ## Common Patterns
@@ -485,7 +489,7 @@ const workflow = pipe(
 ```typescript
 const withContext = (operation: string) =>
   mapErr(error => ({
-    ...error,
+    cause: error,
     operation,
     timestamp: Date.now(),
     environment: process.env.NODE_ENV

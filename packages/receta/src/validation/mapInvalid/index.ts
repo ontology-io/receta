@@ -35,7 +35,7 @@ import { invalid } from '../constructors'
  * ) // => Invalid(['ERROR1', 'ERROR2'])
  *
  * // Real-world: Add context to errors
- * const validateForm = (data: FormData) =>
+ * const validateForm = (data: SignupForm) =>
  *   pipe(
  *     validateEmail(data.email),
  *     mapInvalid(err => ({ field: 'email', message: err }))

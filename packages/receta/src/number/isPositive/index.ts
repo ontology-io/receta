@@ -8,6 +8,8 @@
  *
  * @example
  * ```typescript
+ * import { isPositive } from '@ontologyio/receta/number'
+ *
  * isPositive(42) // => true
  * isPositive(0) // => false
  * isPositive(-5) // => false

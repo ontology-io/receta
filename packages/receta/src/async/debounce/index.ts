@@ -9,6 +9,10 @@ import type { DebounceOptions } from '../types'
  * Useful for rate-limiting API calls, search inputs, or any operation
  * that shouldn't run on every invocation.
  *
+ * The promise of a call that a newer call replaces never settles. With
+ * `trailing: false`, neither does the promise of a call ignored during the delay.
+ * There is no `cancel` or `flush`.
+ *
  * @param fn - Async function to debounce
  * @param options - Debounce options
  * @returns Debounced function
@@ -25,10 +29,10 @@ import type { DebounceOptions } from '../types'
  * )
  *
  * // User types "hello" quickly
- * searchAPI('h')      // Cancelled
- * searchAPI('he')     // Cancelled
- * searchAPI('hel')    // Cancelled
- * searchAPI('hell')   // Cancelled
+ * searchAPI('h')      // Replaced, its promise never settles
+ * searchAPI('he')     // Replaced
+ * searchAPI('hel')    // Replaced
+ * searchAPI('hell')   // Replaced
  * searchAPI('hello')  // Executes after 300ms
  *
  * // Leading edge debounce (execute immediately, ignore subsequent calls)

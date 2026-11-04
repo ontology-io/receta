@@ -38,7 +38,7 @@ const createCharge = (token: string, amount: number) => {
   return ok(charge) // ✅ Explicit success
 }
 
-// Type: Result<Charge, never>
+// Type: Ok<{ id: string, amount: number, ... }>
 // "This function always succeeds"
 ```
 
@@ -47,7 +47,8 @@ const createCharge = (token: string, amount: number) => {
 ```typescript
 // When repo exists
 const fetchRepo = async (owner: string, name: string) => {
-  const repo = await fetch(`https://api.github.com/repos/${owner}/${name}`)
+  const res = await fetch(`https://api.github.com/repos/${owner}/${name}`)
+  const repo = await res.json()
   return ok({
     name: repo.name,
     stars: repo.stargazers_count,
@@ -106,7 +107,7 @@ const getObject = (bucket: string, key: string): Result<Buffer, S3Error> => {
     })
   }
 
-  // ... fetch object
+  return ok(readObject(bucket, key))
 }
 ```
 
@@ -141,7 +142,7 @@ import { tryCatch } from '@ontologyio/receta/result'
 const parseGitHubResponse = (body: string) =>
   tryCatch(() => JSON.parse(body))
 
-// Type: Result<unknown, unknown>
+// Type: Result<any, unknown>
 parseGitHubResponse('{"login":"octocat"}') // Ok({ login: 'octocat' })
 parseGitHubResponse('invalid json')         // Err(SyntaxError)
 ```
@@ -174,22 +175,6 @@ const parseJSON = <T>(str: string): Result<T, ParseError> =>
       input: str.slice(0, 100), // First 100 chars
       reason: String(error)
     })
-  )
-```
-
-### Real-World: Prisma Queries
-
-```typescript
-// Prisma can throw on constraint violations
-const createUser = (email: string) =>
-  tryCatch(
-    () => db.user.create({ data: { email } }),
-    (error) => {
-      if (error.code === 'P2002') {
-        return { type: 'duplicate_email', email }
-      }
-      return { type: 'database_error', error }
-    }
   )
 ```
 
@@ -226,7 +211,7 @@ const createCharge = async (
     },
     (error) => ({
       type: 'api_error',
-      message: error.message
+      message: String(error)
     })
   )
 
@@ -236,6 +221,22 @@ match(result, {
   onOk: (charge) => console.log('Charged:', charge.id),
   onErr: (error) => console.error('Failed:', error.message)
 })
+```
+
+### Real-World: Prisma Queries
+
+```typescript
+// Prisma rejects on constraint violations
+const createUser = (email: string) =>
+  tryCatchAsync(
+    () => db.user.create({ data: { email } }),
+    (error: any) => {
+      if (error.code === 'P2002') {
+        return { type: 'duplicate_email', email }
+      }
+      return { type: 'database_error', error }
+    }
+  )
 ```
 
 ### Real-World: Supabase/Database Queries
@@ -255,7 +256,7 @@ const fetchUser = async (id: string) =>
     },
     (error) => ({
       code: 'DB_ERROR',
-      message: error.message
+      message: String(error)
     })
   )
 ```
@@ -271,7 +272,7 @@ const readConfig = async (path: string) =>
       const content = await fs.readFile(path, 'utf8')
       return JSON.parse(content)
     },
-    (error) => {
+    (error: any) => {
       if (error.code === 'ENOENT') {
         return { type: 'not_found', path }
       }
@@ -299,7 +300,7 @@ const fetchWithTimeout = async (url: string, timeout: number) =>
         clearTimeout(id)
       }
     },
-    (error) => {
+    (error: any) => {
       if (error.name === 'AbortError') {
         return { type: 'timeout', url, timeout }
       }
@@ -365,7 +366,7 @@ const getEnvVar = (key: string) =>
 
 const config = pipe(
   getEnvVar('DATABASE_URL'),
-  flatMap(url => getEnvVar('API_KEY').map(key => ({ url, key }))),
+  flatMap(url => map(getEnvVar('API_KEY'), key => ({ url, key }))),
   unwrapOr({ url: 'default', key: 'default' })
 )
 ```
@@ -429,14 +430,11 @@ const validateSignup = (email: string, password: string) =>
 ### 2. API Call with Fallback
 
 ```typescript
-const fetchUserWithFallback = async (id: string) =>
-  pipe(
-    await tryCatchAsync(() => fetchFromPrimary(id)),
-    match({
-      onOk: (user) => ok(user),
-      onErr: () => tryCatchAsync(() => fetchFromCache(id))
-    })
-  )
+const fetchUserWithFallback = async (id: string) => {
+  const primary = await tryCatchAsync(() => fetchFromPrimary(id))
+
+  return isOk(primary) ? primary : tryCatchAsync(() => fetchFromCache(id))
+}
 ```
 
 ### 3. Required Config
@@ -459,4 +457,4 @@ const loadConfig = () => {
 
 - **[Transformers](./transformers.mdx)**: Work with Results using `map`, `flatMap`, etc.
 - **[Extractors](./extractors.mdx)**: Get values out with `unwrap`, `match`
-- **[Patterns](./04-patterns.md)**: Complete recipes for common scenarios
+- **[Patterns](./patterns.mdx)**: Complete recipes for common scenarios

@@ -20,18 +20,21 @@ export interface BatchError {
  * Returns a Result to handle errors explicitly. If any batch processing fails,
  * the entire operation returns an Err with details about which batch failed.
  *
+ * `fn` runs once per batch and receives the whole batch, so the result holds
+ * one entry per batch rather than one per item.
+ *
  * Useful for bulk operations like data imports, exports, or processing
  * large datasets without overwhelming the system.
  *
  * @param items - Array of items to process
  * @param fn - Async function to apply to each batch
  * @param options - Batch options
- * @returns Promise resolving to Result containing array of all results or error
+ * @returns Promise resolving to Result containing one result per batch, or an error
  *
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { unwrapOr, mapErr } from '@ontologyio/receta/result'
+ * import { unwrapOr, tapErr } from '@ontologyio/receta/result'
  *
  * // Process users in batches of 50
  * const result = await batch(
@@ -46,11 +49,8 @@ export interface BatchError {
  * )
  *
  * // Handle with Result pattern
- * const inserted = R.pipe(
- *   result,
- *   mapErr(error => console.error('Batch failed:', error)),
- *   unwrapOr([])
- * )
+ * const logged = tapErr(result, error => console.error('Batch failed:', error))
+ * const inserted = unwrapOr(logged, [])
  *
  * // Send emails in batches to avoid rate limits
  * const emailResult = await batch(
@@ -59,7 +59,6 @@ export interface BatchError {
  *   {
  *     batchSize: 100,
  *     delayBetweenBatches: 5000, // 5 seconds between batches
- *     concurrency: 2, // Process 2 batches concurrently
  *   }
  * )
  *
@@ -70,7 +69,7 @@ export interface BatchError {
  *     console.log(`Importing batch of ${recordBatch.length}`)
  *     return importRecords(recordBatch)
  *   },
- *   { batchSize: 1000 }
+ *   { batchSize: 1000, concurrency: 2 } // Process 2 batches concurrently
  * )
  * ```
  *

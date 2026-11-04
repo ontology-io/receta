@@ -74,10 +74,10 @@ const users = await userRepository.find({
 
 ```typescript
 import * as R from 'remeda'
-import { where, gt, oneOf } from '@ontologyio/receta/predicate'
+import { where, gte, eq, oneOf } from '@ontologyio/receta/predicate'
 
 // ✅ Define reusable predicates
-const isAdult = gt(18)
+const isAdult = gte<number>(18)
 const isActive = eq(true)
 const isStaff = oneOf(['admin', 'moderator'])
 
@@ -99,13 +99,15 @@ R.filter(users, isActiveStaff)
 R.find(users, isActiveStaff)
 ```
 
+Thresholds are written `gte<number>(18)` because plain `gte(18)` only accepts the literal `18`. See [Comparison Predicates](./comparison.mdx) for why.
+
 **Benefits:**
 - 🔄 **Reusable**: Define once, use everywhere
 - 🧩 **Composable**: Build complex from simple
 - 🔒 **Type-safe**: TypeScript knows what you're filtering
 - 🧪 **Testable**: Test predicates in isolation
 - 📖 **Discoverable**: All filters in one module
-- 🎯 **Explicit**: Clear intent (`gt(18)` vs `>= 18`)
+- 🎯 **Explicit**: Clear intent (`gte(18)` vs `>= 18`)
 
 ## Why Predicates Over Inline Filters?
 
@@ -123,11 +125,11 @@ orders.filter(o => o.amount >= 1000 && o.status === 'pending')
 
 ```typescript
 // ✅ With predicates - composition is natural
-import { gt, where } from '@ontologyio/receta/predicate'
+import { gte, eq, where } from '@ontologyio/receta/predicate'
 
-const isAdult = gt(18)
-const isExpensive = gt(100)
-const isLargeOrder = gt(1000)
+const isAdult = gte<number>(18)
+const isExpensive = gte<number>(100)
+const isLargeOrder = gte<number>(1000)
 
 R.filter(users, where({ age: isAdult, verified: Boolean }))
 R.filter(products, where({ price: isExpensive, inStock: Boolean }))
@@ -137,18 +139,18 @@ R.filter(orders, where({ amount: isLargeOrder, status: eq('pending') }))
 ### Problem 2: Inline Filters Lose Type Information
 
 ```typescript
-// ❌ TypeScript can't narrow mixed arrays
-const mixed: unknown[] = ['hello', 42, true, 'world']
-const strings = mixed.filter(x => typeof x === 'string')
-// Type of strings: unknown[] ❌ (should be string[])
+// ❌ TypeScript can't narrow this inline check
+const mixed: unknown[] = ['hello', 42, NaN, 'world']
+const numbers = mixed.filter(x => typeof x === 'number' && !isNaN(x))
+// Type of numbers: unknown[] ❌ (should be number[])
 ```
 
 ```typescript
 // ✅ Type guards narrow types automatically
-import { isString } from '@ontologyio/receta/predicate'
+import { isNumber } from '@ontologyio/receta/predicate'
 
-const strings = R.filter(mixed, isString)
-// Type of strings: string[] ✅
+const numbers = R.filter(mixed, isNumber)
+// Type of numbers: number[] ✅
 ```
 
 ### Problem 3: Inline Filters Don't Work in Pipelines
@@ -167,7 +169,7 @@ R.pipe(
 // ✅ Clean pipeline with predicates
 R.pipe(
   users,
-  R.filter(prop('age', gte(18))),
+  R.filter(prop('age', gte<number>(18))),
   R.filter(prop('active', Boolean)),
   R.filter(prop('role', eq('admin')))
 )
@@ -176,7 +178,7 @@ R.pipe(
 R.pipe(
   users,
   R.filter(where({
-    age: gte(18),
+    age: gte<number>(18),
     active: Boolean,
     role: eq('admin')
   }))
@@ -199,7 +201,7 @@ interface Issue {
 const openAssignedBugs = where({
   state: eq('open'),
   labels: (labels: string[]) => labels.includes('bug'),
-  assignee: isDefined
+  assignee: not(isNull)
 })
 
 R.filter(issues, openAssignedBugs)
@@ -210,8 +212,8 @@ R.filter(issues, openAssignedBugs)
 ```typescript
 // Price range + rating + availability
 const affordableQuality = where({
-  price: between(50, 200),
-  rating: gte(4.0),
+  price: between<number>(50, 200),
+  rating: gte<number>(4.0),
   inStock: Boolean
 })
 
@@ -222,12 +224,12 @@ R.filter(products, affordableQuality)
 
 ```typescript
 // Complex permission logic
-const canAccessAdmin = or(
+const canAccessAdmin = or<User>(
   prop('role', eq('admin')),
-  and(
+  and<User>(
     prop('role', eq('moderator')),
     prop('verified', Boolean),
-    by((u: User) => u.joinedDays, gt(30))
+    by((u: User) => u.joinedDays, gt<number>(30))
   )
 )
 
@@ -242,7 +244,7 @@ if (canAccessAdmin(currentUser)) {
 // Validate form data
 const isValidEmail = matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
 const isStrongPassword = and(
-  by((s: string) => s.length, gte(8)),
+  by((s: string) => s.length, gte<number>(8)),
   matches(/[A-Z]/),
   matches(/[0-9]/)
 )
@@ -258,7 +260,7 @@ if (!isStrongPassword(formData.password)) errors.push('Weak password')
 // SQL: SELECT * FROM orders WHERE status IN ('pending', 'shipped') AND amount > 100
 const activeHighValueOrders = where({
   status: oneOf(['pending', 'shipped']),
-  amount: gt(100)
+  amount: gt<number>(100)
 })
 
 R.filter(orders, activeHighValueOrders)
@@ -276,7 +278,7 @@ SELECT * FROM users WHERE age >= 18 AND status = 'active'
 ```typescript
 // Receta Predicate (same structure)
 R.filter(users, where({
-  age: gte(18),
+  age: gte<number>(18),
   status: eq('active')
 }))
 ```
@@ -320,8 +322,8 @@ R.filter(users, where({
 For numeric, string, and value comparisons.
 
 ```typescript
-gt(18)           // age > 18
-between(10, 50)  // 10 <= price <= 50
+gt<number>(18)           // age > 18
+between<number>(10, 50)  // 10 <= price <= 50
 eq('active')     // status === 'active'
 ```
 
@@ -329,7 +331,7 @@ eq('active')     // status === 'active'
 For logical composition.
 
 ```typescript
-and(gt(18), lt(65))           // 18 < age < 65
+and(gt<number>(18), lt<number>(65))           // 18 < age < 65
 or(eq('admin'), eq('owner'))  // role === 'admin' OR 'owner'
 not(isEmpty)                  // not empty
 ```
@@ -338,9 +340,9 @@ not(isEmpty)                  // not empty
 For structured object filtering.
 
 ```typescript
-where({ age: gt(18), active: Boolean })  // Multi-field check
+where({ age: gt<number>(18), active: Boolean })  // Multi-field check
 oneOf(['red', 'blue', 'green'])          // Value in list
-prop('status', eq('active'))             // Single property check
+R.filter(users, prop('status', eq('active')))  // Single property check
 ```
 
 ### 4. Type Guards (`isString`, `isNumber`, `isDefined`)
@@ -363,7 +365,7 @@ const isEven: Predicate<number> = (n) => n % 2 === 0
 const isPositive: Predicate<number> = (n) => n > 0
 
 // Predicate factories (return predicates)
-const gt = <T>(threshold: T): Predicate<T> => (value) => value > threshold
+const gt = <T extends number | bigint>(threshold: T): Predicate<T> => (value) => value > threshold
 const eq = <T>(expected: T): Predicate<T> => (value) => value === expected
 
 // Higher-order combinators (predicates → predicate)
@@ -384,12 +386,12 @@ Predicates work seamlessly with Remeda's collection functions:
 
 ```typescript
 import * as R from 'remeda'
-import { where, gt, oneOf } from '@ontologyio/receta/predicate'
+import { where, gt, gte, lt, eq, prop } from '@ontologyio/receta/predicate'
 
-const users = [/* ... */]
+const users: User[] = [/* ... */]
 
 // filter - Keep matching items
-R.filter(users, where({ age: gt(18) }))
+R.filter(users, where({ age: gt<number>(18) }))
 
 // find - First match
 R.find(users, where({ role: eq('admin') }))
@@ -398,16 +400,14 @@ R.find(users, where({ role: eq('admin') }))
 const [active, inactive] = R.partition(users, prop('active', Boolean))
 
 // takeWhile - Take until predicate fails
-R.takeWhile(numbers, lt(10))
+R.takeWhile(numbers, lt<number>(10))
 
 // dropWhile - Drop until predicate fails
-R.dropWhile(numbers, lt(10))
+R.dropWhile(numbers, lt<number>(10))
 
-// any - Check if any match
-R.some(users, prop('verified', Boolean))
-
-// all - Check if all match
-R.every(users, where({ age: gte(18) }))
+// Remeda has no some or every, so use the array methods
+users.some(prop('verified', Boolean))
+users.every(where({ age: gte<number>(18) }))
 ```
 
 ## Performance Considerations
@@ -432,7 +432,7 @@ or(
 
 ```typescript
 // Creating predicates is cheap (no computation)
-const isAdult = gt(18)        // Just returns a function
+const isAdult = gt<number>(18)        // Just returns a function
 const isActive = eq(true)     // Just returns a function
 
 // Only when you CALL them does work happen
@@ -457,9 +457,9 @@ const expensivePredicate = memoize((user: User) => {
 
 ```typescript
 // predicates/user.ts
-export const isAdult = prop('age', gte(18))
-export const isVerified = prop('verified', Boolean)
-export const isStaff = prop('role', oneOf(['admin', 'moderator']))
+export const isAdult = where({ age: gte<number>(18) })
+export const isVerified = where({ verified: Boolean })
+export const isStaff = where({ role: oneOf(['admin', 'moderator']) })
 export const isActiveUser = where({ status: eq('active'), verified: Boolean })
 ```
 
@@ -468,9 +468,9 @@ export const isActiveUser = where({ status: eq('active'), verified: Boolean })
 ```typescript
 // permissions.ts
 const canEditPost = (user: User, post: Post) =>
-  or(
-    eq(post.authorId)(user.id),         // Author can edit
-    and(isStaff(user), isVerified(user)) // Verified staff can edit
+  or<User>(
+    where({ id: eq(post.authorId) }),  // Author can edit
+    and<User>(isStaff, isVerified)     // Verified staff can edit
   )(user)
 ```
 
@@ -479,8 +479,8 @@ const canEditPost = (user: User, post: Post) =>
 ```typescript
 const isValidUser = where({
   email: matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
-  age: between(13, 120),
-  username: by((s: string) => s.length, between(3, 20))
+  age: between<number>(13, 120),
+  username: by((s: string) => s.length, between<number>(3, 20))
 })
 
 if (!isValidUser(userData)) {

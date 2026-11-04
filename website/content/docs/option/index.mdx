@@ -7,7 +7,7 @@ description: "Option represents values that might not exist, providing a type-sa
 
 ### Null Reference Errors Everywhere
 
-```typescript
+```typescript nocheck
 // Traditional nullable code
 function getUserEmail(userId: string): string | undefined {
   const user = users.find(u => u.id === userId)
@@ -73,7 +73,7 @@ if let user = getUser("123") {
 ## The Solution: `Option<T>`
 
 ```typescript
-import { Option, some, none, map, unwrapOr } from '@ontologyio/receta/option'
+import { type Option, some, none, map, unwrapOr } from '@ontologyio/receta/option'
 import * as R from 'remeda'
 
 // Returns Option instead of nullable
@@ -276,7 +276,7 @@ Operations work on the contents:
 ```typescript
 // map: Transform contents if present
 map(some(5), x => x * 2) // Some(10)
-map(none(), x => x * 2)  // None (no contents to transform)
+map(none(), (x: number) => x * 2)  // None (no contents to transform)
 
 // flatMap: Open nested boxes
 flatMap(some(5), x => some(x * 2)) // Some(10)
@@ -374,8 +374,8 @@ if (email !== undefined) {
 }
 
 // Option type
-const email: Option<string> = fromNullable(user?.email)
-match(email, {
+const maybeEmail: Option<string> = fromNullable(user?.email)
+match(maybeEmail, {
   onSome: sendEmail,
   onNone: () => console.log('No email')
 })

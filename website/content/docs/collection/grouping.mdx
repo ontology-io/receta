@@ -93,7 +93,7 @@ const events: GitHubEvent[] = [
 // Group by repo → type → user for activity dashboard
 const activityFeed = nest(events, ['repo', 'type', 'user'])
 
-// Access: activityFeed.receta.push.alice => [event1]
+// Shape: { receta: { push: { alice: [event1] }, pr: { bob: [event2] } }, remeda: { push: { alice: [event3] } } }
 ```
 
 ### Real-World: E-commerce Categories
@@ -116,7 +116,7 @@ const products: Product[] = [
 // Build product catalog hierarchy
 const catalog = nest(products, ['category', 'subcategory', 'brand'])
 
-// Navigation: catalog.electronics.laptops.apple => [product1]
+// Shape: { electronics: { laptops: { apple: [product1], dell: [product2] }, phones: { apple: [product3] } } }
 ```
 
 ### Data-Last in Pipe
@@ -227,6 +227,8 @@ const items = [
 
 const grouped = groupByPath(items, 'metadata.tags')
 
+// Values become keys through String(), so ['urgent'] is 'urgent'
+// and a missing path is 'undefined'
 // Result:
 // {
 //   urgent: [{ id: 1, metadata: { tags: ['urgent'] } }],
@@ -236,7 +238,7 @@ const grouped = groupByPath(items, 'metadata.tags')
 
 ## Combining Both Functions
 
-Use `nest()` for multi-level grouping, then `groupByPath()` for nested properties:
+Use `groupByPath()` for the nested property, then `nest()` for the levels under it:
 
 ```typescript
 const events = [
@@ -245,24 +247,20 @@ const events = [
   { id: '3', user: { role: 'admin' }, repo: 'bar', type: 'push' }
 ]
 
-// First group by repo and type
-const byRepoAndType = nest(events, ['repo', 'type'])
+// First group by user role
+const byRole = groupByPath(events, 'user.role')
 
-// Then group each category by user role
-const withRoles = R.mapValues(byRepoAndType, byType =>
-  R.mapValues(byType, events =>
-    groupByPath(events, 'user.role')
-  )
-)
+// Then group each role by repo and type
+const withRepos = R.mapValues(byRole, (group) => nest(group, ['repo', 'type']))
 
 // Result:
 // {
-//   foo: {
-//     push: { admin: [event1] },
-//     pr: { user: [event2] }
+//   admin: {
+//     foo: { push: [event1] },
+//     bar: { push: [event3] }
 //   },
-//   bar: {
-//     push: { admin: [event3] }
+//   user: {
+//     foo: { pr: [event2] }
 //   }
 // }
 ```
@@ -287,16 +285,20 @@ const withRoles = R.mapValues(byRepoAndType, byType =>
 ### Optimization Tips
 
 ```typescript
+import { getPath } from '@ontologyio/receta/object'
+import { unwrapOr } from '@ontologyio/receta/option'
+
 // ❌ Avoid: Re-grouping on every access
 function getComments(userId: number, postId: number) {
-  return nest(comments, ['userId', 'postId'])[userId]?.[postId]
+  const grouped = nest(comments, ['userId', 'postId'])
+  return unwrapOr(getPath<Comment[]>([userId, postId], grouped), [])
 }
 
 // ✅ Better: Group once, reuse
 const commentsByUserAndPost = nest(comments, ['userId', 'postId'])
 
 function getComments(userId: number, postId: number) {
-  return commentsByUserAndPost[userId]?.[postId] ?? []
+  return unwrapOr(getPath<Comment[]>([userId, postId], commentsByUserAndPost), [])
 }
 ```
 
@@ -304,8 +306,10 @@ function getComments(userId: number, postId: number) {
 
 ### Pattern 1: Fallback to Empty Array
 
+Each level of a `NestedMap` is a union, so read it with `getPath` rather than indexing:
+
 ```typescript
-const comments = commentsByUserAndPost[userId]?.[postId] ?? []
+const comments = unwrapOr(getPath<Comment[]>([userId, postId], commentsByUserAndPost), [])
 ```
 
 ### Pattern 2: Nested Access with Default
@@ -314,14 +318,7 @@ const comments = commentsByUserAndPost[userId]?.[postId] ?? []
 const getNestedValue = <T>(
   nested: NestedMap<T>,
   keys: (string | number)[]
-): T[] => {
-  let current: any = nested
-  for (const key of keys) {
-    current = current?.[key]
-    if (!current) return []
-  }
-  return Array.isArray(current) ? current : []
-}
+): T[] => unwrapOr(getPath<T[]>(keys, nested), [])
 
 const comments = getNestedValue(grouped, [1, 10])
 ```
@@ -329,6 +326,8 @@ const comments = getNestedValue(grouped, [1, 10])
 ### Pattern 3: Transform After Grouping
 
 ```typescript
+import { mapValues } from '@ontologyio/receta/object'
+
 // Group, then aggregate
 const avgPriceByCategory = pipe(
   products,
@@ -347,18 +346,17 @@ const avgPriceByCategory = pipe(
 ### Type Safety
 
 ```typescript
-// TypeScript infers the nested structure
+// nest returns NestedMap<Item>, which doesn't track how deep it goes
 const grouped = nest(items, ['category', 'priority'])
-// grouped: NestedMap<Item>
 
-// Access is type-safe
-const electronics = grouped.electronics // NestedMap<Item> | Item[] | undefined
+// So every level is a union: Item | NestedMap<Item> | readonly Item[]
+const electronics = grouped.electronics
 ```
 
 ### Custom Type Guards
 
 ```typescript
-function isItemArray<T>(value: NestedMap<T> | readonly T[]): value is readonly T[] {
+function isItemArray<T>(value: T | NestedMap<T> | readonly T[]): value is readonly T[] {
   return Array.isArray(value)
 }
 
@@ -378,8 +376,7 @@ import { nest, groupByPath } from '@ontologyio/receta/collection'
 describe('Grouping operations', () => {
   it('creates nested structure', () => {
     const result = nest(items, ['cat', 'pri'])
-    expect(result.electronics.high).toBeDefined()
-    expect(result.electronics.high.length).toBeGreaterThan(0)
+    expect(result).toHaveProperty('electronics.high')
   })
 
   it('groups by nested path', () => {

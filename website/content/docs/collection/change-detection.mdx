@@ -62,7 +62,7 @@ interface UpdatedItem<T> {
 
 ## Custom Equality Checking
 
-By default, `diff()` uses JSON stringification for equality. Provide custom equality for better performance or specific logic:
+By default, `diff()` compares items with Remeda's `isDeepEqual`. Provide custom equality for better performance or specific logic:
 
 ```typescript
 const changes = diff(
@@ -79,7 +79,7 @@ const changes = diff(
 ### When to Use Custom Equality
 
 ```typescript
-// ❌ Inefficient: JSON stringification for every comparison
+// Default: a deep comparison of every field of every matched pair
 diff(items, updatedItems, i => i.id)
 
 // ✅ Better: Custom equality for specific fields
@@ -286,6 +286,8 @@ function handleDocumentUpdates(
 ## Detecting Specific Field Changes
 
 ```typescript
+import { mask } from '@ontologyio/receta/object'
+
 function detectFieldChanges<T extends Record<string, any>>(
   old: T,
   updated: T,
@@ -312,7 +314,7 @@ for (const { old, new: updated } of changes.updated) {
     auditLog.record({
       userId: updated.id,
       changedFields: fieldChanges,
-      newValues: R.pick(updated, Object.keys(fieldChanges))
+      newValues: mask(updated, Object.keys(fieldChanges))
     })
   }
 }
@@ -329,8 +331,8 @@ for (const { old, new: updated } of changes.updated) {
 ### Optimization Tips
 
 ```typescript
-// ❌ Avoid: Expensive equality checks
-diff(items, updated, i => i.id) // Uses JSON.stringify
+// Default: deep-compares every field
+diff(items, updated, i => i.id)
 
 // ✅ Better: Compare specific fields
 diff(
@@ -396,7 +398,7 @@ function createAuditEntries<T extends { id: string }>(
   changes: DiffResult<T>,
   userId: string
 ) {
-  const entries = []
+  const entries: AuditEntry<T>[] = []
 
   for (const item of changes.added) {
     entries.push({

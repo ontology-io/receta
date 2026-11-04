@@ -100,7 +100,7 @@ Combine multiple functions into new functions.
 import { compose, converge, juxt } from '@ontologyio/receta/function'
 
 // Build complex objects from single input
-const buildProfile = converge(
+const buildProfile = converge<User, [string, string, string], Profile>(
   (name, username, domain) => ({ name, username, domain }),
   [
     (user: User) => user.fullName,
@@ -143,8 +143,10 @@ Control how many arguments a function accepts.
 import { unary, binary, nAry } from '@ontologyio/receta/function'
 
 // Fix parseInt with map
-['1', '2', '3'].map(parseInt)         // => [1, NaN, NaN] ❌
-['1', '2', '3'].map(unary(parseInt))  // => [1, 2, 3] ✅
+const digits = ['1', '2', '3']
+
+digits.map(parseInt)         // => [1, NaN, NaN]
+digits.map(unary(parseInt))  // => [1, 2, 3]
 ```
 
 **When to use:** Array callbacks, adapting functions for different contexts
@@ -177,7 +179,7 @@ const parseJSON = tryCatch(
 
 ### 1. Data-First and Data-Last Signatures
 
-All functions support both calling styles:
+Combinators that work on a value (`when`, `unless`, `ifElse`, `cond`, `tap` and others) support both calling styles:
 
 ```typescript
 // Data-first (direct call)
@@ -197,10 +199,10 @@ import { when, tap, converge } from '@ontologyio/receta/function'
 
 const result = pipe(
   rawData,
-  when(needsNormalization, normalize),
+  when(needsNormalization, normalizeRecord),
   map(transform),
   tap(logProgress),
-  filter(isValid),
+  filter(isComplete),
   converge(buildSummary, extractors)
 )
 ```
@@ -253,7 +255,9 @@ const handleState = cond<State, Action>([
 ### Validation Pipelines
 
 ```typescript
-const validateUser = pipe(
+import { piped } from 'remeda'
+
+const validateUser = piped(
   when(emailInvalid, normalizeEmail),
   unless(hasUsername, deriveUsernameFromEmail),
   when(passwordWeak, strengthenPassword),
@@ -264,7 +268,7 @@ const validateUser = pipe(
 ### Data Aggregation
 
 ```typescript
-const analyzeData = converge(
+const analyzeData = converge<number[], [number, number, number, number], Record<string, number>>(
   (total, count, max, min) => ({
     total,
     count,
@@ -285,7 +289,9 @@ const analyzeData = converge(
 ### Debugging Pipelines
 
 ```typescript
-const processData = pipe(
+import { piped } from 'remeda'
+
+const processData = piped(
   fetchData,
   tap((data) => logger.debug('Fetched:', data.length, 'items')),
   transform,

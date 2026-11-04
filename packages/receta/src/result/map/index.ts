@@ -19,7 +19,7 @@ import { ok } from '../constructors'
  * ```typescript
  * // Data-first
  * map(ok(5), x => x * 2) // => Ok(10)
- * map(err('fail'), x => x * 2) // => Err('fail')
+ * map(err('fail'), (x: number) => x * 2) // => Err('fail')
  *
  * // Data-last (in pipe)
  * pipe(

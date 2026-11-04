@@ -34,6 +34,8 @@ export type ObjectSchema<T extends PlainObject> = {
  *
  * @example
  * ```typescript
+ * import { map } from '@ontologyio/receta/result'
+ *
  * // Define schema with predicates
  * const userSchema = {
  *   id: (v: unknown): v is number => typeof v === 'number',
@@ -49,23 +51,23 @@ export type ObjectSchema<T extends PlainObject> = {
  *
  * const invalid = { id: '1', name: 'Alice', email: 'invalid' }
  * validateShape(invalid, userSchema)
- * // => Err({ code: 'VALIDATION_ERROR', message: '...', path: ['id'] })
+ * // => Err({ code: 'VALIDATION_ERROR', message: 'Validation failed for key "id"', path: ['id'] })
  *
  * // Data-last (in pipe)
  * pipe(
  *   apiResponse,
  *   stripUndefined,
- *   (obj) => validateShape(obj, schema),
+ *   (obj) => validateShape(obj, userSchema),
  *   map(user => processUser(user))
  * )
  *
  * // With Predicate module
- * import { isString, isNumber, where } from '@ontologyio/receta/predicate'
+ * import { isString, isNumber } from '@ontologyio/receta/predicate'
  *
- * const schema = {
+ * const profileSchema = {
  *   id: isNumber,
  *   name: isString,
- *   age: where({ min: 0, max: 150 })
+ *   age: (v: unknown): v is number => isNumber(v) && v >= 0 && v <= 150
  * }
  * ```
  *

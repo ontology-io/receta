@@ -28,7 +28,7 @@ import type { Cache, KeyFn, MemoizeOptions, MemoizedAsyncFunction } from '../typ
  * // With TTL
  * const getWeather = memoizeAsync(
  *   async (city: string) => api.fetchWeather(city),
- *   { ttl: 5 * 60 * 1000 } // 5 min cache
+ *   { cache: ttlCache(5 * 60 * 1000) } // 5 min cache
  * )
  *
  * // Custom key extraction

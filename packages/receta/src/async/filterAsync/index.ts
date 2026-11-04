@@ -25,7 +25,7 @@ export interface FilterAsyncError {
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { unwrapOr, mapErr } from '@ontologyio/receta/result'
+ * import { unwrapOr, tapErr } from '@ontologyio/receta/result'
  *
  * // Data-first: Filter users who exist
  * const result = await filterAsync(
@@ -38,17 +38,14 @@ export interface FilterAsyncError {
  * )
  *
  * // Handle with Result pattern
- * const existingUsers = R.pipe(
- *   result,
- *   mapErr(error => console.error('Filter failed:', error)),
- *   unwrapOr([])
- * )
+ * const logged = tapErr(result, error => console.error('Filter failed:', error))
+ * const existingUsers = unwrapOr(logged, [])
  *
- * // Data-last (in pipe)
- * const filtered = await R.pipe(
+ * // Data-last (pipeAsync awaits each step)
+ * const filtered = await pipeAsync(
  *   urls,
- *   async (items) => filterAsync(items, isValid, { concurrency: 3 }),
- *   async (result) => unwrapOr(result, [])
+ *   filterAsync(isReachable, { concurrency: 3 }),
+ *   (result) => unwrapOr(result, [])
  * )
  * ```
  *
@@ -123,6 +120,10 @@ async function filterAsyncImplementation<T>(
  * Use this when you want exceptions instead of Result pattern.
  * Prefer the Result-returning filterAsync for better error handling.
  *
+ * It is typed `never` for now, because `orThrow` can't see through the overloads
+ * of filterAsync, so typed code can't call it. `unwrap` does the same job, as the
+ * example shows.
+ *
  * @param items - Array of items to filter
  * @param predicate - Async function that returns true to keep the item
  * @param options - Concurrency options
@@ -133,14 +134,14 @@ async function filterAsyncImplementation<T>(
  * ```typescript
  * // Throws on error
  * try {
- *   const existingUsers = await filterAsyncOrThrow(
+ *   const existingUsers = unwrap(await filterAsync(
  *     userIds,
  *     async (id) => {
  *       const res = await fetch(`/api/users/${id}`)
  *       return res.ok
  *     },
  *     { concurrency: 5 }
- *   )
+ *   ))
  * } catch (error) {
  *   console.error('Filter failed:', error)
  * }
@@ -148,5 +149,6 @@ async function filterAsyncImplementation<T>(
  *
  * @see filterAsync - Result-returning variant (recommended)
  * @see orThrow - utility for creating throwing variants
+ * @see unwrap - for getting the value out of a Result, or throwing
  */
 export const filterAsyncOrThrow = orThrow(filterAsync)

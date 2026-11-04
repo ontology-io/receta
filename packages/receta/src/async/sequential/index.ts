@@ -26,7 +26,7 @@ export interface SequentialError {
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { unwrapOr, mapErr } from '@ontologyio/receta/result'
+ * import { isErr, tapErr, unwrapOr } from '@ontologyio/receta/result'
  *
  * // Execute tasks one at a time in order
  * const result = await sequential([
@@ -36,11 +36,8 @@ export interface SequentialError {
  * ])
  *
  * // Handle with Result pattern
- * const results = R.pipe(
- *   result,
- *   mapErr(error => console.error('Task failed at index:', error.taskIndex)),
- *   unwrapOr([])
- * )
+ * const logged = tapErr(result, error => console.error('Task failed at index:', error.taskIndex))
+ * const results = unwrapOr(logged, [])
  *
  * // Database migrations that must run in order
  * const migrationResult = await sequential([

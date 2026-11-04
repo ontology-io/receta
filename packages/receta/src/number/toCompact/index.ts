@@ -15,9 +15,9 @@ import type { CompactOptions } from '../types'
  * ```typescript
  * // Data-first
  * toCompact(1000) // => "1K"
- * toCompact(1500) // => "2K"
+ * toCompact(1500) // => "1.5K"
  * toCompact(1000000) // => "1M"
- * toCompact(1234567, { digits: 2 }) // => "1.2M"
+ * toCompact(1234567, { digits: 2 }) // => "1.23M"
  * toCompact(1000, { notation: 'long' }) // => "1 thousand"
  *
  * // Data-last (in pipe)

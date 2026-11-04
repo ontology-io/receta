@@ -25,8 +25,8 @@ import { lens } from '../lens'
  *   city: string
  * }
  *
- * const addressLens = prop<User>('address')
- * const cityLens = prop<Address>('city')
+ * const addressLens = prop<User, 'address'>('address')
+ * const cityLens = prop<Address, 'city'>('city')
  * const userCityLens = compose(addressLens, cityLens)
  *
  * const user = {
@@ -46,9 +46,9 @@ import { lens } from '../lens'
  *   ui: { modal: { title: string } }
  * }
  *
- * const uiLens = prop<State>('ui')
- * const modalLens = prop<State['ui']>('modal')
- * const titleLens = prop<State['ui']['modal']>('title')
+ * const uiLens = prop<State, 'ui'>('ui')
+ * const modalLens = prop<State['ui'], 'modal'>('modal')
+ * const titleLens = prop<State['ui']['modal'], 'title'>('title')
  *
  * const modalTitleLens = compose(
  *   compose(uiLens, modalLens),
@@ -58,17 +58,22 @@ import { lens } from '../lens'
  *
  * @example
  * ```typescript
- * // With array index
- * interface TodoList {
- *   todos: Array<{ text: string; done: boolean }>
+ * // With array index: index works on readonly arrays and its focus may be undefined
+ * interface Todo {
+ *   text: string
+ *   done: boolean
  * }
  *
- * const todosLens = prop<TodoList>('todos')
- * const firstTodoLens = index<Todo>(0)
- * const firstTodoTextLens = compose(
- *   compose(todosLens, firstTodoLens),
- *   prop<Todo>('text')
- * )
+ * interface TodoList {
+ *   todos: readonly Todo[]
+ * }
+ *
+ * const firstTodoLens = compose(prop<TodoList, 'todos'>('todos'), index<Todo>(0))
+ *
+ * const list: TodoList = { todos: [{ text: 'Buy milk', done: false }] }
+ *
+ * over(firstTodoLens, todo => todo && { ...todo, done: true }, list)
+ * // => { todos: [{ text: 'Buy milk', done: true }] }
  * ```
  *
  * @see prop - To create property lenses

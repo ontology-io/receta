@@ -33,7 +33,7 @@ interface User {
   name: string
 }
 
-const users: User[] = [...]
+const users: User[] = [{ id: '123', name: 'Alice' }]
 const getUser = createGetter(users)
 //    ^? MemoizedFunction<[string], User | undefined>
 
@@ -58,7 +58,7 @@ const user = await fetchUser('123')
 
 ```typescript
 interface Cache<K, V> {
-  get(key: K): V | undefined
+  get(key: K): Option<V>
   set(key: K, value: V): void
   has(key: K): boolean
   delete(key: K): boolean

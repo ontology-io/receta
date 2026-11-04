@@ -16,6 +16,8 @@ import { isSome } from '../guards'
  *
  * @example
  * ```typescript
+ * import { flatMap } from '@ontologyio/receta/result'
+ *
  * // Data-first
  * toResult(some(42), 'No value') // => Ok(42)
  * toResult(none(), 'No value') // => Err('No value')
@@ -27,7 +29,7 @@ import { isSome } from '../guards'
  *   flatMap(user => validateUser(user))
  * )
  *
- * // With error function
+ * // With a config lookup
  * pipe(
  *   config.get('apiKey'),
  *   toResult('Missing API key in config')

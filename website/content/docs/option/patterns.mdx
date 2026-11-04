@@ -91,15 +91,14 @@ const validateAge = (age: string): Option<number> =>
     filter(n => n >= 18 && n <= 120)
   )
 
-const validateForm = (form: FormData): Option<ValidForm> =>
+const validateForm = (form: SignupForm): Option<ValidForm> =>
   pipe(
-    collect([
-      validateEmail(form.email),
-      validateAge(form.age)
-    ]),
-    map(([email, age]) => ({ email, age }))
+    validateEmail(form.email),
+    flatMap(email => map(validateAge(form.age), age => ({ email, age })))
   )
 ```
+
+`collect` needs every Option to hold the same type. Here one holds a `string` and the other a `number`, so `flatMap` combines them instead.
 
 ### Optional Fields
 
@@ -117,12 +116,12 @@ const processForm = (form: ProfileForm) => ({
   phone: pipe(
     fromNullable(form.phone),
     filter(p => /^\d{10}$/.test(p)),
-    toNullable
+    toNullable()
   ),
   website: pipe(
     fromNullable(form.website),
     filter(w => w.startsWith('http')),
-    toNullable
+    toNullable()
   )
 })
 ```
@@ -176,13 +175,13 @@ const orderId = unwrapOr(
 const cache = new Map<string, User>()
 
 const getUser = (id: string): Promise<User> =>
-  unwrapOrElse(
-    fromNullable(cache.get(id)),
-    () => fetchUserFromDB(id).then(user => {
+  match(fromNullable(cache.get(id)), {
+    onSome: user => Promise.resolve(user),
+    onNone: () => fetchUserFromDB(id).then(user => {
       cache.set(id, user)
       return user
     })
-  )
+  })
 ```
 
 ## Parsing
@@ -191,9 +190,8 @@ const getUser = (id: string): Promise<User> =>
 
 ```typescript
 const parseConfig = <T>(str: string, validate: (x: unknown) => x is T): Option<T> =>
-  pipe(
-    tryCatch(() => JSON.parse(str)),
-    filter(validate)
+  flatMap(tryCatch(() => JSON.parse(str)), value =>
+    validate(value) ? some(value) : none()
   )
 
 const config = parseConfig(configStr, isValidConfig)

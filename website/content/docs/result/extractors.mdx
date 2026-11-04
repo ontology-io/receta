@@ -25,6 +25,7 @@ description: "Getting Values Out of Results"
 ### Real-World: Testing
 
 ```typescript
+import { describe, expect, it } from 'vitest'
 import { unwrap } from '@ontologyio/receta/result'
 
 describe('createUser', () => {
@@ -76,11 +77,11 @@ app.post('/api/user', (req, res) => {
 
 ### Real-World: UI Rendering with Defaults
 
-```typescript
+```tsx
 import { unwrapOr } from '@ontologyio/receta/result'
 
-// GitHub profile component
-const ProfileCard = ({ username }: { username: string }) => {
+// GitHub profile component (a React Server Component, so it can await)
+const ProfileCard = async ({ username }: { username: string }) => {
   const user = await fetchGitHubUser(username)
 
   // Show fallback if user not found
@@ -120,7 +121,7 @@ const loadConfig = () => {
 
 ### Real-World: Feature Flags
 
-```typescript
+```tsx
 // LaunchDarkly / feature flag system
 const isFeatureEnabled = (flagName: string): boolean =>
   pipe(
@@ -130,11 +131,8 @@ const isFeatureEnabled = (flagName: string): boolean =>
   )
 
 // Usage
-if (isFeatureEnabled('new-checkout')) {
-  return <NewCheckout />
-} else {
-  return <OldCheckout />
-}
+const Checkout = () =>
+  isFeatureEnabled('new-checkout') ? <NewCheckout /> : <OldCheckout />
 ```
 
 ### Real-World: Pagination Defaults
@@ -163,20 +161,22 @@ const getPaginationParams = (query: URLSearchParams) => {
 
 **When to use**: Fallback logic depends on the error, logging before defaulting.
 
-### Real-World: Retry with Cache Fallback
+### Real-World: Cache Fallback
+
+The fallback runs synchronously and its return value is used as is, so it must return a value, not a `Promise`.
 
 ```typescript
 import { unwrapOrElse } from '@ontologyio/receta/result'
 
 const fetchUserWithFallback = async (id: string) =>
   pipe(
-    await tryCatchAsync(() => fetch(`/api/users/${id}`)),
-    unwrapOrElse(async (error) => {
+    await tryCatchAsync(() => fetchUser(id)),
+    unwrapOrElse((error) => {
       // Log the error
       console.error('Primary API failed:', error)
 
       // Try cache
-      const cached = await cache.get(`user:${id}`)
+      const cached = cache.get(`user:${id}`)
       if (cached) {
         console.info('Returning cached user')
         return cached
@@ -283,10 +283,12 @@ app.get('/api/users/:id', async (req, res) => {
 
 ### Real-World: React Component States
 
-```typescript
+```tsx
+import { useEffect, useState } from 'react'
+
 const UserProfile = ({ userId }: { userId: string }) => {
   const [userResult, setUserResult] = useState<Result<User, Error>>(
-    err('Loading...')
+    err(new Error('Loading...'))
   )
 
   useEffect(() => {
@@ -395,7 +397,7 @@ const notifyUser = (result: Result<Payment, PaymentError>) =>
 | Testing (know it's Ok) | `unwrap()` | `expect(unwrap(result)).toBe(42)` |
 | UI with fallback text | `unwrapOr(default)` | `unwrapOr('No description')` |
 | Config with defaults | `unwrapOr(default)` | `unwrapOr(3000)` for port |
-| Need error for fallback | `unwrapOrElse(fn)` | Retry, cache, logging |
+| Need error for fallback | `unwrapOrElse(fn)` | Cache, logging |
 | Different UI for Ok/Err | `match({onOk, onErr})` | Loading/Error/Success states |
 | HTTP response | `match({onOk, onErr})` | 200 vs 404/500 |
 
@@ -406,12 +408,12 @@ const notifyUser = (result: Result<Payment, PaymentError>) =>
 ### 1. Graceful Degradation Chain
 
 ```typescript
+// unwrapOrElse returns a plain value, so each fallback nests inside the last
 const getContent = (id: string) =>
-  pipe(
-    fetchFromCDN(id),
-    unwrapOrElse(() => fetchFromDB(id)),
-    unwrapOrElse(() => fetchFromCache(id)),
-    unwrapOr(staticFallback)
+  unwrapOrElse(fetchFromCDN(id), () =>
+    unwrapOrElse(fetchFromDB(id), () =>
+      unwrapOr(fetchFromCache(id), staticFallback)
+    )
   )
 ```
 
@@ -419,7 +421,7 @@ const getContent = (id: string) =>
 
 ```typescript
 const withSmartDefaults = (result: Result<T, E>) =>
-  unwrapOrElse((error) => {
+  unwrapOrElse(result, (error) => {
     switch (error.type) {
       case 'not_found':
         return defaultForMissing
@@ -484,13 +486,13 @@ const handler = (req) => {
 
 ```typescript
 // BAD
-const user = unwrapOr(null)(fetchUser(id)) // Error is lost!
+const user = unwrapOr<User | null>(null)(fetchUser(id)) // Error is lost!
 
 // GOOD
 const user = pipe(
   fetchUser(id),
   tapErr(error => logger.error('Failed to fetch user', { id, error })),
-  unwrapOr(null)
+  unwrapOr<User | null>(null)
 )
 ```
 

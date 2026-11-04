@@ -66,7 +66,7 @@ s3.getObject(params, (err, data) => {
 ## The Solution: Result Type
 
 ```typescript
-import { Result, ok, err } from '@ontologyio/receta/result'
+import type { Result } from '@ontologyio/receta/result'
 
 type PaymentError =
   | { type: 'card_error'; code: string }
@@ -74,12 +74,11 @@ type PaymentError =
   | { type: 'receipt_error'; reason: string }
   | { type: 'email_error'; service: string }
 
-function processPayment(
+// Error handling is now VISIBLE and TYPED
+declare function processPayment(
   cardToken: string,
   amount: number
-): Result<{ chargeId: string }, PaymentError> {
-  // Error handling is now VISIBLE and TYPED
-}
+): Result<{ chargeId: string }, PaymentError>
 ```
 
 **Now the function signature tells you:**
@@ -120,7 +119,7 @@ try {
 const result = pipe(
   tryCatch(() => JSON.parse(userJson)),
   flatMap(validateUser),
-  flatMap(user => db.save(user)),
+  flatMap(saveUser),
   flatMap(saved => sendWelcomeEmail(saved.email))
 )
 
@@ -204,19 +203,17 @@ match(repo, {
 ### 2. Form Validation (like Stripe Checkout)
 
 ```typescript
-// Validate multiple fields, collect ALL errors
-const validateCheckout = (form: CheckoutForm) => {
-  const results = [
-    validateEmail(form.email),
-    validateCard(form.cardNumber),
-    validateCVV(form.cvv),
-    validateZip(form.zipCode)
-  ]
+// Validate multiple fields
+const results = [
+  validateEmail(form.email),
+  validateCard(form.cardNumber),
+  validateCVV(form.cvv),
+  validateZip(form.zipCode)
+]
 
-  return collect(results) // Fails on FIRST error (fail-fast)
-  // OR
-  const [valid, errors] = partition(results) // Collect ALL errors
-}
+const checkout = collect(results) // Fails on FIRST error (fail-fast)
+// OR
+const [valid, errors] = partition(results) // Collect ALL errors
 ```
 
 ### 3. Database Operations (like Prisma, Supabase)
@@ -226,11 +223,11 @@ const createUser = (email: string, name: string) =>
   pipe(
     validateEmail(email),
     flatMap(() => validateName(name)),
-    flatMap(() => db.user.create({ email, name })),
+    flatMap(() => insertUser({ email, name })),
     flatMap(user => sendWelcomeEmail(user.email)),
     match({
-      onOk: (user) => ({ success: true, userId: user.id }),
-      onErr: (error) => ({ success: false, error })
+      onOk: (user): SignupResponse => ({ success: true, userId: user.id }),
+      onErr: (error): SignupResponse => ({ success: false, error })
     })
   )
 ```
@@ -307,8 +304,8 @@ Input ──[Success Track]──> Output
 - **[Constructors](./constructors.mdx)**: How to create Results (`ok`, `err`, `tryCatch`)
 - **[Transformers](./transformers.mdx)**: How to work with Results (`map`, `flatMap`)
 - **[Extractors](./extractors.mdx)**: How to get values out (`unwrap`, `match`)
-- **[Patterns](./04-patterns.md)**: Common recipes for real-world scenarios
-- **[Migration Guide](./05-migration.md)**: From try-catch to Result
+- **[Patterns](./patterns.mdx)**: Common recipes for real-world scenarios
+- **[Migration Guide](./migration.mdx)**: From try-catch to Result
 
 ---
 

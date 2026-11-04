@@ -33,33 +33,19 @@ import { collectErrors } from '../collectErrors'
  * validateAll([1, -2, 3, -4], isPositive)
  * // => Invalid(['-2 is not positive', '-4 is not positive'])
  *
- * // Real-world: Validate CSV import rows
- * const validateRow = (row: unknown): Validation<User, string> =>
- *   // ... validation logic
+ * // Real-world: Validate CSV import rows. Errors come back as one flat
+ * // list, so each message has to name its row.
+ * type Row = { id: string; price: number }
  *
- * const validateCSV = (rows: unknown[]) =>
- *   validateAll(rows, validateRow)
- * // Returns all invalid rows with their errors
+ * const validateRow = (row: Row) =>
+ *   row.price > 0 ? valid(row) : invalid(`${row.id}: price must be positive`)
+ *
+ * validateAll([{ id: 'a', price: 5 }, { id: 'b', price: -1 }], validateRow)
+ * // => Invalid(['b: price must be positive'])
  *
  * // Real-world: Validate batch API request
- * interface CreateUserRequest {
- *   email: string
- *   name: string
- * }
- *
- * const validateCreateUser = (req: unknown): Validation<CreateUserRequest, string> =>
- *   // ... validation logic
- *
- * const validateBatchCreate = (requests: unknown[]) =>
- *   validateAll(requests, validateCreateUser)
- *
- * // Get detailed error report for failed validations
- * const result = validateBatchCreate(userRequests)
- * if (isInvalid(result)) {
- *   result.errors.forEach((error, idx) => {
- *     console.error(`Request ${idx}: ${error}`)
- *   })
- * }
+ * const validateBatchCreate = (requests: Row[]) =>
+ *   validateAll(requests, validateRow)
  * ```
  *
  * @see validate - for applying multiple validators to a single value

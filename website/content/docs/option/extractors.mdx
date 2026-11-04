@@ -108,8 +108,8 @@ unwrapOrElse<T>(fn: () => T): (option: Option<T>) => T
 ### Basic Usage
 
 ```typescript
-unwrapOrElse(some(42), () => computeDefault())  // => 42 (fn not called)
-unwrapOrElse(none(), () => computeDefault())    // => result of computeDefault()
+unwrapOrElse(some(42), () => computeDefault())  // 42 (fn not called)
+unwrapOrElse(none(), () => computeDefault())    // result of computeDefault()
 ```
 
 ### Real-World: Expensive Defaults
@@ -136,7 +136,7 @@ const getTimestamp = (cached: Option<number>): number =>
 
 Pattern match on Some/None cases.
 
-```typescript
+```typescript title="Signature"
 // Data-first
 match<T, R>(
   option: Option<T>,
@@ -172,7 +172,7 @@ const getStatusCode = (user: Option<User>): number =>
 
 ### Real-World: UI Rendering
 
-```typescript
+```tsx
 const renderUser = (maybeUser: Option<User>) =>
   match(maybeUser, {
     onSome: user => <UserProfile user={user} />,

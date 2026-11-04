@@ -30,8 +30,8 @@ import { purryConfig2 } from '../../utils/purry'
  * // Data-last (in pipe)
  * pipe(
  *   'The quick brown fox',
- *   words,
- *   R.map(capitalize)
+ *   (str) => words(str),
+ *   R.map((word) => capitalize(word))
  * )
  * // => ['The', 'Quick', 'Brown', 'Fox']
  * ```
@@ -118,6 +118,8 @@ export function lines(str: string): string[] {
  * // => Some('first') (only returns first match)
  *
  * // Data-last (in pipe)
+ * import { unwrapOr } from '@ontologyio/receta/option'
+ *
  * pipe(
  *   'User ID: {12345}',
  *   between('{', '}'),

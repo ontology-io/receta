@@ -67,11 +67,11 @@ export function compose<T>(...comparators: Comparator<T>[]): Comparator<T> {
  * ]
  *
  * // Sort by score ascending
- * const scoreAsc = ascending(u => u.score)
- * users.sort(scoreAsc) // => [100, 200, 150] -> [100, 150, 200]
+ * const scoreAsc = ascending((u: { score: number }) => u.score)
+ * users.sort(scoreAsc) // Scores: 100, 150, 200
  *
  * // Reverse it for descending
- * users.sort(reverse(scoreAsc)) // => [200, 150, 100]
+ * users.sort(reverse(scoreAsc)) // Scores: 200, 150, 100
  *
  * // Equivalent to:
  * users.sort(descending(u => u.score))
@@ -85,34 +85,27 @@ export function reverse<T>(comparator: Comparator<T>): Comparator<T> {
 }
 
 /**
- * Wraps a comparator to place null/undefined values first.
+ * Wraps a comparator to place null items first.
+ *
+ * It checks the items being compared, not a field inside them. To order objects
+ * by a nullable field, give the extractor a fallback that sorts where the nulls
+ * should land: `ascending(u => u.lastLogin ?? new Date(0))`.
  *
  * When comparing two null/undefined values, they are considered equal.
  * When comparing null/undefined with a non-null value, null comes first.
+ * `Array.prototype.sort` moves `undefined` to the end without calling the
+ * comparator, so in practice this reorders `null`.
  *
  * @param comparator - The comparator for non-null values
  * @returns A comparator that places nulls first
  *
  * @example
  * ```typescript
- * interface User {
- *   name: string
- *   lastLogin: Date | null
- * }
+ * const scores: (number | null)[] = [30, null, 10, null, 20]
  *
- * const users = [
- *   { name: 'Alice', lastLogin: new Date('2024-01-15') },
- *   { name: 'Bob', lastLogin: null },
- *   { name: 'Charlie', lastLogin: new Date('2024-01-10') },
- *   { name: 'Dave', lastLogin: null }
- * ]
- *
- * // Sort by last login, nulls first
- * users.sort(nullsFirst(ascending(u => u.lastLogin ?? new Date(0))))
- * // => [{ name: 'Bob', lastLogin: null },
- * //     { name: 'Dave', lastLogin: null },
- * //     { name: 'Charlie', lastLogin: 2024-01-10 },
- * //     { name: 'Alice', lastLogin: 2024-01-15 }]
+ * // The extractor's fallback satisfies the types. A null item never reaches it.
+ * scores.sort(nullsFirst(ascending(score => score ?? 0)))
+ * // => [null, null, 10, 20, 30]
  * ```
  *
  * @see nullsLast - to place nulls at the end
@@ -131,7 +124,11 @@ export function nullsFirst<T>(comparator: Comparator<Nullable<T>>): Comparator<N
 }
 
 /**
- * Wraps a comparator to place null/undefined values last.
+ * Wraps a comparator to place null items last.
+ *
+ * It checks the items being compared, not a field inside them. To order objects
+ * by a nullable field, give the extractor a fallback that sorts where the nulls
+ * should land: `descending(p => p.discount ?? 0)`.
  *
  * When comparing two null/undefined values, they are considered equal.
  * When comparing null/undefined with a non-null value, null comes last.
@@ -141,24 +138,11 @@ export function nullsFirst<T>(comparator: Comparator<Nullable<T>>): Comparator<N
  *
  * @example
  * ```typescript
- * interface Product {
- *   name: string
- *   discount: number | null
- * }
+ * const scores: (number | null)[] = [30, null, 10, null, 20]
  *
- * const products = [
- *   { name: 'Keyboard', discount: 10 },
- *   { name: 'Mouse', discount: null },
- *   { name: 'Monitor', discount: 20 },
- *   { name: 'Webcam', discount: null }
- * ]
- *
- * // Sort by discount descending, nulls last
- * products.sort(nullsLast(descending(p => p.discount ?? 0)))
- * // => [{ name: 'Monitor', discount: 20 },
- * //     { name: 'Keyboard', discount: 10 },
- * //     { name: 'Mouse', discount: null },
- * //     { name: 'Webcam', discount: null }]
+ * // The extractor's fallback satisfies the types. A null item never reaches it.
+ * scores.sort(nullsLast(ascending(score => score ?? 0)))
+ * // => [10, 20, 30, null, null]
  * ```
  *
  * @see nullsFirst - to place nulls at the beginning

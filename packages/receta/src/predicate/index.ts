@@ -11,7 +11,7 @@
  *
  * // Basic filtering
  * const numbers = [1, 5, 10, 15, 20]
- * R.filter(numbers, and(gt(5), lt(15))) // => [10]
+ * R.filter(numbers, and(gt<number>(5), lt<number>(15))) // => [10]
  *
  * // Object filtering
  * const users = [
@@ -20,7 +20,7 @@
  *   { age: 30, active: false }
  * ]
  * R.filter(users, where({
- *   age: gt(18),
+ *   age: gt<number>(18),
  *   active: Boolean
  * })) // => [{ age: 25, active: true }]
  * ```

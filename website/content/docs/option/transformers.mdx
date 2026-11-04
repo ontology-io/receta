@@ -41,7 +41,7 @@ map(some(5), x => x * 2)
 // => Some(10)
 
 // None stays None
-map(none(), x => x * 2)
+map(none(), (x: number) => x * 2)
 // => None
 ```
 
@@ -165,8 +165,12 @@ const parseAndValidateAge = (input: string): Option<number> =>
   )
 
 parseAndValidateAge('25')  // => Some(25)
-parseAndValidateAge('15')  // => None (too young)
-parseAndValidateAge('abc') // => None (not a number)
+
+// Too young
+parseAndValidateAge('15')  // => None
+
+// Not a number
+parseAndValidateAge('abc') // => None
 ```
 
 ## filter()
@@ -190,7 +194,7 @@ import { filter, some, none } from '@ontologyio/receta/option'
 
 filter(some(5), x => x > 0)   // => Some(5)
 filter(some(-5), x => x > 0)  // => None
-filter(none(), x => x > 0)    // => None
+filter(none(), (x: number) => x > 0)    // => None
 ```
 
 ### Real-World: Form Validation
@@ -265,7 +269,7 @@ const lookup2 = (id: string): Option<User> =>
   R.pipe(
     findTeamById(id),
     map(team => findUserById(team.leadId)),
-    flatten
+    flatten()
   )
 // Returns Option<User> - clean!
 
@@ -296,9 +300,9 @@ const processUserId = (idStr: string): Option<User> =>
     filter(user => user.active)
   )
 
-processUserId('123')   // => Some(user) if found and active
-processUserId('-1')    // => None (negative ID)
-processUserId('abc')   // => None (parse failed)
+processUserId('123')   // Some(user) if found and active
+processUserId('-1')    // None (negative ID)
+processUserId('abc')   // None (parse failed)
 ```
 
 ## Cheat Sheet

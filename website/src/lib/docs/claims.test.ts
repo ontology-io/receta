@@ -28,6 +28,20 @@ describe('withClaims', () => {
     expect(code).toContain('__none()')
   })
 
+  it('skips a claim in words, so the rest of the example still runs', () => {
+    const { code, claims } = withClaims('first() // => [...all the errors]\nsecond() // => 2\n')
+    expect(claims).toBe(1)
+    expect(code).toContain('first() // => [...all the errors]')
+    expect(code).toContain('__claim(1, () => (second()), () => (2))')
+  })
+
+  it('follows a claim over several comment lines', () => {
+    const source = "check()\n// => Invalid([\n//   { field: 'a' },\n// ])\nnext()\n"
+    const { code, claims } = withClaims(source)
+    expect(claims).toBe(1)
+    expect(code).toContain("__invalid([\n  { field: 'a' },\n])")
+  })
+
   it('leaves examples without claims alone', () => {
     expect(withClaims('const a = 1\n// just a note\n').claims).toBe(0)
   })

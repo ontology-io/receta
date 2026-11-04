@@ -9,9 +9,9 @@ Copy-paste-ready patterns for common scenarios.
 
 ### Pattern: Form State with Lenses
 
-```typescript
+```tsx
 import { useState } from 'react'
-import { prop, path, set, over, type Lens } from '@ontologyio/receta/lens'
+import { prop, path, set, type Lens } from '@ontologyio/receta/lens'
 
 interface FormState {
   user: {
@@ -30,12 +30,12 @@ const firstNameLens = path<FormState, string>('user.firstName')
 const lastNameLens = path<FormState, string>('user.lastName')
 const emailLens = path<FormState, string>('user.email')
 const cardNumberLens = path<FormState, string>('billing.cardNumber')
-const termsLens = prop<FormState>('agreedToTerms')
+const termsLens = prop<FormState, 'agreedToTerms'>('agreedToTerms')
 
 export const CheckoutForm = () => {
   const [form, setForm] = useState<FormState>(initialForm)
 
-  const updateField = <A>(lens: Lens<FormState, A>, value: A) => {
+  const updateField = <A,>(lens: Lens<FormState, A>, value: A) => {
     setForm((state) => set(lens, value, state))
   }
 
@@ -53,7 +53,8 @@ export const CheckoutForm = () => {
         value={form.billing.cardNumber}
         onChange={(e) => updateField(cardNumberLens, e.target.value)}
       />
-      <checkbox
+      <input
+        type="checkbox"
         checked={form.agreedToTerms}
         onChange={(e) => updateField(termsLens, e.target.checked)}
       />
@@ -75,18 +76,19 @@ interface Store {
 }
 
 const themeLens = path<Store, string>('settings.theme')
-const counterLens = prop<Store>('counter')
+const counterLens = prop<Store, 'counter'>('counter')
 
-const useStore = create<Store & Actions>((set) => ({
+// Zustand's own setter is named setState so it doesn't hide the lens `set`
+const useStore = create<Store & Actions>((setState) => ({
   user: { name: '', email: '' },
   settings: { theme: 'light', notifications: true },
   counter: 0,
 
   updateTheme: (theme) =>
-    set((state) => set(themeLens, theme, state)),
+    setState((state) => set(themeLens, theme, state)),
 
   increment: () =>
-    set((state) => over(counterLens, (n) => n + 1, state)),
+    setState((state) => over(counterLens, (n) => n + 1, state)),
 }))
 ```
 
@@ -96,6 +98,7 @@ const useStore = create<Store & Actions>((set) => ({
 
 ```typescript
 import { prop, path, set, over } from '@ontologyio/receta/lens'
+import * as R from 'remeda'
 
 interface AppState {
   user: { isAuthenticated: boolean; profile: UserProfile }
@@ -160,7 +163,7 @@ const validateEmail = (form: Form): Form => {
     form,
     set(emailErrorLens, error),
     set(emailTouchedLens, true),
-    set(prop<Form>('isValid'), error === undefined)
+    set(prop<Form, 'isValid'>('isValid'), error === undefined)
   )
 }
 ```
@@ -199,7 +202,7 @@ const normalizeResponse = (response: APIResponse): APIResponse =>
     over(displayNameLens, (name) => name.trim()),
     over(bioLens, (bio) => bio.slice(0, 160)),
     over(twitterLens, (handle) =>
-      handle?.startsWith('@') ? handle : `@${handle}`
+      handle === undefined || handle.startsWith('@') ? handle : `@${handle}`
     )
   )
 ```
@@ -253,7 +256,7 @@ interface TodoList {
   todos: Array<{ id: string; text: string; done: boolean }>
 }
 
-const todosLens = prop<TodoList>('todos')
+const todosLens = prop<TodoList, 'todos'>('todos')
 
 const toggleTodo = (state: TodoList, todoId: string): TodoList => {
   return over(todosLens, (todos) =>

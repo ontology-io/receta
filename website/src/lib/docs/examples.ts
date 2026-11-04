@@ -61,19 +61,27 @@ export const pageModule = (page: string): string => {
  * - the same name declared twice, because one block shows several variations
  * - a signature with no body, shown to describe a function
  * - `unknown`, which is what a generic infers when its input is an imaginary helper
+ * - `EventTarget`, because only ECMAScript is typed, so a browser event has no real target
  * - a module that isn't Receta or Remeda, such as an imaginary ./db
  */
-const FRAGMENT_CODES = new Set([2300, 2323, 2391, 2393, 2451, 2484, 2440, 18046])
+const FRAGMENT_CODES = new Set([2300, 2323, 2391, 2393, 2451, 2484, 2440])
+
+const UNKNOWN_VALUE = 18046
 
 const NO_OVERLOAD_MATCHES = 2769
 
 const OWN_MODULE = /'(@ontologyio\/[^']+|remeda(?:\/[^']*)?)'/
 
-/** Whether a compiler complaint is about the docs being wrong. */
-export const isRealProblem = (code: number, message: string): boolean => {
-  if (FRAGMENT_CODES.has(code)) return false
+/**
+ * Whether a compiler complaint is about the docs being wrong. An example with imaginary
+ * helpers gets more slack, because its types can't all be known.
+ */
+export const isRealProblem = (code: number, message: string, hasHelpers = true): boolean => {
+  if (code === UNKNOWN_VALUE) return !hasHelpers
+  if (FRAGMENT_CODES.has(code) || message.includes('EventTarget')) return false
   // "No overload matches" prints `value is unknown` even when the example is fully typed.
-  if (code !== NO_OVERLOAD_MATCHES && /\bunknown\b/.test(message)) return false
+  const isUnknownNoise = code !== NO_OVERLOAD_MATCHES && /\bunknown\b/.test(message)
+  if (isUnknownNoise && hasHelpers) return false
   if (code === 2307) return OWN_MODULE.test(message)
   return true
 }

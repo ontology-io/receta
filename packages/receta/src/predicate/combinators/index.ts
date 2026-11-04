@@ -22,7 +22,7 @@ import type { Predicate } from '../types'
  *
  * // Combine comparisons
  * const numbers = [1, 5, 10, 15, 20]
- * R.filter(numbers, and(gt(5), lt(15))) // => [10]
+ * R.filter(numbers, and(gt<number>(5), lt<number>(15))) // => [10]
  *
  * // Multiple conditions
  * const users = [
@@ -143,7 +143,7 @@ export const not =
  *
  * const numbers = [1, 5, 10, 15, 20]
  * // Keep numbers that are either < 8 OR > 12, but not both
- * R.filter(numbers, xor(lt(8), gt(12))) // => [1, 5, 15, 20]
+ * R.filter(numbers, xor(lt<number>(8), gt<number>(12))) // => [1, 5, 15, 20]
  * // 10 is excluded because it's neither < 8 nor > 12
  *
  * // Real-world: Exclusive features (must have one but not both)

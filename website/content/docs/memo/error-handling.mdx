@@ -94,7 +94,7 @@ const getUser = memoize(fetchUser)
 
 // Invalidate all admin users after permission change
 function revokeAdminAccess() {
-  invalidateWhere(getUser, (_key, user) => user?.role === 'admin')
+  invalidateWhere<string, User>(getUser, (_key, user) => user?.role === 'admin')
 }
 
 // Invalidate by key pattern
@@ -102,6 +102,8 @@ function clearDraftPosts() {
   invalidateWhere(getPost, (key: string) => key.startsWith('draft:'))
 }
 ```
+
+`invalidateWhere` needs a cache it can walk through, so use it with the default cache, or a custom cache that has a `forEach` method. It throws for `ttlCache`, `lruCache` and `weakCache`. With `memoizeAsync`, the value it passes is the cached promise.
 
 ### Multi-Cache Invalidation
 

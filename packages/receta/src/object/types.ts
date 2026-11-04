@@ -74,7 +74,7 @@ export interface DeepMergeOptions {
    * Strategy for handling array conflicts.
    * - 'replace': Replace the target array with source array (default)
    * - 'concat': Concatenate source array to target array
-   * - 'merge': Merge arrays by index
+   * - 'merge': Merge arrays of objects by index. The result is as long as the source array
    */
   readonly arrayStrategy?: 'replace' | 'concat' | 'merge'
 

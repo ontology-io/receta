@@ -32,10 +32,11 @@ import type { FlatObject, PlainObject, UnflattenOptions } from '../types'
  * unflatten({ 'items.0': 'a', 'items.1': 'b' })
  * // => { items: ['a', 'b'] }
  *
- * // Data-last (in pipe)
+ * // In a pipe, wrap it. unflatten() returns {} instead of a function, and
+ * // TypeScript reads unflatten({ separator: '_' }) as the data-first call.
  * pipe(
  *   flat,
- *   unflatten({ separator: '_' })
+ *   (obj) => unflatten(obj)
  * )
  * ```
  *

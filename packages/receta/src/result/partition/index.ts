@@ -27,7 +27,7 @@ import { isOk } from '../guards'
  * const [validUsers, errors] = pipe(
  *   rawUsers,
  *   R.map(validateUser),
- *   partition
+ *   partition()
  * )
  *
  * if (errors.length > 0) {

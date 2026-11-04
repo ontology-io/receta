@@ -32,6 +32,7 @@ function view<S, A>(lens: Lens<S, A>): (source: S) => A
 
 ```typescript
 import { prop, path, view } from '@ontologyio/receta/lens'
+import * as R from 'remeda'
 
 interface User {
   name: string
@@ -41,13 +42,13 @@ interface User {
 const user = { name: 'Alice', address: { city: 'Boston' } }
 
 // Data-first
-const name = view(prop<User>('name'), user) // 'Alice'
+const name = view(prop<User, 'name'>('name'), user) // 'Alice'
 const city = view(path<User, string>('address.city'), user) // 'Boston'
 
 // Data-last (in pipe)
 const result = R.pipe(
   user,
-  view(prop<User>('name'))
+  view(prop<User, 'name'>('name'))
 ) // 'Alice'
 ```
 
@@ -96,7 +97,7 @@ function set<S, A>(lens: Lens<S, A>, value: A): (source: S) => S
 const user = { name: 'Alice', age: 30 }
 
 // Data-first
-const updated = set(prop<User>('name'), 'Bob', user)
+const updated = set(prop<User, 'name'>('name'), 'Bob', user)
 // => { name: 'Bob', age: 30 }
 
 // Original unchanged
@@ -105,8 +106,8 @@ console.log(user.name) // 'Alice'
 // Data-last (in pipe)
 const result = R.pipe(
   user,
-  set(prop<User>('name'), 'Charlie'),
-  set(prop<User>('age'), 31)
+  set(prop<User, 'name'>('name'), 'Charlie'),
+  set(prop<User, 'age'>('age'), 31)
 )
 // => { name: 'Charlie', age: 31 }
 ```
@@ -156,7 +157,7 @@ interface Form {
 
 const emailErrorLens = path<Form, string | undefined>('fields.email.error')
 const passwordErrorLens = path<Form, string | undefined>('fields.password.error')
-const isValidLens = prop<Form>('isValid')
+const isValidLens = prop<Form, 'isValid'>('isValid')
 
 const validateAndUpdate = (form: Form): Form => {
   const emailError = validateEmail(form.fields.email.value)
@@ -192,17 +193,17 @@ function over<S, A>(lens: Lens<S, A>, fn: (a: A) => A): (source: S) => S
 const user = { name: 'alice', age: 30 }
 
 // Data-first
-const older = over(prop<User>('age'), (age) => age + 1, user)
+const older = over(prop<User, 'age'>('age'), (age) => age + 1, user)
 // => { name: 'alice', age: 31 }
 
-const caps = over(prop<User>('name'), (name) => name.toUpperCase(), user)
+const caps = over(prop<User, 'name'>('name'), (name) => name.toUpperCase(), user)
 // => { name: 'ALICE', age: 30 }
 
 // Data-last (in pipe)
 const result = R.pipe(
   user,
-  over(prop<User>('name'), (name) => name.toUpperCase()),
-  over(prop<User>('age'), (age) => age + 1)
+  over(prop<User, 'name'>('name'), (name) => name.toUpperCase()),
+  over(prop<User, 'age'>('age'), (age) => age + 1)
 )
 // => { name: 'ALICE', age: 31 }
 ```
@@ -215,8 +216,8 @@ interface State {
   history: number[]
 }
 
-const counterLens = prop<State>('counter')
-const historyLens = prop<State>('history')
+const counterLens = prop<State, 'counter'>('counter')
+const historyLens = prop<State, 'history'>('history')
 
 // Increment and record
 const increment = (state: State): State =>
@@ -235,8 +236,8 @@ interface Cart {
   total: number
 }
 
-const itemsLens = prop<Cart>('items')
-const totalLens = prop<Cart>('total')
+const itemsLens = prop<Cart, 'items'>('items')
+const totalLens = prop<Cart, 'total'>('total')
 
 // Update quantity for specific item
 const updateQuantity = (cart: Cart, itemId: string, delta: number): Cart => {
@@ -249,10 +250,13 @@ const updateQuantity = (cart: Cart, itemId: string, delta: number): Cart => {
           : item
       )
     ),
-    // Recalculate total
-    over(totalLens, () =>
-      cart.items.reduce((sum, item) => sum + item.quantity * item.price, 0)
-    )
+    // Recalculate total from the updated items
+    (updated) =>
+      set(
+        totalLens,
+        updated.items.reduce((sum, item) => sum + item.quantity * item.price, 0),
+        updated
+      )
   )
 }
 ```
@@ -266,9 +270,9 @@ interface Article {
   tags: string[]
 }
 
-const titleLens = prop<Article>('title')
-const contentLens = prop<Article>('content')
-const tagsLens = prop<Article>('tags')
+const titleLens = prop<Article, 'title'>('title')
+const contentLens = prop<Article, 'content'>('content')
+const tagsLens = prop<Article, 'tags'>('tags')
 
 // Normalize article text
 const normalizeArticle = (article: Article): Article =>
@@ -309,10 +313,10 @@ const incrementIfEven = (state: State): State => {
 const processUser = (user: User): User =>
   R.pipe(
     user,
-    over(prop<User>('name'), (name) => name.trim()),
-    over(prop<User>('name'), (name) => name.toLowerCase()),
-    over(prop<User>('email'), (email) => email.toLowerCase()),
-    set(prop<User>('updatedAt'), Date.now())
+    over(prop<User, 'name'>('name'), (name) => name.trim()),
+    over(prop<User, 'name'>('name'), (name) => name.toLowerCase()),
+    over(prop<User, 'email'>('email'), (email) => email.toLowerCase()),
+    set(prop<User, 'updatedAt'>('updatedAt'), Date.now())
   )
 ```
 
@@ -325,9 +329,9 @@ interface Stats {
   average: number
 }
 
-const countLens = prop<Stats>('count')
-const sumLens = prop<Stats>('sum')
-const avgLens = prop<Stats>('average')
+const countLens = prop<Stats, 'count'>('count')
+const sumLens = prop<Stats, 'sum'>('sum')
+const avgLens = prop<Stats, 'average'>('average')
 
 const addValue = (stats: Stats, value: number): Stats =>
   R.pipe(
@@ -355,7 +359,7 @@ const currentAge = view(ageLens, user)
 const newAge = currentAge + 1
 const result2 = set(ageLens, newAge, user)
 
-// result1 === result2
+// result1 and result2 hold the same data, in two separate objects
 ```
 
 When to use each:
@@ -371,31 +375,31 @@ All operations support both calling conventions:
 
 ```typescript
 // Data-first: All arguments at once
-view(lens, data)
-set(lens, value, data)
-over(lens, fn, data)
+view(someLens, data)
+set(someLens, value, data)
+over(someLens, fn, data)
 
 // Data-last: Partial application for pipes
-view(lens)(data)
-set(lens, value)(data)
-over(lens, fn)(data)
+view(someLens)(data)
+set(someLens, value)(data)
+over(someLens, fn)(data)
 
 // In practice with pipes
 R.pipe(
   data,
-  view(lens), // returns the focused value
+  view(someLens), // returns the focused value
   // ... more transformations
 )
 
 R.pipe(
   data,
-  set(lens, value), // returns updated data
+  set(someLens, value), // returns updated data
   set(otherLens, otherValue), // chain updates
 )
 
 R.pipe(
   data,
-  over(lens, fn), // returns transformed data
+  over(someLens, fn), // returns transformed data
   over(otherLens, otherFn), // chain transformations
 )
 ```
@@ -420,7 +424,7 @@ const correct = (user: User) => set(nameLens, 'Bob', user)
 ### Mistake 2: Using `set` Instead of `over`
 
 ```typescript
-// ❌ Wrong - reading then setting (not atomic)
+// ❌ Wordy - reading, then setting
 const increment = (state: State) => {
   const current = view(counterLens, state)
   return set(counterLens, current + 1, state)
@@ -460,17 +464,17 @@ const updated = set(ageLens, 31, user)
 
 ```typescript
 // ✅ Fine to create inline
-setState((state) => set(prop<State>('counter'), 10, state))
+setState((state) => set(prop<State, 'counter'>('counter'), 10, state))
 
 // ✅ Also fine to cache
-const counterLens = prop<State>('counter')
+const counterLens = prop<State, 'counter'>('counter')
 setState((state) => set(counterLens, 10, state))
 ```
 
 ### Multiple Updates
 
 ```typescript
-// ✅ Efficient - single pass
+// ✅ Reads top to bottom
 R.pipe(
   state,
   set(lens1, value1),
@@ -478,7 +482,7 @@ R.pipe(
   set(lens3, value3)
 )
 
-// ⚠️ Less efficient - multiple passes (but usually negligible)
+// ⚠️ The same work, and the same copies, with more noise
 let result = state
 result = set(lens1, value1, result)
 result = set(lens2, value2, result)

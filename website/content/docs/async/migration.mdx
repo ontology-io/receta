@@ -62,6 +62,7 @@ async function fetchAllUsers(userIds: string[]) {
 }
 
 // Processes 1000 IDs efficiently with only 5 concurrent requests
+// The result is a Result: isOk(users) gives you users.value
 const users = await fetchAllUsers(thousandIds)
 ```
 
@@ -92,22 +93,22 @@ app.post('/api/bulk-refund', async (req, res) => {
 **After:**
 ```typescript
 import { mapAsync } from '@ontologyio/receta/async'
+import { match } from '@ontologyio/receta/result'
 
 app.post('/api/bulk-refund', async (req, res) => {
   const { paymentIntentIds } = req.body
 
-  try {
-    // ✅ Respects Stripe rate limits
-    const refunds = await mapAsync(
-      paymentIntentIds,
-      async (id) => stripe.refunds.create({ payment_intent: id }),
-      { concurrency: 10 } // Safe for Stripe API
-    )
+  // ✅ Respects Stripe rate limits
+  const refunds = await mapAsync(
+    paymentIntentIds,
+    async (id) => stripe.refunds.create({ payment_intent: id }),
+    { concurrency: 10 } // Safe for Stripe API
+  )
 
-    res.json({ success: true, refunds })
-  } catch (error) {
-    res.status(500).json({ error: error.message })
-  }
+  match(refunds, {
+    onOk: (value) => res.json({ success: true, refunds: value }),
+    onErr: (error) => res.status(500).json({ error: String(error.error) })
+  })
 })
 ```
 
@@ -156,7 +157,7 @@ async function fetchWithRetry(url: string) {
       delay: 1000,
       backoff: 2, // Exponential: 1s, 2s, 4s
       onRetry: (error, attempt, delay) => {
-        console.log(`Retry ${attempt} after ${delay}ms:`, error.message)
+        console.log(`Retry ${attempt} after ${delay}ms:`, (error as Error).message)
       }
     }
   )
@@ -213,8 +214,8 @@ async function fetchGitHubRepo(owner: string, repo: string) {
       backoff: 2,
       shouldRetry: (error, attempt) => {
         // Only retry rate limits and network errors
-        return error.message.includes('Rate limited') ||
-               error.message.includes('fetch failed')
+        const { message } = error as Error
+        return message.includes('Rate limited') || message.includes('fetch failed')
       },
       onRetry: (error, attempt, delay) => {
         console.log(`GitHub API retry ${attempt} in ${delay}ms`)
@@ -251,24 +252,28 @@ async function fetchUserData(userId: string) {
 ```typescript
 // ✅ Timeout protection on each operation
 import { timeout } from '@ontologyio/receta/async'
+import { isErr, ok } from '@ontologyio/receta/result'
 
 async function fetchUserData(userId: string) {
   const user = await timeout(
     fetch(`/api/users/${userId}`).then(r => r.json()),
     5000 // 5 second timeout
   )
+  if (isErr(user)) return user
 
   const posts = await timeout(
     fetch(`/api/posts?userId=${userId}`).then(r => r.json()),
     5000
   )
+  if (isErr(posts)) return posts
 
   const comments = await timeout(
     fetch(`/api/comments?userId=${userId}`).then(r => r.json()),
     5000
   )
+  if (isErr(comments)) return comments
 
-  return { user, posts, comments }
+  return ok({ user: user.value, posts: posts.value, comments: comments.value })
 }
 
 // Fails fast if any endpoint is slow
@@ -299,26 +304,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 **After:**
 ```typescript
 import { timeout, TimeoutError } from '@ontologyio/receta/async'
+import { flatten, match, tryCatchAsync } from '@ontologyio/receta/result'
 
 // pages/api/weather.ts
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  try {
-    const { city } = req.query
+  const { city } = req.query
 
-    // ✅ 3 second timeout prevents hanging
-    const weather = await timeout(
-      fetch(`https://api.weather.com/v1/current?city=${city}`).then(r => r.json()),
-      3000
+  // ✅ 3 second timeout prevents hanging
+  // A timeout is an Err, and tryCatchAsync catches anything fetch rejects with
+  const weather = flatten(
+    await tryCatchAsync(() =>
+      timeout(
+        fetch(`https://api.weather.com/v1/current?city=${city}`).then(r => r.json()),
+        3000
+      )
     )
+  )
 
-    res.json(weather)
-  } catch (error) {
-    if (error instanceof TimeoutError) {
-      res.status(504).json({ error: 'Weather service timeout' })
-    } else {
-      res.status(500).json({ error: error.message })
+  match(weather, {
+    onOk: (value) => res.json(value),
+    onErr: (error) => {
+      if (error instanceof TimeoutError) {
+        res.status(504).json({ error: 'Weather service timeout' })
+      } else {
+        res.status(500).json({ error: String(error) })
+      }
     }
-  }
+  })
 }
 ```
 
@@ -333,7 +345,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 // ❌ Complex manual batching logic
 async function importUsers(users: User[]) {
   const batchSize = 100
-  const results = []
+  const results: unknown[] = []
 
   for (let i = 0; i < users.length; i += batchSize) {
     const batch = users.slice(i, i + batchSize)
@@ -381,7 +393,7 @@ async function importUsers(users: User[]) {
 async function sendBulkEmails(recipients: string[], emailContent: Email) {
   const batchSize = 50
   const delayMs = 5000 // 5 seconds between batches
-  const results = []
+  const results: unknown[] = []
 
   for (let i = 0; i < recipients.length; i += batchSize) {
     const batch = recipients.slice(i, i + batchSize)
@@ -427,6 +439,7 @@ async function sendBulkEmails(recipients: string[], emailContent: Email) {
 }
 
 // Even better: combine with retry for resilience
+// Each batch gets its own Result, so one failed batch doesn't stop the rest
 import { retry } from '@ontologyio/receta/async'
 
 async function sendBulkEmailsWithRetry(recipients: string[], emailContent: Email) {
@@ -482,14 +495,13 @@ function onSearchInput(query: string) {
 
 // Issues:
 // - Global state (searchTimeout)
-// - No proper cleanup
 // - Hard to test
 // - Race conditions possible
 ```
 
 **After:**
 ```typescript
-// ✅ Reliable debounce with proper cleanup
+// ✅ Reliable debounce
 import { debounce } from '@ontologyio/receta/async'
 
 const searchAPI = debounce(
@@ -592,24 +604,29 @@ Result-returning functions provide **type-safe error handling** without exceptio
 
 **Before (exceptions)**:
 ```typescript
-try {
-  const data = await retry(() => fetchUser(id))
-  return data.email
-} catch (error) {
-  console.error('Failed:', error)
-  return 'fallback@example.com'
+async function emailFor(id: string) {
+  try {
+    const data = await fetchUser(id)
+    return data.email
+  } catch (error) {
+    console.error('Failed:', error)
+    return 'fallback@example.com'
+  }
 }
 ```
 
 **After (Result)**:
 ```typescript
-const result = await retryResult(() => fetchUser(id))
-return pipe(
-  result,
-  map(user => user.email),
-  mapErr(err => console.error('Failed after', err.attempts, 'attempts')),
-  unwrapOr('fallback@example.com')
-)
+async function emailFor(id: string) {
+  const result = await retry(() => fetchUser(id))
+
+  return pipe(
+    result,
+    map(user => user.email),
+    tapErr(err => console.error('Failed after', err.attempts, 'attempts')),
+    unwrapOr('fallback@example.com')
+  )
+}
 ```
 
 ### Benefits
@@ -620,12 +637,12 @@ return pipe(
 ✅ **Explicit** - Must handle errors, can't forget
 ✅ **Better DX** - IDE shows error types
 
-### Migration Path: retry → retryResult
+### Migration Path: Throwing Retry Helper → retry
 
 **Before**:
 ```typescript
 const fetchUser = async (id: string): Promise<User> => {
-  return retry(
+  return retryManually(
     async () => {
       const res = await fetch(`/api/users/${id}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -647,7 +664,7 @@ try {
 **After**:
 ```typescript
 const fetchUserResult = async (id: string): Promise<Result<User, FetchError>> => {
-  const result = await retryResult(
+  const result = await retry(
     async () => {
       const res = await fetch(`/api/users/${id}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -671,17 +688,13 @@ const result = await fetchUserResult('123')
 const name = pipe(result, map(u => u.name), unwrapOr('Unknown'))
 ```
 
-### Migration Path: mapAsync → mapAsyncResult
+### Migration Path: Promise.all → mapAsync
 
 **Before**:
 ```typescript
 const processUsers = async (userIds: string[]): Promise<User[]> => {
   try {
-    return await mapAsync(
-      userIds,
-      async (id) => fetchUser(id),
-      { concurrency: 5 }
-    )
+    return await Promise.all(userIds.map((id) => fetchUser(id)))
   } catch (error) {
     console.error('One user failed, entire batch failed')
     return []
@@ -691,33 +704,29 @@ const processUsers = async (userIds: string[]): Promise<User[]> => {
 
 **After**:
 ```typescript
-const processUsersResult = async (
-  userIds: string[]
-): Promise<Result<User[], FetchError>> => {
-  return mapAsyncResult(
+const processUsersResult = async (userIds: string[]) => {
+  return mapAsync(
     userIds,
     (id) => fetchUserResult(id),
     { concurrency: 5 }
   )
 }
 
-// Know exactly which user failed
+// fetchUserResult returns a Result, so each user carries its own outcome
 const result = await processUsersResult(userIds)
-if (isErr(result)) {
-  console.error(`User at index ${result.error.index} failed:`, result.error.error)
-  // Can retry just that user!
-} else {
-  console.log(`Processed ${result.value.length} users`)
+if (isOk(result)) {
+  const [users, failures] = partition(result.value)
+  console.log(`Processed ${users.length} users, ${failures.length} failed`)
 }
 ```
 
-### Migration Path: timeout → timeoutResult
+### Migration Path: Hand-Written Timeout → timeout
 
 **Before**:
 ```typescript
 const fetchWithTimeout = async (url: string) => {
   try {
-    return await timeout(fetch(url), 5000)
+    return await withTimeout(fetch(url), 5000)
   } catch (error) {
     if (error instanceof TimeoutError) {
       return fallbackData
@@ -730,12 +739,12 @@ const fetchWithTimeout = async (url: string) => {
 **After**:
 ```typescript
 const fetchWithTimeoutResult = async (url: string) => {
-  const result = await timeoutResult(fetch(url), 5000)
+  const result = await timeout(fetch(url), 5000)
   return pipe(result, unwrapOr(fallbackData))
 }
 ```
 
-### Migration Path: poll → pollResult
+### Migration Path: Throwing from poll → Returning a Result
 
 **Before**:
 ```typescript
@@ -759,7 +768,7 @@ const waitForJob = async (jobId: string) => {
 **After**:
 ```typescript
 const waitForJobResult = async (jobId: string) => {
-  return pollResult(
+  const finished = await poll(
     async () => {
       const status = await checkJobStatus(jobId)
       if (status.state === 'failed') return err({ type: 'job_failed', jobId })
@@ -767,6 +776,8 @@ const waitForJobResult = async (jobId: string) => {
     },
     { interval: 2000, maxAttempts: 30 }
   )
+
+  return flatten(finished)
 }
 
 // Usage
@@ -787,7 +798,7 @@ pipe(
 async function processPayment(paymentId: string): Promise<Payment> {
   try {
     // Fetch payment details with retry
-    const payment = await retry(
+    const payment = await retryManually(
       async () => {
         const res = await fetch(`/api/payments/${paymentId}`)
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -797,7 +808,7 @@ async function processPayment(paymentId: string): Promise<Payment> {
     )
 
     // Process with timeout
-    const result = await timeout(
+    const result = await withTimeout(
       stripe.charges.create({
         amount: payment.amount,
         currency: payment.currency,
@@ -831,11 +842,13 @@ type PaymentError =
   | { type: 'timeout'; operation: string }
   | { type: 'stripe_error'; code: string; message: string }
 
+type StripeError = { code?: string; message: string }
+
 async function processPaymentResult(
   paymentId: string
 ): Promise<Result<Payment, PaymentError>> {
   // Fetch payment details with retry
-  const paymentResult = await retryResult(
+  const paymentResult = await retry(
     async () => {
       const res = await fetch(`/api/payments/${paymentId}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -849,20 +862,25 @@ async function processPaymentResult(
     return err({
       type: 'fetch_failed',
       attempts: paymentResult.error.attempts,
-      message: paymentResult.error.error.message
+      message: String(paymentResult.error.lastError)
     })
   }
 
   const payment = paymentResult.value
 
   // Process with timeout
-  const chargeResult = await timeoutResult(
-    stripe.charges.create({
-      amount: payment.amount,
-      currency: payment.currency,
-      source: payment.sourceId
-    }),
-    10000
+  // A timeout is an Err, and tryCatchAsync catches what Stripe rejects with
+  const chargeResult = flatten(
+    await tryCatchAsync(() =>
+      timeout(
+        stripe.charges.create({
+          amount: payment.amount,
+          currency: payment.currency,
+          source: payment.sourceId
+        }),
+        10000
+      )
+    )
   )
 
   // Transform timeout or Stripe errors
@@ -872,11 +890,8 @@ async function processPaymentResult(
       if (error instanceof TimeoutError) {
         return { type: 'timeout', operation: 'stripe_charge' }
       }
-      return {
-        type: 'stripe_error',
-        code: error.code || 'unknown',
-        message: error.message
-      }
+      const { code, message } = error as StripeError
+      return { type: 'stripe_error', code: code || 'unknown', message }
     })
   )
 }
@@ -917,10 +932,8 @@ pipe(
 **Pattern: Retry + Result + mapAsync**:
 ```typescript
 // Process multiple payments with retry and Result
-const processPaymentsResult = async (
-  paymentIds: string[]
-): Promise<Result<Payment[], { index: number; error: PaymentError }>> => {
-  return mapAsyncResult(
+const processPaymentsResult = async (paymentIds: string[]) => {
+  return mapAsync(
     paymentIds,
     (id) => processPaymentResult(id),
     { concurrency: 5 }
@@ -931,14 +944,11 @@ const processPaymentsResult = async (
 const result = await processPaymentsResult(paymentIds)
 
 if (isOk(result)) {
-  console.log(`Successfully processed ${result.value.length} payments`)
-} else {
-  const { index, error } = result.error
-  console.error(`Payment ${paymentIds[index]} failed:`, error.type)
+  const [paid, failed] = partition(result.value)
+  console.log(`Successfully processed ${paid.length} payments`)
 
-  // Retry just the failed payment
-  const retryResult = await processPaymentResult(paymentIds[index])
-  // Handle retry result...
+  // Each failure says what went wrong
+  failed.forEach((error) => console.error('Payment failed:', error.type))
 }
 ```
 
@@ -947,10 +957,10 @@ if (isOk(result)) {
 - [ ] Identify functions that return `Promise<T>` and throw exceptions
 - [ ] Change return type to `Promise<Result<T, E>>`
 - [ ] Define custom error types (unions) instead of using `Error`
-- [ ] Replace `retry()` with `retryResult()`
-- [ ] Replace `mapAsync()` with `mapAsyncResult()` where appropriate
-- [ ] Replace `timeout()` with `timeoutResult()`
-- [ ] Replace `poll()` with `pollResult()`
+- [ ] Replace throwing retry helpers with `retry()`
+- [ ] Replace `Promise.all()` with `mapAsync()` where you need a limit
+- [ ] Replace throwing timeout helpers with `timeout()`
+- [ ] Replace polling loops with `poll()`
 - [ ] Replace try-catch blocks with `pipe()` + Result functions
 - [ ] Use `isOk()`/`isErr()` for type narrowing
 - [ ] Use `match()` for exhaustive error handling
@@ -1095,6 +1105,7 @@ async function waitForJobComplete(jobId: string) {
     async () => {
       const status = await checkJobStatus(jobId)
 
+      // Throwing stops poll, and it rejects rather than returning an Err
       if (status.state === 'failed') {
         throw new Error('Job failed')
       }
@@ -1170,7 +1181,7 @@ const user = await retry(
   {
     shouldRetry: (error) => {
       // Only retry network errors, not validation errors
-      return error.message.includes('fetch failed')
+      return (error as Error).message.includes('fetch failed')
     }
   }
 )
@@ -1179,7 +1190,7 @@ const user = await retry(
 ### ❌ Pitfall 3: Nesting Retries
 
 ```typescript
-// BAD - exponential retry explosion
+// BAD - the inner retry returns a Result, so the outer retry never sees a failure
 const result = await retry(async () => {
   return retry(async () => {
     return fetch('/api/data').then(r => r.json())
@@ -1215,27 +1226,22 @@ window.addEventListener('scroll', () => trackScroll())
 ### ❌ Pitfall 5: Ignoring Timeout Errors
 
 ```typescript
-// BAD - treating timeout like any other error
+// BAD - a timeout is an Err, so the catch never sees it
 try {
   const data = await timeout(fetchData(), 5000)
+  render(data) // data is a Result, not the value
 } catch (error) {
   console.error('Failed:', error)
-  // Can't distinguish timeout from other failures
 }
 
-// GOOD - handle timeout specifically
-import { TimeoutError } from '@ontologyio/receta/async'
+// GOOD - check the Result
+const data = await timeout(fetchData(), 5000)
 
-try {
-  const data = await timeout(fetchData(), 5000)
-} catch (error) {
-  if (error instanceof TimeoutError) {
-    // Show user-friendly timeout message
-    console.error('Request timed out - please try again')
-  } else {
-    // Other error
-    console.error('Failed:', error)
-  }
+if (isErr(data)) {
+  // Show user-friendly timeout message
+  console.error('Request timed out - please try again')
+} else {
+  render(data.value)
 }
 ```
 
@@ -1297,13 +1303,14 @@ Then migrate each pattern systematically.
 ```typescript
 import { describe, it, expect, vi } from 'vitest'
 import { mapAsync } from '@ontologyio/receta/async'
+import { isErr, unwrap } from '@ontologyio/receta/result'
 
 describe('mapAsync migration', () => {
   it('processes items with concurrency limit', async () => {
     const fetchUser = vi.fn(async (id: string) => ({ id, name: `User ${id}` }))
 
     const ids = ['1', '2', '3', '4', '5']
-    const users = await mapAsync(ids, fetchUser, { concurrency: 2 })
+    const users = unwrap(await mapAsync(ids, fetchUser, { concurrency: 2 }))
 
     expect(users).toHaveLength(5)
     expect(fetchUser).toHaveBeenCalledTimes(5)
@@ -1315,9 +1322,9 @@ describe('mapAsync migration', () => {
       return { id, name: `User ${id}` }
     })
 
-    await expect(
-      mapAsync(['1', '2', '3'], fetchUser)
-    ).rejects.toThrow('User not found')
+    const result = await mapAsync(['1', '2', '3'], fetchUser)
+
+    expect(isErr(result)).toBe(true)
   })
 })
 ```
@@ -1327,6 +1334,7 @@ describe('mapAsync migration', () => {
 ```typescript
 import { describe, it, expect, vi } from 'vitest'
 import { retry } from '@ontologyio/receta/async'
+import { isErr, ok } from '@ontologyio/receta/result'
 
 describe('retry migration', () => {
   it('retries on failure', async () => {
@@ -1339,7 +1347,7 @@ describe('retry migration', () => {
 
     const result = await retry(flaky, { maxAttempts: 3, delay: 10 })
 
-    expect(result).toBe('success')
+    expect(result).toEqual(ok('success'))
     expect(flaky).toHaveBeenCalledTimes(3)
   })
 
@@ -1348,11 +1356,11 @@ describe('retry migration', () => {
       throw new Error('FATAL_ERROR')
     })
 
-    await expect(
-      retry(fn, {
-        shouldRetry: (error) => !error.message.includes('FATAL')
-      })
-    ).rejects.toThrow('FATAL_ERROR')
+    const result = await retry(fn, {
+      shouldRetry: (error) => !(error as Error).message.includes('FATAL')
+    })
+
+    expect(isErr(result)).toBe(true)
 
     expect(fn).toHaveBeenCalledTimes(1) // No retries
   })
@@ -1426,4 +1434,4 @@ describe('debounce migration', () => {
 
 - **[Patterns](./patterns.mdx)**: Complete recipes for common scenarios
 - **[API Reference](../reference/async.mdx)**: Quick function lookup
-- **[Advanced Patterns](./04-advanced-patterns.md)**: Combining utilities for complex workflows
+- **[Retry and Timeout](./retry-timeout.mdx)**: Combining utilities for complex workflows

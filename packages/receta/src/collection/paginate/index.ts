@@ -85,10 +85,7 @@ function paginateImplementation<T>(
  * @example
  * ```typescript
  * // Data-first
- * const messages = [
- *   { id: 'msg_1', text: 'Hello', createdAt: '2024-01-01' },
- *   { id: 'msg_2', text: 'World', createdAt: '2024-01-02' }
- * ]
+ * const messages = Array.from({ length: 25 }, (_, i) => ({ id: `msg_${i + 1}` }))
  *
  * paginateCursor(messages, (m) => m.id, { limit: 10 })
  * // => {

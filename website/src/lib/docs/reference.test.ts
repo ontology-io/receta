@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { exampleCode, exportSection, failureType, proseToMdx, signatureTitles } from './reference'
+import { commentExamples, exampleCode, exportSection, failureType, proseToMdx, signatureTitles } from './reference'
 
 describe('proseToMdx', () => {
   it('turns generics into code, so MDX does not read them as tags', () => {
@@ -32,6 +32,35 @@ describe('exampleCode', () => {
 
   it('takes an unfenced example as it is', () => {
     expect(exampleCode('const a = 1\n')).toEqual(['const a = 1'])
+  })
+})
+
+describe('commentExamples', () => {
+  const comment = [
+    '/**',
+    ' * Sends mail.',
+    ' *',
+    ' * @example',
+    ' * ```ts',
+    " * send('a @b.com') // => Ok(1)",
+    ' * @decorated',
+    ' * ```',
+    ' *',
+    ' * @see other',
+    ' * @example',
+    ' * send(2)',
+    ' */',
+  ].join('\n')
+
+  it('keeps an @ inside an example and stops at the next tag', () => {
+    expect(commentExamples(comment)).toEqual([
+      "```ts\nsend('a @b.com') // => Ok(1)\n@decorated\n```",
+      'send(2)',
+    ])
+  })
+
+  it('finds nothing in a comment without examples', () => {
+    expect(commentExamples('/** Just text. */')).toEqual([])
   })
 })
 

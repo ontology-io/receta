@@ -3,6 +3,7 @@
 import ts from 'typescript'
 
 const CLAIM = /^[ \t]*;?[ \t]*(?:\r?\n[ \t]*)?\/\/\s*=>\s*(.+?)\s*$/m
+const COMMENT_LINE = /^[ \t]*\/\/ ?(.*)$/
 
 /** The docs print values the way a reader thinks of them, not how they are constructed. */
 const toConstructors = (expected: string): string =>
@@ -14,10 +15,30 @@ const toConstructors = (expected: string): string =>
     .replace(/\bValid\(/g, '__valid(')
     .replace(/\bInvalid\(/g, '__invalid(')
 
+/** The comment lines right after a claim's first line, which may continue it. */
+const continuationLines = (rest: string): readonly string[] => {
+  const lines = rest.split('\n').slice(1)
+  const end = lines.findIndex((line) => !COMMENT_LINE.test(line))
+  return (end < 0 ? lines : lines.slice(0, end)).map((line) => COMMENT_LINE.exec(line)?.[1] ?? '')
+}
+
+/** A claim in words, like `// => [...all errors]`, can't run, and must not stop the rest. */
+const isExpression = (expected: string): boolean => {
+  const { diagnostics = [] } = ts.transpileModule(`(${toConstructors(expected)});`, {
+    reportDiagnostics: true,
+  })
+  return diagnostics.length === 0
+}
+
+/** Reads a claim, following it over more comment lines when it spans several. */
 const claimAfter = (source: string, from: number, to: number): string | undefined => {
   const trivia = source.slice(from, to)
   const match = CLAIM.exec(trivia)
-  return match && match.index === 0 ? match[1] : undefined
+  if (!match || match.index !== 0) return undefined
+  const first = match[1] ?? ''
+  const rest = continuationLines(trivia.slice(match[0].length))
+  const attempts = rest.map((_, count) => [first, ...rest.slice(0, count + 1)].join('\n'))
+  return [first, ...attempts].find(isExpression)
 }
 
 /** `console.log(value)` claims something about the value, not about what log returns. */

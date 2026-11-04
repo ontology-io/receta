@@ -20,7 +20,8 @@ export interface MapAsyncError {
  * This is more powerful than Promise.all(items.map(fn)) because it:
  * - Allows limiting concurrent operations (rate limiting, resource management)
  * - Returns Result for explicit error handling
- * - Provides detailed error information (which item failed)
+ * - Provides detailed error information (which item failed, when `concurrency`
+ *   is below the item count)
  *
  * @param items - Array of items to map over
  * @param fn - Async function to apply to each item
@@ -30,7 +31,7 @@ export interface MapAsyncError {
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { unwrapOr, mapErr } from '@ontologyio/receta/result'
+ * import { unwrapOr, tapErr } from '@ontologyio/receta/result'
  *
  * // Data-first: Fetch users with concurrency limit
  * const result = await mapAsync(
@@ -40,17 +41,14 @@ export interface MapAsyncError {
  * )
  *
  * // Handle with Result pattern
- * const users = R.pipe(
- *   result,
- *   mapErr(error => console.error('Failed at index:', error.index)),
- *   unwrapOr([])
- * )
+ * const logged = tapErr(result, error => console.error('Failed at index:', error.index))
+ * const users = unwrapOr(logged, [])
  *
- * // Data-last (in pipe)
- * const processed = await R.pipe(
+ * // Data-last (pipeAsync awaits each step)
+ * const processed = await pipeAsync(
  *   userIds,
- *   async (ids) => mapAsync(ids, fetchUser, { concurrency: 5 }),
- *   async (result) => unwrapOr(result, [])
+ *   mapAsync(fetchUser, { concurrency: 5 }),
+ *   (result) => unwrapOr(result, [])
  * )
  *
  * // Unlimited concurrency (same as Promise.all but safer)
@@ -172,6 +170,10 @@ async function mapAsyncImplementation<T, U>(
  * This is implemented using the `orThrow` utility from Result module,
  * which converts any Result-returning function to a throwing variant.
  *
+ * It is typed `never` for now, because `orThrow` can't see through the overloads
+ * of mapAsync, so typed code can't call it. `unwrap` does the same job, as the
+ * example shows.
+ *
  * @param items - Array of items to map over
  * @param fn - Async function to apply to each item
  * @param options - Concurrency options
@@ -182,21 +184,19 @@ async function mapAsyncImplementation<T, U>(
  * ```typescript
  * // Throws on error
  * try {
- *   const users = await mapAsyncOrThrow(
+ *   const users = unwrap(await mapAsync(
  *     userIds,
  *     async (id) => fetchUser(id),
  *     { concurrency: 5 }
- *   )
+ *   ))
  * } catch (error) {
  *   console.error('Failed:', error)
  * }
- *
- * // Equivalent to using orThrow directly
- * const mapAsyncOrThrow = orThrow(mapAsync)
  * ```
  *
  * @see mapAsync - Result-returning variant (recommended)
  * @see orThrow - utility for creating throwing variants
+ * @see unwrap - for getting the value out of a Result, or throwing
  */
 export const mapAsyncOrThrow = orThrow(mapAsync)
 

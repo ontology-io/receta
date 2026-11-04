@@ -15,7 +15,8 @@ The Function module is designed to work seamlessly with Receta's Result and Opti
 ```typescript
 import { pipe } from 'remeda'
 import { ifElse, when, cond } from '@ontologyio/receta/function'
-import { ok, err, isOk, map, flatMap, unwrapOr } from '@ontologyio/receta/result'
+import { ok, err, isOk, map, flatMap } from '@ontologyio/receta/result'
+import { unwrapOr as unwrapOrOption } from '@ontologyio/receta/option'
 
 // Transform Results based on conditions
 const processResult = <T>(result: Result<T, string>) =>
@@ -36,7 +37,7 @@ const handleError = cond<string, string>([
 ])
 
 const getErrorMessage = (result: Result<any, string>) =>
-  isOk(result) ? 'Success' : unwrapOr(handleError(result.error), 'Error occurred')
+  isOk(result) ? 'Success' : unwrapOrOption(handleError(result.error), 'Error occurred')
 ```
 
 ### Safe Transformation Pipelines
@@ -63,7 +64,7 @@ const processUser = (user: User) =>
     // Validate
     flatMap(validateUser),
     // Add metadata
-    map((validated) => ({
+    map((validated: User) => ({
       ...validated,
       processedAt: new Date()
     }))
@@ -116,6 +117,8 @@ const result = pipe(
 ### Safe Lookups
 
 ```typescript
+import { fromNullable, isSome, map, unwrapOr } from '@ontologyio/receta/option'
+
 interface Config {
   [key: string]: any
 }
@@ -216,7 +219,7 @@ import { cond, when, unless } from '@ontologyio/receta/function'
 import { where, gt, lt, between, and, oneOf } from '@ontologyio/receta/predicate'
 import { unwrapOr } from '@ontologyio/receta/option'
 
-interface Product {
+type Product = {
   id: string
   name: string
   price: number
@@ -226,11 +229,11 @@ interface Product {
 }
 
 // Build reusable predicates
-const isExpensive = where({ price: gt(1000) })
-const isAffordable = where({ price: lt(100) })
-const isInStock = where({ stock: gt(0) })
-const isFeatured = where({ featured: (x: boolean) => x === true })
-const isElectronics = where({ category: oneOf(['laptop', 'phone', 'tablet']) })
+const isExpensive = where<Product>({ price: gt<number>(1000) })
+const isAffordable = where<Product>({ price: lt<number>(100) })
+const isInStock = where<Product>({ stock: gt<number>(0) })
+const isFeatured = where<Product>({ featured: (x) => x === true })
+const isElectronics = where<Product>({ category: oneOf(['laptop', 'phone', 'tablet']) })
 
 // Use cond with predicates for classification
 const classifyProduct = cond<Product, string>([
@@ -258,16 +261,16 @@ const processProducts = (products: Product[]) =>
 ```typescript
 import { where, gt, and } from '@ontologyio/receta/predicate'
 
-interface User {
+type User = {
   age: number
   verified: boolean
   premium: boolean
 }
 
 // Define predicates
-const isAdult = where({ age: gt(18) })
-const isVerified = where({ verified: (x: boolean) => x === true })
-const isPremium = where({ premium: (x: boolean) => x === true })
+const isAdult = where<User>({ age: gt<number>(18) })
+const isVerified = where<User>({ verified: (x) => x === true })
+const isPremium = where<User>({ premium: (x) => x === true })
 const isFullAccess = and(isAdult, isVerified)
 
 // Use predicates in conditionals
@@ -406,8 +409,8 @@ const syncInventory = (oldItems: Item[], newItems: Item[]) =>
 
 ```typescript
 import { pipe } from 'remeda'
-import { tryCatch, tap, when, partial } from '@ontologyio/receta/function'
-import { flatMap, map, mapErr } from '@ontologyio/receta/result'
+import { tap, partial } from '@ontologyio/receta/function'
+import { flatMap, isOk, map, tryCatchAsync, unwrapOr } from '@ontologyio/receta/result'
 
 interface ApiConfig {
   baseUrl: string
@@ -423,30 +426,31 @@ interface ApiError {
 const createApiClient = (config: ApiConfig) => {
   const fetchApi = async (endpoint: string, options?: RequestInit) => {
     const url = `${config.baseUrl}${endpoint}`
-    
-    return pipe(
-      url,
-      tap((url) => logger.debug('Fetching', { url })),
-      // Safe fetch
-      tryCatch(
-        async (url: string) => {
-          const response = await fetch(url, {
-            ...options,
-            headers: { ...config.headers, ...(options?.headers || {}) }
-          })
-          
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`)
-          }
-          
-          return response.json()
-        },
-        (error): ApiError => ({
-          status: 500,
-          message: error instanceof Error ? error.message : String(error),
-          timestamp: new Date().toISOString()
+    logger.debug('Fetching', { url })
+
+    // tryCatch from this module is for sync code. Fetching needs tryCatchAsync.
+    const result = await tryCatchAsync(
+      async () => {
+        const response = await fetch(url, {
+          ...options,
+          headers: { ...config.headers, ...(options?.headers || {}) }
         })
-      ),
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
+        }
+
+        return response.json()
+      },
+      (error): ApiError => ({
+        status: 500,
+        message: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      })
+    )
+
+    return pipe(
+      result,
       tap((result) => {
         if (isOk(result)) {
           logger.debug('Fetch successful')
@@ -475,7 +479,7 @@ const api = createApiClient({
 
 const user = await pipe(
   await api.get('/users/123'),
-  map((data) => ({
+  map((data: User) => ({
     ...data,
     fetchedAt: new Date()
   })),
@@ -488,8 +492,8 @@ const user = await pipe(
 
 ```typescript
 import { pipe } from 'remeda'
-import { when, unless, cond } from '@ontologyio/receta/function'
-import { ok, err, flatMap, collect } from '@ontologyio/receta/result'
+import { when, unless, tap } from '@ontologyio/receta/function'
+import { ok, err, flatMap, isOk, map } from '@ontologyio/receta/result'
 
 interface FormData {
   email: string
@@ -540,16 +544,13 @@ const validateForm = (data: FormData) =>
     data,
     normalizeForm,
     tap((form) => logger.debug('Normalized form', form)),
-    (form) => collect([
-      validateEmail(form.email),
-      validatePassword(form.password),
-      validateAge(form.age)
-    ]),
-    map(([email, password, age]) => ({
-      email,
-      password,
-      age
-    }))
+    // Each field has its own type, so chain them instead of using collect
+    (form) =>
+      flatMap(validateEmail(form.email), (email) =>
+        flatMap(validatePassword(form.password), (password) =>
+          map(validateAge(form.age), (age) => ({ email, password, age }))
+        )
+      )
   )
 
 // Usage
@@ -577,6 +578,8 @@ const parse = tryCatch(
 )
 
 // ✅ Option when error details don't matter
+import { fromNullable } from '@ontologyio/receta/option'
+
 const findUser = (id: string): Option<User> =>
   fromNullable(users.find(u => u.id === id))
 ```
@@ -604,7 +607,9 @@ pipe(
 ### 3. Combine Conditionals with Validation
 
 ```typescript
-const processUser = pipe(
+import { piped } from 'remeda'
+
+const processUser = piped(
   normalizeEmail,
   when(needsVerification, sendVerificationEmail),
   flatMap(validateUser),

@@ -95,12 +95,14 @@ parseConfig('{"a":1}') // Cached
 ### Options
 
 ```typescript
-interface MemoizeOptions {
-  cache?: Cache<unknown, unknown>
+interface MemoizeOptions<K = string> {
+  cache?: Cache<K, unknown>
   maxSize?: number
   ttl?: number
 }
 ```
+
+`ttl` is accepted but not applied yet, so entries never expire with it. To expire entries, pass `cache: ttlCache(ms)`.
 
 #### With maxSize
 
@@ -236,7 +238,7 @@ memoizeBy(
 
 ```typescript
 memoizeBy(
-  (opts) => process(opts),
+  (opts) => buildReport(opts),
   (opts) => JSON.stringify(opts)
 )
 ```
@@ -453,8 +455,7 @@ const getWeather = memoize(fetchWeather, {
 **Characteristics**:
 - ✅ Auto-expiration
 - ✅ Fresh data
-- ✅ Predictable memory
-- ⚠️ Periodic cleanup needed
+- ⚠️ Expired entries stay in memory until they are read again
 
 **When to use**:
 - API responses
@@ -495,6 +496,7 @@ const getUser = memoize(fetchUser, {
 - ✅ Keeps hot data
 - ✅ Auto-eviction
 - ⚠️ Older data lost
+- ⚠️ A cached `undefined` throws on the next call, because `get` treats it as missing
 
 **When to use**:
 - Memory-constrained environments
@@ -514,7 +516,7 @@ const processImage = memoize(transform, {
 // After 50 different images:
 processImage('img-001') // Cached
 processImage('img-050') // Cached
-processImage('img-051') // Computes, evicts img-001
+processImage('img-051') // Computes, evicts img-002 (now the least recently used)
 ```
 
 ### WeakMap Cache
@@ -535,6 +537,8 @@ const processNode = memoizeBy(
 - ✅ Perfect for objects
 - ❌ Only object keys
 - ❌ Can't iterate entries
+- ❌ `clear()` does nothing, because a `WeakMap` can't be emptied
+- ❌ A cached `null` or `undefined` throws on the next call, because `get` treats it as missing
 
 **When to use**:
 - Object keys (DOM nodes, etc.)
@@ -560,7 +564,7 @@ const computeDepth = memoizeBy(
   { cache: weakCache() }
 )
 
-const root = { id: 'root', children: [...] }
+const root: TreeNode = { id: 'root', children: [{ id: 'leaf', children: [] }] }
 computeDepth(root) // Computed
 computeDepth(root) // Cached
 
@@ -575,7 +579,7 @@ All cache strategies implement this interface:
 
 ```typescript
 interface Cache<K, V> {
-  get(key: K): V | undefined
+  get(key: K): Option<V>
   set(key: K, value: V): void
   has(key: K): boolean
   delete(key: K): boolean
@@ -592,7 +596,7 @@ const fn = memoize(expensive)
 fn.cache.has(key) // boolean
 
 // Get cached value
-fn.cache.get(key) // value | undefined
+fn.cache.get(key) // Some(value) or None
 
 // Delete entry
 fn.cache.delete(key) // boolean
@@ -604,12 +608,14 @@ fn.cache.clear() // void
 ### Custom Cache Implementation
 
 ```typescript
+import { none, some, type Option } from '@ontologyio/receta/option'
+
 class CustomCache<K, V> implements Cache<K, V> {
   private map = new Map<K, V>()
 
-  get(key: K): V | undefined {
+  get(key: K): Option<V> {
     console.log(`Cache get: ${key}`)
-    return this.map.get(key)
+    return this.map.has(key) ? some(this.map.get(key) as V) : none()
   }
 
   set(key: K, value: V): void {

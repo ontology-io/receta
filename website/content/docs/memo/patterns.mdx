@@ -64,16 +64,11 @@ const fn = memoize(expensive)
 // Check if cached
 console.log(fn.cache.has(key)) // false = cache miss
 
-// Inspect cache size
-if (fn.cache instanceof Map) {
-  console.log('Cache size:', fn.cache.size)
-}
-
-// Debug cache keys
-fn.cache.forEach((value, key) => {
-  console.log('Cached:', key, value)
-})
+// Read the cached entry
+console.log(fn.cache.get(key)) // Some(value), or None on a miss
 ```
+
+The `Cache` interface has no size or iteration methods, so check entries by key.
 
 ## Next Steps
 

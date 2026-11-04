@@ -54,7 +54,7 @@ const result = pipe(
 )
 
 // Use compose when thinking mathematically
-const transform = compose(finalize, process, prepare)
+const tidy = compose(finalize, clean, prepare)
 ```
 
 ### Real-World Example
@@ -84,15 +84,17 @@ function converge<T, Args extends readonly unknown[], R>(
 
 ### Basic Usage
 
+TypeScript can't infer the input type from the list of functions, so a standalone `converge` needs its type arguments: the input, the results of each function, and the final result. Inside a `pipe`, the input type comes from the pipeline and they can be left out.
+
 ```typescript
 import { converge } from '@ontologyio/receta/function'
 
 // Calculate average
-const average = converge(
-  (sum: number, length: number) => sum / length,
+const average = converge<number[], [number, number], number>(
+  (sum, length) => sum / length,
   [
-    (nums: number[]) => nums.reduce((a, b) => a + b, 0),
-    (nums: number[]) => nums.length
+    (nums) => nums.reduce((a, b) => a + b, 0),
+    (nums) => nums.length
   ]
 )
 
@@ -108,7 +110,7 @@ Use `converge` when you need to:
 
 ```typescript
 // Building summary objects
-const buildSummary = converge(
+const buildSummary = converge<number[], [number, number, number, number], Record<string, number>>(
   (total, count, max, min) => ({
     total,
     count,
@@ -150,8 +152,8 @@ interface Profile {
   }
 }
 
-const buildProfile = converge(
-  (fullName: string, username: string, domain: string, stats: any): Profile => ({
+const buildProfile = converge<User, [string, string, string, any], Profile>(
+  (fullName, username, domain, stats) => ({
     fullName,
     username,
     domain,
@@ -221,12 +223,17 @@ analyze([1, 2, 3, 4, 5])
 ### Difference Between juxt and converge
 
 ```typescript
+const sum = (nums: number[]) => nums.reduce((a, b) => a + b, 0)
+const count = (nums: number[]) => nums.length
+const max = (nums: number[]) => Math.max(...nums)
+const data = [1, 2, 9, 3, 0]
+
 // juxt: returns array of results
 const metrics = juxt([sum, count, max])
 metrics(data) // => [15, 5, 9]
 
 // converge: combines results with a function
-const summary = converge(
+const summary = converge<number[], [number, number, number], Record<string, number>>(
   (sum, count, max) => ({ sum, count, max }),
   [sum, count, max]
 )
@@ -338,8 +345,10 @@ You can nest these combinators for powerful transformations:
 ```typescript
 import { converge, juxt } from '@ontologyio/receta/function'
 
+type Analysis = { stats: Record<string, number>; uniqueCount: number }
+
 // Extract multiple metrics, then build summary
-const analyzeData = converge(
+const analyzeData = converge<number[], [readonly number[], number], Analysis>(
   (metrics, uniqueValues) => ({
     stats: {
       count: metrics[0],
@@ -374,10 +383,10 @@ analyzeData([1, 2, 2, 3, 3, 3, 4, 5])
 
 ```typescript
 // ❌ Unclear
-const fn = converge((a, b) => a + b, [f1, f2])
+const fn = converge<Order, [number, number], number>((a, b) => a + b, [f1, f2])
 
 // ✅ Clear intent
-const calculateTotal = converge(
+const calculateTotal = converge<Order, [number, number], number>(
   (subtotal, tax) => subtotal + tax,
   [getSubtotal, calculateTax]
 )
@@ -391,7 +400,7 @@ const getFullName = (user: User) => `${user.firstName} ${user.lastName}`
 const getUsername = (user: User) => user.email.split('@')[0]!
 const getDomain = (user: User) => user.email.split('@')[1]!
 
-const buildProfile = converge(
+const buildProfile = converge<User, [string, string, string], Profile>(
   (name, username, domain) => ({ name, username, domain }),
   [getFullName, getUsername, getDomain]
 )
@@ -409,7 +418,12 @@ const buildSummary = converge<
   (total, count, max, min): Summary => ({
     total, count, max, min, avg: total / count
   }),
-  [sum, count, max, min]
+  [
+    (nums) => R.sum(nums),
+    (nums) => nums.length,
+    (nums) => Math.max(...nums),
+    (nums) => Math.min(...nums)
+  ]
 )
 ```
 

@@ -79,22 +79,22 @@ const createUserWithProfile = async (data: SignupData) => {
     createPreferences(data.theme, data.notifications)
   ]
 
-  return pipe(
-    await Promise.all(operations),
-    collect, // ALL must succeed or transaction rolls back
-    match({
-      onOk: ([user, profile, prefs]) => ({
-        userId: user.id,
-        profileId: profile.id,
-        prefsId: prefs.id
-      }),
-      onErr: async (error) => {
-        // Rollback all operations
-        await rollbackTransaction()
-        return error
-      }
-    })
-  )
+  // ALL must succeed or transaction rolls back
+  const created = collect(await Promise.all(operations))
+
+  if (isErr(created)) {
+    // Rollback all operations
+    await rollbackTransaction()
+    return created
+  }
+
+  const [user, profile, prefs] = created.value
+
+  return ok({
+    userId: user.id,
+    profileId: profile.id,
+    prefsId: prefs.id
+  })
 }
 ```
 
@@ -120,7 +120,7 @@ const createRepoWithFiles = async (
 
   return pipe(
     await Promise.all(fileUploads),
-    collect, // All files must upload successfully
+    collect(), // All files must upload successfully
     map(uploads => ({
       repo: repo.value,
       files: uploads
@@ -170,7 +170,7 @@ import { partition } from '@ontologyio/receta/result'
 const importUsers = async (csvRows: string[][]) => {
   // Validate each row
   const results = csvRows.map((row, index) =>
-    validateUserRow(row).mapErr(error => ({
+    mapErr(validateUserRow(row), error => ({
       row: index + 1,
       error
     }))
@@ -207,10 +207,12 @@ const importUsers = async (csvRows: string[][]) => {
 // Process multiple payments, track successes and failures
 const batchCharge = async (charges: ChargeRequest[]) => {
   const results = await Promise.all(
-    charges.map(charge =>
-      processPayment(charge.customerId, charge.amount)
-        .map(payment => ({ customerId: charge.customerId, payment }))
-        .mapErr(error => ({ customerId: charge.customerId, error }))
+    charges.map(async charge =>
+      pipe(
+        await processPayment(charge.customerId, charge.amount),
+        map(payment => ({ customerId: charge.customerId, payment })),
+        mapErr(error => ({ customerId: charge.customerId, error }))
+      )
     )
   )
 
@@ -289,7 +291,7 @@ const healthCheck = async () => {
       pipe(
         await tryCatchAsync(check),
         map(() => name),
-        mapErr(error => ({ service: name, error: error.message }))
+        mapErr((error: any) => ({ service: name, error: error.message }))
       )
     )
   )
@@ -317,9 +319,11 @@ const healthCheck = async () => {
 // Send email to multiple recipients
 const sendBulkEmail = async (recipients: string[], template: EmailTemplate) => {
   const results = await Promise.all(
-    recipients.map(email =>
-      sendEmail(email, template)
-        .mapErr(error => ({ email, reason: error.message }))
+    recipients.map(async email =>
+      mapErr(await sendEmail(email, template), error => ({
+        email,
+        reason: error.message
+      }))
     )
   )
 
@@ -480,12 +484,10 @@ const setupAccount = async (data: AccountData) => {
     fromNullable(data.website, 'No website')
   ])
 
-  const [profile, _] = optional
+  const [email, password, username] = required.value
+  const [profile] = optional
 
-  return ok({
-    ...unwrap(required),
-    profile
-  })
+  return ok({ email, password, username, profile })
 }
 ```
 
@@ -528,7 +530,7 @@ const createOrder = pipe(
 const results = await processAll(items)
 const [succeeded, failed] = partition(results)
 
-return {
+const report = {
   processed: succeeded,
   failedCount: failed.length,
   retry: failed // Queue for retry
@@ -539,11 +541,11 @@ return {
 
 ```typescript
 const required = collect(requiredFields)
-const [optional, _] = partition(optionalFields)
+const [optional] = partition(optionalFields)
 
-return pipe(
+const account = pipe(
   required,
-  map(req => ({ ...req, ...optional }))
+  map(fields => ({ fields, optional }))
 )
 ```
 

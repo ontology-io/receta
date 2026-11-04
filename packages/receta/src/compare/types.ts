@@ -11,7 +11,9 @@
  * @example
  * ```typescript
  * const numericComparator: Comparator<number> = (a, b) => a - b
- * [3, 1, 2].sort(numericComparator) // => [1, 2, 3]
+ * const numbers = [3, 1, 2]
+ *
+ * numbers.sort(numericComparator) // => [1, 2, 3]
  * ```
  */
 export type Comparator<T> = (a: T, b: T) => number

@@ -34,7 +34,7 @@ collect([some(1), none(), some(3)])
 ### Real-World: Form Validation
 
 ```typescript
-const validateForm = (data: FormData) => {
+const validateForm = (data: SignupForm) => {
   const fields = collect([
     validateEmail(data.email),
     validatePassword(data.password),

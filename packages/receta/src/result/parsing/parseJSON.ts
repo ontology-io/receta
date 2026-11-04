@@ -21,10 +21,10 @@ import { ok, err } from '../constructors'
  *
  * // Failed parsing
  * parseJSON('invalid json')
- * // => Err(SyntaxError: Unexpected token 'i'...)
+ * // Err(SyntaxError)
  *
  * parseJSON('{"incomplete":')
- * // => Err(SyntaxError: Unexpected end of JSON input)
+ * // Err(SyntaxError)
  *
  * // With type annotation
  * interface User {
@@ -38,12 +38,10 @@ import { ok, err } from '../constructors'
  * // Use with pipe and map
  * pipe(
  *   parseJSON<User>('{"name":"Bob","age":25}'),
- *   Result.map(user => user.name.toUpperCase())
+ *   map(user => user.name.toUpperCase())
  * )
  * // => Ok('BOB')
  * ```
- *
- * @see {@link JSON.parse} - The underlying native function
  */
 export function parseJSON<T = unknown>(str: string): Result<T, SyntaxError> {
   try {

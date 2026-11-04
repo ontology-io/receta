@@ -25,8 +25,8 @@ import { purryConfig2 } from '../../utils'
  * @example
  * ```typescript
  * // Data-first
- * const result = unless(
- *   (str: string) => str.startsWith('http'),
+ * const result = unless<string>(
+ *   (str) => str.startsWith('http'),
  *   (str) => `https://${str}`,
  *   'example.com'
  * )

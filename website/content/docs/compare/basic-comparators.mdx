@@ -355,6 +355,8 @@ function byKey<T, K extends keyof T>(key: K): Comparator<T>
 ### Comparison with `ascending()`
 
 ```typescript
+const products = [{ name: 'Monitor', price: 300 }, { name: 'Mouse', price: 25 }]
+
 // These are equivalent:
 products.sort(ascending(p => p.price))
 products.sort(byKey('price'))
@@ -390,6 +392,12 @@ products.sort(byKey('price'))
 #### Sort by String Property
 
 ```typescript
+const products = [
+  { id: 'c', name: 'Monitor' },
+  { id: 'a', name: 'Mouse' },
+  { id: 'b', name: 'Keyboard' }
+]
+
 // Sort by name (alphabetically)
 products.sort(byKey('name'))
 // => [Keyboard, Monitor, Mouse]
@@ -429,6 +437,8 @@ interface Employee {
   salary: number
   hireDate: Date
 }
+
+const employees: Employee[] = await fetchEmployees()
 
 // User clicks column header to sort
 function sortByColumn(column: keyof Employee) {
@@ -490,8 +500,8 @@ users.sort(ascending(u => u.profile.age))
 ```typescript
 function getSortComparator(direction: 'asc' | 'desc') {
   return direction === 'asc'
-    ? ascending(x => x.price)
-    : descending(x => x.price)
+    ? ascending((x: Product) => x.price)
+    : descending((x: Product) => x.price)
 }
 ```
 

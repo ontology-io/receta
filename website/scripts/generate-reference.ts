@@ -6,7 +6,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import * as R from 'remeda'
 import ts from 'typescript'
-import { type ExportDoc, exportSection } from '../src/lib/docs/reference'
+import { commentExamples, type ExportDoc, exportSection } from '../src/lib/docs/reference'
 
 const LIBRARY_SOURCE = join(import.meta.dir, '../../packages/receta/src')
 const OUT_DIR = join(import.meta.dir, '../content/docs/reference')
@@ -86,7 +86,7 @@ const exportDoc = (checker: ts.TypeChecker, exported: ts.Symbol): ExportDoc => {
   const shared = {
     name,
     summary: ts.displayPartsToString(symbol.getDocumentationComment(checker)),
-    examples: R.unique(tagTexts(tags, 'example')),
+    examples: R.unique(R.flatMap(symbol.declarations ?? [], declarationExamples)),
     seeAlso: R.map(R.unique(tagTexts(tags, 'see')), seeAlsoName),
   }
   if (callSignatures.length > 0) return functionDoc(checker, shared, name, callSignatures)
@@ -119,6 +119,15 @@ const functionDoc = (
     checker.typeToString(checker.getReturnTypeOfSignature(signature), undefined, PRINT_FLAGS),
   ),
 })
+
+/** The doc comment directly above a declaration, read as raw text. */
+const declarationExamples = (declaration: ts.Declaration): readonly string[] => {
+  const file = declaration.getSourceFile().text
+  const statement = ts.isVariableDeclaration(declaration) ? declaration.parent.parent : declaration
+  const comments = ts.getLeadingCommentRanges(file, statement.getFullStart()) ?? []
+  const docComment = R.last(R.filter(comments, ({ pos }) => file.startsWith('/**', pos)))
+  return docComment ? commentExamples(file.slice(docComment.pos, docComment.end)) : []
+}
 
 const tagTexts = (tags: readonly ts.JSDocTagInfo[], tagName: string): readonly string[] =>
   R.pipe(

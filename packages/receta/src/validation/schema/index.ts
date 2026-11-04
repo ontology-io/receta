@@ -16,13 +16,17 @@ import { isInvalid } from '../guards'
  * If all fields are valid, returns Valid with the object.
  * If any field is invalid, returns Invalid with FieldError objects for each failed field.
  *
+ * Valid holds the object you passed in, so a validator can't convert a field or fill in a default.
+ * Declare the object's shape with `type`, not `interface`, because `T` must extend `Record<string, unknown>`.
+ * The data-last form `schema(rules)` is broken in 0.4.1 and crashes when called, so always pass the value.
+ *
  * @param schemaObj - Schema mapping keys to validators
  * @param value - Object to validate
  * @returns Validation with the object, or field-level errors
  *
  * @example
  * ```typescript
- * interface User {
+ * type User = {
  *   name: string
  *   email: string
  *   age: number
@@ -47,8 +51,8 @@ import { isInvalid } from '../guards'
  * // ])
  *
  * // Real-world: Form validation
- * const validateRegistration = (formData: unknown) =>
- *   schema(userSchema, formData)
+ * const validateRegistration = (form: User) =>
+ *   schema(userSchema, form)
  *
  * const result = validateRegistration(formData)
  * if (isInvalid(result)) {
@@ -60,14 +64,8 @@ import { isInvalid } from '../guards'
  *
  * // Real-world: API request validation
  * const createUserSchema: ValidationSchema<CreateUserRequest, string> = {
- *   email: pipe(
- *     fromPredicate(s => s.length > 0, 'Email required'),
- *     flatMap(fromPredicate(s => s.includes('@'), 'Invalid email'))
- *   ),
- *   password: pipe(
- *     fromPredicate(s => s.length >= 8, 'Min 8 characters'),
- *     flatMap(fromPredicate(s => /[A-Z]/.test(s), 'Need uppercase'))
- *   )
+ *   email: validate([required('Email required'), email()]),
+ *   password: validate([minLength(8, 'Min 8 characters'), matches(/[A-Z]/, 'Need uppercase')])
  * }
  *
  * app.post('/api/users', (req, res) => {
@@ -123,6 +121,7 @@ function schemaImplementation<T extends Record<string, unknown>, E>(
  *
  * Like schema, but only validates fields that are present in the value.
  * Missing fields are not validated.
+ * The data-last form `partial(rules)` is broken in 0.4.1 and crashes when called, so always pass the value.
  *
  * @param schemaObj - Schema mapping keys to validators
  * @param value - Partial object to validate

@@ -40,7 +40,7 @@ export const isString: TypePredicate<unknown, string> = (value): value is string
  * Type guard that checks if a value is a number.
  *
  * Narrows the type to `number` in TypeScript.
- * Returns false for NaN (use `isFiniteNumber` to include NaN).
+ * Returns false for NaN. Infinity passes: use `isFiniteNumber` to reject it too.
  *
  * @param value - The value to check
  * @returns True if value is a number and not NaN
@@ -61,7 +61,7 @@ export const isString: TypePredicate<unknown, string> = (value): value is string
  * }
  * ```
  *
- * @see isFiniteNumber - to allow NaN
+ * @see isFiniteNumber - to also reject Infinity
  * @see isInteger - for integer type guard
  * @see isString - for string type guard
  */
@@ -249,12 +249,12 @@ export const isArray: TypePredicate<unknown, unknown[]> = (value): value is unkn
   Array.isArray(value)
 
 /**
- * Type guard that checks if a value is a plain object.
+ * Type guard that checks if a value is a non-null object that isn't an array.
  *
- * Returns false for arrays, functions, null, and other non-plain objects.
+ * Returns false for arrays, functions and null. Class instances such as Date and Map pass.
  *
  * @param value - The value to check
- * @returns True if value is a plain object
+ * @returns True if value is a non-null, non-array object
  *
  * @example
  * ```typescript
