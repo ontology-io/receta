@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1](https://github.com/ontology-io/receta/compare/receta@v0.4.0...receta@v0.4.1) (2026-11-04)
+
+
+### Bug Fixes
+
+* **deps:** move to remeda 2.58 and test the newest release in CI ([ca489a6](https://github.com/ontology-io/receta/commit/ca489a66fce42fc8fcb923a2e1cf9fa4a0e7ec8b))
+* **deps:** move to remeda 2.58 and test the newest release in CI ([1e22fe8](https://github.com/ontology-io/receta/commit/1e22fe833cb5b9b672ad68d1ed75bee448617948))
+
 ## [0.4.0](https://github.com/ontology-io/receta/compare/receta@v0.3.5...receta@v0.4.0) (2026-10-22)
 
 
