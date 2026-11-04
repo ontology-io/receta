@@ -23,6 +23,8 @@
     "clean": "nx run-many --target=clean --all",
     "lint": "nx run-many --target=lint --all",
     "generate-llm": "bun run scripts/generate-llm-txt.ts",
+    "website:dev": "cd website && bun run dev",
+    "website:build": "cd website && bun run build",
     "docs:generate": "bun run scripts/generate-docs.ts",
     "docs:watch": "bun run scripts/generate-docs.ts --watch",
     "docs:build": "cd docs-site && bun install && bun run build",

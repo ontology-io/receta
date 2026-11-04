@@ -18772,10 +18772,11 @@
                       "type": "text",
                       "id": "RYuee",
                       "name": "Length",
-                      "fill": "$on-ink-3",
-                      "content": "no pin",
+                      "fill": "$ok-on-ink",
+                      "content": "pin 240vh",
                       "fontFamily": "$font-machine",
-                      "fontSize": 15
+                      "fontSize": 15,
+                      "fontWeight": "500"
                     }
                   ]
                 },
@@ -18786,7 +18787,7 @@
                   "fill": "$on-ink-2",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Rail draws its tangle. Markers stamp in on enter, one per line of evidence.",
+                  "content": "Shares one pin with 03: the crime scene turns into the story. Evidence stamps in, then the rail pulls straight.",
                   "lineHeight": 1.25,
                   "fontFamily": "$font-human",
                   "fontSize": 21
@@ -18837,7 +18838,7 @@
                       "id": "h0bSCp",
                       "name": "Length",
                       "fill": "$ok-on-ink",
-                      "content": "pin 180vh",
+                      "content": "shared",
                       "fontFamily": "$font-machine",
                       "fontSize": 15,
                       "fontWeight": "500"
@@ -18851,7 +18852,7 @@
                   "fill": "$on-ink-2",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Horizon rises ink to paper. Falling lines, then staggered story lines. Token turns Ok.",
+                  "content": "Horizon rises ink to paper. Falling lines, then staggered story lines. The value turns Ok.",
                   "lineHeight": 1.25,
                   "fontFamily": "$font-human",
                   "fontSize": 21
@@ -19572,7 +19573,7 @@
                   "fill": "$on-ink-2",
                   "textGrowth": "fixed-width",
                   "width": "fill_container",
-                  "content": "Parallax off below 768px. Rail moves to the left edge. Pins shorten to 60%. The railway turns vertical.",
+                  "content": "Below 1152px: no parallax and no pins. The rail moves to the left edge in plain CSS, and the railway turns vertical.",
                   "lineHeight": 1.32,
                   "fontFamily": "$font-human",
                   "fontSize": 21
