@@ -23,7 +23,7 @@ ruleTester.run('prefer-option-over-null', rule, {
     {
       name: 'Already using Option<T>',
       code: `
-        import { Option, fromNullable } from 'receta/option'
+        import { Option, fromNullable } from '@ontologyio/receta/option'
         function findUser(id: string): Option<User> {
           return fromNullable(users.find(u => u.id === id))
         }
@@ -134,7 +134,7 @@ ruleTester.run('prefer-option-over-null', rule, {
         { messageId: 'preferOption' },
         { messageId: 'useFromNullable' },
       ],
-      output: `import { Option, fromNullable } from 'receta/option'
+      output: `import { fromNullable, type Option } from '@ontologyio/receta/option'
 
         function findUser(id: string): Option<User> {
           return fromNullable(users.find(u => u.id === id))
@@ -152,7 +152,7 @@ ruleTester.run('prefer-option-over-null', rule, {
         { messageId: 'preferOption' },
         { messageId: 'useFromNullable' },
       ],
-      output: `import { Option, fromNullable } from 'receta/option'
+      output: `import { fromNullable, type Option } from '@ontologyio/receta/option'
 
         const getConfig = (key: string): Option<Config> => {
           return fromNullable(config[key] || null)
@@ -170,7 +170,7 @@ ruleTester.run('prefer-option-over-null', rule, {
         { messageId: 'preferOption' },
         { messageId: 'useFromNullable' },
       ],
-      output: `import { Option, fromNullable } from 'receta/option'
+      output: `import { fromNullable, type Option } from '@ontologyio/receta/option'
 
         function maybeValue(): Option<string> {
           return fromNullable(someValue)
@@ -195,7 +195,7 @@ export function getOrder(raw: string): Line[] | null {
         { messageId: 'useFromNullable', line: 4 },
         { messageId: 'useFromNullable', line: 6 },
       ],
-      output: `import { Option, fromNullable } from 'receta/option'
+      output: `import { fromNullable, type Option } from '@ontologyio/receta/option'
 type Line = { sku: string; qty: number }
 export function getOrder(raw: string): Option<Line[]> {
   try {
@@ -358,7 +358,7 @@ export function getOrder(raw: string): Option<Line[]> {
     },
     {
       name: 'Imports only what is missing from receta/option',
-      code: `import { Option } from 'receta/option'
+      code: `import { Option } from '@ontologyio/receta/option'
 function findUser(id: string): User | undefined {
   return users.find(u => u.id === id)
 }
@@ -367,8 +367,8 @@ function findUser(id: string): User | undefined {
         { messageId: 'preferOption' },
         { messageId: 'useFromNullable' },
       ],
-      output: `import { fromNullable } from 'receta/option'
-import { Option } from 'receta/option'
+      output: `import { fromNullable } from '@ontologyio/receta/option'
+import { Option } from '@ontologyio/receta/option'
 function findUser(id: string): Option<User> {
   return fromNullable(users.find(u => u.id === id))
 }

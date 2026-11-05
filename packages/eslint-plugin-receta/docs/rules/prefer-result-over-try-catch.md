@@ -1,6 +1,6 @@
 # prefer-result-over-try-catch
 
-Prefer `Result.tryCatch()` over try-catch blocks for error handling.
+Prefer `tryCatch()` over try-catch blocks for error handling.
 
 ## Rule Details
 
@@ -39,14 +39,14 @@ function fetchData(url: string) {
 ### ✅ Correct
 
 ```typescript
-import { Result } from 'receta/result'
+import { tryCatch, tryCatchAsync, type Result } from '@ontologyio/receta/result'
 
 function parseJSON(str: string): Result<any, SyntaxError> {
-  return Result.tryCatch(() => JSON.parse(str))
+  return tryCatch(() => JSON.parse(str))
 }
 
 function fetchData(url: string): Promise<Result<Response, Error>> {
-  return Result.tryCatchAsync(() => fetch(url))
+  return tryCatchAsync(() => fetch(url))
 }
 ```
 
@@ -104,13 +104,13 @@ function complexHandler() {
 For complex cases, manually refactor using Result combinators:
 
 ```typescript
-import { Result, mapErr } from 'receta/result'
+import { mapErr, tap, tryCatch, type Result } from '@ontologyio/receta/result'
 
 function complexHandler(): Result<Data, CustomError> {
   return pipe(
-    Result.tryCatch(() => processData()),
-    Result.tap(logSuccess),
-    Result.mapErr(e => {
+    tryCatch(() => processData()),
+    tap(logSuccess),
+    mapErr(e => {
       logger.error('Failed to process', e)
       cleanup()
       notifyAdmin(e)

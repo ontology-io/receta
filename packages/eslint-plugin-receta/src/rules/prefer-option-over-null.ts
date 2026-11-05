@@ -13,6 +13,8 @@ const createRule = ESLintUtils.RuleCreator(
 
 type MessageIds = 'preferOption' | 'useFromNullable' | 'nullableReturn'
 
+const OPTION_MODULE = '@ontologyio/receta/option'
+
 export default createRule<[], MessageIds>({
   name: 'prefer-option-over-null',
   meta: {
@@ -78,9 +80,10 @@ export default createRule<[], MessageIds>({
                 )
 
                 if (missingImports.length > 0) {
+                  // Option is a type, so the import has to survive verbatimModuleSyntax
                   const importStatement = generateImportStatement(
-                    missingImports,
-                    'receta/option'
+                    missingImports.map(name => (name === 'Option' ? 'type Option' : name)),
+                    OPTION_MODULE
                   )
                   yield fixer.insertTextBeforeRange([0, 0], `${importStatement}\n`)
                 }
@@ -245,7 +248,7 @@ function isImportedFromOption(sourceCode: Readonly<TSESLint.SourceCode>, name: s
   return sourceCode.ast.body.some(
     stmt =>
       stmt.type === 'ImportDeclaration' &&
-      stmt.source.value === 'receta/option' &&
+      stmt.source.value === OPTION_MODULE &&
       stmt.specifiers.some(
         spec =>
           spec.type === 'ImportSpecifier' &&

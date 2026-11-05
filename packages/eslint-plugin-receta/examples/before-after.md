@@ -39,23 +39,23 @@ async function processUsers(ids: string[]) {
 
 ```typescript
 import * as R from 'remeda'
-import { Result } from 'receta/result'
-import { Option, fromNullable } from 'receta/option'
-import { mapAsync } from 'receta/async'
+import { map, tryCatchAsync, type Result } from '@ontologyio/receta/result'
+import { fromNullable, type Option } from '@ontologyio/receta/option'
+import { mapAsync } from '@ontologyio/receta/async'
 
 async function processUsers(ids: string[]): Promise<Result<string[], Error>> {
   return R.pipe(
     await mapAsync(ids, async (id) =>
-      Result.tryCatchAsync(async () => {
+      tryCatchAsync(async () => {
         const response = await fetch(`/api/users/${id}`)
         return response.json()
       })
     ),
-    Result.collect, // Convert Result<User>[] → Result<User[]>
-    Result.map(
+    collect, // Convert Result<User>[] → Result<User[]>
+    map(
       R.pipe(
         R.map(fromNullable), // Convert User[] → Option<User>[]
-        Option.collect, // Convert Option<User>[] → Option<User[]>
+        collect, // Convert Option<User>[] → Option<User[]>
         R.filter(u => u.age >= 18),
         R.map(u => u.name.toUpperCase())
       )
@@ -110,29 +110,28 @@ if (config) {
 ### After (With eslint-plugin-receta)
 
 ```typescript
-import { Result } from 'receta/result'
-import { Option, fromNullable } from 'receta/option'
+import * as R from 'remeda'
+import { map, ok, tryCatch, unwrapOr, type Result } from '@ontologyio/receta/result'
+import { fromNullable, match, none, some, type Option } from '@ontologyio/receta/option'
 
-function getConfig(key: string): Result<Option<Config>, ParseError> {
-  return R.pipe(
-    fromNullable(localStorage.getItem(key)),
-    Option.map(raw => Result.tryCatch(() => JSON.parse(raw))),
-    Option.sequence // Option<Result<T>> → Result<Option<T>>
-  )
+const parseConfig = (raw: string): Result<Config, unknown> => tryCatch(() => JSON.parse(raw))
+
+function getConfig(key: string): Result<Option<Config>, unknown> {
+  return match(fromNullable(localStorage.getItem(key)), {
+    onSome: (raw): Result<Option<Config>, unknown> => map(parseConfig(raw), (config) => some(config)),
+    onNone: () => ok(none()),
+  })
 }
 
 // Usage
-const result = getConfig('app.settings')
+const noConfig: Option<Config> = none()
 
 R.pipe(
-  result,
-  Result.map(
-    Option.match({
-      onSome: applySettings,
-      onNone: applyDefaults
-    })
-  ),
-  Result.mapErr(err => console.error('Config error:', err))
+  unwrapOr(getConfig('app.settings'), noConfig),
+  match({
+    onSome: applySettings,
+    onNone: applyDefaults,
+  })
 )
 ```
 
@@ -169,13 +168,13 @@ const activeUserEmails = users
 
 ```typescript
 import * as R from 'remeda'
-import { Option, fromNullable } from 'receta/option'
+import { fromNullable } from '@ontologyio/receta/option'
 
 const activeUserEmails = R.pipe(
   users,
   R.filter(u => u.status === 'active'),
   R.map(u => fromNullable(u.email)),
-  Option.collect,
+  collect,
   R.map(email => email.toLowerCase()),
   R.unique(),
   R.sort()
@@ -216,10 +215,10 @@ function loadUserPreferences(userId: string): UserPrefs {
 ### After (With eslint-plugin-receta)
 
 ```typescript
-import { Result, unwrapOr } from 'receta/result'
+import { isErr, tryCatch, unwrapOr, type Result } from '@ontologyio/receta/result'
 
 function loadUserPreferences(userId: string): Result<UserPrefs, Error> {
-  return Result.tryCatch(() => fetchPreferences(userId))
+  return tryCatch(() => fetchPreferences(userId))
 }
 
 // Usage with explicit fallback
@@ -227,8 +226,8 @@ const prefs = unwrapOr(loadUserPreferences(userId), DEFAULT_PREFS)
 
 // Or track whether defaults were used
 const prefsResult = loadUserPreferences(userId)
-const prefs = Result.unwrapOr(prefsResult, DEFAULT_PREFS)
-const usingDefaults = Result.isErr(prefsResult)
+const prefs = unwrapOr(prefsResult, DEFAULT_PREFS)
+const usingDefaults = isErr(prefsResult)
 
 if (usingDefaults) {
   console.warn('Using default preferences')
@@ -276,41 +275,20 @@ function validateUser(data: unknown): User | null {
 ### After (With eslint-plugin-receta)
 
 ```typescript
-import * as R from 'remeda'
-import { Validation, validate, isString, isNumber } from 'receta/validation'
+import { fromPredicate, match, schema, type ValidationSchema } from '@ontologyio/receta/validation'
 
-const validateName = validate(
-  isString,
-  (s: string) => s.length > 0,
-  'Name must be non-empty string'
-)
-
-const validateEmail = validate(
-  isString,
-  (s: string) => s.includes('@'),
-  'Email must contain @'
-)
-
-const validateAge = validate(
-  isNumber,
-  (n: number) => n >= 0,
-  'Age must be non-negative'
-)
-
-function validateUser(data: unknown): Validation<User> {
-  return Validation.struct({
-    name: validateName(data?.name),
-    email: validateEmail(data?.email),
-    age: validateAge(data?.age)
-  })
+const userRules: ValidationSchema<User, string> = {
+  name: fromPredicate((name) => name.length > 0, 'Name must be non-empty'),
+  email: fromPredicate((email) => email.includes('@'), 'Email must contain @'),
+  age: fromPredicate((age) => age >= 0, 'Age must be non-negative'),
 }
 
-// Usage
-const result = validateUser(unknownData)
+const validateUser = schema(userRules)
 
-Validation.match(result, {
-  onValid: user => console.log('Valid user:', user),
-  onInvalid: errors => console.error('Validation errors:', errors)
+// Usage
+match(validateUser(user), {
+  onValid: (user) => console.log('Valid user:', user),
+  onInvalid: (errors) => console.error('Validation errors:', errors),
 })
 ```
 

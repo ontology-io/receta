@@ -14,16 +14,18 @@ const createRule = ESLintUtils.RuleCreator(
 
 type MessageIds = 'preferResult' | 'addResultImport'
 
+const RESULT_MODULE = '@ontologyio/receta/result'
+
 export default createRule<[], MessageIds>({
   name: 'prefer-result-over-try-catch',
   meta: {
     type: 'suggestion',
     docs: {
-      description: 'Prefer Result.tryCatch over try-catch blocks for error handling',
+      description: 'Prefer tryCatch over try-catch blocks for error handling',
     },
     messages: {
-      preferResult: 'Use Result.tryCatch() instead of try-catch for explicit error handling',
-      addResultImport: 'Add Result import from receta/result',
+      preferResult: 'Use tryCatch() instead of try-catch for explicit error handling',
+      addResultImport: 'Add tryCatch import from @ontologyio/receta/result',
     },
     fixable: 'code',
     schema: [],
@@ -56,31 +58,28 @@ export default createRule<[], MessageIds>({
             ? function* (fixer) {
                 const returnExpression = sourceCode.getText(returned)
 
-                // Generate Result.tryCatch wrapper
-                const resultCode = `const result = Result.tryCatch(\n  () => ${returnExpression}\n)\nreturn result`
+                // Generate tryCatch wrapper
+                const resultCode = `const result = tryCatch(\n  () => ${returnExpression}\n)\nreturn result`
 
                 // Replace the entire try-catch with Result pattern
                 yield fixer.replaceText(node, resultCode)
 
-                // Check if Result is imported
-                const hasResultImport = sourceCode.ast.body.some(
+                // Check if tryCatch is imported
+                const hasTryCatchImport = sourceCode.ast.body.some(
                   stmt =>
                     stmt.type === 'ImportDeclaration' &&
-                    stmt.source.value === 'receta/result' &&
+                    stmt.source.value === RESULT_MODULE &&
                     stmt.specifiers.some(
                       spec =>
                         spec.type === 'ImportSpecifier' &&
                         spec.imported.type === 'Identifier' &&
-                        spec.imported.name === 'Result'
+                        spec.imported.name === 'tryCatch'
                     )
                 )
 
-                if (!hasResultImport) {
+                if (!hasTryCatchImport) {
                   // Add import at the top
-                  const importStatement = generateImportStatement(
-                    ['Result'],
-                    'receta/result'
-                  )
+                  const importStatement = generateImportStatement(['tryCatch'], RESULT_MODULE)
                   yield fixer.insertTextBeforeRange(
                     [0, 0],
                     `${importStatement}\n`
@@ -95,7 +94,7 @@ export default createRule<[], MessageIds>({
 })
 
 /**
- * Find the expression to hand to Result.tryCatch, but only when the rewrite
+ * Find the expression to hand to tryCatch, but only when the rewrite
  * keeps everything the try statement does. The fix replaces the whole statement
  * with one sync arrow function, so anything else in it would be lost or broken.
  */

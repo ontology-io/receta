@@ -13,11 +13,11 @@ const ruleTester = new RuleTester({
 ruleTester.run('prefer-result-over-try-catch', rule, {
   valid: [
     {
-      name: 'Already using Result.tryCatch',
+      name: 'Already using tryCatch',
       code: `
-        import { Result } from 'receta/result'
+        import { tryCatch } from '@ontologyio/receta/result'
         function parseJSON(str: string) {
-          return Result.tryCatch(() => JSON.parse(str))
+          return tryCatch(() => JSON.parse(str))
         }
       `,
     },
@@ -170,10 +170,10 @@ ruleTester.run('prefer-result-over-try-catch', rule, {
         }
       `,
       errors: [{ messageId: 'preferResult' }],
-      output: `import { Result } from 'receta/result'
+      output: `import { tryCatch } from '@ontologyio/receta/result'
 
         function parseJSON(str: string) {
-          const result = Result.tryCatch(
+          const result = tryCatch(
   () => JSON.parse(str)
 )
 return result
@@ -190,10 +190,10 @@ return result
         }
       `,
       errors: [{ messageId: 'preferResult' }],
-      output: `import { Result } from 'receta/result'
+      output: `import { tryCatch } from '@ontologyio/receta/result'
 
         function read() {
-          const result = Result.tryCatch(
+          const result = tryCatch(
   () => load()
 )
 return result
@@ -215,10 +215,10 @@ return result
         }
       `,
       errors: [{ messageId: 'preferResult' }],
-      output: `import { Result } from 'receta/result'
+      output: `import { tryCatch } from '@ontologyio/receta/result'
 
         function load() {
-          const result = Result.tryCatch(
+          const result = tryCatch(
   () => parse(
               input,
               options

@@ -71,7 +71,7 @@ All rules set to error. Use for new projects or strict enforcement.
 
 ### ✅ `prefer-result-over-try-catch` 🔧
 
-Enforces using `Result.tryCatch()` instead of try-catch blocks for error handling.
+Enforces using `tryCatch()` instead of try-catch blocks for error handling.
 
 **❌ Bad:**
 
@@ -88,16 +88,16 @@ function parseJSON(str: string) {
 **✅ Good:**
 
 ```typescript
-import { Result } from 'receta/result'
+import { tryCatch, type Result } from '@ontologyio/receta/result'
 
 function parseJSON(str: string): Result<any, SyntaxError> {
-  return Result.tryCatch(() => JSON.parse(str))
+  return tryCatch(() => JSON.parse(str))
 }
 ```
 
 **Reports:** Every `try` with a `catch`, except where the failure is already a value or the `catch` ends the program at an entry point. See the [rule docs](docs/rules/prefer-result-over-try-catch.md).
 
-**Autofix:** Rewrites a lone `return` with an empty or rethrowing `catch` to `Result.tryCatch()` and adds necessary imports. Everything else is reported without a fix.
+**Autofix:** Rewrites a lone `return` with an empty or rethrowing `catch` to `tryCatch()` and adds necessary imports. Everything else is reported without a fix.
 
 ---
 
@@ -116,7 +116,7 @@ function findUser(id: string): User | undefined {
 **✅ Good:**
 
 ```typescript
-import { Option, fromNullable } from 'receta/option'
+import { fromNullable, type Option } from '@ontologyio/receta/option'
 
 function findUser(id: string): Option<User> {
   return fromNullable(users.find(u => u.id === id))
@@ -243,18 +243,18 @@ async function processUsers(ids: string[]) {
 
 ```typescript
 import * as R from 'remeda'
-import { Result } from 'receta/result'
-import { Option, fromNullable } from 'receta/option'
-import { mapAsync } from 'receta/async'
+import { map, tryCatch, type Result } from '@ontologyio/receta/result'
+import { fromNullable } from '@ontologyio/receta/option'
+import { mapAsync } from '@ontologyio/receta/async'
 
 async function processUsers(ids: string[]): Promise<Result<string[], Error>> {
   return R.pipe(
-    await mapAsync(ids, id => Result.tryCatch(() => fetchUser(id))),
-    Result.collect,
-    Result.map(
+    await mapAsync(ids, id => tryCatch(() => fetchUser(id))),
+    collect,
+    map(
       R.pipe(
         R.map(fromNullable),
-        Option.collect,
+        collect,
         R.filter(u => u.age >= 18),
         R.map(u => u.name.toUpperCase())
       )

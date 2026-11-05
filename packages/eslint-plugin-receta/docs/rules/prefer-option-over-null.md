@@ -32,7 +32,7 @@ const maybeValue: string | undefined = getValue()
 ### ✅ Correct
 
 ```typescript
-import { Option, fromNullable, some, none } from 'receta/option'
+import { fromNullable, none, some, type Option } from '@ontologyio/receta/option'
 
 function findUser(id: string): Option<User> {
   return fromNullable(users.find(u => u.id === id))
@@ -94,7 +94,7 @@ function findFirst(arr: number[]): number | undefined {
 **After (autofix):**
 
 ```typescript
-import { Option, fromNullable } from 'receta/option'
+import { fromNullable, type Option } from '@ontologyio/receta/option'
 
 function findFirst(arr: number[]): Option<number> {
   return fromNullable(arr[0])
@@ -107,13 +107,13 @@ Once using Option, leverage combinators for safe transformations:
 
 ```typescript
 import * as R from 'remeda'
-import { Option, fromNullable, unwrapOr } from 'receta/option'
+import { filter, fromNullable, map, unwrapOr, type Option } from '@ontologyio/receta/option'
 
 function getUserEmail(userId: string): Option<string> {
   return R.pipe(
     findUser(userId),
-    Option.map(user => user.email),
-    Option.filter(email => email.includes('@'))
+    map(user => user.email),
+    filter(email => email.includes('@'))
   )
 }
 

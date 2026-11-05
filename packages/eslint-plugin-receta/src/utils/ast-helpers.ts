@@ -41,7 +41,7 @@ export function findEnclosingFunction(node: TSESTree.Node): FunctionNode | undef
 
 /**
  * Check if a catch clause adds nothing to the error: it is empty, or it only
- * rethrows what it caught. Result.tryCatch keeps that same error, so replacing
+ * rethrows what it caught. tryCatch keeps that same error, so replacing
  * such a clause loses no code. Logging or wrapping the error would be lost.
  */
 export function isCatchClauseTransparent(catchClause: TSESTree.CatchClause): boolean {
@@ -236,7 +236,11 @@ export function isChainableArrayMethod(method: string): boolean {
  */
 export function generateImportStatement(
   utilities: string[],
-  from: 'receta/result' | 'receta/option' | 'receta/async' | 'remeda'
+  from:
+    | '@ontologyio/receta/result'
+    | '@ontologyio/receta/option'
+    | '@ontologyio/receta/async'
+    | 'remeda'
 ): string {
   const uniqueUtilities = [...new Set(utilities)].sort()
 
