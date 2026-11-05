@@ -60,14 +60,14 @@ import type { PlainObject, DeepMergeOptions } from '../types'
 export function deepMerge(objects: readonly PlainObject[], options?: DeepMergeOptions): PlainObject
 export function deepMerge(options?: DeepMergeOptions): (objects: readonly PlainObject[]) => PlainObject
 export function deepMerge(objectsOrOptions?: readonly PlainObject[] | DeepMergeOptions, maybeOptions?: DeepMergeOptions): any {
-  // Data-last: if first arg looks like options (has arrayStrategy/customMerge)
-  if (objectsOrOptions !== undefined && !Array.isArray(objectsOrOptions) &&
-      ('arrayStrategy' in objectsOrOptions || 'customMerge' in objectsOrOptions)) {
-    return (objects: readonly PlainObject[]) => deepMergeImplementation(objects, objectsOrOptions as DeepMergeOptions)
+  // Data-last: only an array is data, so anything else is the options
+  if (!Array.isArray(objectsOrOptions)) {
+    return (objects: readonly PlainObject[]) =>
+      deepMergeImplementation(objects, objectsOrOptions as DeepMergeOptions | undefined)
   }
 
   // Data-first
-  return deepMergeImplementation(objectsOrOptions as readonly PlainObject[] ?? [], maybeOptions)
+  return deepMergeImplementation(objectsOrOptions as readonly PlainObject[], maybeOptions)
 }
 
 function deepMergeImplementation(objects: readonly PlainObject[], options?: DeepMergeOptions): PlainObject {
@@ -91,7 +91,7 @@ function deepMergeImplementation(objects: readonly PlainObject[], options?: Deep
         case 'merge':
           return source.map((item, index) => {
             if (index < target.length) {
-              return mergeTwo(target[index], item)
+              return mergeValues(String(index), target[index], item)
             }
             return item
           })

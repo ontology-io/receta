@@ -45,13 +45,13 @@ import type { FlatObject, PlainObject, UnflattenOptions } from '../types'
 export function unflatten(obj: FlatObject, options?: UnflattenOptions): PlainObject
 export function unflatten(options?: UnflattenOptions): (obj: FlatObject) => PlainObject
 export function unflatten(objOrOptions?: FlatObject | UnflattenOptions, maybeOptions?: UnflattenOptions): any {
-  // Data-last: if first arg looks like options (has separator key)
-  if (objOrOptions !== undefined && typeof objOrOptions === 'object' && 'separator' in objOrOptions && !Object.keys(objOrOptions).some(k => k.includes('.'))) {
-    return (obj: FlatObject) => unflattenImplementation(obj, objOrOptions as UnflattenOptions)
+  // Data-last: no arguments, or a first arg that looks like options (has separator key)
+  if (objOrOptions === undefined || (typeof objOrOptions === 'object' && 'separator' in objOrOptions && !Object.keys(objOrOptions).some(k => k.includes('.')))) {
+    return (obj: FlatObject) => unflattenImplementation(obj, objOrOptions as UnflattenOptions | undefined)
   }
 
   // Data-first
-  return unflattenImplementation(objOrOptions as FlatObject ?? {}, maybeOptions)
+  return unflattenImplementation(objOrOptions as FlatObject, maybeOptions)
 }
 
 function unflattenImplementation(obj: FlatObject, options?: UnflattenOptions): PlainObject {

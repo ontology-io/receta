@@ -159,21 +159,21 @@ function isEmpty(value: unknown, options: Required<StripEmptyOptions>): boolean 
 export function stripEmpty(obj: PlainObject, options?: StripEmptyOptions): PlainObject
 export function stripEmpty(options?: StripEmptyOptions): (obj: PlainObject) => PlainObject
 export function stripEmpty(objOrOptions?: PlainObject | StripEmptyOptions, maybeOptions?: StripEmptyOptions): any {
-  // Data-last: if first arg looks like options (has stripEmpty* or deep keys)
+  // Data-last: no arguments, or a first arg that looks like options (has stripEmpty* or deep keys)
   if (
-    objOrOptions !== undefined &&
-    typeof objOrOptions === 'object' &&
-    !Array.isArray(objOrOptions) &&
-    ('stripEmptyStrings' in objOrOptions ||
-      'stripEmptyArrays' in objOrOptions ||
-      'stripEmptyObjects' in objOrOptions ||
-      'deep' in objOrOptions)
+    objOrOptions === undefined ||
+    (typeof objOrOptions === 'object' &&
+      !Array.isArray(objOrOptions) &&
+      ('stripEmptyStrings' in objOrOptions ||
+        'stripEmptyArrays' in objOrOptions ||
+        'stripEmptyObjects' in objOrOptions ||
+        'deep' in objOrOptions))
   ) {
-    return (obj: PlainObject) => stripEmptyImplementation(obj, objOrOptions as StripEmptyOptions)
+    return (obj: PlainObject) => stripEmptyImplementation(obj, objOrOptions as StripEmptyOptions | undefined)
   }
 
   // Data-first
-  return stripEmptyImplementation(objOrOptions as PlainObject ?? {}, maybeOptions)
+  return stripEmptyImplementation(objOrOptions as PlainObject, maybeOptions)
 }
 
 function stripEmptyImplementation(

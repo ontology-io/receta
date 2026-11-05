@@ -46,14 +46,14 @@ import type { FlatObject, FlattenOptions, PlainObject } from '../types'
 export function flatten(obj: PlainObject, options?: FlattenOptions): FlatObject
 export function flatten(options?: FlattenOptions): (obj: PlainObject) => FlatObject
 export function flatten(objOrOptions?: PlainObject | FlattenOptions, maybeOptions?: FlattenOptions): any {
-  // Data-last: if first arg looks like options (has separator/maxDepth/flattenArrays keys)
-  if (objOrOptions !== undefined && typeof objOrOptions === 'object' &&
-      ('separator' in objOrOptions || 'maxDepth' in objOrOptions || 'flattenArrays' in objOrOptions)) {
-    return (obj: PlainObject) => flattenImplementation(obj, objOrOptions as FlattenOptions)
+  // Data-last: no arguments, or a first arg that looks like options (has separator/maxDepth/flattenArrays keys)
+  if (objOrOptions === undefined || (typeof objOrOptions === 'object' &&
+      ('separator' in objOrOptions || 'maxDepth' in objOrOptions || 'flattenArrays' in objOrOptions))) {
+    return (obj: PlainObject) => flattenImplementation(obj, objOrOptions as FlattenOptions | undefined)
   }
 
   // Data-first
-  return flattenImplementation(objOrOptions as PlainObject ?? {}, maybeOptions)
+  return flattenImplementation(objOrOptions as PlainObject, maybeOptions)
 }
 
 function flattenImplementation(obj: PlainObject, options?: FlattenOptions): FlatObject {
