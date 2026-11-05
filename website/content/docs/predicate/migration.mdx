@@ -29,7 +29,7 @@ const premiumUsers = users.filter(u => u.age >= 18 && u.active === true && u.pre
 // ✅ Benefits:
 import { where, and, gte, eq, oneOf } from '@ontologyio/receta/predicate'
 
-const isActiveAdult = where({ age: gte<number>(18), active: eq(true) })
+const isActiveAdult = where({ age: gte(18), active: eq(true) })
 const isStaff = where({ role: oneOf(['admin', 'moderator']) })
 
 const activeAdults = R.filter(users, isActiveAdult)
@@ -93,9 +93,9 @@ const midRangeProducts = products.filter(p => p.price >= 50 && p.price <= 200)
 ```typescript
 import { gt, lte, between } from '@ontologyio/receta/predicate'
 
-const isExpensive = gt<number>(100)
-const isBudget = lte<number>(50)
-const isMidRange = between<number>(50, 200)
+const isExpensive = gt(100)
+const isBudget = lte(50)
+const isMidRange = between(50, 200)
 ```
 
 #### Step 3: Refactor
@@ -106,9 +106,9 @@ const budgetProducts = R.filter(products, (p) => isBudget(p.price))
 const midRangeProducts = R.filter(products, (p) => isMidRange(p.price))
 
 // Or with where():
-const expensiveProducts2 = R.filter(products, where({ price: gt<number>(100) }))
-const budgetProducts2 = R.filter(products, where({ price: lte<number>(50) }))
-const midRangeProducts2 = R.filter(products, where({ price: between<number>(50, 200) }))
+const expensiveProducts2 = R.filter(products, where({ price: gt(100) }))
+const budgetProducts2 = R.filter(products, where({ price: lte(50) }))
+const midRangeProducts2 = R.filter(products, where({ price: between(50, 200) }))
 ```
 
 ---
@@ -174,7 +174,7 @@ const eligibleUsers = users.filter(u =>
 import { where, gte, eq, oneOf } from '@ontologyio/receta/predicate'
 
 const isEligible = where({
-  age: gte<number>(18),
+  age: gte(18),
   verified: eq(true),
   country: eq('US'),
   role: oneOf(['admin', 'moderator'])
@@ -236,7 +236,7 @@ import { where, eq, and, or, gt } from '@ontologyio/receta/predicate'
 
 const isAuthor = where({ id: eq(post.authorId) })
 const isVerifiedAdmin = where({ role: eq('admin'), verified: eq(true) })
-const isSeniorMod = where({ role: eq('moderator'), reputation: gt<number>(1000) })
+const isSeniorMod = where({ role: eq('moderator'), reputation: gt(1000) })
 ```
 
 #### Step 2: Compose
@@ -317,12 +317,12 @@ const recentPosts = posts.filter(p => {
 ```typescript
 import { by, gt, lte } from '@ontologyio/receta/predicate'
 
-const isPopular = by((u: User) => u.followers.length, gt<number>(1000))
+const isPopular = by((u: User) => u.followers.length, gt(1000))
 
 const isRecent = by((p: Post) => {
   const daysSince = (Date.now() - p.createdAt.getTime()) / (24 * 60 * 60 * 1000)
   return daysSince
-}, lte<number>(7))
+}, lte(7))
 ```
 
 #### Step 2: Refactor
@@ -348,7 +348,7 @@ Find the most duplicated filter logic and extract it first.
 users.filter(u => u.age >= 18 && u.verified)
 
 // 2. Extract
-const isVerifiedAdult = where({ age: gte<number>(18), verified: eq(true) })
+const isVerifiedAdult = where({ age: gte(18), verified: eq(true) })
 
 // 3. Gradually replace call sites
 R.filter(users, isVerifiedAdult)
@@ -358,7 +358,7 @@ R.filter(users, isVerifiedAdult)
 
 ```typescript
 // predicates/user.ts
-export const isAdult = where({ age: gte<number>(18) })
+export const isAdult = where({ age: gte(18) })
 export const isVerified = where({ verified: eq(true) })
 export const isActive = where({ status: eq('active') })
 export const isStaff = where({ role: oneOf(['admin', 'moderator']) })
@@ -385,7 +385,7 @@ Old and new can live side-by-side:
 const oldFilter = users.filter(u => u.age >= 18)
 
 // ✅ New code uses predicates
-const newFilter = R.filter(users, where({ age: gte<number>(18) }))
+const newFilter = R.filter(users, where({ age: gte(18) }))
 ```
 
 ---
@@ -396,11 +396,11 @@ const newFilter = R.filter(users, where({ age: gte<number>(18) }))
 
 ```typescript
 // ❌ Too granular
-const isAgeGreaterThan18 = gt<number>(18)
+const isAgeGreaterThan18 = gt(18)
 const hasAgeGreaterThan18 = where({ age: isAgeGreaterThan18 })
 
 // ✅ Right level
-const isAdult = where({ age: gt<number>(18) })
+const isAdult = where({ age: gt(18) })
 ```
 
 **Rule**: Abstract when logic is **reused**, not just for the sake of it.
@@ -435,12 +435,12 @@ import { isNotEmpty } from '@ontologyio/receta/predicate'
 
 ```typescript
 // ❌ Still inline, just with predicate functions
-R.filter(users, where({ age: gt<number>(18), verified: eq(true) }))
-R.filter(users, where({ age: gt<number>(18), verified: eq(true) }))
-R.filter(users, where({ age: gt<number>(18), verified: eq(true) }))
+R.filter(users, where({ age: gt(18), verified: eq(true) }))
+R.filter(users, where({ age: gt(18), verified: eq(true) }))
+R.filter(users, where({ age: gt(18), verified: eq(true) }))
 
 // ✅ Extract if reused
-const isVerifiedAdult = where({ age: gt<number>(18), verified: eq(true) })
+const isVerifiedAdult = where({ age: gt(18), verified: eq(true) })
 R.filter(users, isVerifiedAdult)
 R.filter(users, isVerifiedAdult)
 R.filter(users, isVerifiedAdult)
@@ -515,9 +515,9 @@ products.filter(p => p.price > 100 && p.inStock && p.rating >= 4.0)
 
 // After
 const qualityExpensive = where({
-  price: gt<number>(100),
+  price: gt(100),
   inStock: eq(true),
-  rating: gte<number>(4.0)
+  rating: gte(4.0)
 })
 ```
 

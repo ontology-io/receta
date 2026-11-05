@@ -16,7 +16,7 @@
     "check:links": "bun scripts/check-links.ts"
   },
   "dependencies": {
-    "@ontologyio/receta": "^0.4.1",
+    "@ontologyio/receta": "^0.4.2",
     "fumadocs-core": "^16.17.10",
     "fumadocs-mdx": "^15.4.10",
     "fumadocs-ui": "^16.17.10",

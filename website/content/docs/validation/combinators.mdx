@@ -286,8 +286,7 @@ schema(userSchema, {
 
 ### What schema Expects
 
-- **Always pass the value.** The data-last forms `schema(rules)` and `partial(rules)` compile, but they crash in 0.4.1 with `validator is not a function`. For a reusable validator, wrap the call: `(form: Form) => schema(rules, form)`.
-- **Declare shapes with `type`, not `interface`.** `schema` requires a `Record<string, unknown>`, and TypeScript won't accept an interface as one.
+- **Pass the value, or leave it out to get a validator.** `schema(rules, form)` validates now, and `schema(rules)` returns a function you can reuse or put in a pipe. The same goes for `partial`.
 - **Cover every required key.** Once the value has a declared type, each required key needs a validator. Optional keys can be left out.
 - **Name the error type when you need it.** `schema` can't infer it from the validators. Without a return type annotation, errors come back as `FieldError<unknown>`. Annotate the return type or write `schema<User, string>(...)`.
 - **A validator sees only its own field.** To compare fields, build the schema inside a function that closes over the form, or use `flatMap` after `schema`.

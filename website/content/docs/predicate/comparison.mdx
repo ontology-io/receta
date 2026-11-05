@@ -21,8 +21,6 @@ description: "Comparison predicates test values against thresholds, ranges, and 
 | `isEmpty` | Empty check | `isEmpty('')` → true |
 | `isNotEmpty` | Non-empty check | `isNotEmpty('hi')` → true |
 
-> **Why `gt<number>(18)`?** `gt`, `gte`, `lt`, `lte` and `between` keep the exact literal you pass, so plain `gt(18)` is a `Predicate<18>`, which won't accept a `number`. Write `gt<number>(18)` to get a `Predicate<number>`. A threshold already typed `number`, as in `gte(minPrice)`, doesn't need it.
-
 ---
 
 ## Numeric Comparisons
@@ -39,7 +37,7 @@ const users = [
   { name: 'Bob', age: 17 },
   { name: 'Charlie', age: 30 }
 ]
-R.filter(users, (u) => gt<number>(18)(u.age))
+R.filter(users, (u) => gt(18)(u.age))
 // => [{ name: 'Alice', age: 25 }, { name: 'Charlie', age: 30 }]
 
 // Filter expensive products
@@ -47,14 +45,14 @@ const products = [
   { name: 'Phone', price: 500 },
   { name: 'Cable', price: 15 }
 ]
-R.filter(products, (p) => gt<number>(100)(p.price))
+R.filter(products, (p) => gt(100)(p.price))
 // => [{ name: 'Phone', price: 500 }]
 ```
 
 **Real-world: Stripe transactions over $100**
 ```typescript
 const transactions = await fetchTransactions()
-const largePayments = R.filter(transactions, (t) => gt<number>(10000)(t.amount)) // cents
+const largePayments = R.filter(transactions, (t) => gt(10000)(t.amount)) // cents
 ```
 
 ### `gte(threshold)` - Greater Than or Equal
@@ -64,7 +62,7 @@ import { gte } from '@ontologyio/receta/predicate'
 
 // Filter passing scores (>= 60)
 const scores = [45, 60, 75, 55, 80]
-R.filter(scores, gte<number>(60))
+R.filter(scores, gte(60))
 // => [60, 75, 80]
 
 // Minimum order value
@@ -73,7 +71,7 @@ const orders = [
   { id: 2, amount: 100 },
   { id: 3, amount: 75 }
 ]
-R.filter(orders, (o) => gte<number>(75)(o.amount))
+R.filter(orders, (o) => gte(75)(o.amount))
 // => [{ id: 2, amount: 100 }, { id: 3, amount: 75 }]
 ```
 
@@ -82,7 +80,7 @@ R.filter(orders, (o) => gte<number>(75)(o.amount))
 const instances = await ec2.describeInstances()
 const powerfulInstances = R.filter(
   instances,
-  (i) => gte<number>(4)(i.cpuCount)
+  (i) => gte(4)(i.cpuCount)
 )
 ```
 
@@ -97,7 +95,7 @@ const items = [
   { name: 'Laptop', price: 1000 },
   { name: 'Pen', price: 2 }
 ]
-R.filter(items, (i) => lt<number>(50)(i.price))
+R.filter(items, (i) => lt(50)(i.price))
 // => [{ name: 'Notebook', price: 5 }, { name: 'Pen', price: 2 }]
 
 // Low stock alerts
@@ -106,13 +104,13 @@ const inventory = [
   { sku: 'B', quantity: 50 },
   { sku: 'C', quantity: 2 }
 ]
-const lowStock = R.filter(inventory, (item) => lt<number>(10)(item.quantity))
+const lowStock = R.filter(inventory, (item) => lt(10)(item.quantity))
 ```
 
 **Real-world: GitHub issues with few comments**
 ```typescript
 const issues = await octokit.issues.listForRepo()
-const needsAttention = R.filter(issues, (i) => lt<number>(3)(i.comments))
+const needsAttention = R.filter(issues, (i) => lt(3)(i.comments))
 ```
 
 ### `lte(threshold)` - Less Than or Equal
@@ -126,7 +124,7 @@ const shoppingCart = [
   { name: 'Shoes', price: 100 },
   { name: 'Watch', price: 200 }
 ]
-R.filter(shoppingCart, (item) => lte<number>(100)(item.price))
+R.filter(shoppingCart, (item) => lte(100)(item.price))
 // => [{ name: 'Shirt', price: 50 }, { name: 'Shoes', price: 100 }]
 ```
 
@@ -142,7 +140,7 @@ const users = [
   { name: 'Middle', age: 45 },
   { name: 'Senior', age: 70 }
 ]
-const workingAge = R.filter(users, (u) => between<number>(18, 65)(u.age))
+const workingAge = R.filter(users, (u) => between(18, 65)(u.age))
 // => [{ name: 'Young', age: 25 }, { name: 'Middle', age: 45 }]
 
 // Price range filtering
@@ -151,14 +149,14 @@ const products = [
   { name: 'Mid-range Phone', price: 500 },
   { name: 'Flagship Phone', price: 1200 }
 ]
-const affordable = R.filter(products, (p) => between<number>(300, 800)(p.price))
+const affordable = R.filter(products, (p) => between(300, 800)(p.price))
 // => [{ name: 'Mid-range Phone', price: 500 }]
 ```
 
 **Real-world: E-commerce price slider**
 ```typescript
 // User selects price range [50, 200]
-const priceFilter = between<number>(50, 200)
+const priceFilter = between(50, 200)
 const filtered = R.filter(products, (p) => priceFilter(p.price))
 ```
 
@@ -379,13 +377,13 @@ R.filter(batches, isNotEmpty)
 import { and, or, between, gt, gte, lt } from '@ontologyio/receta/predicate'
 
 // Adults but not seniors (18 ≤ age < 65)
-const workingAge = and(gte<number>(18), lt<number>(65))
+const workingAge = and(gte(18), lt(65))
 
 // Budget or premium (< $50 OR > $500)
-const budgetOrPremium = or(lt<number>(50), gt<number>(500))
+const budgetOrPremium = or(lt(50), gt(500))
 
 // Using between is cleaner for ranges
-const teenRange = between<number>(13, 19)
+const teenRange = between(13, 19)
 ```
 
 ---
@@ -437,10 +435,10 @@ and(
 
 ```typescript
 // ✅ Single range check
-between<number>(18, 65)
+between(18, 65)
 
 // ❌ Two separate checks
-and(gte<number>(18), lte<number>(65))
+and(gte(18), lte(65))
 ```
 
 ---
@@ -450,18 +448,18 @@ and(gte<number>(18), lte<number>(65))
 ### Pattern: Age Groups
 
 ```typescript
-const isChild = lt<number>(13)
-const isTeen = between<number>(13, 19)
-const isAdult = between<number>(20, 64)
-const isSenior = gte<number>(65)
+const isChild = lt(13)
+const isTeen = between(13, 19)
+const isAdult = between(20, 64)
+const isSenior = gte(65)
 ```
 
 ### Pattern: Price Ranges
 
 ```typescript
-const isBudget = lt<number>(50)
-const isMidRange = between<number>(50, 200)
-const isPremium = gt<number>(200)
+const isBudget = lt(50)
+const isMidRange = between(50, 200)
+const isPremium = gt(200)
 ```
 
 ### Pattern: String Validation

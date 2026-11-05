@@ -36,7 +36,7 @@ import { eq } from '../comparison'
  *
  * // Filter with multiple conditions
  * R.filter(users, where({
- *   age: gt<number>(18),
+ *   age: gt(18),
  *   active: Boolean  // shorthand for (v) => Boolean(v)
  * }))
  * // => [{ age: 25, name: 'Alice', active: true }]
@@ -50,7 +50,7 @@ import { eq } from '../comparison'
  * R.filter(products, where({
  *   category: eq('electronics'),
  *   inStock: Boolean,
- *   price: lt<number>(30)
+ *   price: lt(30)
  * }))
  * // => [{ price: 10, category: 'electronics', inStock: true }]
  * ```
@@ -131,7 +131,7 @@ export const oneOf =
  * ]
  *
  * // Test single property
- * R.filter(users, prop('age', gt<number>(18))) // => Alice and Charlie
+ * R.filter(users, prop('age', gt(18))) // => Alice and Charlie
  *
  * // Combine with other predicates
  * R.filter(users, prop('name', oneOf(['Alice', 'Bob'])))
@@ -296,7 +296,7 @@ export const satisfies = <T>(predicate: Predicate<T>): Predicate<T> => predicate
  * // Test derived values
  * R.filter(
  *   users,
- *   by((u) => u.tags.length, gt<number>(1))
+ *   by((u) => u.tags.length, gt(1))
  * )
  * // => Alice and Charlie (have multiple tags)
  *
@@ -308,7 +308,7 @@ export const satisfies = <T>(predicate: Predicate<T>): Predicate<T> => predicate
  * ]
  * R.filter(
  *   products,
- *   by((p) => p.price * (1 - p.discount), gt<number>(80))
+ *   by((p) => p.price * (1 - p.discount), gt(80))
  * )
  * // => products with final price > 80
  * ```

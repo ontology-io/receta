@@ -101,7 +101,7 @@ flatten(data, { flattenArrays: true })
 
 ### In Pipelines
 
-Wrap `flatten` and `unflatten` in an arrow function inside `pipe`. The data-last forms don't work in the current release: `flatten()` with no arguments returns `{}` instead of a function, and TypeScript reads `flatten({ separator: '_' })` as the data-first call.
+`flatten()` and `unflatten()` work in a pipe with no arguments. With options, wrap them in an arrow function, because TypeScript reads `flatten({ separator: '__' })` as the data-first call.
 
 ```typescript
 import { pipe } from 'remeda'
@@ -473,7 +473,7 @@ deepMerge([obj1, obj2], { arrayStrategy: 'concat' })
 
 ### Array Strategy: merge
 
-Merges arrays of objects by index. The result is as long as the source array, so target items past its end are dropped. Use it with arrays of objects only: primitive items come back as objects such as `{ 0: 'c' }`.
+Merges arrays by index. Objects and arrays merge, and anything else takes the source value. The result is as long as the source array, so target items past its end are dropped.
 
 ```typescript
 const defaults = {

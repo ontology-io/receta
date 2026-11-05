@@ -130,14 +130,14 @@ async function filterAsyncImplementation<T>(
  * ```typescript
  * // Throws on error
  * try {
- *   const existingUsers = unwrap(await filterAsync(
+ *   const existingUsers = await filterAsyncOrThrow(
  *     userIds,
  *     async (id) => {
  *       const res = await fetch(`/api/users/${id}`)
  *       return res.ok
  *     },
  *     { concurrency: 5 }
- *   ))
+ *   )
  * } catch (error) {
  *   console.error('Filter failed:', error)
  * }
@@ -145,7 +145,6 @@ async function filterAsyncImplementation<T>(
  *
  * @see filterAsync - Result-returning variant (recommended)
  * @see orThrow - utility for creating throwing variants
- * @see unwrap - for getting the value out of a Result, or throwing
  */
 export function filterAsyncOrThrow<T>(
   items: readonly T[],

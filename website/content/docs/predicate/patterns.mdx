@@ -42,13 +42,13 @@ interface Product {
 
 // Price slider: $50-200
 const priceRange = where({
-  price: between<number>(50, 200)
+  price: between(50, 200)
 })
 
 // Quality products (rating >= 4, enough reviews)
 const qualityProduct = where({
-  rating: gte<number>(4.0),
-  reviewCount: gte<number>(10)
+  rating: gte(4.0),
+  reviewCount: gte(10)
 })
 
 // Available products
@@ -63,7 +63,7 @@ const electronics = where({
 
 // On sale (discount > 0)
 const onSale = where({
-  discount: gt<number>(0)
+  discount: gt(0)
 })
 
 // Combine for "Best Electronics Deals"
@@ -147,21 +147,21 @@ const searchResults = R.filter(
 ```typescript
 // Low stock alert (< 10 units)
 const lowStock = where({
-  quantity: lt<number>(10),
+  quantity: lt(10),
   inStock: eq(true)
 })
 
 // Out of stock but popular (needs reorder)
 const needsRestock = where({
   inStock: eq(false),
-  rating: gte<number>(4.0),
-  reviewCount: gte<number>(50)
+  rating: gte(4.0),
+  reviewCount: gte(50)
 })
 
 // Overstock (> 100 units, low sales)
 const overstock = and<Product>(
-  where({ quantity: gt<number>(100) }),
-  by((p: Product) => p.salesLast30Days, lt<number>(5))
+  where({ quantity: gt(100) }),
+  by((p: Product) => p.salesLast30Days, lt(5))
 )
 ```
 
@@ -200,12 +200,12 @@ const isVerified = where({
 
 // Veteran users (account > 1 year)
 const isVeteran = where({
-  accountAgeDays: gte<number>(365)
+  accountAgeDays: gte(365)
 })
 
 // High reputation users
 const highReputation = where({
-  reputation: gte<number>(1000)
+  reputation: gte(1000)
 })
 
 // Premium users
@@ -253,7 +253,7 @@ const isTrusted = or<User>(
   and<User>(
     isVerified,
     highReputation,
-    where({ accountAgeDays: gte<number>(180) }),
+    where({ accountAgeDays: gte(180) }),
     where({
       flags: by((flags: string[]) => flags.length, eq(0))
     })
@@ -373,7 +373,7 @@ const highPriorityBugs = and<Issue>(
   isBug,
   or<Issue>(
     isCritical,
-    where({ comments: gte<number>(10) })
+    where({ comments: gte(10) })
   )
 )
 ```
@@ -404,7 +404,7 @@ const failed = where({ status: eq('failed') })
 
 // Large charges (> $100)
 const largeCharges = where({
-  amount: gt<number>(10000)  // $100.00 in cents
+  amount: gt(10000)  // $100.00 in cents
 })
 
 // Recent charges (last 30 days)
@@ -448,7 +448,7 @@ const isValidEmail = matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
 
 // Password requirements
 const isStrongPassword = and(
-  by((s: string) => s.length, gte<number>(8)),
+  by((s: string) => s.length, gte(8)),
   matches(/[A-Z]/),      // Has uppercase
   matches(/[a-z]/),      // Has lowercase
   matches(/[0-9]/),      // Has number
@@ -456,7 +456,7 @@ const isStrongPassword = and(
 )
 
 // Age validation
-const isAdult = gte<number>(18)
+const isAdult = gte(18)
 
 // Validate entire form
 const validateSignup = (form: SignupForm): string[] => {
@@ -509,8 +509,8 @@ interface Step3Data {
 }
 
 const validateStep1 = where({
-  firstName: by((s: string) => s.length, between<number>(2, 50)),
-  lastName: by((s: string) => s.length, between<number>(2, 50)),
+  firstName: by((s: string) => s.length, between(2, 50)),
+  lastName: by((s: string) => s.length, between(2, 50)),
   email: matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
 })
 
@@ -610,10 +610,10 @@ const getFacetCounts = (products: Product[]) => {
   )
 
   const priceRanges = {
-    under50: R.filter(products, where({ price: lt<number>(50) })).length,
-    '50to100': R.filter(products, where({ price: between<number>(50, 100) })).length,
-    '100to200': R.filter(products, where({ price: between<number>(100, 200) })).length,
-    over200: R.filter(products, where({ price: gt<number>(200) })).length
+    under50: R.filter(products, where({ price: lt(50) })).length,
+    '50to100': R.filter(products, where({ price: between(50, 100) })).length,
+    '100to200': R.filter(products, where({ price: between(100, 200) })).length,
+    over200: R.filter(products, where({ price: gt(200) })).length
   }
 
   return { categories, brands, priceRanges }
@@ -630,22 +630,22 @@ const getFacetCounts = (products: Product[]) => {
 // SQL: SELECT * FROM orders WHERE status IN ('pending', 'processing') AND amount > 1000
 const query1 = where({
   status: oneOf(['pending', 'processing']),
-  amount: gt<number>(1000)
+  amount: gt(1000)
 })
 
 // SQL: SELECT * FROM users WHERE role = 'admin' AND verified = true AND age >= 18
 const query2 = where({
   role: eq('admin'),
   verified: eq(true),
-  age: gte<number>(18)
+  age: gte(18)
 })
 
 // SQL: SELECT * FROM products WHERE category = 'electronics' AND (price < 100 OR discount > 0.2)
 const query3 = and<Product>(
   where({ category: eq('electronics') }),
   or<Product>(
-    where({ price: lt<number>(100) }),
-    where({ discount: gt<number>(0.2) })
+    where({ price: lt(100) }),
+    where({ discount: gt(0.2) })
   )
 )
 ```
@@ -695,7 +695,7 @@ interface DataRecord {
 
 // Valid records (non-negative value, recent, validated)
 const isValid = where({
-  value: gte<number>(0),
+  value: gte(0),
   timestamp: (date: Date) => {
     const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000
     return date.getTime() > oneDayAgo
@@ -705,8 +705,8 @@ const isValid = where({
 
 // Suspicious records (extreme values)
 const isSuspicious = or<DataRecord>(
-  where({ value: lt<number>(0) }),
-  where({ value: gt<number>(1000000) })
+  where({ value: lt(0) }),
+  where({ value: gt(1000000) })
 )
 
 // Partition data
@@ -732,7 +732,7 @@ const processRecords = (rawData: unknown[]) => {
   const validRecords = R.filter(
     parsed,
     where({
-      amount: and(gte<number>(0), lt<number>(1000000)),
+      amount: and(gte(0), lt(1000000)),
       status: oneOf(['active', 'pending']),
       timestamp: (d: Date) => !isNaN(d.getTime())
     })
@@ -758,7 +758,7 @@ interface Post {
 
 // Needs review (multiple flags or serious reports)
 const needsReview = or<Post>(
-  where({ flagCount: gte<number>(3) }),
+  where({ flagCount: gte(3) }),
   where({
     reportedReasons: (reasons: string[]) =>
       reasons.some(r => ['spam', 'hate', 'violence'].includes(r))

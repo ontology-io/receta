@@ -69,7 +69,7 @@ Trailing:               ^          ^              ^
 Leading:     ^                     ^              ^
 Both:        ^          ^          ^          ^   ^
 ```
-**Replaced calls never settle.** When a newer call replaces an older one, the older call's promise stays pending forever, so only the last call of a burst gets past its `await`. With `trailing: false`, calls ignored during the delay stay pending too. Don't rely on a `finally` or other cleanup after awaiting a debounced call.
+**Replaced calls share the run that replaced them.** Every call settles: calls waiting for the same run get one shared promise, so they all resolve with its result, or reject if it fails. With `trailing: false`, a call ignored during the delay gets the last leading result. If `leading` and `trailing` are both false, nothing can run, so calls reject.
 
 
 ### Real-World Examples

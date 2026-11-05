@@ -10,7 +10,6 @@ const links = {
   docs: '/docs',
   github: 'https://github.com/ontology-io/receta',
   npm: 'https://www.npmjs.com/package/@ontologyio/receta',
-  jsr: 'https://jsr.io/@ontologyio/receta',
 } as const
 
 export const metaContent = {
@@ -247,19 +246,19 @@ export const agentsContent = {
     warningLabel: 'warning',
     warnings: [
       {
-        position: '3:55',
-        message: 'Use Option<T> instead of T | null | undefined',
+        position: '2:3',
+        message: 'Use tryCatch() instead of try-catch for explicit error handling',
+        rule: 'receta/prefer-result-over-try-catch',
+      },
+      {
+        position: '4:24',
+        message: 'This function can return null. Return Option<T> instead',
         rule: 'receta/prefer-option-over-null',
       },
       {
-        position: '7:3',
-        message: 'Use R.pipe() instead of method chaining for better composition',
-        rule: 'receta/prefer-pipe-composition',
-      },
-      {
-        position: '10:3',
-        message: 'Use Result.tryCatch() instead of try-catch for explicit error handling',
-        rule: 'receta/prefer-result-over-try-catch',
+        position: '7:12',
+        message: 'This function can return null. Return Option<T> instead',
+        rule: 'receta/prefer-option-over-null',
       },
     ],
     summary: '✖ 3 problems (0 errors, 3 warnings)',
@@ -309,10 +308,9 @@ export const okContent = {
     { label: 'Docs', href: links.docs },
     { label: 'GitHub', href: links.github },
     { label: 'npm', href: links.npm },
-    { label: 'JSR', href: links.jsr },
   ],
   wordmark: 'receta',
-  package: '@ontologyio/receta 0.4.1 · MIT',
+  package: '@ontologyio/receta 0.4.2 · MIT',
   signOff: 'This page is a pipe. You just ran it.',
 } as const
 

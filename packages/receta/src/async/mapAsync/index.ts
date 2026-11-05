@@ -175,11 +175,11 @@ async function mapAsyncImplementation<T, U>(
  * ```typescript
  * // Throws on error
  * try {
- *   const users = unwrap(await mapAsync(
+ *   const users = await mapAsyncOrThrow(
  *     userIds,
  *     async (id) => fetchUser(id),
  *     { concurrency: 5 }
- *   ))
+ *   )
  * } catch (error) {
  *   console.error('Failed:', error)
  * }
@@ -187,7 +187,6 @@ async function mapAsyncImplementation<T, U>(
  *
  * @see mapAsync - Result-returning variant (recommended)
  * @see orThrow - utility for creating throwing variants
- * @see unwrap - for getting the value out of a Result, or throwing
  */
 export function mapAsyncOrThrow<T, U>(
   items: readonly T[],

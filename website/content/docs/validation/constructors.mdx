@@ -160,7 +160,7 @@ isEmail('not-an-email')      // => Invalid(['Invalid email format'])
 import { gte } from '@ontologyio/receta/predicate'
 
 const isAdult = fromPredicate(
-  gte<number>(18),
+  gte(18),
   'Must be 18 or older'
 )
 

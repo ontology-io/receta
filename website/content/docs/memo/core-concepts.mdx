@@ -102,7 +102,7 @@ interface MemoizeOptions<K = string> {
 }
 ```
 
-`ttl` is accepted but not applied yet, so entries never expire with it. To expire entries, pass `cache: ttlCache(ms)`.
+`ttl` expires entries after that many milliseconds, and works alongside `maxSize`. It's ignored when you pass your own `cache`.
 
 #### With maxSize
 
