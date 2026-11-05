@@ -16,8 +16,8 @@ START: What sorting need?
 ├─ COMBINE comparators?
 │  ├─ Multi-level sort (priority) ────────────────► compose()
 │  ├─ Reverse order ──────────────────────────────► reverse()
-│  ├─ Nulls first ────────────────────────────────► nullsFirst()
-│  ├─ Nulls last ─────────────────────────────────► nullsLast()
+│  ├─ Null items first ───────────────────────────► nullsFirst()
+│  ├─ Null items last ────────────────────────────► nullsLast()
 │  └─ Tiebreaker ─────────────────────────────────► withTiebreaker()
 │
 ├─ TYPE-SPECIFIC?
