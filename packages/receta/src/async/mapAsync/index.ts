@@ -170,10 +170,6 @@ async function mapAsyncImplementation<T, U>(
  * This is implemented using the `orThrow` utility from Result module,
  * which converts any Result-returning function to a throwing variant.
  *
- * It is typed `never` for now, because `orThrow` can't see through the overloads
- * of mapAsync, so typed code can't call it. `unwrap` does the same job, as the
- * example shows.
- *
  * @param items - Array of items to map over
  * @param fn - Async function to apply to each item
  * @param options - Concurrency options
@@ -198,5 +194,29 @@ async function mapAsyncImplementation<T, U>(
  * @see orThrow - utility for creating throwing variants
  * @see unwrap - for getting the value out of a Result, or throwing
  */
-export const mapAsyncOrThrow = orThrow(mapAsync)
+export function mapAsyncOrThrow<T, U>(
+  items: readonly T[],
+  fn: (item: T, index: number) => Promise<U>,
+  options?: ConcurrencyOptions
+): Promise<U[]>
+
+export function mapAsyncOrThrow<T, U>(
+  fn: (item: T, index: number) => Promise<U>,
+  options?: ConcurrencyOptions
+): (items: readonly T[]) => Promise<U[]>
+
+export function mapAsyncOrThrow<T, U>(
+  itemsOrFn: readonly T[] | ((item: T, index: number) => Promise<U>),
+  fnOrOptions?: ((item: T, index: number) => Promise<U>) | ConcurrencyOptions,
+  options?: ConcurrencyOptions
+): Promise<U[]> | ((items: readonly T[]) => Promise<U[]>) {
+  // Data-last
+  if (typeof itemsOrFn === 'function') {
+    return orThrow(mapAsync(itemsOrFn, fnOrOptions as ConcurrencyOptions | undefined))
+  }
+
+  // Data-first
+  const fn = fnOrOptions as (item: T, index: number) => Promise<U>
+  return orThrow(mapAsync(fn, options))(itemsOrFn)
+}
 

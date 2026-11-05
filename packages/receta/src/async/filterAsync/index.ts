@@ -120,10 +120,6 @@ async function filterAsyncImplementation<T>(
  * Use this when you want exceptions instead of Result pattern.
  * Prefer the Result-returning filterAsync for better error handling.
  *
- * It is typed `never` for now, because `orThrow` can't see through the overloads
- * of filterAsync, so typed code can't call it. `unwrap` does the same job, as the
- * example shows.
- *
  * @param items - Array of items to filter
  * @param predicate - Async function that returns true to keep the item
  * @param options - Concurrency options
@@ -151,4 +147,28 @@ async function filterAsyncImplementation<T>(
  * @see orThrow - utility for creating throwing variants
  * @see unwrap - for getting the value out of a Result, or throwing
  */
-export const filterAsyncOrThrow = orThrow(filterAsync)
+export function filterAsyncOrThrow<T>(
+  items: readonly T[],
+  predicate: (item: T, index: number) => Promise<boolean>,
+  options?: ConcurrencyOptions
+): Promise<T[]>
+
+export function filterAsyncOrThrow<T>(
+  predicate: (item: T, index: number) => Promise<boolean>,
+  options?: ConcurrencyOptions
+): (items: readonly T[]) => Promise<T[]>
+
+export function filterAsyncOrThrow<T>(
+  itemsOrPredicate: readonly T[] | ((item: T, index: number) => Promise<boolean>),
+  predicateOrOptions?: ((item: T, index: number) => Promise<boolean>) | ConcurrencyOptions,
+  options?: ConcurrencyOptions
+): Promise<T[]> | ((items: readonly T[]) => Promise<T[]>) {
+  // Data-last
+  if (typeof itemsOrPredicate === 'function') {
+    return orThrow(filterAsync(itemsOrPredicate, predicateOrOptions as ConcurrencyOptions | undefined))
+  }
+
+  // Data-first
+  const predicate = predicateOrOptions as (item: T, index: number) => Promise<boolean>
+  return orThrow(filterAsync(predicate, options))(itemsOrPredicate)
+}
