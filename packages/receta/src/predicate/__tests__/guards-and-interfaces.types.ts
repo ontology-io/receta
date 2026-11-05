@@ -48,6 +48,20 @@ export const notString = (value: unknown) => {
   return stillString
 }
 
+// A guard for a subtype of a non-union has nothing to exclude either, so not must not
+// claim the false branch is impossible.
+type Animal = { legs: number }
+type Barker = Animal & { bark(): void }
+type Email = string & { readonly brand: 'email' }
+
+const isBarker = (animal: Animal): animal is Barker => 'bark' in animal
+const isEmail = (text: string): text is Email => text.includes('@')
+const animals: readonly Animal[] = []
+
+export const legs = (pet: Animal): number => (not(isBarker)(pet) ? pet.legs : pet.legs + 1)
+export const quiet: Animal[] = R.partition(animals, not(isBarker))[1]
+export const notEmail = (text: string): number => (not(isEmail)(text) ? text.length : text.length + 1)
+
 // Plain predicates keep their old types, spread included.
 const isAdult = (age: number) => age >= 18
 const isSenior = (age: number) => age >= 65
