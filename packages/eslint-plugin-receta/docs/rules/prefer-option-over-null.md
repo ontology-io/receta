@@ -101,6 +101,8 @@ function findFirst(arr: number[]): Option<number> {
 }
 ```
 
+The fix never changes a return type that something else depends on. A class method, an overload, a typed variable or a callback is reported without a fix, and so is a file where `Option` or `fromNullable` already means something else. An aliased import is reused under its alias.
+
 ## Usage with Option Combinators
 
 Once using Option, leverage combinators for safe transformations:
@@ -132,8 +134,6 @@ This rule may not be suitable for:
 ## Options
 
 This rule has no options.
-
-The fix never changes a return type that something else depends on. A class method, an overload, a typed variable or a callback is reported without a fix, and so is a file where `Option` or `fromNullable` already means something else. An aliased import is reused under its alias.
 
 ## Further Reading
 
