@@ -6,11 +6,11 @@
 
 import type { Predicate } from '../types'
 
+/** The wide type of a threshold, so `gt(18)` tests any number and not only the literal 18. */
+type Widen<T> = T extends number ? number : T extends bigint ? bigint : never
+
 /**
  * Creates a predicate that tests if a value is greater than a threshold.
- *
- * Write `gt<number>(18)` so the predicate accepts any number: plain `gt(18)`
- * infers the literal type and accepts only that value.
  *
  * @param threshold - The minimum value (exclusive)
  * @returns A predicate that returns true if value > threshold
@@ -33,14 +33,11 @@ import type { Predicate } from '../types'
  * @see lt - for less than comparison
  * @see between - for range comparison
  */
-export const gt = <T extends number | bigint>(threshold: T): Predicate<T> => (value) =>
+export const gt = <T extends number | bigint>(threshold: T): Predicate<Widen<T>> => (value) =>
   value > threshold
 
 /**
  * Creates a predicate that tests if a value is greater than or equal to a threshold.
- *
- * Write `gte<number>(18)` so the predicate accepts any number: plain `gte(18)`
- * infers the literal type and accepts only that value.
  *
  * @param threshold - The minimum value (inclusive)
  * @returns A predicate that returns true if value >= threshold
@@ -56,14 +53,11 @@ export const gt = <T extends number | bigint>(threshold: T): Predicate<T> => (va
  * @see gt - for exclusive comparison (>)
  * @see lte - for less than or equal comparison
  */
-export const gte = <T extends number | bigint>(threshold: T): Predicate<T> => (value) =>
+export const gte = <T extends number | bigint>(threshold: T): Predicate<Widen<T>> => (value) =>
   value >= threshold
 
 /**
  * Creates a predicate that tests if a value is less than a threshold.
- *
- * Write `lt<number>(100)` so the predicate accepts any number: plain `lt(100)`
- * infers the literal type and accepts only that value.
  *
  * @param threshold - The maximum value (exclusive)
  * @returns A predicate that returns true if value < threshold
@@ -88,14 +82,11 @@ export const gte = <T extends number | bigint>(threshold: T): Predicate<T> => (v
  * @see gt - for greater than comparison
  * @see between - for range comparison
  */
-export const lt = <T extends number | bigint>(threshold: T): Predicate<T> => (value) =>
+export const lt = <T extends number | bigint>(threshold: T): Predicate<Widen<T>> => (value) =>
   value < threshold
 
 /**
  * Creates a predicate that tests if a value is less than or equal to a threshold.
- *
- * Write `lte<number>(100)` so the predicate accepts any number: plain `lte(100)`
- * infers the literal type and accepts only that value.
  *
  * @param threshold - The maximum value (inclusive)
  * @returns A predicate that returns true if value <= threshold
@@ -111,7 +102,7 @@ export const lt = <T extends number | bigint>(threshold: T): Predicate<T> => (va
  * @see lt - for exclusive comparison (<)
  * @see gte - for greater than or equal comparison
  */
-export const lte = <T extends number | bigint>(threshold: T): Predicate<T> => (value) =>
+export const lte = <T extends number | bigint>(threshold: T): Predicate<Widen<T>> => (value) =>
   value <= threshold
 
 /**
@@ -164,9 +155,6 @@ export const neq = <T>(expected: T): Predicate<T> => (value) => value !== expect
 /**
  * Creates a predicate that tests if a value is within a range (inclusive).
  *
- * Write `between<number>(18, 65)` so the predicate accepts any number: plain `between(18, 65)`
- * infers the literal type and accepts only that value.
- *
  * @param min - The minimum value (inclusive)
  * @param max - The maximum value (inclusive)
  * @returns A predicate that returns true if min <= value <= max
@@ -191,7 +179,7 @@ export const neq = <T>(expected: T): Predicate<T> => (value) => value !== expect
  * @see gt - for greater than comparison
  * @see lt - for less than comparison
  */
-export const between = <T extends number | bigint>(min: T, max: T): Predicate<T> => (value) =>
+export const between = <T extends number | bigint>(min: T, max: T): Predicate<Widen<T>> => (value) =>
   value >= min && value <= max
 
 /**
