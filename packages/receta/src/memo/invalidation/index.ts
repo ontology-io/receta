@@ -40,8 +40,8 @@ export function invalidateMany<K>(memoized: AnyMemoized, keys: K[]): void {
  *
  * Useful for conditional invalidation based on key patterns or cached values.
  *
- * Works with the default cache and custom caches that have a `forEach` method.
- * Throws for `ttlCache`, `lruCache` and `weakCache`.
+ * Works with the default cache, `ttlCache`, `lruCache` and custom caches that have a
+ * `forEach` method. Throws for `weakCache`, because a WeakMap can't be listed.
  *
  * @example
  * ```typescript
