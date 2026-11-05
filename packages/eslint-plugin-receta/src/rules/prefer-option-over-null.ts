@@ -1,11 +1,11 @@
 import { ESLintUtils } from '@typescript-eslint/utils'
 import type { TSESLint, TSESTree } from '@typescript-eslint/utils'
 import {
+  canChangeReturnType,
   findReturnStatements,
   insertImport,
   isNullableReturnType,
   generateImportStatement,
-  ownsItsReturnType,
   resolveBinding,
   type FunctionNode,
 } from '../utils/ast-helpers.js'
@@ -64,16 +64,26 @@ export default createRule<[], MessageIds>({
         const typeNode = returnType.typeAnnotation
         const baseTypeNode = findSingleNonNullType(typeNode)
 
-        const optionBinding = resolveBinding(sourceCode, node, OPTION_MODULE, 'Option')
-        const wrapBinding = resolveBinding(sourceCode, node, OPTION_MODULE, 'fromNullable')
+        const everyReturn = [node, ...returnStatements]
+        const optionBinding = resolveBinding(sourceCode, [node], OPTION_MODULE, 'Option', 'type')
+        const wrapBinding = resolveBinding(sourceCode, everyReturn, OPTION_MODULE, 'fromNullable')
+        const noneBinding = resolveBinding(sourceCode, everyReturn, OPTION_MODULE, 'none')
+        const wrapName = wrapBinding?.name ?? 'fromNullable'
+
+        const returnedValues = returnStatements.flatMap(stmt => stmt.argument ?? [])
+        const usesNone = returnedValues.some(isEmptyValue)
+        const usesWrap = returnedValues.some(
+          value => !isEmptyValue(value) && !isAlreadyWrappedInFromNullable(value, wrapName)
+        )
 
         // The two fixes only make sense together, so they share one decision
         const canFix =
           baseTypeNode !== undefined &&
           optionBinding !== undefined &&
-          wrapBinding !== undefined &&
+          (!usesWrap || wrapBinding !== undefined) &&
+          (!usesNone || noneBinding !== undefined) &&
           canRewriteToOption(node, returnStatements) &&
-          ownsItsReturnType(node)
+          canChangeReturnType(node, sourceCode)
 
         context.report({
           node: typeNode,
@@ -88,7 +98,8 @@ export default createRule<[], MessageIds>({
                 // Option is a type, so the import has to survive verbatimModuleSyntax
                 const missingImports = [
                   ...(optionBinding.needsImport ? ['type Option'] : []),
-                  ...(wrapBinding.needsImport ? ['fromNullable'] : []),
+                  ...(usesWrap && wrapBinding?.needsImport ? ['fromNullable'] : []),
+                  ...(usesNone && noneBinding?.needsImport ? ['none'] : []),
                 ]
 
                 if (missingImports.length > 0) {
@@ -104,21 +115,24 @@ export default createRule<[], MessageIds>({
 
         // Also check return statements and suggest wrapping with fromNullable
         for (const returnStmt of returnStatements) {
-          if (
-            returnStmt.argument &&
-            !isAlreadyWrappedInFromNullable(returnStmt.argument, wrapBinding?.name ?? 'fromNullable')
-          ) {
+          if (returnStmt.argument && !isAlreadyWrappedInFromNullable(returnStmt.argument, wrapName)) {
             context.report({
               node: returnStmt,
               messageId: 'useFromNullable',
               fix: canFix
                 ? fixer => {
                     const argument = returnStmt.argument!
+
+                    // fromNullable(null) can't infer T, and none() says the same thing
+                    if (isEmptyValue(argument)) {
+                      return fixer.replaceText(argument, `${noneBinding?.name ?? 'none'}()`)
+                    }
+
                     const argText = sourceCode.getText(argument)
                     // A comma expression has to stay one argument
                     const wrapped =
                       argument.type === 'SequenceExpression' ? `(${argText})` : argText
-                    return fixer.replaceText(argument, `${wrapBinding.name}(${wrapped})`)
+                    return fixer.replaceText(argument, `${wrapName}(${wrapped})`)
                   }
                 : null,
             })
@@ -128,6 +142,16 @@ export default createRule<[], MessageIds>({
     }
   },
 })
+
+/**
+ * Check for a literal null or undefined, which has no value to wrap.
+ */
+function isEmptyValue(node: TSESTree.Node): boolean {
+  return (
+    (node.type === 'Literal' && node.raw === 'null') ||
+    (node.type === 'Identifier' && node.name === 'undefined')
+  )
+}
 
 /**
  * Find the null and undefined values an unannotated function can return.

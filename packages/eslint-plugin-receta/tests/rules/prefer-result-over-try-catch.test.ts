@@ -609,5 +609,113 @@ return result
 }
 `,
     },
+    {
+      name: 'No fix when a parameter shadows the imported tryCatch',
+      code: `import { tryCatch } from '@ontologyio/receta/result'
+function load(s: string, tryCatch: number) {
+  try {
+    return parse(s)
+  } catch (e) {
+    throw e
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: null,
+    },
+    {
+      name: 'No fix when tryCatch is only imported as a type',
+      code: `import type { tryCatch } from '@ontologyio/receta/result'
+function load(s: string) {
+  try {
+    return parse(s)
+  } catch (e) {
+    throw e
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: null,
+    },
+    {
+      name: 'No fix in a recursive function, which would see the new return type',
+      code: `function load(s: string) {
+  try {
+    return load(s.slice(1))
+  } catch (e) {
+    throw e
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: null,
+    },
+    {
+      name: 'Keeps code on the directive line valid',
+      code: `'use strict'; function load(s: string) {
+  try {
+    return parse(s)
+  } catch (e) {
+    throw e
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: `'use strict';
+import { tryCatch } from '@ontologyio/receta/result'
+ function load(s: string) {
+  const result = tryCatch(
+  () => parse(s)
+)
+return result
+}
+`,
+    },
+    {
+      name: 'Keeps a triple-slash reference first',
+      code: `/// <reference lib="dom" />
+function load(s: string) {
+  try {
+    return parse(s)
+  } catch (e) {
+    throw e
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: `/// <reference lib="dom" />
+import { tryCatch } from '@ontologyio/receta/result'
+function load(s: string) {
+  const result = tryCatch(
+  () => parse(s)
+)
+return result
+}
+`,
+    },
+    {
+      name: 'Keeps a file pragma first, and a doc comment with its function',
+      code: `// @ts-nocheck
+/** Loads it. */
+function load(s: string) {
+  try {
+    return parse(s)
+  } catch (e) {
+    throw e
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: `// @ts-nocheck
+import { tryCatch } from '@ontologyio/receta/result'
+/** Loads it. */
+function load(s: string) {
+  const result = tryCatch(
+  () => parse(s)
+)
+return result
+}
+`,
+    },
   ],
 })

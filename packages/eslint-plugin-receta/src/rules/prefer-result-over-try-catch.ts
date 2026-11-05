@@ -1,6 +1,7 @@
 import { ESLintUtils } from '@typescript-eslint/utils'
 import type { TSESLint, TSESTree } from '@typescript-eslint/utils'
 import {
+  canChangeReturnType,
   findEnclosingFunction,
   generateImportStatement,
   insertImport,
@@ -8,7 +9,6 @@ import {
   isCatchClauseTransparent,
   isEntryPointGuard,
   isNameInScope,
-  ownsItsReturnType,
   resolveBinding,
 } from '../utils/ast-helpers.js'
 
@@ -53,7 +53,7 @@ export default createRule<[], MessageIds>({
           return
         }
 
-        const binding = resolveBinding(sourceCode, node, RESULT_MODULE, 'tryCatch')
+        const binding = resolveBinding(sourceCode, [node], RESULT_MODULE, 'tryCatch')
         const returned = findRewritableReturn(node, node.handler, sourceCode)
 
         context.report({
@@ -116,7 +116,7 @@ function findRewritableReturn(
     isCatchClauseTransparent(handler) &&
     // The result changes type, which only this function may decide
     fn.returnType === undefined &&
-    ownsItsReturnType(fn) &&
+    canChangeReturnType(fn, sourceCode) &&
     // An arrow body starting with `{` is a block, and `() => a, b` splits the argument list
     !sourceCode.getText(argument).startsWith('{') &&
     argument.type !== 'SequenceExpression' &&

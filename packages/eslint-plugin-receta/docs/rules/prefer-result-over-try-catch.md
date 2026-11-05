@@ -120,7 +120,9 @@ function complexHandler(): Result<Data, CustomError> {
 }
 ```
 
-The fix never changes a return type that something else depends on. An explicit return type, a class method, an overload, a typed variable or a callback is reported without a fix, and so is a file where `tryCatch` already means something else. An aliased import is reused under its alias.
+The fix leaves a function alone when it can see something pinning the return type. An explicit return type, a class method, an overload, a typed variable, a callback or a recursive call is reported without a fix, and so is a file where `tryCatch` already means something else. An aliased import is reused under its alias.
+
+The fix can't see every caller, so update them afterwards. In plain JavaScript, nothing will flag one you miss.
 
 ## Options
 

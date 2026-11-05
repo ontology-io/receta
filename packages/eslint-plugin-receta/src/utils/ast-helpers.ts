@@ -254,29 +254,38 @@ export function generateImportStatement(
 /** The name to call a module's export by, and whether the file still has to import it. */
 export type Binding = { readonly name: string; readonly needsImport: boolean }
 
+type ImportedName = { readonly name: string; readonly isTypeOnly: boolean }
+
 /**
- * Work out how a fix can refer to a module's export at this node. Answers undefined
- * when the plain name already means something else here, so the fix would collide.
+ * Work out how a fix can refer to a module's export at every given node. Answers
+ * undefined when the name means something else at any of them, or when a value is
+ * needed and the file only imports the type.
  */
 export function resolveBinding(
   sourceCode: Readonly<TSESLint.SourceCode>,
-  node: TSESTree.Node,
+  nodes: readonly TSESTree.Node[],
   module: string,
-  exported: string
+  exported: string,
+  kind: 'value' | 'type' = 'value'
 ): Binding | undefined {
-  const local = findImportedName(sourceCode, module, exported)
-  if (local !== undefined) return { name: local, needsImport: false }
+  const imported = findImportedName(sourceCode, module, exported)
+  if (imported?.isTypeOnly && kind === 'value') return undefined
 
-  return isNameInScope(sourceCode.getScope(node), exported)
-    ? undefined
-    : { name: exported, needsImport: true }
+  const name = imported?.name ?? exported
+  const meansTheImport = nodes.every(node => {
+    const variable = findVariable(sourceCode.getScope(node), name)
+    if (imported === undefined) return variable === undefined
+    return variable?.defs.some(def => String(def.type) === 'ImportBinding') === true
+  })
+
+  return meansTheImport ? { name, needsImport: imported === undefined } : undefined
 }
 
 function findImportedName(
   sourceCode: Readonly<TSESLint.SourceCode>,
   module: string,
   exported: string
-): string | undefined {
+): ImportedName | undefined {
   for (const statement of sourceCode.ast.body) {
     if (statement.type !== 'ImportDeclaration' || statement.source.value !== module) continue
 
@@ -286,9 +295,21 @@ function findImportedName(
         specifier.imported.type === 'Identifier' &&
         specifier.imported.name === exported
       ) {
-        return specifier.local.name
+        return {
+          name: specifier.local.name,
+          isTypeOnly: statement.importKind === 'type' || specifier.importKind === 'type',
+        }
       }
     }
+  }
+
+  return undefined
+}
+
+function findVariable(scope: TSESLint.Scope.Scope, name: string): TSESLint.Scope.Variable | undefined {
+  for (let current: TSESLint.Scope.Scope | null = scope; current; current = current.upper) {
+    const variable = current.set.get(name)
+    if (variable) return variable
   }
 
   return undefined
@@ -298,16 +319,13 @@ function findImportedName(
  * Check whether a name is bound here or in any scope above.
  */
 export function isNameInScope(scope: TSESLint.Scope.Scope, name: string): boolean {
-  for (let current: TSESLint.Scope.Scope | null = scope; current; current = current.upper) {
-    if (current.set.has(name)) return true
-  }
-
-  return false
+  return findVariable(scope, name) !== undefined
 }
 
 /**
  * Add an import without disturbing what has to stay first in the file: a shebang
- * must be the first line, and a directive stops being one below an import.
+ * must be the first line, a directive stops being one below an import, and
+ * TypeScript only reads triple-slash references and file pragmas at the very top.
  */
 export function insertImport(
   fixer: TSESLint.RuleFixer,
@@ -315,10 +333,14 @@ export function insertImport(
   statement: string
 ): TSESLint.RuleFix {
   const lastDirective = findLastDirective(sourceCode.ast.body)
-  if (lastDirective) return fixer.insertTextAfter(lastDirective, `\n${statement}`)
 
-  const text = sourceCode.getText()
-  const start = text.startsWith('#!') ? text.indexOf('\n') + 1 : 0
+  if (lastDirective) {
+    const rest = sourceCode.getText().slice(lastDirective.range[1])
+    const endsItsLine = /^[ \t]*(\r?\n|$)/.test(rest)
+    return fixer.insertTextAfter(lastDirective, `\n${statement}${endsItsLine ? '' : '\n'}`)
+  }
+
+  const start = findImportStart(sourceCode)
 
   return fixer.insertTextBeforeRange([start, start], `${statement}\n`)
 }
@@ -334,20 +356,53 @@ function findLastDirective(body: readonly TSESTree.ProgramStatement[]): TSESTree
   return last
 }
 
+function findImportStart(sourceCode: Readonly<TSESLint.SourceCode>): number {
+  const text = sourceCode.getText()
+  let start = text.startsWith('#!') ? text.indexOf('\n') + 1 : 0
+
+  for (const comment of sourceCode.getAllComments()) {
+    if (comment.range[0] < start) continue
+
+    const isNext = text.slice(start, comment.range[0]).trim() === ''
+    if (!isNext || !isFilePragma(comment)) break
+
+    const lineEnd = text.indexOf('\n', comment.range[1])
+    start = lineEnd === -1 ? text.length : lineEnd + 1
+  }
+
+  return start
+}
+
+function isFilePragma(comment: TSESTree.Comment): boolean {
+  return String(comment.type) === 'Line' && /^\/\s*<|^\s*@ts-(no)?check\b/.test(comment.value)
+}
+
 /**
- * Check that nothing outside a function pins its return type, so a fix may change
- * it. Overloads, class methods, typed variables and callbacks all set it elsewhere,
- * and the rewritten function would stop compiling against them.
+ * Check that a fix may change what a function returns. Overloads, class methods,
+ * typed variables and callbacks all set the type elsewhere, and a recursive call
+ * would see the new type, so the rewritten function would stop compiling.
  */
-export function ownsItsReturnType(fn: FunctionNode): boolean {
-  if (fn.type === 'FunctionDeclaration') return !hasOverloads(fn)
+export function canChangeReturnType(
+  fn: FunctionNode,
+  sourceCode: Readonly<TSESLint.SourceCode>
+): boolean {
+  if (fn.type === 'FunctionDeclaration') {
+    return !hasOverloads(fn) && !callsItself(fn, fn.id?.name, sourceCode)
+  }
 
   const parent = fn.parent
-  return (
-    parent.type === 'VariableDeclarator' &&
-    parent.init === fn &&
-    parent.id.typeAnnotation === undefined
-  )
+  if (parent.type !== 'VariableDeclarator' || parent.init !== fn) return false
+  if (parent.id.type !== 'Identifier' || parent.id.typeAnnotation !== undefined) return false
+
+  return !callsItself(fn, parent.id.name, sourceCode)
+}
+
+function callsItself(
+  fn: FunctionNode,
+  name: string | undefined,
+  sourceCode: Readonly<TSESLint.SourceCode>
+): boolean {
+  return name !== undefined && sourceCode.getText(fn.body).includes(`${name}(`)
 }
 
 function hasOverloads(fn: TSESTree.FunctionDeclaration): boolean {
