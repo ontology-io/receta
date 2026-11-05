@@ -118,6 +118,15 @@ describe('keys that only become __proto__ when coerced', () => {
 })
 
 describe('rename only reads its own mapping', () => {
+  it('keeps the key when the mapping value is empty', () => {
+    const aliases: { first?: string; last?: string | undefined } = { first: 'given', last: undefined }
+
+    expect(rename({ first: 'a', last: 'b' }, aliases as Record<string, string>)).toEqual({
+      given: 'a',
+      last: 'b',
+    })
+  })
+
   it('leaves keys that exist on Object.prototype alone', () => {
     expect(Object.keys(rename(fromJson('{"constructor": 1, "toString": 2}'), {}))).toEqual([
       'constructor',
