@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2](https://github.com/ontology-io/receta/compare/receta@v0.4.1...receta@v0.4.2) (2026-11-05)
+
+
+### Features
+
+* official website, Fumadocs docs and library fixes ([6124b2c](https://github.com/ontology-io/receta/commit/6124b2c05b0065008399965c6e778b10b7f51f61))
+* **website:** theme the docs and publish them for agents ([d32bcac](https://github.com/ontology-io/receta/commit/d32bcace593511c47c21075f2a4772fa4fd63ee5))
+
+
+### Bug Fixes
+
+* **eslint-plugin:** stop crashing and report what the rules exist to catch ([e436723](https://github.com/ontology-io/receta/commit/e4367232e862d52d3e09ca0fb10998c32f1bb28e))
+* **receta:** accept interfaces and keep type guards in predicates ([140b4fc](https://github.com/ontology-io/receta/commit/140b4fc9b91f763f0249a40ef81a00ecabd5a7d8))
+* **receta:** apply the memo ttl option and list every built-in cache ([5c0b77f](https://github.com/ontology-io/receta/commit/5c0b77f86d90b9f4018a87c956e8a59c19e4bf61))
+* **receta:** close the remaining prototype paths ([8c7c98b](https://github.com/ontology-io/receta/commit/8c7c98b0bd0c85caa1ae701b31a9c58dd94380f7))
+* **receta:** give bare collect and friends the right shape in a pipe ([b8b7259](https://github.com/ontology-io/receta/commit/b8b7259282ff50b689a9d2b59bafe837e6f54b6e))
+* **receta:** honour has in custom caches and tidy option detection ([a578f88](https://github.com/ontology-io/receta/commit/a578f88115b910d606fb9ee5561d8e2b799c4154))
+* **receta:** keep arrays when setting through a path lens ([2053045](https://github.com/ontology-io/receta/commit/20530454bdd200b85fafcf4c20860c0107157a2b))
+* **receta:** keep comparisons and not working in generic code ([2749b33](https://github.com/ontology-io/receta/commit/2749b33d35f9d4324d86499d4d613fbdfefea0c3))
+* **receta:** keep element types in the OrThrow helpers ([e3a368b](https://github.com/ontology-io/receta/commit/e3a368b267b2038a757dc6a13b222e41e9480eee))
+* **receta:** keep not a plain predicate ([8558d50](https://github.com/ontology-io/receta/commit/8558d50b3ce5d02b01b0b41d58537d3507d0c986))
+* **receta:** keep the key when a rename mapping value is empty ([a58fdb6](https://github.com/ontology-io/receta/commit/a58fdb6de4feeb701bd47c5bd71377ef53583297))
+* **receta:** let comparison predicates accept any number ([4d06f81](https://github.com/ontology-io/receta/commit/4d06f811968d5bfe1e98477fe912bab497a640ce))
+* **receta:** make schema and partial work data-last ([b091639](https://github.com/ontology-io/receta/commit/b0916394cd27b0524d067886e385c929b5a6b090))
+* **receta:** remove duplicates from union's first list ([ee68179](https://github.com/ontology-io/receta/commit/ee681796f8d93df3fd0007fed02cd312cdc1c218))
+* **receta:** repair no-argument object helpers and index merging ([61abb0d](https://github.com/ontology-io/receta/commit/61abb0d5405d2b78c5d0f5669d554a43ba1901c7))
+* **receta:** report which item failed in mapAsync ([65797f8](https://github.com/ontology-io/receta/commit/65797f8c8226e03156c0bb846e155947bcba9221))
+* **receta:** settle every debounced call ([2e2ac5c](https://github.com/ontology-io/receta/commit/2e2ac5c4ad33f6271cbdcdaa93649494dfd59ded))
+* **receta:** share one promise between replaced debounce calls ([c260f6b](https://github.com/ontology-io/receta/commit/c260f6b09422ce16dbd237cacd73dc903a3ada83))
+* **receta:** stop mistaking data for options in object helpers ([accd95d](https://github.com/ontology-io/receta/commit/accd95dcc8fd51d922652b7a7d3372268e60bef9))
+* **receta:** stop object helpers changing shared prototypes ([74aadd0](https://github.com/ontology-io/receta/commit/74aadd04719515939fc0ac98f6df8986ec41dcc3))
+* **receta:** stop poll once its timeout fires ([69bb1d6](https://github.com/ontology-io/receta/commit/69bb1d66ebd794ff4c9282ce15d327a91c3ac483))
+* **receta:** type mapAsyncOrThrow and filterAsyncOrThrow ([6047a26](https://github.com/ontology-io/receta/commit/6047a267570355040e1a78d0a196c4949e6997dc))
+* stabilize the library before the next release ([b78d33b](https://github.com/ontology-io/receta/commit/b78d33b12fd9cf37da010092e9cab5f82a3aef4a))
+
 ## [0.4.1](https://github.com/ontology-io/receta/compare/receta@v0.4.0...receta@v0.4.1) (2026-11-04)
 
 
