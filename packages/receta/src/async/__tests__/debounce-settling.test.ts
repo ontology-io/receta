@@ -25,6 +25,25 @@ describe('debounce settles every call', () => {
     expect(outcomes.map((outcome) => outcome.status)).toEqual(['rejected', 'rejected'])
   })
 
+  it('hands replaced calls one shared promise, so handling any of them handles all', async () => {
+    const debounced = debounce(async (value: number) => value, { delay: 5 })
+
+    const first = debounced(1)
+    const second = debounced(2)
+
+    expect(first).toBe(second)
+    expect(await second).toBe(2)
+  })
+
+  it('starts a new promise after a run', async () => {
+    const debounced = debounce(async (value: number) => value, { delay: 5 })
+
+    const first = debounced(1)
+    await first
+
+    expect(debounced(2)).not.toBe(first)
+  })
+
   it('rejects when fn throws synchronously on the trailing edge', async () => {
     const throwsSynchronously = (): Promise<number> => {
       throw new Error('sync failure')

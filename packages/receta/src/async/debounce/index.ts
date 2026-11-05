@@ -1,10 +1,28 @@
-import * as R from 'remeda'
 import type { DebounceOptions } from '../types'
 import { match, tryCatchAsync } from '../../result'
 
-type Waiter<T> = {
+/** The calls waiting for one run. They share a promise, so handling any of them handles all. */
+type Batch<T> = {
+  readonly promise: Promise<T>
   readonly resolve: (value: T) => void
   readonly reject: (reason: unknown) => void
+}
+
+const createBatch = <T>(): Batch<T> => {
+  let resolve!: Batch<T>['resolve']
+  let reject!: Batch<T>['reject']
+  const promise = new Promise<T>((settle, fail) => {
+    resolve = settle
+    reject = fail
+  })
+  return { promise, resolve, reject }
+}
+
+/** Rejects for a caller who awaits, without crashing a process that ignores the promise. */
+const rejectQuietly = (message: string): Promise<never> => {
+  const rejected = Promise.reject(new Error(message))
+  rejected.catch(() => undefined)
+  return rejected
 }
 
 const NOTHING_CAN_RUN = 'debounce: leading and trailing are both false, so fn never runs'
@@ -64,16 +82,15 @@ export function debounce<TArgs extends readonly unknown[], TReturn>(
   let lastInvocation = 0
   let lastRun: Promise<TReturn> | undefined
   // A later call replaces the arguments of a waiting call, never its promise.
-  let waiting: Waiter<TReturn>[] = []
+  let batch: Batch<TReturn> | undefined
 
-  const run = async (args: TArgs): Promise<void> => {
+  const run = async (args: TArgs, running: Batch<TReturn>): Promise<void> => {
     lastInvocation = Date.now()
-    const settling = waiting
-    waiting = []
+    batch = undefined
 
     match(await tryCatchAsync(() => fn(...args)), {
-      onOk: (value) => R.forEach(settling, ({ resolve }) => resolve(value)),
-      onErr: (error) => R.forEach(settling, ({ reject }) => reject(error)),
+      onOk: running.resolve,
+      onErr: running.reject,
     })
   }
 
@@ -86,23 +103,21 @@ export function debounce<TArgs extends readonly unknown[], TReturn>(
     }
 
     if (!shouldExecuteLeading && !trailing) {
-      return lastRun ?? Promise.reject(new Error(NOTHING_CAN_RUN))
+      return lastRun ?? rejectQuietly(NOTHING_CAN_RUN)
     }
 
-    const settled = new Promise<TReturn>((resolve, reject) => {
-      waiting.push({ resolve, reject })
-    })
+    const waiting = (batch ??= createBatch<TReturn>())
 
     if (shouldExecuteLeading) {
-      lastRun = settled
-      void run(args)
+      lastRun = waiting.promise
+      void run(args, waiting)
     } else {
       timeoutId = setTimeout(() => {
         timeoutId = undefined
-        void run(args)
+        void run(args, waiting)
       }, delay)
     }
 
-    return settled
+    return waiting.promise
   }
 }
