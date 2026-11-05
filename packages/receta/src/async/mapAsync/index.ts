@@ -1,5 +1,5 @@
 import type { ConcurrencyOptions } from '../types'
-import { ok, err, isOk, tryCatchAsync, type Result, orThrow } from '../../result'
+import { ok, err, isOk, tryCatchAsync, unwrap, type Result, orThrow } from '../../result'
 
 /**
  * Error type for mapAsync failures.
@@ -96,20 +96,19 @@ async function mapAsyncImplementation<T, U>(
 ): Promise<Result<U[], MapAsyncError>> {
   const { concurrency = Infinity } = options ?? {}
 
-  // Unlimited concurrency - use Promise.all with Result wrapping
+  const failureAt =
+    (index: number, item: T) =>
+    (error: unknown): MapAsyncError => ({ type: 'map_async_error', index, item, error })
+
+  // Unlimited concurrency - Promise.all stops at the first failure, which already says where
   if (concurrency === Infinity || concurrency >= items.length) {
-    try {
-      const results = await Promise.all(items.map(fn))
-      return ok(results)
-    } catch (error) {
-      // Find which item failed (best effort)
-      return err({
-        type: 'map_async_error' as const,
-        index: -1, // Unknown in Promise.all
-        item: undefined,
-        error,
-      })
-    }
+    const runItem = async (item: T, index: number): Promise<U> =>
+      unwrap(await tryCatchAsync(() => fn(item, index), failureAt(index, item)))
+
+    return tryCatchAsync(
+      () => Promise.all(items.map(runItem)),
+      (failure) => failure as MapAsyncError
+    )
   }
 
   // Limited concurrency using a sliding window with error tracking
@@ -122,7 +121,7 @@ async function mapAsyncImplementation<T, U>(
     if (firstError) break
 
     const promise = (async () => {
-      const attempt = await tryCatchAsync(() => fn(item, i))
+      const attempt = await tryCatchAsync(() => fn(item, i), failureAt(i, item))
 
       if (isOk(attempt)) {
         results[i] = attempt.value
@@ -130,14 +129,7 @@ async function mapAsyncImplementation<T, U>(
       }
 
       // Capture first error with context
-      if (!firstError) {
-        firstError = {
-          type: 'map_async_error' as const,
-          index: i,
-          item,
-          error: attempt.error,
-        }
-      }
+      firstError ??= attempt.error
     })()
 
     // Wrap in a void promise that removes itself when done
