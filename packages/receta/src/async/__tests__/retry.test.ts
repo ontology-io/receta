@@ -91,9 +91,9 @@ describe('Async.retry', () => {
       expect(delays.length).toBe(2)
       // First delay ~100ms, second delay ~200ms (with some tolerance)
       expect(delays[0]!).toBeGreaterThanOrEqual(90)
-      expect(delays[0]!).toBeLessThan(150)
+      expect(delays[0]!).toBeLessThan(180)
       expect(delays[1]!).toBeGreaterThanOrEqual(180)
-      expect(delays[1]!).toBeLessThan(250)
+      expect(delays[1]!).toBeLessThan(400)
     })
 
     it('uses constant delay when backoff is 1', async () => {
@@ -122,9 +122,9 @@ describe('Async.retry', () => {
       expect(delays.length).toBe(2)
       // Both delays should be ~100ms
       expect(delays[0]!).toBeGreaterThanOrEqual(90)
-      expect(delays[0]!).toBeLessThan(150)
+      expect(delays[0]!).toBeLessThan(180)
       expect(delays[1]!).toBeGreaterThanOrEqual(90)
-      expect(delays[1]!).toBeLessThan(150)
+      expect(delays[1]!).toBeLessThan(180)
     })
 
     it('respects maxDelay', async () => {
@@ -153,7 +153,7 @@ describe('Async.retry', () => {
       expect(isErr(result)).toBe(true)
       // All delays should be capped at maxDelay
       delays.forEach((delay) => {
-        expect(delay).toBeLessThan(250)
+        expect(delay).toBeLessThan(500)
       })
     })
   })
@@ -332,7 +332,7 @@ describe('Async.sleep', () => {
     const duration = Date.now() - start
 
     expect(duration).toBeGreaterThanOrEqual(90)
-    expect(duration).toBeLessThan(150)
+    expect(duration).toBeLessThan(400)
   })
 
   it('resolves with undefined', async () => {

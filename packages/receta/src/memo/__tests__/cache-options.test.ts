@@ -11,46 +11,46 @@ const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 describe('the ttl option', () => {
   it('expires entries in memoize', async () => {
     const fn = vi.fn((n: number) => n * 2)
-    const memoized = memoize(fn, { ttl: 20 })
+    const memoized = memoize(fn, { ttl: 50 })
 
     memoized(1)
     memoized(1)
     expect(fn).toHaveBeenCalledTimes(1)
 
-    await pause(40)
+    await pause(80)
     memoized(1)
     expect(fn).toHaveBeenCalledTimes(2)
   })
 
   it('expires entries in memoizeBy', async () => {
     const fn = vi.fn((a: number, b: number) => a + b)
-    const memoized = memoizeBy(fn, (a, b) => `${a}:${b}`, { ttl: 20 })
+    const memoized = memoizeBy(fn, (a, b) => `${a}:${b}`, { ttl: 50 })
 
     memoized(1, 2)
     memoized(1, 2)
     expect(fn).toHaveBeenCalledTimes(1)
 
-    await pause(40)
+    await pause(80)
     memoized(1, 2)
     expect(fn).toHaveBeenCalledTimes(2)
   })
 
   it('expires entries in memoizeAsync', async () => {
     const fn = vi.fn(async (n: number) => n * 2)
-    const memoized = memoizeAsync(fn, { ttl: 20 })
+    const memoized = memoizeAsync(fn, { ttl: 50 })
 
     await memoized(1)
     await memoized(1)
     expect(fn).toHaveBeenCalledTimes(1)
 
-    await pause(40)
+    await pause(80)
     await memoized(1)
     expect(fn).toHaveBeenCalledTimes(2)
   })
 
   it('works with maxSize', async () => {
     const fn = vi.fn((n: number) => n * 2)
-    const memoized = memoize(fn, { ttl: 20, maxSize: 2 })
+    const memoized = memoize(fn, { ttl: 50, maxSize: 2 })
 
     memoized(1)
     memoized(2)
@@ -58,7 +58,7 @@ describe('the ttl option', () => {
     expect(memoized.cache.has(1)).toBe(false)
     expect(memoized.cache.has(3)).toBe(true)
 
-    await pause(40)
+    await pause(80)
     expect(memoized.cache.has(3)).toBe(false)
   })
 
