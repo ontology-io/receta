@@ -560,5 +560,121 @@ function find(id: string): User | null {
       errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
       output: null,
     },
+    {
+      name: 'Fixes each function in a file whole, so none is left half done',
+      code: `export function a(): string | null {
+  return null
+}
+export function b(x?: string): string | null {
+  return x ?? null
+}
+`,
+      errors: [
+        { messageId: 'preferOption' },
+        { messageId: 'useFromNullable' },
+        { messageId: 'preferOption' },
+        { messageId: 'useFromNullable' },
+      ],
+      output: [
+        `import { none, type Option } from '@ontologyio/receta/option'
+export function a(): Option<string> {
+  return none()
+}
+export function b(x?: string): string | null {
+  return x ?? null
+}
+`,
+        `import { fromNullable } from '@ontologyio/receta/option'
+import { none, type Option } from '@ontologyio/receta/option'
+export function a(): Option<string> {
+  return none()
+}
+export function b(x?: string): Option<string> {
+  return fromNullable(x ?? null)
+}
+`,
+      ],
+    },
+    {
+      name: 'Never wraps a none() from an earlier pass',
+      code: `export function a(): string | null {
+  return null
+}
+export function b(): string | null {
+  return null
+}
+`,
+      errors: [
+        { messageId: 'preferOption' },
+        { messageId: 'useFromNullable' },
+        { messageId: 'preferOption' },
+        { messageId: 'useFromNullable' },
+      ],
+      output: [
+        `import { none, type Option } from '@ontologyio/receta/option'
+export function a(): Option<string> {
+  return none()
+}
+export function b(): string | null {
+  return null
+}
+`,
+        `import { none, type Option } from '@ontologyio/receta/option'
+export function a(): Option<string> {
+  return none()
+}
+export function b(): Option<string> {
+  return none()
+}
+`,
+      ],
+    },
+    {
+      name: 'No fix on an annotated React component, where null renders nothing',
+      languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+      code: `function Panel({ open }: Props): ReactElement | null {
+  if (!open) return null
+  return <div>hello</div>
+}
+`,
+      errors: [
+        { messageId: 'preferOption' },
+        { messageId: 'useFromNullable' },
+        { messageId: 'useFromNullable' },
+      ],
+      output: null,
+    },
+    {
+      name: 'No fix when JSX sits inside a conditional',
+      languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+      code: `function Panel({ open }: Props): ReactElement | null {
+  return open ? <div>hello</div> : null
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'No fix for recursion that a text search would miss',
+      code: `function last(node: Node): Node | null {
+  return node.children.map(last)[0] ?? null
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'A similar name is not recursion',
+      code: `function root(node: Node): Node | null {
+  return myroot(node)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: `import { fromNullable, type Option } from '@ontologyio/receta/option'
+function root(node: Node): Option<Node> {
+  return fromNullable(myroot(node))
+}
+`,
+    },
   ],
 })

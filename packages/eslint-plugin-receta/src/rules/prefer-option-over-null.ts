@@ -71,6 +71,15 @@ export default createRule<[], MessageIds>({
         const wrapName = wrapBinding?.name ?? 'fromNullable'
 
         const returnedValues = returnStatements.flatMap(stmt => stmt.argument ?? [])
+        const rewriteValue = (value: TSESTree.Expression): string => {
+          // fromNullable(null) can't infer T, and none() says the same thing
+          if (isEmptyValue(value)) return `${noneBinding?.name ?? 'none'}()`
+
+          // A comma expression has to stay one argument
+          const text = sourceCode.getText(value)
+          return `${wrapName}(${value.type === 'SequenceExpression' ? `(${text})` : text})`
+        }
+
         const usesNone = returnedValues.some(isEmptyValue)
         const usesWrap = returnedValues.some(
           value => !isEmptyValue(value) && !isAlreadyWrappedInFromNullable(value, wrapName)
@@ -82,6 +91,7 @@ export default createRule<[], MessageIds>({
           optionBinding !== undefined &&
           (!usesWrap || wrapBinding !== undefined) &&
           (!usesNone || noneBinding !== undefined) &&
+          !returnedValues.flatMap(findPossibleValues).some(isJsx) &&
           canRewriteToOption(node, returnStatements) &&
           canChangeReturnType(node, sourceCode)
 
@@ -109,6 +119,14 @@ export default createRule<[], MessageIds>({
                     generateImportStatement(missingImports, OPTION_MODULE)
                   )
                 }
+
+                // One fix for the whole function. ESLint drops a fix that overlaps another
+                // and retries next pass, so separate fixes could land half of a function.
+                for (const argument of returnedValues) {
+                  if (!isAlreadyWrappedInFromNullable(argument, wrapName)) {
+                    yield fixer.replaceText(argument, rewriteValue(argument))
+                  }
+                }
               }
             : null,
         })
@@ -119,22 +137,6 @@ export default createRule<[], MessageIds>({
             context.report({
               node: returnStmt,
               messageId: 'useFromNullable',
-              fix: canFix
-                ? fixer => {
-                    const argument = returnStmt.argument!
-
-                    // fromNullable(null) can't infer T, and none() says the same thing
-                    if (isEmptyValue(argument)) {
-                      return fixer.replaceText(argument, `${noneBinding?.name ?? 'none'}()`)
-                    }
-
-                    const argText = sourceCode.getText(argument)
-                    // A comma expression has to stay one argument
-                    const wrapped =
-                      argument.type === 'SequenceExpression' ? `(${argText})` : argText
-                    return fixer.replaceText(argument, `${wrapName}(${wrapped})`)
-                  }
-                : null,
             })
           }
         }
@@ -142,6 +144,14 @@ export default createRule<[], MessageIds>({
     }
   },
 })
+
+/**
+ * Check for JSX. A function that returns it is a component, and null is how a
+ * component renders nothing, so an Option there would crash at render.
+ */
+function isJsx(value: TSESTree.Node): boolean {
+  return value.type === 'JSXElement' || value.type === 'JSXFragment'
+}
 
 /**
  * Check for a literal null or undefined, which has no value to wrap.
@@ -176,9 +186,7 @@ function findNullableReturnValues(
   const values = returned.flatMap(findPossibleValues)
 
   // null is how a React component renders nothing
-  const isComponent = values.some(
-    value => value.type === 'JSXElement' || value.type === 'JSXFragment'
-  )
+  const isComponent = values.some(isJsx)
 
   if (isComponent || values.every(isNullish)) {
     return []

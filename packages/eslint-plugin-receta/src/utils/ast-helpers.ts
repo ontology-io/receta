@@ -402,7 +402,14 @@ function callsItself(
   name: string | undefined,
   sourceCode: Readonly<TSESLint.SourceCode>
 ): boolean {
-  return name !== undefined && sourceCode.getText(fn.body).includes(`${name}(`)
+  const names = [name, fn.id?.name].filter(candidate => candidate !== undefined)
+
+  return names.some(candidate =>
+    findVariable(sourceCode.getScope(fn), candidate)?.references.some(
+      reference =>
+        reference.identifier.range[0] >= fn.range[0] && reference.identifier.range[1] <= fn.range[1]
+    )
+  )
 }
 
 function hasOverloads(fn: TSESTree.FunctionDeclaration): boolean {
