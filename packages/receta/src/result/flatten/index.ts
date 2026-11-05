@@ -7,6 +7,8 @@ import { isOk } from '../guards'
  *
  * Converts Result<Result<T, E>, E> to Result<T, E>.
  *
+ * In a pipe, write `flatten()`. A bare `flatten` runs correctly but loses the element type.
+ *
  * @param result - A Result containing another Result
  * @returns The inner Result
  *
@@ -26,8 +28,8 @@ import { isOk } from '../guards'
  *
  * @see flatMap - for chaining Result-returning functions
  */
-export function flatten<T, E, F>(result: Result<Result<T, E>, F>): Result<T, E | F>
 export function flatten<T, E>(): <F>(result: Result<Result<T, E>, F>) => Result<T, E | F>
+export function flatten<T, E, F>(result: Result<Result<T, E>, F>): Result<T, E | F>
 export function flatten(...args: unknown[]): unknown {
   return R.purry(flattenImplementation, args)
 }

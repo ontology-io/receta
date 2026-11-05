@@ -7,6 +7,8 @@ import { isSome } from '../guards'
  *
  * Returns a tuple of [Some values[], None count].
  *
+ * In a pipe, write `partition()`. A bare `partition` runs correctly but loses the element type.
+ *
  * @param options - Array of Options to partition
  * @returns Tuple of [values from Some, count of None]
  *
@@ -31,8 +33,8 @@ import { isSome } from '../guards'
  *
  * @see collect - for requiring all to be Some
  */
-export function partition<T>(options: readonly Option<T>[]): [T[], number]
 export function partition<T>(): (options: readonly Option<T>[]) => [T[], number]
+export function partition<T>(options: readonly Option<T>[]): [T[], number]
 export function partition(...args: unknown[]): unknown {
   return R.purry(partitionImplementation, args)
 }

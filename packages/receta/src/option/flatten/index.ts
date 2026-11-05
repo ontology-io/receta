@@ -7,6 +7,8 @@ import { isSome } from '../guards'
  *
  * Converts Option<Option<T>> to Option<T>.
  *
+ * In a pipe, write `flatten()`. A bare `flatten` runs correctly but loses the element type.
+ *
  * @param option - The nested Option to flatten
  * @returns The flattened Option
  *
@@ -27,8 +29,8 @@ import { isSome } from '../guards'
  *
  * @see flatMap - for mapping and flattening in one step
  */
-export function flatten<T>(option: Option<Option<T>>): Option<T>
 export function flatten<T>(): (option: Option<Option<T>>) => Option<T>
+export function flatten<T>(option: Option<Option<T>>): Option<T>
 export function flatten(...args: unknown[]): unknown {
   return R.purry(flattenImplementation, args)
 }

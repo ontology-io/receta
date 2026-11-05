@@ -10,6 +10,8 @@ import type { Option } from '../types'
  *
  * Use this when interfacing with APIs that expect null for missing values.
  *
+ * In a pipe, write `toNullable()`. A bare `toNullable` runs correctly but loses the element type.
+ *
  * @param option - The Option to convert
  * @returns The value or null
  *
@@ -35,8 +37,8 @@ import type { Option } from '../types'
  *
  * @see fromNullable - for converting nullable values to Option
  */
-export function toNullable<T>(option: Option<T>): T | null
 export function toNullable<T>(): (option: Option<T>) => T | null
+export function toNullable<T>(option: Option<T>): T | null
 export function toNullable(...args: unknown[]): unknown {
   return R.purry(toNullableImplementation, args)
 }
