@@ -3,9 +3,13 @@ import type { TSESLint, TSESTree } from '@typescript-eslint/utils'
 import {
   findEnclosingFunction,
   generateImportStatement,
+  insertImport,
   isCatchClauseReturningFailure,
   isCatchClauseTransparent,
   isEntryPointGuard,
+  isNameInScope,
+  ownsItsReturnType,
+  resolveBinding,
 } from '../utils/ast-helpers.js'
 
 const createRule = ESLintUtils.RuleCreator(
@@ -49,44 +53,32 @@ export default createRule<[], MessageIds>({
           return
         }
 
+        const binding = resolveBinding(sourceCode, node, RESULT_MODULE, 'tryCatch')
         const returned = findRewritableReturn(node, node.handler, sourceCode)
 
         context.report({
           node,
           messageId: 'preferResult',
-          fix: returned
-            ? function* (fixer) {
-                const returnExpression = sourceCode.getText(returned)
+          fix:
+            binding && returned
+              ? function* (fixer) {
+                  const returnExpression = sourceCode.getText(returned)
 
-                // Generate tryCatch wrapper
-                const resultCode = `const result = tryCatch(\n  () => ${returnExpression}\n)\nreturn result`
-
-                // Replace the entire try-catch with Result pattern
-                yield fixer.replaceText(node, resultCode)
-
-                // Check if tryCatch is imported
-                const hasTryCatchImport = sourceCode.ast.body.some(
-                  stmt =>
-                    stmt.type === 'ImportDeclaration' &&
-                    stmt.source.value === RESULT_MODULE &&
-                    stmt.specifiers.some(
-                      spec =>
-                        spec.type === 'ImportSpecifier' &&
-                        spec.imported.type === 'Identifier' &&
-                        spec.imported.name === 'tryCatch'
-                    )
-                )
-
-                if (!hasTryCatchImport) {
-                  // Add import at the top
-                  const importStatement = generateImportStatement(['tryCatch'], RESULT_MODULE)
-                  yield fixer.insertTextBeforeRange(
-                    [0, 0],
-                    `${importStatement}\n`
+                  // Replace the entire try-catch with the tryCatch call
+                  yield fixer.replaceText(
+                    node,
+                    `const result = ${binding.name}(\n  () => ${returnExpression}\n)\nreturn result`
                   )
+
+                  if (binding.needsImport) {
+                    yield insertImport(
+                      fixer,
+                      sourceCode,
+                      generateImportStatement(['tryCatch'], RESULT_MODULE)
+                    )
+                  }
                 }
-              }
-            : null,
+              : null,
         })
       },
     }
@@ -122,19 +114,14 @@ function findRewritableReturn(
     !fn.generator &&
     node.finalizer === null &&
     isCatchClauseTransparent(handler) &&
-    // `() => { value: 1 }` is a block and `() => a, b` splits the argument list
-    argument.type !== 'ObjectExpression' &&
+    // The result changes type, which only this function may decide
+    fn.returnType === undefined &&
+    ownsItsReturnType(fn) &&
+    // An arrow body starting with `{` is a block, and `() => a, b` splits the argument list
+    !sourceCode.getText(argument).startsWith('{') &&
     argument.type !== 'SequenceExpression' &&
     sourceCode.getCommentsInside(node).length === 0 &&
     !isNameInScope(sourceCode.getScope(node), 'result')
 
   return isSafe ? argument : undefined
-}
-
-function isNameInScope(scope: TSESLint.Scope.Scope, name: string): boolean {
-  for (let current: TSESLint.Scope.Scope | null = scope; current; current = current.upper) {
-    if (current.set.has(name)) return true
-  }
-
-  return false
 }

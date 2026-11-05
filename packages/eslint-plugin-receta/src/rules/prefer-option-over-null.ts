@@ -2,8 +2,11 @@ import { ESLintUtils } from '@typescript-eslint/utils'
 import type { TSESLint, TSESTree } from '@typescript-eslint/utils'
 import {
   findReturnStatements,
+  insertImport,
   isNullableReturnType,
   generateImportStatement,
+  ownsItsReturnType,
+  resolveBinding,
   type FunctionNode,
 } from '../utils/ast-helpers.js'
 
@@ -61,8 +64,16 @@ export default createRule<[], MessageIds>({
         const typeNode = returnType.typeAnnotation
         const baseTypeNode = findSingleNonNullType(typeNode)
 
+        const optionBinding = resolveBinding(sourceCode, node, OPTION_MODULE, 'Option')
+        const wrapBinding = resolveBinding(sourceCode, node, OPTION_MODULE, 'fromNullable')
+
         // The two fixes only make sense together, so they share one decision
-        const canFix = baseTypeNode !== undefined && canRewriteToOption(node, returnStatements)
+        const canFix =
+          baseTypeNode !== undefined &&
+          optionBinding !== undefined &&
+          wrapBinding !== undefined &&
+          canRewriteToOption(node, returnStatements) &&
+          ownsItsReturnType(node)
 
         context.report({
           node: typeNode,
@@ -72,20 +83,20 @@ export default createRule<[], MessageIds>({
                 const baseType = sourceCode.getText(baseTypeNode)
 
                 // Replace return type with Option<T>
-                yield fixer.replaceText(typeNode, `Option<${baseType}>`)
+                yield fixer.replaceText(typeNode, `${optionBinding.name}<${baseType}>`)
 
-                // Both names end up in the rewritten function
-                const missingImports = ['Option', 'fromNullable'].filter(
-                  name => !isImportedFromOption(sourceCode, name)
-                )
+                // Option is a type, so the import has to survive verbatimModuleSyntax
+                const missingImports = [
+                  ...(optionBinding.needsImport ? ['type Option'] : []),
+                  ...(wrapBinding.needsImport ? ['fromNullable'] : []),
+                ]
 
                 if (missingImports.length > 0) {
-                  // Option is a type, so the import has to survive verbatimModuleSyntax
-                  const importStatement = generateImportStatement(
-                    missingImports.map(name => (name === 'Option' ? 'type Option' : name)),
-                    OPTION_MODULE
+                  yield insertImport(
+                    fixer,
+                    sourceCode,
+                    generateImportStatement(missingImports, OPTION_MODULE)
                   )
-                  yield fixer.insertTextBeforeRange([0, 0], `${importStatement}\n`)
                 }
               }
             : null,
@@ -95,18 +106,19 @@ export default createRule<[], MessageIds>({
         for (const returnStmt of returnStatements) {
           if (
             returnStmt.argument &&
-            !isAlreadyWrappedInFromNullable(returnStmt.argument)
+            !isAlreadyWrappedInFromNullable(returnStmt.argument, wrapBinding?.name ?? 'fromNullable')
           ) {
             context.report({
               node: returnStmt,
               messageId: 'useFromNullable',
               fix: canFix
                 ? fixer => {
-                    const argText = sourceCode.getText(returnStmt.argument!)
-                    return fixer.replaceText(
-                      returnStmt.argument!,
-                      `fromNullable(${argText})`
-                    )
+                    const argument = returnStmt.argument!
+                    const argText = sourceCode.getText(argument)
+                    // A comma expression has to stay one argument
+                    const wrapped =
+                      argument.type === 'SequenceExpression' ? `(${argText})` : argText
+                    return fixer.replaceText(argument, `${wrapBinding.name}(${wrapped})`)
                   }
                 : null,
             })
@@ -244,27 +256,13 @@ function alwaysExits(node: TSESTree.Statement | null): boolean {
   }
 }
 
-function isImportedFromOption(sourceCode: Readonly<TSESLint.SourceCode>, name: string): boolean {
-  return sourceCode.ast.body.some(
-    stmt =>
-      stmt.type === 'ImportDeclaration' &&
-      stmt.source.value === OPTION_MODULE &&
-      stmt.specifiers.some(
-        spec =>
-          spec.type === 'ImportSpecifier' &&
-          spec.imported.type === 'Identifier' &&
-          spec.imported.name === name
-      )
-  )
-}
-
 /**
  * Check if expression is already wrapped in fromNullable()
  */
-function isAlreadyWrappedInFromNullable(node: TSESTree.Node): boolean {
+function isAlreadyWrappedInFromNullable(node: TSESTree.Node, wrapName: string): boolean {
   return (
     node.type === 'CallExpression' &&
     node.callee.type === 'Identifier' &&
-    node.callee.name === 'fromNullable'
+    node.callee.name === wrapName
   )
 }

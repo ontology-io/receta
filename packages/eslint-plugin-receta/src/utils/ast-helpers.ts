@@ -250,3 +250,121 @@ export function generateImportStatement(
 
   return `import { ${uniqueUtilities.join(', ')} } from '${from}'`
 }
+
+/** The name to call a module's export by, and whether the file still has to import it. */
+export type Binding = { readonly name: string; readonly needsImport: boolean }
+
+/**
+ * Work out how a fix can refer to a module's export at this node. Answers undefined
+ * when the plain name already means something else here, so the fix would collide.
+ */
+export function resolveBinding(
+  sourceCode: Readonly<TSESLint.SourceCode>,
+  node: TSESTree.Node,
+  module: string,
+  exported: string
+): Binding | undefined {
+  const local = findImportedName(sourceCode, module, exported)
+  if (local !== undefined) return { name: local, needsImport: false }
+
+  return isNameInScope(sourceCode.getScope(node), exported)
+    ? undefined
+    : { name: exported, needsImport: true }
+}
+
+function findImportedName(
+  sourceCode: Readonly<TSESLint.SourceCode>,
+  module: string,
+  exported: string
+): string | undefined {
+  for (const statement of sourceCode.ast.body) {
+    if (statement.type !== 'ImportDeclaration' || statement.source.value !== module) continue
+
+    for (const specifier of statement.specifiers) {
+      if (
+        specifier.type === 'ImportSpecifier' &&
+        specifier.imported.type === 'Identifier' &&
+        specifier.imported.name === exported
+      ) {
+        return specifier.local.name
+      }
+    }
+  }
+
+  return undefined
+}
+
+/**
+ * Check whether a name is bound here or in any scope above.
+ */
+export function isNameInScope(scope: TSESLint.Scope.Scope, name: string): boolean {
+  for (let current: TSESLint.Scope.Scope | null = scope; current; current = current.upper) {
+    if (current.set.has(name)) return true
+  }
+
+  return false
+}
+
+/**
+ * Add an import without disturbing what has to stay first in the file: a shebang
+ * must be the first line, and a directive stops being one below an import.
+ */
+export function insertImport(
+  fixer: TSESLint.RuleFixer,
+  sourceCode: Readonly<TSESLint.SourceCode>,
+  statement: string
+): TSESLint.RuleFix {
+  const lastDirective = findLastDirective(sourceCode.ast.body)
+  if (lastDirective) return fixer.insertTextAfter(lastDirective, `\n${statement}`)
+
+  const text = sourceCode.getText()
+  const start = text.startsWith('#!') ? text.indexOf('\n') + 1 : 0
+
+  return fixer.insertTextBeforeRange([start, start], `${statement}\n`)
+}
+
+function findLastDirective(body: readonly TSESTree.ProgramStatement[]): TSESTree.Node | undefined {
+  let last: TSESTree.Node | undefined
+
+  for (const statement of body) {
+    if (statement.type !== 'ExpressionStatement' || statement.directive === undefined) break
+    last = statement
+  }
+
+  return last
+}
+
+/**
+ * Check that nothing outside a function pins its return type, so a fix may change
+ * it. Overloads, class methods, typed variables and callbacks all set it elsewhere,
+ * and the rewritten function would stop compiling against them.
+ */
+export function ownsItsReturnType(fn: FunctionNode): boolean {
+  if (fn.type === 'FunctionDeclaration') return !hasOverloads(fn)
+
+  const parent = fn.parent
+  return (
+    parent.type === 'VariableDeclarator' &&
+    parent.init === fn &&
+    parent.id.typeAnnotation === undefined
+  )
+}
+
+function hasOverloads(fn: TSESTree.FunctionDeclaration): boolean {
+  const isExported =
+    fn.parent.type === 'ExportNamedDeclaration' || fn.parent.type === 'ExportDefaultDeclaration'
+  const holder: TSESTree.Node | undefined = isExported ? fn.parent.parent : fn.parent
+
+  if (holder?.type !== 'Program' && holder?.type !== 'BlockStatement' && holder?.type !== 'TSModuleBlock') {
+    return false
+  }
+
+  return holder.body.some(statement => {
+    const declaration =
+      statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
+        ? statement.declaration
+        : statement
+
+    return declaration?.type === 'TSDeclareFunction' && declaration.id?.name === fn.id?.name
+  })
+}

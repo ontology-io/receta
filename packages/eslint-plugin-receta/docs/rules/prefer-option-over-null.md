@@ -133,6 +133,8 @@ This rule may not be suitable for:
 
 This rule has no options.
 
+The fix never changes a return type that something else depends on. A class method, an overload, a typed variable or a callback is reported without a fix, and so is a file where `Option` or `fromNullable` already means something else. An aliased import is reused under its alias.
+
 ## Further Reading
 
 - [Option Module Documentation](../../../docs/modules/option/README.md)

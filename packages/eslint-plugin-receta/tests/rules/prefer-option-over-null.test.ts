@@ -374,5 +374,113 @@ function findUser(id: string): Option<User> {
 }
 `,
     },
+    {
+      name: 'No fix on an overload implementation',
+      code: `function find(id: string): User | null
+function find(id: number): User | null
+function find(id: string | number): User | null {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'No fix on a class method, which may implement an interface',
+      code: `class Users {
+  find(id: string): User | null {
+    return users.get(id)
+  }
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'No fix when a type on the variable sets the return type',
+      code: `const find: Finder = (id: string): User | null => {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'No fix when another module already owns the name Option',
+      code: `import { Option } from 'fp-ts/Option'
+function find(id: string): User | null {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'No fix when a local declaration owns the name fromNullable',
+      code: `const fromNullable = 1
+function find(id: string): User | null {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'Uses the local names of aliased imports',
+      code: `import { fromNullable as wrap, type Option as Maybe } from '@ontologyio/receta/option'
+function find(id: string): User | null {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: `import { fromNullable as wrap, type Option as Maybe } from '@ontologyio/receta/option'
+function find(id: string): Maybe<User> {
+  return wrap(users.get(id))
+}
+`,
+    },
+    {
+      name: 'Keeps a comma expression as one argument',
+      code: `function find(id: string): User | null {
+  return (track(id), users.get(id))
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: `import { fromNullable, type Option } from '@ontologyio/receta/option'
+function find(id: string): Option<User> {
+  return (fromNullable((track(id), users.get(id))))
+}
+`,
+    },
+    {
+      name: 'Keeps a shebang first',
+      code: `#!/usr/bin/env node
+function find(id: string): User | null {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: `#!/usr/bin/env node
+import { fromNullable, type Option } from '@ontologyio/receta/option'
+function find(id: string): Option<User> {
+  return fromNullable(users.get(id))
+}
+`,
+    },
+    {
+      name: 'Keeps directives first, so they stay directives',
+      code: `'use client'
+function find(id: string): User | null {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: `'use client'
+import { fromNullable, type Option } from '@ontologyio/receta/option'
+function find(id: string): Option<User> {
+  return fromNullable(users.get(id))
+}
+`,
+    },
   ],
 })

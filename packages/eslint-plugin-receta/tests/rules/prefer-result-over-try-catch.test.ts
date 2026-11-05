@@ -449,5 +449,165 @@ return result
       errors: [{ messageId: 'preferResult' }],
       output: null,
     },
+    {
+      name: 'No fix when the expression only starts like an object',
+      code: `function load(s: string) {
+  try {
+    return { a: parse(s) } as Config
+  } catch (e) {
+    throw e
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: null,
+    },
+    {
+      name: 'No fix when the function declares its return type',
+      code: `function load(s: string): number {
+  try {
+    return parse(s)
+  } catch (e) {
+    throw e
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: null,
+    },
+    {
+      name: 'No fix in a class method, which may implement an interface',
+      code: `class Loader {
+  load(s: string) {
+    try {
+    return parse(s)
+  } catch (e) {
+    throw e
+  }
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: null,
+    },
+    {
+      name: 'No fix when a type on the variable sets the return type',
+      code: `const load: Parser = (s) => {
+  try {
+    return parse(s)
+  } catch (e) {
+    throw e
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: null,
+    },
+    {
+      name: 'No fix in a callback, whose caller expects the old value',
+      code: `items.map((s) => {
+  try {
+    return parse(s)
+  } catch (e) {
+    throw e
+  }
+})
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: null,
+    },
+    {
+      name: 'No fix when another module already owns the name tryCatch',
+      code: `import { tryCatch } from '@ontologyio/receta/function'
+function load(s: string) {
+  try {
+    return parse(s)
+  } catch (e) {
+    throw e
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: null,
+    },
+    {
+      name: 'No fix when a local declaration owns the name tryCatch',
+      code: `const tryCatch = 1
+function load(s: string) {
+  try {
+    return parse(s)
+  } catch (e) {
+    throw e
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: null,
+    },
+    {
+      name: 'Uses the local name of an aliased import',
+      code: `import { tryCatch as attempt } from '@ontologyio/receta/result'
+function load(s: string) {
+  try {
+    return parse(s)
+  } catch (e) {
+    throw e
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: `import { tryCatch as attempt } from '@ontologyio/receta/result'
+function load(s: string) {
+  const result = attempt(
+  () => parse(s)
+)
+return result
+}
+`,
+    },
+    {
+      name: 'Keeps a shebang first',
+      code: `#!/usr/bin/env node
+function load(s: string) {
+  try {
+    return parse(s)
+  } catch (e) {
+    throw e
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: `#!/usr/bin/env node
+import { tryCatch } from '@ontologyio/receta/result'
+function load(s: string) {
+  const result = tryCatch(
+  () => parse(s)
+)
+return result
+}
+`,
+    },
+    {
+      name: 'Keeps directives first, so they stay directives',
+      code: `'use client'
+function load(s: string) {
+  try {
+    return parse(s)
+  } catch (e) {
+    throw e
+  }
+}
+`,
+      errors: [{ messageId: 'preferResult' }],
+      output: `'use client'
+import { tryCatch } from '@ontologyio/receta/result'
+function load(s: string) {
+  const result = tryCatch(
+  () => parse(s)
+)
+return result
+}
+`,
+    },
   ],
 })
