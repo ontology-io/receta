@@ -6,6 +6,7 @@
 
 import * as R from 'remeda'
 import type { PlainObject } from '../types'
+import { setOwnKey } from '../../utils/setOwnKey'
 
 /**
  * Renames keys in an object according to a mapping.
@@ -49,7 +50,7 @@ function renameImplementation<T extends PlainObject>(obj: T, mapping: Record<str
 
   Object.entries(obj).forEach(([key, value]) => {
     const newKey = mapping[key] ?? key
-    result[newKey] = value
+    setOwnKey(result, newKey, value)
   })
 
   return result

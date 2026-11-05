@@ -10,6 +10,9 @@ import { isOptionsObject } from '../isOptionsObject'
 
 const OPTION_TYPES = { separator: 'string' } as const
 
+// A path through one of these reaches a prototype every object shares.
+const UNSAFE_KEYS: ReadonlySet<string> = new Set(['__proto__', 'constructor', 'prototype'])
+
 /**
  * Unflattens a single-level object with dot-notation keys into a nested object.
  *
@@ -18,6 +21,7 @@ const OPTION_TYPES = { separator: 'string' } as const
  *
  * @param obj - The flattened object to unflatten
  * An object made only of option keys reads as options. To treat one as data, pass `{}` as the second argument.
+ * Keys with a `__proto__`, `constructor` or `prototype` segment are skipped.
  *
  * @param options - Unflattening options (separator)
  * @returns A nested object
@@ -37,8 +41,8 @@ const OPTION_TYPES = { separator: 'string' } as const
  * unflatten({ 'items.0': 'a', 'items.1': 'b' })
  * // => { items: ['a', 'b'] }
  *
- * // In a pipe, wrap it. unflatten() returns {} instead of a function, and
- * // TypeScript reads unflatten({ separator: '_' }) as the data-first call.
+ * // unflatten() works in a pipe. With options, wrap it, because TypeScript
+ * // reads unflatten({ separator: '_' }) as the data-first call.
  * pipe(
  *   flat,
  *   (obj) => unflatten(obj)
@@ -51,12 +55,12 @@ export function unflatten(obj: FlatObject, options?: UnflattenOptions): PlainObj
 export function unflatten(options?: UnflattenOptions): (obj: FlatObject) => PlainObject
 export function unflatten(objOrOptions?: FlatObject | UnflattenOptions, maybeOptions?: UnflattenOptions): any {
   // Data-last: no arguments, or a lone argument made only of options
-  if (objOrOptions === undefined || (maybeOptions === undefined && isOptionsObject(objOrOptions, OPTION_TYPES))) {
+  if (maybeOptions === undefined && (objOrOptions === undefined || isOptionsObject(objOrOptions, OPTION_TYPES))) {
     return (obj: FlatObject) => unflattenImplementation(obj, objOrOptions as UnflattenOptions | undefined)
   }
 
   // Data-first
-  return unflattenImplementation(objOrOptions as FlatObject, maybeOptions)
+  return unflattenImplementation(objOrOptions as FlatObject ?? {}, maybeOptions)
 }
 
 function unflattenImplementation(obj: FlatObject, options?: UnflattenOptions): PlainObject {
@@ -66,6 +70,8 @@ function unflattenImplementation(obj: FlatObject, options?: UnflattenOptions): P
 
   Object.entries(obj).forEach(([key, value]) => {
     const parts = key.split(separator)
+    if (parts.some((part) => UNSAFE_KEYS.has(part))) return
+
     let current: any = result
 
     parts.forEach((part, index) => {
@@ -78,7 +84,8 @@ function unflattenImplementation(obj: FlatObject, options?: UnflattenOptions): P
         const nextPart = parts[index + 1]
         const isNextPartNumber = nextPart !== undefined && /^\d+$/.test(nextPart)
 
-        if (current[part] === undefined) {
+        // Own keys only: an inherited one would walk into a shared prototype
+        if (!Object.hasOwn(current, part) || current[part] === undefined) {
           current[part] = isNextPartNumber ? [] : {}
         }
 

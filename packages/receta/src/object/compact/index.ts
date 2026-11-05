@@ -6,6 +6,7 @@
 
 import * as R from 'remeda'
 import type { PlainObject } from '../types'
+import { setOwnKey } from '../../utils/setOwnKey'
 
 /**
  * Removes all nullish (null or undefined) values from an object (shallow).
@@ -48,7 +49,7 @@ export function compact<T extends PlainObject>(obj: T): Partial<T> {
 
   Object.entries(obj).forEach(([key, value]) => {
     if (value != null) {
-      result[key as keyof T] = value as T[keyof T]
+      setOwnKey(result, key, value)
     }
   })
 

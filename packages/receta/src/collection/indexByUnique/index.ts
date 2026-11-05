@@ -2,6 +2,7 @@ import * as R from 'remeda'
 import { Result, ok, err } from '../../result'
 import type { IndexConfig, DuplicateKeyError } from '../types'
 import { DuplicateKeyError as DuplicateKeyErrorClass } from '../types'
+import { setOwnKey } from '../../utils/setOwnKey'
 
 /**
  * Creates an index (map) from an array, ensuring keys are unique.
@@ -88,7 +89,7 @@ function indexByUniqueImplementation<T, TKey extends string | number>(
   for (const item of items) {
     const key = getKey(item)
 
-    if (key in index) {
+    if (Object.hasOwn(index, key)) {
       if (onCollision === 'error') {
         return err(new DuplicateKeyErrorClass(key))
       } else if (onCollision === 'first') {
@@ -97,7 +98,7 @@ function indexByUniqueImplementation<T, TKey extends string | number>(
       // onCollision === 'last' - overwrite with current
     }
 
-    index[key] = item
+    setOwnKey(index, key, item)
   }
 
   return ok(index)

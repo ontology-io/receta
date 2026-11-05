@@ -7,6 +7,7 @@
 import * as R from 'remeda'
 import type { PlainObject } from '../types'
 import { isOptionsObject } from '../isOptionsObject'
+import { setOwnKey } from '../../utils/setOwnKey'
 
 const OPTION_TYPES = {
   stripEmptyStrings: 'boolean',
@@ -156,7 +157,8 @@ function isEmpty(value: unknown, options: Required<StripEmptyOptions>): boolean 
  * )
  * // => { name: 'Alice', nested: { bio: '', age: null } }
  *
- * // In a pipe, wrap it. stripEmpty() returns {} instead of a function.
+ * // stripEmpty() works in a pipe. With options, wrap it, because TypeScript
+ * // reads stripEmpty({ deep: false }) as the data-first call.
  * pipe(
  *   apiPayload,
  *   (payload) => stripEmpty(payload)
@@ -170,12 +172,12 @@ export function stripEmpty(obj: PlainObject, options?: StripEmptyOptions): Plain
 export function stripEmpty(options?: StripEmptyOptions): (obj: PlainObject) => PlainObject
 export function stripEmpty(objOrOptions?: PlainObject | StripEmptyOptions, maybeOptions?: StripEmptyOptions): any {
   // Data-last: no arguments, or a lone argument made only of options
-  if (objOrOptions === undefined || (maybeOptions === undefined && isOptionsObject(objOrOptions, OPTION_TYPES))) {
+  if (maybeOptions === undefined && (objOrOptions === undefined || isOptionsObject(objOrOptions, OPTION_TYPES))) {
     return (obj: PlainObject) => stripEmptyImplementation(obj, objOrOptions as StripEmptyOptions | undefined)
   }
 
   // Data-first
-  return stripEmptyImplementation(objOrOptions as PlainObject, maybeOptions)
+  return stripEmptyImplementation(objOrOptions as PlainObject ?? {}, maybeOptions)
 }
 
 function stripEmptyImplementation(
@@ -211,7 +213,7 @@ function stripEmptyImplementation(
     const processedValue = stripValue(value)
 
     if (!isEmpty(processedValue, opts)) {
-      result[key] = processedValue
+      setOwnKey(result, key, processedValue)
     }
   }
 
