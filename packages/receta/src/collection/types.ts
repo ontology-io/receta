@@ -170,7 +170,7 @@ export interface IndexConfig {
 export class DuplicateKeyError extends Error {
   constructor(
     public readonly key: string | number,
-    message = `Duplicate key found: ${key}`
+    message: string = `Duplicate key found: ${key}`
   ) {
     super(message)
     this.name = 'DuplicateKeyError'

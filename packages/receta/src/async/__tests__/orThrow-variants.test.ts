@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'bun:test'
 import * as R from 'remeda'
-import { filterAsyncOrThrow, mapAsyncOrThrow } from '../index'
+import {
+  batchOrThrow,
+  filterAsyncOrThrow,
+  mapAsyncOrThrow,
+  parallelOrThrow,
+  sequentialOrThrow,
+} from '../index'
 
 const failOn = (bad: number) => async (value: number) => {
   if (value === bad) throw new Error(`bad ${value}`)
@@ -46,5 +52,23 @@ describe('filterAsyncOrThrow', () => {
     const expected = { type: 'filter_async_error' }
     await expect(filterAsyncOrThrow([1], broken)).rejects.toMatchObject(expected)
     await expect(filterAsyncOrThrow(broken)([1])).rejects.toMatchObject(expected)
+  })
+})
+
+describe('parallelOrThrow, sequentialOrThrow and batchOrThrow', () => {
+  const broken = async (): Promise<number> => {
+    throw new Error('broken')
+  }
+
+  it('return the values', async () => {
+    expect(await parallelOrThrow([async () => 1, async () => 2], { concurrency: 1 })).toEqual([1, 2])
+    expect(await sequentialOrThrow([async () => 1, async () => 2])).toEqual([1, 2])
+    expect(await batchOrThrow([1, 2, 3], async (group) => group.length, { batchSize: 2 })).toEqual([2, 1])
+  })
+
+  it('reject with the error type of the function they wrap', async () => {
+    await expect(parallelOrThrow([broken])).rejects.toMatchObject({ type: 'map_async_error' })
+    await expect(sequentialOrThrow([broken])).rejects.toMatchObject({ type: 'sequential_error' })
+    await expect(batchOrThrow([1], broken)).rejects.toMatchObject({ type: 'batch_error' })
   })
 })
