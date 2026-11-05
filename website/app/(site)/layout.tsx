@@ -1,6 +1,6 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from 'react'
-import { fontVariables } from '../fonts'
+import { landingFontVariables } from './fonts'
 import { metaContent, SITE_URL } from '@/content/home.content'
 import './globals.css'
 
@@ -11,17 +11,23 @@ import './globals.css'
  */
 const ENABLE_MOTION = `matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.setAttribute('data-motion','')`
 
+const { title, description, image, siteName, themeColor } = metaContent
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: metaContent.title,
-  description: metaContent.description,
-  openGraph: { title: metaContent.title, description: metaContent.description, type: 'website' },
+  title,
+  description,
+  alternates: { canonical: '/' },
+  openGraph: { title, description, type: 'website', url: '/', siteName, locale: 'en_US', images: [image] },
+  twitter: { card: 'summary_large_image', title, description, images: [image.url] },
 }
+
+export const viewport: Viewport = { themeColor }
 
 type RootLayoutProps = { readonly children: ReactNode }
 
 const RootLayout = ({ children }: RootLayoutProps) => (
-  <html lang="en" suppressHydrationWarning className={fontVariables}>
+  <html lang="en" suppressHydrationWarning className={landingFontVariables}>
     <head>
       <script dangerouslySetInnerHTML={{ __html: ENABLE_MOTION }} />
     </head>

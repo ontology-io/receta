@@ -6,16 +6,28 @@ const INSTALL_COMMAND = 'bun add @ontologyio/receta remeda'
 /** Where the site lives. Change this one line when the domain is ready. */
 export const SITE_URL = 'https://receta-website.khaled-mailhub.workers.dev'
 
-const links = {
+/** The published version the site describes. A test keeps it equal to the installed package. */
+export const RECETA_VERSION = '0.4.2'
+
+export const links = {
   docs: '/docs',
   github: 'https://github.com/ontology-io/receta',
   npm: 'https://www.npmjs.com/package/@ontologyio/receta',
 } as const
 
+// Search reads these two lines, so they say what Receta is. The page itself keeps the brand voice.
 export const metaContent = {
-  title: 'Receta: code that reads like a story',
+  siteName: 'Receta',
+  title: 'Receta: Functional TypeScript with Result and Option',
   description:
-    'TypeScript recipes built on Remeda. Receta makes failure, absence and flow visible in your types, so a person can verify what an agent wrote.',
+    'Receta is a functional TypeScript library built on Remeda. Result, Option and async recipes keep failure in your types, so you can verify what an agent wrote.',
+  image: {
+    url: '/og.png',
+    width: 1200,
+    height: 630,
+    alt: 'Code should read like a story, not a crime scene. Receta, functional TypeScript with Result and Option.',
+  },
+  themeColor: '#14110e',
 } as const
 
 export const navContent = {
@@ -40,7 +52,7 @@ export const heroContent = {
   eyebrow: 'TypeScript recipes, built on Remeda',
   headline: ['Code should read', 'like a story, not', 'a crime scene'],
   fullStop: '.',
-  lede: 'Receta makes failure, absence and flow visible in your types, so a person can verify what an agent wrote.',
+  lede: 'Receta is a functional TypeScript library that makes failure, absence and flow visible in your types, so a person can verify what an agent wrote.',
   whyLabel: 'Why it exists',
   whyHref: '#why',
   pipeLabel: 'This page, as a pipe',
@@ -173,19 +185,19 @@ export const menuContent = {
     title: 'The recipe library',
     package: '@ontologyio/receta',
     dishes: [
-      { need: 'Error handling', recipe: 'Result', sample: 'tryCatch' },
-      { need: 'Nullable values', recipe: 'Option', sample: 'fromNullable' },
-      { need: 'Async, with limits', recipe: 'Async', sample: 'mapAsync' },
-      { need: 'Every error at once', recipe: 'Validation', sample: 'validate' },
-      { need: 'Filtering', recipe: 'Predicate', sample: 'where' },
-      { need: 'Trees, diffs, pages', recipe: 'Collection', sample: 'nest' },
-      { need: 'Deep objects', recipe: 'Object', sample: 'mask' },
-      { need: 'Text', recipe: 'String', sample: 'slugify' },
-      { need: 'Numbers', recipe: 'Number', sample: 'toCurrency' },
-      { need: 'Caching', recipe: 'Memo', sample: 'memoize' },
-      { need: 'Immutable updates', recipe: 'Lens', sample: 'view' },
-      { need: 'Sorting', recipe: 'Compare', sample: 'ascending' },
-      { need: 'Control flow', recipe: 'Function', sample: 'ifElse' },
+      { need: 'Error handling', recipe: 'Result', href: '/docs/result', sample: 'tryCatch' },
+      { need: 'Nullable values', recipe: 'Option', href: '/docs/option', sample: 'fromNullable' },
+      { need: 'Async, with limits', recipe: 'Async', href: '/docs/async', sample: 'mapAsync' },
+      { need: 'Every error at once', recipe: 'Validation', href: '/docs/validation', sample: 'validate' },
+      { need: 'Filtering', recipe: 'Predicate', href: '/docs/predicate', sample: 'where' },
+      { need: 'Trees, diffs, pages', recipe: 'Collection', href: '/docs/collection', sample: 'nest' },
+      { need: 'Deep objects', recipe: 'Object', href: '/docs/object', sample: 'mask' },
+      { need: 'Text', recipe: 'String', href: '/docs/reference/string', sample: 'slugify' },
+      { need: 'Numbers', recipe: 'Number', href: '/docs/reference/number', sample: 'toCurrency' },
+      { need: 'Caching', recipe: 'Memo', href: '/docs/memo', sample: 'memoize' },
+      { need: 'Immutable updates', recipe: 'Lens', href: '/docs/lens', sample: 'view' },
+      { need: 'Sorting', recipe: 'Compare', href: '/docs/compare', sample: 'ascending' },
+      { need: 'Control flow', recipe: 'Function', href: '/docs/function', sample: 'ifElse' },
     ],
   },
   primitives: {
@@ -202,7 +214,7 @@ export const menuContent = {
     need: 'None of the above',
     recipe: 'vanilla, last',
   },
-  caption: 'Written down once, for people and for LLMs: decision trees and llm.txt ship with the repo.',
+  caption: 'Written down once, for people and for LLMs: decision trees ship with the repo, and the docs publish llms.txt.',
 } as const
 
 export const zoomContent = {
@@ -310,7 +322,7 @@ export const okContent = {
     { label: 'npm', href: links.npm },
   ],
   wordmark: 'receta',
-  package: '@ontologyio/receta 0.4.2 · MIT',
+  package: `@ontologyio/receta ${RECETA_VERSION} · MIT`,
   signOff: 'This page is a pipe. You just ran it.',
 } as const
 

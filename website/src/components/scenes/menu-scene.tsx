@@ -9,18 +9,34 @@ import { RAIL, SCENE_HEIGHT } from '@/lib/motion/rails'
 const COURSE_STATIONS = [356, 816, 958] as const
 const COLUMN_SPLIT = 7
 
+const ORDER_STYLE = 'font-machine text-[0.9375rem] font-medium whitespace-nowrap lg:text-code-5'
+const ORDER_LINK_STYLE = 'underline decoration-on-paper-3 decoration-1 underline-offset-4 hover:text-err-text'
+
 type DishProps = {
   readonly need: string
   readonly recipe: string
+  readonly href?: string | undefined
   readonly sample?: string
 }
 
+type OrderProps = Pick<DishProps, 'recipe' | 'href'>
+
+/** What to order, linked to its docs when it has a page. */
+const Order = ({ recipe, href }: OrderProps) =>
+  href ? (
+    <a href={href} className={cx(ORDER_STYLE, ORDER_LINK_STYLE)}>
+      {recipe}
+    </a>
+  ) : (
+    <span className={ORDER_STYLE}>{recipe}</span>
+  )
+
 /** One row of the card: what you need, dotted leader, what to order. */
-const Dish = ({ need, recipe, sample }: DishProps) => (
+const Dish = ({ need, recipe, href, sample }: DishProps) => (
   <li className="flex flex-row items-baseline gap-10">
     <span className="font-human text-[1.4375rem] lg:text-[1.4375rem]">{need}</span>
     <span aria-hidden className="min-w-16 flex-1 border-b-2 border-dotted border-on-paper-3 lg:reveal-draw" />
-    <span className="font-machine text-[0.9375rem] font-medium whitespace-nowrap lg:text-code-5">{recipe}</span>
+    <Order recipe={recipe} href={href} />
     {sample && (
       <span className="hidden w-114 text-right font-machine text-[0.875rem] text-on-paper-3 lg:block">{sample}</span>
     )}
@@ -73,12 +89,12 @@ export const MenuScene = ({ copy }: MenuSceneProps) => {
         <div className="flex flex-col gap-14 lg:flex-row lg:gap-80 lg:pl-44">
           <ul className="flex flex-col gap-14 lg:flex-1 lg:gap-20">
             {leftColumn.map((dish) => (
-              <Dish key={dish.need} need={dish.need} recipe={dish.recipe} sample={dish.sample} />
+              <Dish key={dish.need} need={dish.need} recipe={dish.recipe} href={dish.href} sample={dish.sample} />
             ))}
           </ul>
           <ul className="flex flex-col gap-14 lg:flex-1 lg:gap-20">
             {rightColumn.map((dish) => (
-              <Dish key={dish.need} need={dish.need} recipe={dish.recipe} sample={dish.sample} />
+              <Dish key={dish.need} need={dish.need} recipe={dish.recipe} href={dish.href} sample={dish.sample} />
             ))}
           </ul>
         </div>
