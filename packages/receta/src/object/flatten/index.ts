@@ -6,6 +6,9 @@
 
 import * as R from 'remeda'
 import type { FlatObject, FlattenOptions, PlainObject } from '../types'
+import { isOptionsObject } from '../isOptionsObject'
+
+const OPTION_TYPES = { separator: 'string', maxDepth: 'number', flattenArrays: 'boolean' } as const
 
 /**
  * Flattens a nested object into a single-level object with dot-notation keys.
@@ -15,6 +18,8 @@ import type { FlatObject, FlattenOptions, PlainObject } from '../types'
  * and database operations.
  *
  * @param obj - The object to flatten
+ * An object made only of option keys reads as options. To treat one as data, pass `{}` as the second argument.
+ *
  * @param options - Flattening options (separator, maxDepth, flattenArrays)
  * @returns A flattened object with dot-notation keys
  *
@@ -46,9 +51,8 @@ import type { FlatObject, FlattenOptions, PlainObject } from '../types'
 export function flatten(obj: PlainObject, options?: FlattenOptions): FlatObject
 export function flatten(options?: FlattenOptions): (obj: PlainObject) => FlatObject
 export function flatten(objOrOptions?: PlainObject | FlattenOptions, maybeOptions?: FlattenOptions): any {
-  // Data-last: no arguments, or a first arg that looks like options (has separator/maxDepth/flattenArrays keys)
-  if (objOrOptions === undefined || (typeof objOrOptions === 'object' &&
-      ('separator' in objOrOptions || 'maxDepth' in objOrOptions || 'flattenArrays' in objOrOptions))) {
+  // Data-last: no arguments, or a lone argument made only of options
+  if (objOrOptions === undefined || (maybeOptions === undefined && isOptionsObject(objOrOptions, OPTION_TYPES))) {
     return (obj: PlainObject) => flattenImplementation(obj, objOrOptions as FlattenOptions | undefined)
   }
 

@@ -6,6 +6,9 @@
 
 import * as R from 'remeda'
 import type { FlatObject, PlainObject, UnflattenOptions } from '../types'
+import { isOptionsObject } from '../isOptionsObject'
+
+const OPTION_TYPES = { separator: 'string' } as const
 
 /**
  * Unflattens a single-level object with dot-notation keys into a nested object.
@@ -14,6 +17,8 @@ import type { FlatObject, PlainObject, UnflattenOptions } from '../types'
  * back into `{ user: { name: 'Alice' } }`.
  *
  * @param obj - The flattened object to unflatten
+ * An object made only of option keys reads as options. To treat one as data, pass `{}` as the second argument.
+ *
  * @param options - Unflattening options (separator)
  * @returns A nested object
  *
@@ -45,8 +50,8 @@ import type { FlatObject, PlainObject, UnflattenOptions } from '../types'
 export function unflatten(obj: FlatObject, options?: UnflattenOptions): PlainObject
 export function unflatten(options?: UnflattenOptions): (obj: FlatObject) => PlainObject
 export function unflatten(objOrOptions?: FlatObject | UnflattenOptions, maybeOptions?: UnflattenOptions): any {
-  // Data-last: no arguments, or a first arg that looks like options (has separator key)
-  if (objOrOptions === undefined || (typeof objOrOptions === 'object' && 'separator' in objOrOptions && !Object.keys(objOrOptions).some(k => k.includes('.')))) {
+  // Data-last: no arguments, or a lone argument made only of options
+  if (objOrOptions === undefined || (maybeOptions === undefined && isOptionsObject(objOrOptions, OPTION_TYPES))) {
     return (obj: FlatObject) => unflattenImplementation(obj, objOrOptions as UnflattenOptions | undefined)
   }
 
