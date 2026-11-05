@@ -85,7 +85,7 @@ export function invalid<E>(errors: E | readonly E[]): Invalid<E> {
  *
  * // Using predicate builders
  * const isAdult = fromPredicate(
- *   gte<number>(18),
+ *   gte(18),
  *   'Must be 18 or older'
  * )
  *

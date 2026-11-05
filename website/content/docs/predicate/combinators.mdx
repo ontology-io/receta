@@ -17,7 +17,7 @@ title: "Predicate Combinators"
 
 **Key Properties:**
 - ✅ **Short-circuit**: `and` stops on first false, `or` stops on first true
-- ✅ **Type-safe**: Predicates of one type combine into a predicate of that type. Type guards can take part, but the result is a plain `Predicate`, so it doesn't narrow
+- ✅ **Type-safe**: Predicates of one type combine into a predicate of that type. `and` and `or` keep what up to three type guards prove, so the result narrows. `not` returns a plain `Predicate`.
 - ✅ **Pure**: No side effects, same input = same output
 - ✅ **Nestable**: Combinators can be nested infinitely
 
@@ -40,7 +40,7 @@ import * as R from 'remeda'
 import { and, gte, lt } from '@ontologyio/receta/predicate'
 
 // Age range: 18 ≤ age < 65
-const workingAge = and(gte<number>(18), lt<number>(65))
+const workingAge = and(gte(18), lt(65))
 
 const users = [
   { name: 'Teen', age: 16 },
@@ -70,8 +70,8 @@ interface Product {
 
 // Available quality products under $200
 const affordableQuality = where({
-  price: and(gt<number>(50), lt<number>(200)),
-  rating: gt<number>(4.0),
+  price: and(gt(50), lt(200)),
+  rating: gt(4.0),
   inStock: eq(true)
 })
 
@@ -81,7 +81,7 @@ R.filter(products, affordableQuality)
 const saleElectronics = and<Product>(
   where({ category: eq('electronics') }),
   where({ inStock: eq(true) }),
-  where({ price: lt<number>(100) })
+  where({ price: lt(100) })
 )
 ```
 
@@ -99,10 +99,10 @@ interface User {
 const canAccessModPanel = and<User>(
   where({ verified: eq(true) }),
   or<User>(
-    where({ role: eq('admin') }),
+    where({ role: eq<User['role']>('admin') }),
     and<User>(
-      where({ role: eq('moderator') }),
-      where({ accountAgeDays: gt<number>(90) })
+      where({ role: eq<User['role']>('moderator') }),
+      where({ accountAgeDays: gt(90) })
     )
   )
 )
@@ -234,8 +234,8 @@ const isActive2 = oneOf(['pending', 'processing', 'shipped'])
 ```typescript
 // Either budget (< $50) or premium (> $500)
 const budgetOrPremium = or(
-  lt<number>(50),
-  gt<number>(500)
+  lt(50),
+  gt(500)
 )
 
 const products = [
@@ -256,7 +256,7 @@ const canEdit = (user: User, resource: Resource) =>
   or<User>(
     where({ id: eq(resource.ownerId) }),
     where({ role: eq('admin'), verified: eq(true) }),
-    where({ role: eq('moderator'), reputation: gt<number>(1000) })
+    where({ role: eq('moderator'), reputation: gt(1000) })
   )(user)
 ```
 
@@ -356,7 +356,7 @@ Returns true if **exactly one** predicate returns true.
 import { xor, lt, gt } from '@ontologyio/receta/predicate'
 
 // Numbers outside range 8-12 (< 8 OR > 12, but not both)
-const outsideRange = xor(lt<number>(8), gt<number>(12))
+const outsideRange = xor(lt(8), gt(12))
 
 const numbers = [1, 5, 10, 15, 20]
 R.filter(numbers, outsideRange)
@@ -542,7 +542,7 @@ const inRange = (min: number, max: number) =>
 
 // Or use between()
 import { between } from '@ontologyio/receta/predicate'
-const inRange2 = between<number>(18, 65) // Cleaner!
+const inRange2 = between(18, 65) // Cleaner!
 ```
 
 ### Pattern 2: Multi-Status Check
@@ -570,7 +570,7 @@ const hasPermission = (user: User, permission: string) =>
 ```typescript
 const validOrder = where({
   status: oneOf(['pending', 'processing']),
-  amount: and(gt<number>(0), lt<number>(10000)),
+  amount: and(gt(0), lt(10000)),
   customer: where({
     verified: eq(true),
     country: oneOf(['US', 'CA', 'UK'])
@@ -588,14 +588,14 @@ import { and, or, not, eq, gt, lt } from '@ontologyio/receta/predicate'
 
 describe('Predicate combinators', () => {
   it('and - all must pass', () => {
-    const inRange = and(gt<number>(10), lt<number>(20))
+    const inRange = and(gt(10), lt(20))
     expect(inRange(15)).toBe(true)
     expect(inRange(5)).toBe(false)
     expect(inRange(25)).toBe(false)
   })
 
   it('or - any can pass', () => {
-    const extremes = or(lt<number>(10), gt<number>(90))
+    const extremes = or(lt(10), gt(90))
     expect(extremes(5)).toBe(true)
     expect(extremes(95)).toBe(true)
     expect(extremes(50)).toBe(false)

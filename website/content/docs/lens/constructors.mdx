@@ -150,7 +150,7 @@ const reducer = (state: AppState, action: Action): AppState => {
 function path<S, A = unknown>(pathStr: string): Lens<S, A>
 ```
 
-**When to use**: You need to access/update properties multiple levels deep. Paths step through plain objects, so use `index` for array elements. The path string isn't checked against the type, and the value type you pass is taken on trust.
+**When to use**: You need to access/update properties multiple levels deep. Paths step through plain objects and arrays, so `items.0.name` reaches into the first item. The path string isn't checked against the type, and the value type you pass is taken on trust.
 
 ### Basic Usage
 

@@ -229,9 +229,9 @@ type Product = {
 }
 
 // Build reusable predicates
-const isExpensive = where<Product>({ price: gt<number>(1000) })
-const isAffordable = where<Product>({ price: lt<number>(100) })
-const isInStock = where<Product>({ stock: gt<number>(0) })
+const isExpensive = where<Product>({ price: gt(1000) })
+const isAffordable = where<Product>({ price: lt(100) })
+const isInStock = where<Product>({ stock: gt(0) })
 const isFeatured = where<Product>({ featured: (x) => x === true })
 const isElectronics = where<Product>({ category: oneOf(['laptop', 'phone', 'tablet']) })
 
@@ -268,7 +268,7 @@ type User = {
 }
 
 // Define predicates
-const isAdult = where<User>({ age: gt<number>(18) })
+const isAdult = where<User>({ age: gt(18) })
 const isVerified = where<User>({ verified: (x) => x === true })
 const isPremium = where<User>({ premium: (x) => x === true })
 const isFullAccess = and(isAdult, isVerified)

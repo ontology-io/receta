@@ -17,12 +17,12 @@ import type { Predicate } from '../types'
  * import * as R from 'remeda'
  *
  * const numbers = [1, 5, 10, 15, 20]
- * R.filter(numbers, gt<number>(10)) // => [15, 20]
+ * R.filter(numbers, gt(10)) // => [15, 20]
  *
  * // With pipe
  * R.pipe(
  *   numbers,
- *   R.filter(gt<number>(10))
+ *   R.filter(gt(10))
  * ) // => [15, 20]
  * ```
  *
@@ -48,7 +48,7 @@ export function gt<T extends number | bigint>(threshold: T): Predicate<T> {
  * import * as R from 'remeda'
  *
  * const numbers = [1, 5, 10, 15, 20]
- * R.filter(numbers, gte<number>(10)) // => [10, 15, 20]
+ * R.filter(numbers, gte(10)) // => [10, 15, 20]
  * ```
  *
  * @see gt - for exclusive comparison (>)
@@ -72,7 +72,7 @@ export function gte<T extends number | bigint>(threshold: T): Predicate<T> {
  * import * as R from 'remeda'
  *
  * const numbers = [1, 5, 10, 15, 20]
- * R.filter(numbers, lt<number>(10)) // => [1, 5]
+ * R.filter(numbers, lt(10)) // => [1, 5]
  *
  * // Useful for filtering by age, price, etc.
  * const products = [
@@ -80,7 +80,7 @@ export function gte<T extends number | bigint>(threshold: T): Predicate<T> {
  *   { name: 'B', price: 15 },
  *   { name: 'C', price: 25 }
  * ]
- * R.filter(products, (p) => lt<number>(20)(p.price)) // => products A and B
+ * R.filter(products, (p) => lt(20)(p.price)) // => products A and B
  * ```
  *
  * @see lte - for inclusive comparison (<=)
@@ -105,7 +105,7 @@ export function lt<T extends number | bigint>(threshold: T): Predicate<T> {
  * import * as R from 'remeda'
  *
  * const numbers = [1, 5, 10, 15, 20]
- * R.filter(numbers, lte<number>(10)) // => [1, 5, 10]
+ * R.filter(numbers, lte(10)) // => [1, 5, 10]
  * ```
  *
  * @see lt - for exclusive comparison (<)
@@ -177,7 +177,7 @@ export const neq = <T>(expected: T): Predicate<T> => (value) => value !== expect
  * import * as R from 'remeda'
  *
  * const numbers = [1, 5, 10, 15, 20, 25]
- * R.filter(numbers, between<number>(10, 20)) // => [10, 15, 20]
+ * R.filter(numbers, between(10, 20)) // => [10, 15, 20]
  *
  * // Real-world: Filter products by price range
  * const products = [
@@ -185,7 +185,7 @@ export const neq = <T>(expected: T): Predicate<T> => (value) => value !== expect
  *   { name: 'Standard', price: 15 },
  *   { name: 'Premium', price: 50 }
  * ]
- * R.filter(products, (p) => between<number>(10, 30)(p.price))
+ * R.filter(products, (p) => between(10, 30)(p.price))
  * // => [{ name: 'Standard', price: 15 }]
  * ```
  *

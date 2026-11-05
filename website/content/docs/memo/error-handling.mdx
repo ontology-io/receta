@@ -103,7 +103,7 @@ function clearDraftPosts() {
 }
 ```
 
-`invalidateWhere` needs a cache it can walk through, so use it with the default cache, or a custom cache that has a `forEach` method. It throws for `ttlCache`, `lruCache` and `weakCache`. With `memoizeAsync`, the value it passes is the cached promise.
+`invalidateWhere` needs a cache it can walk through, so use it with the default cache, `ttlCache`, `lruCache` or a custom cache that has a `forEach` method. It throws for `weakCache`, because a WeakMap can't be listed. With `memoizeAsync`, the value it passes is the cached promise.
 
 ### Multi-Cache Invalidation
 

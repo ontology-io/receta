@@ -506,7 +506,7 @@ const searchUsers = debounce(
 )
 
 // Only the last keystroke of a burst runs
-// Earlier calls were replaced, so their promises never settle
+// Earlier calls were replaced, so they all get the result of that last run
 searchInput.addEventListener('input', async (event) => {
   const result = await searchUsers(event.target.value)
 
@@ -517,7 +517,7 @@ searchInput.addEventListener('input', async (event) => {
 })
 ```
 
-Debounce belongs where a newer call can replace an older one, such as a search box. Don't put it in front of a server handler: a request whose call was replaced would wait forever.
+Debounce belongs where a newer call can replace an older one, such as a search box. Don't put it in front of a server handler: a request whose call was replaced would get the answer to someone else's request.
 
 ### 6. Real-Time Data Sync with Throttling
 

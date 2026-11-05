@@ -52,7 +52,7 @@ const users: User[] = [
 
 // Active adults
 const activeAdult = where({
-  age: gt<number>(18),
+  age: gt(18),
   active: Boolean  // shorthand for (v) => Boolean(v)
 })
 
@@ -67,7 +67,7 @@ Think of `where()` like SQL or MongoDB queries:
 ```typescript
 // SQL: SELECT * FROM products WHERE price >= 100 AND inStock = true
 const query = where({
-  price: gte<number>(100),
+  price: gte(100),
   inStock: eq(true)
 })
 
@@ -78,7 +78,7 @@ R.filter(products, query)
 // MongoDB: db.orders.find({ status: 'pending', amount: { $gt: 1000 } })
 const query = where({
   status: eq('pending'),
-  amount: gt<number>(1000)
+  amount: gt(1000)
 })
 
 R.filter(orders, query)
@@ -112,8 +112,8 @@ interface Product {
 // Products: electronics, $50-200, rated 4+, in stock
 const affordableQualityElectronics = where({
   category: eq('electronics'),
-  price: between<number>(50, 200),
-  rating: gte<number>(4.0),
+  price: between(50, 200),
+  rating: gte(4.0),
   inStock: eq(true)
 })
 
@@ -148,13 +148,13 @@ const verifiedAdmin = where({
 const seniorModerator = where({
   role: eq('moderator'),
   verified: eq(true),
-  accountAgeDays: gte<number>(90)
+  accountAgeDays: gte(90)
 })
 
 // Premium users
 const premiumUser = where({
   verified: eq(true),
-  premiumTier: gt<number>(0)
+  premiumTier: gt(0)
 })
 ```
 
@@ -181,7 +181,7 @@ const criticalIssues = where({
   state: eq('open'),
   labels: (labels: string[]) =>
     labels.includes('critical') || labels.includes('security'),
-  comments: lt<number>(2)  // Few comments = needs attention
+  comments: lt(2)  // Few comments = needs attention
 })
 ```
 
@@ -200,13 +200,13 @@ interface Order {
 // Active high-value orders
 const activeHighValue = where({
   status: oneOf(['pending', 'processing']),
-  amount: gte<number>(1000),
+  amount: gte(1000),
   isPriority: eq(true)
 })
 
 // Recent large orders
 const recentLargeOrders = where({
-  amount: gt<number>(5000),
+  amount: gt(5000),
   createdAt: (date: Date) =>
     date.getTime() > Date.now() - 7 * 24 * 60 * 60 * 1000 // Last 7 days
 })
@@ -227,13 +227,13 @@ interface Order {
 
 // For nested properties, use custom predicates
 const usVerifiedOrders = where({
-  amount: gt<number>(100),
+  amount: gt(100),
   customer: (customer: Order['customer']) => customer.country === 'US' && customer.verified
 })
 
 // Or nest another where()
 const usVerifiedOrders2 = where({
-  amount: gt<number>(100),
+  amount: gt(100),
   customer: where({
     country: eq('US'),
     verified: eq(true)
@@ -343,7 +343,7 @@ const users = [
   { name: 'Charlie', age: 30 }
 ]
 
-R.filter(users, prop('age', gt<number>(18)))
+R.filter(users, prop('age', gt(18)))
 // => Alice and Charlie
 ```
 
@@ -356,7 +356,7 @@ R.filter(users, prop('age', gt<number>(18)))
 R.pipe(
   users,
   R.filter(prop('verified', eq(true))),
-  R.filter(prop('age', gte<number>(18))),
+  R.filter(prop('age', gte(18))),
   R.filter(prop('country', oneOf(['US', 'CA'])))
 )
 
@@ -466,7 +466,7 @@ const hasProperty = <T extends Record<string, unknown>, K extends string>(
 ): Predicate<T>
 ```
 
-Check if an object has a specific property (regardless of value). Describe the data with a `type` alias: `hasProperty` needs a `Record<string, unknown>`, and an `interface` doesn't count as one.
+Check if an object has a specific property (regardless of value).
 
 ### Basic Usage
 
@@ -531,7 +531,7 @@ const users = [
 ]
 
 // Users with multiple tags
-R.filter(users, by((u) => u.tags.length, gt<number>(1)))
+R.filter(users, by((u) => u.tags.length, gt(1)))
 // => Alice and Charlie
 ```
 
@@ -549,7 +549,7 @@ interface Product {
 // Final price > $80 after discount
 const expensiveAfterDiscount = by(
   (p: Product) => p.price * (1 - p.discount),
-  gt<number>(80)
+  gt(80)
 )
 
 R.filter(products, expensiveAfterDiscount)
@@ -561,13 +561,13 @@ R.filter(products, expensiveAfterDiscount)
 // Long usernames (> 10 characters)
 const longUsername = by(
   (u: User) => u.username.length,
-  gt<number>(10)
+  gt(10)
 )
 
 // Short descriptions
 const shortDescription = by(
   (p: Product) => p.description.length,
-  lt<number>(50)
+  lt(50)
 )
 ```
 
@@ -577,13 +577,13 @@ const shortDescription = by(
 // Users with many followers
 const popular = by(
   (u: User) => u.followers.length,
-  gte<number>(1000)
+  gte(1000)
 )
 
 // Products with reviews
 const hasReviews = by(
   (p: Product) => p.reviews.length,
-  gt<number>(0)
+  gt(0)
 )
 ```
 
@@ -600,13 +600,13 @@ const accountAgeDays = (u: User) =>
   Math.floor((Date.now() - u.createdAt.getTime()) / (24 * 60 * 60 * 1000))
 
 // Veteran users (account > 365 days)
-const veteranUsers = by(accountAgeDays, gt<number>(365))
+const veteranUsers = by(accountAgeDays, gt(365))
 
 // Inactive users (no login in 90 days)
 const daysSinceLogin = (u: User) =>
   Math.floor((Date.now() - u.lastLoginAt.getTime()) / (24 * 60 * 60 * 1000))
 
-const inactiveUsers = by(daysSinceLogin, gt<number>(90))
+const inactiveUsers = by(daysSinceLogin, gt(90))
 ```
 
 ---
@@ -661,8 +661,8 @@ const eligibleForDiscount = satisfies((order: Order) => {
 // E-commerce: Premium electronics on sale, highly rated
 const dealOfTheDay = where({
   category: eq('electronics'),
-  price: and(gt<number>(100), lt<number>(500)),
-  rating: gte<number>(4.5),
+  price: and(gt(100), lt(500)),
+  rating: gte(4.5),
   inStock: eq(true),
   tags: by(
     (tags: string[]) => tags,
@@ -679,8 +679,8 @@ const canModerate = or<User>(
   where({
     role: eq('user'),
     verified: eq(true),
-    reputation: gt<number>(1000),
-    accountAgeDays: gt<number>(180)
+    reputation: gt(1000),
+    accountAgeDays: gt(180)
   })
 )
 ```
@@ -695,12 +695,12 @@ Create a predicates module for your domain:
 // predicates/user.ts
 import { where, and, or, eq, gt, oneOf, by } from '@ontologyio/receta/predicate'
 
-export const isAdult = where({ age: gt<number>(18) })
+export const isAdult = where({ age: gt(18) })
 export const isVerified = where({ verified: eq(true) })
 export const isStaff = where({ role: oneOf(['admin', 'moderator']) })
 export const isActive = where({ status: eq('active'), verified: eq(true) })
-export const isPremium = where({ tier: gt<number>(0) })
-export const isVeteran = by((u: User) => u.accountAgeDays, gt<number>(365))
+export const isPremium = where({ tier: gt(0) })
+export const isVeteran = by((u: User) => u.accountAgeDays, gt(365))
 
 // Compose them
 export const canAccessPremiumContent = or<User>(isPremium, isStaff)

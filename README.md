@@ -178,10 +178,10 @@ const products = [
 const filtered = R.filter(
   products,
   where({
-    price: between<number>(10, 100),
+    price: between(10, 100),
     inStock: Boolean,
     category: oneOf(['electronics', 'books']),
-    rating: gte<number>(4.0)
+    rating: gte(4.0)
   })
 )
 // [{ price: 50, ... }]

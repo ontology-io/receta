@@ -1019,12 +1019,12 @@ const parseConfig = (json: string): Result<Config, ParseError> =>
 
 ## Publishing
 
-Receta is published to npm and JSR. There is no root import: use a module path such as `@ontologyio/receta/result`. `Result`, `Option` and `Validation` are types, so `Result.map(...)` doesn't exist. Import the functions by name.
+Receta is published to npm. There is no root import: use a module path such as `@ontologyio/receta/result`. `Result`, `Option` and `Validation` are types, so `Result.map(...)` doesn't exist. Import the functions by name.
 
 ```bash
 bun add @ontologyio/receta remeda
 npm install @ontologyio/receta remeda
-deno add jsr:@ontologyio/receta
+deno add npm:@ontologyio/receta
 ```
 
 ### Publishing Workflow
@@ -1033,7 +1033,7 @@ deno add jsr:@ontologyio/receta
 2. **Release PR Created**: Merge the Release Please PR to publish
 3. **Multi-Registry Deploy**: Automatically publishes to:
    - ✅ npm (primary)
-   - ✅ JSR (Deno)
+   - ⚠️ JSR (Deno): stuck on 0.3.0 until the repo is linked to the package on jsr.io
    - ✅ GitHub Packages (backup)
 
 ### Manual Publishing

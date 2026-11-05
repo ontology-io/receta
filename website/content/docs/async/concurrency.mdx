@@ -239,7 +239,7 @@ type MapAsyncError = {
 }
 ```
 
-`index` and `item` say which item failed, but only when `concurrency` is lower than the number of items. Without a limit the work runs through `Promise.all`, which can't say which promise rejected, so you get `index: -1` and `item: undefined`.
+`index` and `item` say which item failed.
 
 ### What Counts as a Failure
 
