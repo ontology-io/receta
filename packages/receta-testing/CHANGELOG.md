@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/ontology-io/receta/compare/receta-testing@v0.2.0...receta-testing@v0.2.1) (2026-11-05)
+
+
+### Features
+
+* official website, Fumadocs docs and library fixes ([6124b2c](https://github.com/ontology-io/receta/commit/6124b2c05b0065008399965c6e778b10b7f51f61))
+
 ## [0.2.0](https://github.com/ontology-io/receta/compare/receta-testing@v0.1.3...receta-testing@v0.2.0) (2026-10-22)
 
 
