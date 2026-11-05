@@ -6,6 +6,7 @@
 
 import type { ObjectPath, PlainObject } from '../types'
 import { purryConfig2 } from '../../utils/purry'
+import { setOwnKey } from '../../utils/setOwnKey'
 
 /**
  * Immutably sets a value at a given path in an object.
@@ -62,7 +63,7 @@ function setPathImplementation<T extends PlainObject>(path: ObjectPath, value: u
     // Base case: set the value
     if (Array.isArray(obj)) {
       const newArray = [...obj]
-      newArray[head as number] = value
+      setOwnKey(newArray, head, value)
       return newArray as any as T
     } else {
       return { ...obj, [head as any]: value } as T
@@ -93,7 +94,7 @@ function setPathImplementation<T extends PlainObject>(path: ObjectPath, value: u
 
   if (Array.isArray(obj)) {
     const newArray = [...obj]
-    newArray[head as number] = updatedNext
+    setOwnKey(newArray, head, updatedNext)
     return newArray as any as T
   } else {
     return { ...obj, [head as any]: updatedNext } as T

@@ -1,6 +1,7 @@
 import * as R from 'remeda'
 import type { Lens, Path, PathValue } from '../types'
 import { lens } from '../lens'
+import { setOwnKey } from '../../utils/setOwnKey'
 
 /**
  * Creates a Lens focusing on a nested property using dot notation.
@@ -95,6 +96,11 @@ function setNested(container: unknown, keys: readonly string[], value: unknown):
  * @internal
  */
 function withKey(container: unknown, key: string, value: unknown): unknown {
-  if (Array.isArray(container)) return Object.assign([...container], { [key]: value })
+  if (Array.isArray(container)) {
+    const copy = [...container]
+    setOwnKey(copy, key, value)
+    return copy
+  }
+
   return R.isObjectType(container) ? { ...container, [key]: value } : { [key]: value }
 }

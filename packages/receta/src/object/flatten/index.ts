@@ -7,6 +7,7 @@
 import * as R from 'remeda'
 import type { FlatObject, FlattenOptions, PlainObject } from '../types'
 import { isOptionsObject } from '../isOptionsObject'
+import { setOwnKey } from '../../utils/setOwnKey'
 
 const OPTION_TYPES = { separator: 'string', maxDepth: 'number', flattenArrays: 'boolean' } as const
 
@@ -68,13 +69,13 @@ function flattenImplementation(obj: PlainObject, options?: FlattenOptions): Flat
   function recurse(current: unknown, path: string[], depth: number): void {
     // Stop at max depth (depth is 0-indexed, so depth >= maxDepth means we've reached the limit)
     if (depth >= maxDepth) {
-      result[path.join(separator)] = current
+      setOwnKey(result, path.join(separator), current)
       return
     }
 
     // Handle null/undefined
     if (current == null) {
-      result[path.join(separator)] = current
+      setOwnKey(result, path.join(separator), current)
       return
     }
 
@@ -82,14 +83,14 @@ function flattenImplementation(obj: PlainObject, options?: FlattenOptions): Flat
     if (Array.isArray(current)) {
       if (flattenArrays) {
         if (current.length === 0) {
-          result[path.join(separator)] = []
+          setOwnKey(result, path.join(separator), [])
         } else {
           current.forEach((item, index) => {
             recurse(item, [...path, String(index)], depth + 1)
           })
         }
       } else {
-        result[path.join(separator)] = current
+        setOwnKey(result, path.join(separator), current)
       }
       return
     }
@@ -99,7 +100,7 @@ function flattenImplementation(obj: PlainObject, options?: FlattenOptions): Flat
       const entries = Object.entries(current as Record<string, unknown>)
 
       if (entries.length === 0) {
-        result[path.join(separator)] = {}
+        setOwnKey(result, path.join(separator), {})
       } else {
         entries.forEach(([key, value]) => {
           recurse(value, [...path, key], depth + 1)
@@ -109,7 +110,7 @@ function flattenImplementation(obj: PlainObject, options?: FlattenOptions): Flat
     }
 
     // Handle primitives and other types
-    result[path.join(separator)] = current
+    setOwnKey(result, path.join(separator), current)
   }
 
   // Start recursion

@@ -7,11 +7,9 @@
 import * as R from 'remeda'
 import type { FlatObject, PlainObject, UnflattenOptions } from '../types'
 import { isOptionsObject } from '../isOptionsObject'
+import { setOwnKey } from '../../utils/setOwnKey'
 
 const OPTION_TYPES = { separator: 'string' } as const
-
-// A path through one of these reaches a prototype every object shares.
-const UNSAFE_KEYS: ReadonlySet<string> = new Set(['__proto__', 'constructor', 'prototype'])
 
 /**
  * Unflattens a single-level object with dot-notation keys into a nested object.
@@ -21,7 +19,6 @@ const UNSAFE_KEYS: ReadonlySet<string> = new Set(['__proto__', 'constructor', 'p
  *
  * @param obj - The flattened object to unflatten
  * An object made only of option keys reads as options. To treat one as data, pass `{}` as the second argument.
- * Keys with a `__proto__`, `constructor` or `prototype` segment are skipped.
  *
  * @param options - Unflattening options (separator)
  * @returns A nested object
@@ -70,15 +67,13 @@ function unflattenImplementation(obj: FlatObject, options?: UnflattenOptions): P
 
   Object.entries(obj).forEach(([key, value]) => {
     const parts = key.split(separator)
-    if (parts.some((part) => UNSAFE_KEYS.has(part))) return
-
     let current: any = result
 
     parts.forEach((part, index) => {
       const isLast = index === parts.length - 1
 
       if (isLast) {
-        current[part] = value
+        setOwnKey(current, part, value)
       } else {
         // Check if next part is a number to determine array vs object
         const nextPart = parts[index + 1]
@@ -86,7 +81,7 @@ function unflattenImplementation(obj: FlatObject, options?: UnflattenOptions): P
 
         // Own keys only: an inherited one would walk into a shared prototype
         if (!Object.hasOwn(current, part) || current[part] === undefined) {
-          current[part] = isNextPartNumber ? [] : {}
+          setOwnKey(current, part, isNextPartNumber ? [] : {})
         }
 
         current = current[part]

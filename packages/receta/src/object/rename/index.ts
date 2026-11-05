@@ -49,7 +49,7 @@ function renameImplementation<T extends PlainObject>(obj: T, mapping: Record<str
   const result: PlainObject = {}
 
   Object.entries(obj).forEach(([key, value]) => {
-    const newKey = mapping[key] ?? key
+    const newKey = Object.hasOwn(mapping, key) ? mapping[key] : key
     setOwnKey(result, newKey, value)
   })
 

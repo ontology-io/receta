@@ -77,8 +77,8 @@ function diffImplementation<T, TId extends string | number>(
   getId: (item: T) => TId,
   isEqual: Comparator<T> = defaultEqual
 ): DiffResult<T> {
-  const oldById = R.indexBy(oldItems, getId) as Record<string | number, T | undefined>
-  const newById = R.indexBy(newItems, getId) as Record<string | number, T | undefined>
+  const oldById = indexById(oldItems, getId)
+  const newById = indexById(newItems, getId)
 
   const oldIds = new Set(R.keys(oldById))
   const newIds = new Set(R.keys(newById))
@@ -113,6 +113,20 @@ function diffImplementation<T, TId extends string | number>(
   }
 
   return { added, updated, removed, unchanged }
+}
+
+/** Indexes on an object with no prototype, so an id such as __proto__ is ordinary data. */
+function indexById<T>(
+  items: readonly T[],
+  getId: (item: T) => string | number
+): Record<string | number, T | undefined> {
+  const index: Record<string | number, T | undefined> = Object.create(null)
+
+  for (const item of items) {
+    index[getId(item)] = item
+  }
+
+  return index
 }
 
 function defaultEqual<T>(a: T, b: T): boolean {
