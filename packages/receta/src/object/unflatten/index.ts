@@ -6,6 +6,10 @@
 
 import * as R from 'remeda'
 import type { FlatObject, PlainObject, UnflattenOptions } from '../types'
+import { isOptionsObject } from '../isOptionsObject'
+import { setOwnKey } from '../../utils/setOwnKey'
+
+const OPTION_TYPES = { separator: 'string' } as const
 
 /**
  * Unflattens a single-level object with dot-notation keys into a nested object.
@@ -14,6 +18,8 @@ import type { FlatObject, PlainObject, UnflattenOptions } from '../types'
  * back into `{ user: { name: 'Alice' } }`.
  *
  * @param obj - The flattened object to unflatten
+ * An object made only of option keys reads as options. To treat one as data, pass `{}` as the second argument.
+ *
  * @param options - Unflattening options (separator)
  * @returns A nested object
  *
@@ -32,8 +38,8 @@ import type { FlatObject, PlainObject, UnflattenOptions } from '../types'
  * unflatten({ 'items.0': 'a', 'items.1': 'b' })
  * // => { items: ['a', 'b'] }
  *
- * // In a pipe, wrap it. unflatten() returns {} instead of a function, and
- * // TypeScript reads unflatten({ separator: '_' }) as the data-first call.
+ * // unflatten() works in a pipe. With options, wrap it, because TypeScript
+ * // reads unflatten({ separator: '_' }) as the data-first call.
  * pipe(
  *   flat,
  *   (obj) => unflatten(obj)
@@ -45,13 +51,13 @@ import type { FlatObject, PlainObject, UnflattenOptions } from '../types'
 export function unflatten(obj: FlatObject, options?: UnflattenOptions): PlainObject
 export function unflatten(options?: UnflattenOptions): (obj: FlatObject) => PlainObject
 export function unflatten(objOrOptions?: FlatObject | UnflattenOptions, maybeOptions?: UnflattenOptions): any {
-  // Data-last: no arguments, or a first arg that looks like options (has separator key)
-  if (objOrOptions === undefined || (typeof objOrOptions === 'object' && 'separator' in objOrOptions && !Object.keys(objOrOptions).some(k => k.includes('.')))) {
+  // Data-last: no arguments, or a lone argument made only of options
+  if (maybeOptions === undefined && (objOrOptions === undefined || isOptionsObject(objOrOptions, OPTION_TYPES))) {
     return (obj: FlatObject) => unflattenImplementation(obj, objOrOptions as UnflattenOptions | undefined)
   }
 
   // Data-first
-  return unflattenImplementation(objOrOptions as FlatObject, maybeOptions)
+  return unflattenImplementation(objOrOptions as FlatObject ?? {}, maybeOptions)
 }
 
 function unflattenImplementation(obj: FlatObject, options?: UnflattenOptions): PlainObject {
@@ -67,14 +73,15 @@ function unflattenImplementation(obj: FlatObject, options?: UnflattenOptions): P
       const isLast = index === parts.length - 1
 
       if (isLast) {
-        current[part] = value
+        setOwnKey(current, part, value)
       } else {
         // Check if next part is a number to determine array vs object
         const nextPart = parts[index + 1]
         const isNextPartNumber = nextPart !== undefined && /^\d+$/.test(nextPart)
 
-        if (current[part] === undefined) {
-          current[part] = isNextPartNumber ? [] : {}
+        // Own keys only: an inherited one would walk into a shared prototype
+        if (!Object.hasOwn(current, part) || current[part] === undefined) {
+          setOwnKey(current, part, isNextPartNumber ? [] : {})
         }
 
         current = current[part]

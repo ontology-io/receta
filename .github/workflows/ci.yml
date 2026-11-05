@@ -133,3 +133,7 @@ jobs:
 
       - name: Lint
         run: bunx nx run receta:lint
+
+      - name: Check Receta can publish to JSR
+        working-directory: packages/receta
+        run: bunx jsr publish --dry-run --allow-dirty

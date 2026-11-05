@@ -6,6 +6,7 @@
 
 import * as R from 'remeda'
 import type { PlainObject, DeepMergeOptions } from '../types'
+import { setOwnKey } from '../../utils/setOwnKey'
 
 /**
  * Deep merges multiple objects with configurable conflict resolution.
@@ -60,14 +61,14 @@ import type { PlainObject, DeepMergeOptions } from '../types'
 export function deepMerge(objects: readonly PlainObject[], options?: DeepMergeOptions): PlainObject
 export function deepMerge(options?: DeepMergeOptions): (objects: readonly PlainObject[]) => PlainObject
 export function deepMerge(objectsOrOptions?: readonly PlainObject[] | DeepMergeOptions, maybeOptions?: DeepMergeOptions): any {
-  // Data-last: only an array is data, so anything else is the options
-  if (!Array.isArray(objectsOrOptions)) {
+  // Data-last: only an array is data, so a lone anything else is the options
+  if (maybeOptions === undefined && !Array.isArray(objectsOrOptions)) {
     return (objects: readonly PlainObject[]) =>
       deepMergeImplementation(objects, objectsOrOptions as DeepMergeOptions | undefined)
   }
 
   // Data-first
-  return deepMergeImplementation(objectsOrOptions as readonly PlainObject[], maybeOptions)
+  return deepMergeImplementation(objectsOrOptions as readonly PlainObject[] ?? [], maybeOptions)
 }
 
 function deepMergeImplementation(objects: readonly PlainObject[], options?: DeepMergeOptions): PlainObject {
@@ -114,13 +115,13 @@ function deepMergeImplementation(objects: readonly PlainObject[], options?: Deep
     const result = { ...target }
 
     Object.entries(source).forEach(([key, sourceValue]) => {
-      const targetValue = result[key]
+      const targetValue = Object.hasOwn(result, key) ? result[key] : undefined
 
-      if (targetValue === undefined) {
-        result[key] = sourceValue
-      } else {
-        result[key] = mergeValues(key, targetValue, sourceValue)
-      }
+      setOwnKey(
+        result,
+        key,
+        targetValue === undefined ? sourceValue : mergeValues(key, targetValue, sourceValue)
+      )
     })
 
     return result

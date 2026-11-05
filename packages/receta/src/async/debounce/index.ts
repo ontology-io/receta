@@ -1,4 +1,31 @@
 import type { DebounceOptions } from '../types'
+import { match, tryCatchAsync } from '../../result'
+
+/** The calls waiting for one run. They share a promise, so handling any of them handles all. */
+type Batch<T> = {
+  readonly promise: Promise<T>
+  readonly resolve: (value: T) => void
+  readonly reject: (reason: unknown) => void
+}
+
+const createBatch = <T>(): Batch<T> => {
+  let resolve!: Batch<T>['resolve']
+  let reject!: Batch<T>['reject']
+  const promise = new Promise<T>((settle, fail) => {
+    resolve = settle
+    reject = fail
+  })
+  return { promise, resolve, reject }
+}
+
+/** Rejects for a caller who awaits, without crashing a process that ignores the promise. */
+const rejectQuietly = (message: string): Promise<never> => {
+  const rejected = Promise.reject(new Error(message))
+  rejected.catch(() => undefined)
+  return rejected
+}
+
+const NOTHING_CAN_RUN = 'debounce: leading and trailing are both false, so fn never runs'
 
 /**
  * Debounces an async function.
@@ -9,9 +36,10 @@ import type { DebounceOptions } from '../types'
  * Useful for rate-limiting API calls, search inputs, or any operation
  * that shouldn't run on every invocation.
  *
- * The promise of a call that a newer call replaces never settles. With
- * `trailing: false`, neither does the promise of a call ignored during the delay.
- * There is no `cancel` or `flush`.
+ * Every call settles. A call that a newer one replaces gets the result of the run
+ * that replaced it, and with `trailing: false`, a call ignored during the delay gets
+ * the result of the last leading run. If `leading` and `trailing` are both false,
+ * nothing can run, so every call rejects. There is no `cancel` or `flush`.
  *
  * @param fn - Async function to debounce
  * @param options - Debounce options
@@ -29,7 +57,7 @@ import type { DebounceOptions } from '../types'
  * )
  *
  * // User types "hello" quickly
- * searchAPI('h')      // Replaced, its promise never settles
+ * searchAPI('h')      // Replaced, settles with the result for 'hello'
  * searchAPI('he')     // Replaced
  * searchAPI('hel')    // Replaced
  * searchAPI('hell')   // Replaced
@@ -52,39 +80,44 @@ export function debounce<TArgs extends readonly unknown[], TReturn>(
 
   let timeoutId: ReturnType<typeof setTimeout> | undefined
   let lastInvocation = 0
+  let lastRun: Promise<TReturn> | undefined
+  // A later call replaces the arguments of a waiting call, never its promise.
+  let batch: Batch<TReturn> | undefined
 
-  const debounced = (...args: TArgs): Promise<TReturn> => {
-    const now = Date.now()
-    const timeSinceLastInvocation = now - lastInvocation
+  const run = async (args: TArgs, running: Batch<TReturn>): Promise<void> => {
+    lastInvocation = Date.now()
+    batch = undefined
+
+    match(await tryCatchAsync(() => fn(...args)), {
+      onOk: running.resolve,
+      onErr: running.reject,
+    })
+  }
+
+  return (...args: TArgs): Promise<TReturn> => {
+    const shouldExecuteLeading = leading && Date.now() - lastInvocation >= delay
 
     if (timeoutId !== undefined) {
       clearTimeout(timeoutId)
       timeoutId = undefined
     }
 
-    return new Promise<TReturn>((resolve, reject) => {
-      const execute = (): void => {
-        fn(...args)
-          .then(resolve)
-          .catch(reject)
-      }
+    if (!shouldExecuteLeading && !trailing) {
+      return lastRun ?? rejectQuietly(NOTHING_CAN_RUN)
+    }
 
-      const shouldExecuteLeading = leading && timeSinceLastInvocation >= delay
-      if (shouldExecuteLeading) {
-        lastInvocation = now
-        execute()
-        return
-      }
+    const waiting = (batch ??= createBatch<TReturn>())
 
-      if (trailing) {
-        timeoutId = setTimeout(() => {
-          lastInvocation = Date.now()
-          timeoutId = undefined
-          execute()
-        }, delay)
-      }
-    })
+    if (shouldExecuteLeading) {
+      lastRun = waiting.promise
+      void run(args, waiting)
+    } else {
+      timeoutId = setTimeout(() => {
+        timeoutId = undefined
+        void run(args, waiting)
+      }, delay)
+    }
+
+    return waiting.promise
   }
-
-  return debounced
 }

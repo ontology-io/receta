@@ -1,11 +1,15 @@
 import { ESLintUtils } from '@typescript-eslint/utils'
 import type { TSESLint, TSESTree } from '@typescript-eslint/utils'
 import {
+  canChangeReturnType,
   findEnclosingFunction,
   generateImportStatement,
+  insertImport,
   isCatchClauseReturningFailure,
   isCatchClauseTransparent,
   isEntryPointGuard,
+  isNameInScope,
+  resolveBinding,
 } from '../utils/ast-helpers.js'
 
 const createRule = ESLintUtils.RuleCreator(
@@ -14,16 +18,18 @@ const createRule = ESLintUtils.RuleCreator(
 
 type MessageIds = 'preferResult' | 'addResultImport'
 
+const RESULT_MODULE = '@ontologyio/receta/result'
+
 export default createRule<[], MessageIds>({
   name: 'prefer-result-over-try-catch',
   meta: {
     type: 'suggestion',
     docs: {
-      description: 'Prefer Result.tryCatch over try-catch blocks for error handling',
+      description: 'Prefer tryCatch over try-catch blocks for error handling',
     },
     messages: {
-      preferResult: 'Use Result.tryCatch() instead of try-catch for explicit error handling',
-      addResultImport: 'Add Result import from receta/result',
+      preferResult: 'Use tryCatch() instead of try-catch for explicit error handling',
+      addResultImport: 'Add tryCatch import from @ontologyio/receta/result',
     },
     fixable: 'code',
     schema: [],
@@ -47,47 +53,32 @@ export default createRule<[], MessageIds>({
           return
         }
 
+        const binding = resolveBinding(sourceCode, [node], RESULT_MODULE, 'tryCatch')
         const returned = findRewritableReturn(node, node.handler, sourceCode)
 
         context.report({
           node,
           messageId: 'preferResult',
-          fix: returned
-            ? function* (fixer) {
-                const returnExpression = sourceCode.getText(returned)
+          fix:
+            binding && returned
+              ? function* (fixer) {
+                  const returnExpression = sourceCode.getText(returned)
 
-                // Generate Result.tryCatch wrapper
-                const resultCode = `const result = Result.tryCatch(\n  () => ${returnExpression}\n)\nreturn result`
+                  // Replace the entire try-catch with the tryCatch call
+                  yield fixer.replaceText(
+                    node,
+                    `const result = ${binding.name}(\n  () => ${returnExpression}\n)\nreturn result`
+                  )
 
-                // Replace the entire try-catch with Result pattern
-                yield fixer.replaceText(node, resultCode)
-
-                // Check if Result is imported
-                const hasResultImport = sourceCode.ast.body.some(
-                  stmt =>
-                    stmt.type === 'ImportDeclaration' &&
-                    stmt.source.value === 'receta/result' &&
-                    stmt.specifiers.some(
-                      spec =>
-                        spec.type === 'ImportSpecifier' &&
-                        spec.imported.type === 'Identifier' &&
-                        spec.imported.name === 'Result'
+                  if (binding.needsImport) {
+                    yield insertImport(
+                      fixer,
+                      sourceCode,
+                      generateImportStatement(['tryCatch'], RESULT_MODULE)
                     )
-                )
-
-                if (!hasResultImport) {
-                  // Add import at the top
-                  const importStatement = generateImportStatement(
-                    ['Result'],
-                    'receta/result'
-                  )
-                  yield fixer.insertTextBeforeRange(
-                    [0, 0],
-                    `${importStatement}\n`
-                  )
+                  }
                 }
-              }
-            : null,
+              : null,
         })
       },
     }
@@ -95,7 +86,7 @@ export default createRule<[], MessageIds>({
 })
 
 /**
- * Find the expression to hand to Result.tryCatch, but only when the rewrite
+ * Find the expression to hand to tryCatch, but only when the rewrite
  * keeps everything the try statement does. The fix replaces the whole statement
  * with one sync arrow function, so anything else in it would be lost or broken.
  */
@@ -123,19 +114,14 @@ function findRewritableReturn(
     !fn.generator &&
     node.finalizer === null &&
     isCatchClauseTransparent(handler) &&
-    // `() => { value: 1 }` is a block and `() => a, b` splits the argument list
-    argument.type !== 'ObjectExpression' &&
+    // The result changes type, which only this function may decide
+    fn.returnType === undefined &&
+    canChangeReturnType(fn, sourceCode) &&
+    // An arrow body starting with `{` is a block, and `() => a, b` splits the argument list
+    !sourceCode.getText(argument).startsWith('{') &&
     argument.type !== 'SequenceExpression' &&
     sourceCode.getCommentsInside(node).length === 0 &&
     !isNameInScope(sourceCode.getScope(node), 'result')
 
   return isSafe ? argument : undefined
-}
-
-function isNameInScope(scope: TSESLint.Scope.Scope, name: string): boolean {
-  for (let current: TSESLint.Scope.Scope | null = scope; current; current = current.upper) {
-    if (current.set.has(name)) return true
-  }
-
-  return false
 }

@@ -1,6 +1,7 @@
 import { isSome } from '../../option'
 import type { Cache, KeyFn, MemoizeOptions, MemoizedFunction } from '../types'
 import { boundedCache } from '../caches/boundedCache'
+import { lookup } from '../caches/lookup'
 
 /**
  * Creates a memoized function with custom key extraction.
@@ -50,7 +51,7 @@ export function memoizeBy<Args extends readonly unknown[], R, K>(
   const memoized = (...args: Args): R => {
     const key = keyFn(...args)
 
-    const cached = cache.get(key)
+    const cached = lookup(cache, key)
     if (isSome(cached)) return cached.value
 
     const result = fn(...args)

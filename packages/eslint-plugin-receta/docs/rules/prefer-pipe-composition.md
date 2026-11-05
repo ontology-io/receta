@@ -115,14 +115,14 @@ Combine with Result/Option seamlessly:
 
 ```typescript
 import * as R from 'remeda'
-import { Result } from 'receta/result'
+import { map, tryCatch } from '@ontologyio/receta/result'
 
 const processUsers = R.pipe(
   users,
   R.filter(u => u.active),
-  R.map(u => Result.tryCatch(() => validateUser(u))),
-  Result.collect, // Collect all Results
-  Result.map(R.map(u => u.name))
+  R.map(u => tryCatch(() => validateUser(u))),
+  collect, // Collect all Results
+  map(R.map(u => u.name))
 )
 ```
 

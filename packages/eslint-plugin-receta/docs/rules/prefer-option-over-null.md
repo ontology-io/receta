@@ -32,7 +32,7 @@ const maybeValue: string | undefined = getValue()
 ### ✅ Correct
 
 ```typescript
-import { Option, fromNullable, some, none } from 'receta/option'
+import { fromNullable, none, some, type Option } from '@ontologyio/receta/option'
 
 function findUser(id: string): Option<User> {
   return fromNullable(users.find(u => u.id === id))
@@ -94,12 +94,16 @@ function findFirst(arr: number[]): number | undefined {
 **After (autofix):**
 
 ```typescript
-import { Option, fromNullable } from 'receta/option'
+import { fromNullable, type Option } from '@ontologyio/receta/option'
 
 function findFirst(arr: number[]): Option<number> {
   return fromNullable(arr[0])
 }
 ```
+
+The fix leaves a function alone when it can see something pinning the return type. A class method, an overload, a typed variable, a callback or a recursive call is reported without a fix, and so is a file where `Option`, `fromNullable` or `none` already means something else. An aliased import is reused under its alias.
+
+The fix can't see every caller, so update them afterwards. In plain JavaScript, nothing will flag one you miss.
 
 ## Usage with Option Combinators
 
@@ -107,13 +111,13 @@ Once using Option, leverage combinators for safe transformations:
 
 ```typescript
 import * as R from 'remeda'
-import { Option, fromNullable, unwrapOr } from 'receta/option'
+import { filter, fromNullable, map, unwrapOr, type Option } from '@ontologyio/receta/option'
 
 function getUserEmail(userId: string): Option<string> {
   return R.pipe(
     findUser(userId),
-    Option.map(user => user.email),
-    Option.filter(email => email.includes('@'))
+    map(user => user.email),
+    filter(email => email.includes('@'))
   )
 }
 

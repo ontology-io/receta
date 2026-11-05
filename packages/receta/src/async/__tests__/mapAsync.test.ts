@@ -121,8 +121,8 @@ describe('Async.mapAsync', () => {
       expect(isErr(result)).toBe(true)
       if (isErr(result)) {
         expect(result.error.type).toBe('map_async_error')
-        // With unlimited concurrency (Promise.all), index is -1
-        expect(result.error.index).toBe(-1)
+        expect(result.error.index).toBe(1)
+        expect(result.error.item).toBe(2)
       }
     })
 
@@ -240,5 +240,44 @@ describe('mapAsync with a concurrency limit', () => {
       _tag: 'Err',
       error: { type: 'map_async_error', index: 1, item: 2, error: new Error('sync failure') },
     })
+  })
+})
+
+describe('mapAsync without a concurrency limit', () => {
+  it('reports which item failed', async () => {
+    const result = await mapAsync(['a', 'b', 'c'], async (letter) => {
+      if (letter === 'b') throw new Error('bad letter')
+      return letter
+    })
+
+    expect(result).toMatchObject({
+      _tag: 'Err',
+      error: { type: 'map_async_error', index: 1, item: 'b', error: new Error('bad letter') },
+    })
+  })
+
+  it('reports a synchronous throw the same way', async () => {
+    const throwsSynchronously = (value: number): Promise<number> => {
+      if (value === 2) throw new Error('sync failure')
+      return Promise.resolve(value)
+    }
+
+    const result = await mapAsync([1, 2], throwsSynchronously)
+
+    expect(result).toMatchObject({ _tag: 'Err', error: { index: 1, item: 2 } })
+  })
+
+  it('fails as soon as one item fails', async () => {
+    let slowItemFinished = false
+
+    const result = await mapAsync([1, 2], async (value) => {
+      if (value === 1) throw new Error('fast failure')
+      await sleep(30)
+      slowItemFinished = true
+      return value
+    })
+
+    expect(isErr(result)).toBe(true)
+    expect(slowItemFinished).toBe(false)
   })
 })

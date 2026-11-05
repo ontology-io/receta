@@ -1,6 +1,6 @@
 // Compile-time checks: `tsc --noEmit` reads this file, and the test runner doesn't check types.
 import * as R from 'remeda'
-import { filterAsyncOrThrow, mapAsyncOrThrow } from '../index'
+import { batchOrThrow, filterAsyncOrThrow, mapAsyncOrThrow, parallelOrThrow, sequentialOrThrow } from '../index'
 
 const words: readonly string[] = ['a', 'bb']
 
@@ -13,3 +13,8 @@ const onlyLong = filterAsyncOrThrow(async (word: string) => word.length > 1)
 export const mappedDataLast: Promise<number[]> = toLengths(words)
 export const keptDataLast: Promise<string[]> = onlyLong(words)
 export const inPipe: Promise<number[]> = R.pipe(words, toLengths)
+
+// The element type survives, where wrapping these with orThrow alone made it unknown.
+export const ran: Promise<number[]> = parallelOrThrow([async () => 1], { concurrency: 2 })
+export const inOrder: Promise<string[]> = sequentialOrThrow([async () => 'a'])
+export const counts: Promise<number[]> = batchOrThrow(words, async (group) => group.length)

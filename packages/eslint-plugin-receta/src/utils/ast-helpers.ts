@@ -41,7 +41,7 @@ export function findEnclosingFunction(node: TSESTree.Node): FunctionNode | undef
 
 /**
  * Check if a catch clause adds nothing to the error: it is empty, or it only
- * rethrows what it caught. Result.tryCatch keeps that same error, so replacing
+ * rethrows what it caught. tryCatch keeps that same error, so replacing
  * such a clause loses no code. Logging or wrapping the error would be lost.
  */
 export function isCatchClauseTransparent(catchClause: TSESTree.CatchClause): boolean {
@@ -236,7 +236,11 @@ export function isChainableArrayMethod(method: string): boolean {
  */
 export function generateImportStatement(
   utilities: string[],
-  from: 'receta/result' | 'receta/option' | 'receta/async' | 'remeda'
+  from:
+    | '@ontologyio/receta/result'
+    | '@ontologyio/receta/option'
+    | '@ontologyio/receta/async'
+    | 'remeda'
 ): string {
   const uniqueUtilities = [...new Set(utilities)].sort()
 
@@ -245,4 +249,184 @@ export function generateImportStatement(
   }
 
   return `import { ${uniqueUtilities.join(', ')} } from '${from}'`
+}
+
+/** The name to call a module's export by, and whether the file still has to import it. */
+export type Binding = { readonly name: string; readonly needsImport: boolean }
+
+type ImportedName = { readonly name: string; readonly isTypeOnly: boolean }
+
+/**
+ * Work out how a fix can refer to a module's export at every given node. Answers
+ * undefined when the name means something else at any of them, or when a value is
+ * needed and the file only imports the type.
+ */
+export function resolveBinding(
+  sourceCode: Readonly<TSESLint.SourceCode>,
+  nodes: readonly TSESTree.Node[],
+  module: string,
+  exported: string,
+  kind: 'value' | 'type' = 'value'
+): Binding | undefined {
+  const imported = findImportedName(sourceCode, module, exported)
+  if (imported?.isTypeOnly && kind === 'value') return undefined
+
+  const name = imported?.name ?? exported
+  const meansTheImport = nodes.every(node => {
+    const variable = findVariable(sourceCode.getScope(node), name)
+    if (imported === undefined) return variable === undefined
+    return variable?.defs.some(def => String(def.type) === 'ImportBinding') === true
+  })
+
+  return meansTheImport ? { name, needsImport: imported === undefined } : undefined
+}
+
+function findImportedName(
+  sourceCode: Readonly<TSESLint.SourceCode>,
+  module: string,
+  exported: string
+): ImportedName | undefined {
+  for (const statement of sourceCode.ast.body) {
+    if (statement.type !== 'ImportDeclaration' || statement.source.value !== module) continue
+
+    for (const specifier of statement.specifiers) {
+      if (
+        specifier.type === 'ImportSpecifier' &&
+        specifier.imported.type === 'Identifier' &&
+        specifier.imported.name === exported
+      ) {
+        return {
+          name: specifier.local.name,
+          isTypeOnly: statement.importKind === 'type' || specifier.importKind === 'type',
+        }
+      }
+    }
+  }
+
+  return undefined
+}
+
+function findVariable(scope: TSESLint.Scope.Scope, name: string): TSESLint.Scope.Variable | undefined {
+  for (let current: TSESLint.Scope.Scope | null = scope; current; current = current.upper) {
+    const variable = current.set.get(name)
+    if (variable) return variable
+  }
+
+  return undefined
+}
+
+/**
+ * Check whether a name is bound here or in any scope above.
+ */
+export function isNameInScope(scope: TSESLint.Scope.Scope, name: string): boolean {
+  return findVariable(scope, name) !== undefined
+}
+
+/**
+ * Add an import without disturbing what has to stay first in the file: a shebang
+ * must be the first line, a directive stops being one below an import, and
+ * TypeScript only reads triple-slash references and file pragmas at the very top.
+ */
+export function insertImport(
+  fixer: TSESLint.RuleFixer,
+  sourceCode: Readonly<TSESLint.SourceCode>,
+  statement: string
+): TSESLint.RuleFix {
+  const lastDirective = findLastDirective(sourceCode.ast.body)
+
+  if (lastDirective) {
+    const rest = sourceCode.getText().slice(lastDirective.range[1])
+    const endsItsLine = /^[ \t]*(\r?\n|$)/.test(rest)
+    return fixer.insertTextAfter(lastDirective, `\n${statement}${endsItsLine ? '' : '\n'}`)
+  }
+
+  const start = findImportStart(sourceCode)
+
+  return fixer.insertTextBeforeRange([start, start], `${statement}\n`)
+}
+
+function findLastDirective(body: readonly TSESTree.ProgramStatement[]): TSESTree.Node | undefined {
+  let last: TSESTree.Node | undefined
+
+  for (const statement of body) {
+    if (statement.type !== 'ExpressionStatement' || statement.directive === undefined) break
+    last = statement
+  }
+
+  return last
+}
+
+function findImportStart(sourceCode: Readonly<TSESLint.SourceCode>): number {
+  const text = sourceCode.getText()
+  let start = text.startsWith('#!') ? text.indexOf('\n') + 1 : 0
+
+  for (const comment of sourceCode.getAllComments()) {
+    if (comment.range[0] < start) continue
+
+    const isNext = text.slice(start, comment.range[0]).trim() === ''
+    if (!isNext || !isFilePragma(comment)) break
+
+    const lineEnd = text.indexOf('\n', comment.range[1])
+    start = lineEnd === -1 ? text.length : lineEnd + 1
+  }
+
+  return start
+}
+
+function isFilePragma(comment: TSESTree.Comment): boolean {
+  return String(comment.type) === 'Line' && /^\/\s*<|^\s*@ts-(no)?check\b/.test(comment.value)
+}
+
+/**
+ * Check that a fix may change what a function returns. Overloads, class methods,
+ * typed variables and callbacks all set the type elsewhere, and a recursive call
+ * would see the new type, so the rewritten function would stop compiling.
+ */
+export function canChangeReturnType(
+  fn: FunctionNode,
+  sourceCode: Readonly<TSESLint.SourceCode>
+): boolean {
+  if (fn.type === 'FunctionDeclaration') {
+    return !hasOverloads(fn) && !callsItself(fn, fn.id?.name, sourceCode)
+  }
+
+  const parent = fn.parent
+  if (parent.type !== 'VariableDeclarator' || parent.init !== fn) return false
+  if (parent.id.type !== 'Identifier' || parent.id.typeAnnotation !== undefined) return false
+
+  return !callsItself(fn, parent.id.name, sourceCode)
+}
+
+function callsItself(
+  fn: FunctionNode,
+  name: string | undefined,
+  sourceCode: Readonly<TSESLint.SourceCode>
+): boolean {
+  const names = [name, fn.id?.name].filter(candidate => candidate !== undefined)
+
+  return names.some(candidate =>
+    findVariable(sourceCode.getScope(fn), candidate)?.references.some(
+      reference =>
+        reference.identifier.range[0] >= fn.range[0] && reference.identifier.range[1] <= fn.range[1]
+    )
+  )
+}
+
+function hasOverloads(fn: TSESTree.FunctionDeclaration): boolean {
+  const isExported =
+    fn.parent.type === 'ExportNamedDeclaration' || fn.parent.type === 'ExportDefaultDeclaration'
+  const holder: TSESTree.Node | undefined = isExported ? fn.parent.parent : fn.parent
+
+  if (holder?.type !== 'Program' && holder?.type !== 'BlockStatement' && holder?.type !== 'TSModuleBlock') {
+    return false
+  }
+
+  return holder.body.some(statement => {
+    const declaration =
+      statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
+        ? statement.declaration
+        : statement
+
+    return declaration?.type === 'TSDeclareFunction' && declaration.id?.name === fn.id?.name
+  })
 }

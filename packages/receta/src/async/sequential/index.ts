@@ -109,4 +109,6 @@ export async function sequential<T>(
  * @see sequential - Result-returning variant (recommended)
  * @see orThrow - utility for creating throwing variants
  */
-export const sequentialOrThrow = orThrow(sequential)
+export function sequentialOrThrow<T>(tasks: ReadonlyArray<() => Promise<T>>): Promise<T[]> {
+  return orThrow(sequential<T>)(tasks)
+}

@@ -68,9 +68,9 @@ try {
 }
 
 // After (imports added automatically)
-import { Result } from 'receta/result'
+import { tryCatch } from '@ontologyio/receta/result'
 
-const result = Result.tryCatch(() => JSON.parse(str))
+const result = tryCatch(() => JSON.parse(str))
 return result
 ```
 
@@ -83,7 +83,7 @@ Preserves and enhances TypeScript types:
 function findUser(id: string): User | undefined
 
 // After (autofix)
-import { Option, fromNullable } from 'receta/option'
+import { fromNullable, type Option } from '@ontologyio/receta/option'
 
 function findUser(id: string): Option<User>
 ```
@@ -101,11 +101,12 @@ Two preset configs for different adoption strategies:
 
 ### Rule 1: `prefer-result-over-try-catch`
 
-**Converts:** `try-catch` blocks → `Result.tryCatch()`
+**Converts:** `try-catch` blocks → `tryCatch()`
 
 **Example:**
 
 ```typescript
+import { tryCatch } from '@ontologyio/receta/result'
 // Before
 try {
   return JSON.parse(str)
@@ -114,7 +115,7 @@ try {
 }
 
 // After (autofix)
-const result = Result.tryCatch(() => JSON.parse(str))
+const result = tryCatch(() => JSON.parse(str))
 return result
 ```
 
@@ -136,7 +137,7 @@ function findUser(id: string): User | undefined {
 }
 
 // After (autofix)
-import { Option, fromNullable } from 'receta/option'
+import { fromNullable, type Option } from '@ontologyio/receta/option'
 
 function findUser(id: string): Option<User> {
   return fromNullable(users.find(u => u.id === id))
@@ -289,7 +290,7 @@ Potential rules to add based on CLAUDE.md priorities:
    - Detect: Functions that can fail but return raw values
    - Suggest: Return `Result<T, E>`
 
-5. **`receta/async-result-pattern`**
+5. **`@ontologyio/receta/async-result-pattern`**
    - Enforce: Async functions return `Promise<Result<T, E>>`
 
 ### Phase 3: Advanced Features
@@ -345,16 +346,17 @@ try {
 
 To Receta/Remeda:
 ```typescript
+import { map, tryCatchAsync } from '@ontologyio/receta/result'
 // 12 lines, type-safe, composable
 return R.pipe(
   await mapAsync(ids, id =>
-    Result.tryCatchAsync(() => fetch(`/api/users/${id}`).then(r => r.json()))
+    tryCatchAsync(() => fetch(`/api/users/${id}`).then(r => r.json()))
   ),
-  Result.collect,
-  Result.map(
+  collect,
+  map(
     R.pipe(
       R.map(fromNullable),
-      Option.collect,
+      collect,
       R.filter(u => u.age >= 18),
       R.map(u => u.name.toUpperCase())
     )

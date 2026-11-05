@@ -23,7 +23,7 @@ ruleTester.run('prefer-option-over-null', rule, {
     {
       name: 'Already using Option<T>',
       code: `
-        import { Option, fromNullable } from 'receta/option'
+        import { Option, fromNullable } from '@ontologyio/receta/option'
         function findUser(id: string): Option<User> {
           return fromNullable(users.find(u => u.id === id))
         }
@@ -134,7 +134,7 @@ ruleTester.run('prefer-option-over-null', rule, {
         { messageId: 'preferOption' },
         { messageId: 'useFromNullable' },
       ],
-      output: `import { Option, fromNullable } from 'receta/option'
+      output: `import { fromNullable, type Option } from '@ontologyio/receta/option'
 
         function findUser(id: string): Option<User> {
           return fromNullable(users.find(u => u.id === id))
@@ -152,7 +152,7 @@ ruleTester.run('prefer-option-over-null', rule, {
         { messageId: 'preferOption' },
         { messageId: 'useFromNullable' },
       ],
-      output: `import { Option, fromNullable } from 'receta/option'
+      output: `import { fromNullable, type Option } from '@ontologyio/receta/option'
 
         const getConfig = (key: string): Option<Config> => {
           return fromNullable(config[key] || null)
@@ -170,7 +170,7 @@ ruleTester.run('prefer-option-over-null', rule, {
         { messageId: 'preferOption' },
         { messageId: 'useFromNullable' },
       ],
-      output: `import { Option, fromNullable } from 'receta/option'
+      output: `import { fromNullable, type Option } from '@ontologyio/receta/option'
 
         function maybeValue(): Option<string> {
           return fromNullable(someValue)
@@ -195,13 +195,13 @@ export function getOrder(raw: string): Line[] | null {
         { messageId: 'useFromNullable', line: 4 },
         { messageId: 'useFromNullable', line: 6 },
       ],
-      output: `import { Option, fromNullable } from 'receta/option'
+      output: `import { fromNullable, none, type Option } from '@ontologyio/receta/option'
 type Line = { sku: string; qty: number }
 export function getOrder(raw: string): Option<Line[]> {
   try {
     return fromNullable(JSON.parse(raw))
   } catch (e) {
-    return fromNullable(null)
+    return none()
   }
 }
 `,
@@ -358,7 +358,7 @@ export function getOrder(raw: string): Option<Line[]> {
     },
     {
       name: 'Imports only what is missing from receta/option',
-      code: `import { Option } from 'receta/option'
+      code: `import { Option } from '@ontologyio/receta/option'
 function findUser(id: string): User | undefined {
   return users.find(u => u.id === id)
 }
@@ -367,10 +367,312 @@ function findUser(id: string): User | undefined {
         { messageId: 'preferOption' },
         { messageId: 'useFromNullable' },
       ],
-      output: `import { fromNullable } from 'receta/option'
-import { Option } from 'receta/option'
+      output: `import { fromNullable } from '@ontologyio/receta/option'
+import { Option } from '@ontologyio/receta/option'
 function findUser(id: string): Option<User> {
   return fromNullable(users.find(u => u.id === id))
+}
+`,
+    },
+    {
+      name: 'No fix on an overload implementation',
+      code: `function find(id: string): User | null
+function find(id: number): User | null
+function find(id: string | number): User | null {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'No fix on a class method, which may implement an interface',
+      code: `class Users {
+  find(id: string): User | null {
+    return users.get(id)
+  }
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'No fix when a type on the variable sets the return type',
+      code: `const find: Finder = (id: string): User | null => {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'No fix when another module already owns the name Option',
+      code: `import { Option } from 'fp-ts/Option'
+function find(id: string): User | null {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'No fix when a local declaration owns the name fromNullable',
+      code: `const fromNullable = 1
+function find(id: string): User | null {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'Uses the local names of aliased imports',
+      code: `import { fromNullable as wrap, type Option as Maybe } from '@ontologyio/receta/option'
+function find(id: string): User | null {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: `import { fromNullable as wrap, type Option as Maybe } from '@ontologyio/receta/option'
+function find(id: string): Maybe<User> {
+  return wrap(users.get(id))
+}
+`,
+    },
+    {
+      name: 'Keeps a comma expression as one argument',
+      code: `function find(id: string): User | null {
+  return (track(id), users.get(id))
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: `import { fromNullable, type Option } from '@ontologyio/receta/option'
+function find(id: string): Option<User> {
+  return (fromNullable((track(id), users.get(id))))
+}
+`,
+    },
+    {
+      name: 'Keeps a shebang first',
+      code: `#!/usr/bin/env node
+function find(id: string): User | null {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: `#!/usr/bin/env node
+import { fromNullable, type Option } from '@ontologyio/receta/option'
+function find(id: string): Option<User> {
+  return fromNullable(users.get(id))
+}
+`,
+    },
+    {
+      name: 'Keeps directives first, so they stay directives',
+      code: `'use client'
+function find(id: string): User | null {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: `'use client'
+import { fromNullable, type Option } from '@ontologyio/receta/option'
+function find(id: string): Option<User> {
+  return fromNullable(users.get(id))
+}
+`,
+    },
+    {
+      name: 'Writes none() for a literal null, because fromNullable(null) does not compile',
+      code: `function find(id?: string): string | null {
+  if (id) return id
+  return null
+}
+`,
+      errors: [
+        { messageId: 'preferOption' },
+        { messageId: 'useFromNullable' },
+        { messageId: 'useFromNullable' },
+      ],
+      output: `import { fromNullable, none, type Option } from '@ontologyio/receta/option'
+function find(id?: string): Option<string> {
+  if (id) return fromNullable(id)
+  return none()
+}
+`,
+    },
+    {
+      name: 'Writes none() for undefined, and imports only what it uses',
+      code: `function find(): string | undefined {
+  return undefined
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: `import { none, type Option } from '@ontologyio/receta/option'
+function find(): Option<string> {
+  return none()
+}
+`,
+    },
+    {
+      name: 'No fix when another declaration owns the name none',
+      code: `const none = 1
+function find(): string | undefined {
+  return undefined
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'No fix when a block around a return shadows fromNullable',
+      code: `function find(id: string): User | null {
+  if (id) {
+    const fromNullable = 1
+    return users.get(id)
+  }
+  return users.first()
+}
+`,
+      errors: [
+        { messageId: 'preferOption' },
+        { messageId: 'useFromNullable' },
+        { messageId: 'useFromNullable' },
+      ],
+      output: null,
+    },
+    {
+      name: 'No fix when fromNullable is only imported as a type',
+      code: `import type { fromNullable } from '@ontologyio/receta/option'
+function find(id: string): User | null {
+  return users.get(id)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'No fix in a recursive function, which would double-wrap itself',
+      code: `function root(node: Node): Node | null {
+  return node.parent ? root(node.parent) : node
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'Fixes each function in a file whole, so none is left half done',
+      code: `export function a(): string | null {
+  return null
+}
+export function b(x?: string): string | null {
+  return x ?? null
+}
+`,
+      errors: [
+        { messageId: 'preferOption' },
+        { messageId: 'useFromNullable' },
+        { messageId: 'preferOption' },
+        { messageId: 'useFromNullable' },
+      ],
+      output: [
+        `import { none, type Option } from '@ontologyio/receta/option'
+export function a(): Option<string> {
+  return none()
+}
+export function b(x?: string): string | null {
+  return x ?? null
+}
+`,
+        `import { fromNullable } from '@ontologyio/receta/option'
+import { none, type Option } from '@ontologyio/receta/option'
+export function a(): Option<string> {
+  return none()
+}
+export function b(x?: string): Option<string> {
+  return fromNullable(x ?? null)
+}
+`,
+      ],
+    },
+    {
+      name: 'Never wraps a none() from an earlier pass',
+      code: `export function a(): string | null {
+  return null
+}
+export function b(): string | null {
+  return null
+}
+`,
+      errors: [
+        { messageId: 'preferOption' },
+        { messageId: 'useFromNullable' },
+        { messageId: 'preferOption' },
+        { messageId: 'useFromNullable' },
+      ],
+      output: [
+        `import { none, type Option } from '@ontologyio/receta/option'
+export function a(): Option<string> {
+  return none()
+}
+export function b(): string | null {
+  return null
+}
+`,
+        `import { none, type Option } from '@ontologyio/receta/option'
+export function a(): Option<string> {
+  return none()
+}
+export function b(): Option<string> {
+  return none()
+}
+`,
+      ],
+    },
+    {
+      name: 'No fix on an annotated React component, where null renders nothing',
+      languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+      code: `function Panel({ open }: Props): ReactElement | null {
+  if (!open) return null
+  return <div>hello</div>
+}
+`,
+      errors: [
+        { messageId: 'preferOption' },
+        { messageId: 'useFromNullable' },
+        { messageId: 'useFromNullable' },
+      ],
+      output: null,
+    },
+    {
+      name: 'No fix when JSX sits inside a conditional',
+      languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } },
+      code: `function Panel({ open }: Props): ReactElement | null {
+  return open ? <div>hello</div> : null
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'No fix for recursion that a text search would miss',
+      code: `function last(node: Node): Node | null {
+  return node.children.map(last)[0] ?? null
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: null,
+    },
+    {
+      name: 'A similar name is not recursion',
+      code: `function root(node: Node): Node | null {
+  return myroot(node)
+}
+`,
+      errors: [{ messageId: 'preferOption' }, { messageId: 'useFromNullable' }],
+      output: `import { fromNullable, type Option } from '@ontologyio/receta/option'
+function root(node: Node): Option<Node> {
+  return fromNullable(myroot(node))
 }
 `,
     },

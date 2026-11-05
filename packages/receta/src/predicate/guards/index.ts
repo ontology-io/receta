@@ -192,7 +192,7 @@ export const isUndefined: TypePredicate<unknown, undefined> = (value): value is 
  * import { isNullish, not } from '@ontologyio/receta/predicate'
  *
  * const values: Array<string | null | undefined> = ['hello', null, 'world', undefined]
- * R.filter(values, not(isNullish)) // type: string[]
+ * R.filter(values, not(isNullish)) // type stays (string | null | undefined)[]. isDefined narrows it
  * // => ['hello', 'world']
  * ```
  *

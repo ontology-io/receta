@@ -73,4 +73,9 @@ export async function parallel<T>(
  * @see parallel - Result-returning variant (recommended)
  * @see orThrow - utility for creating throwing variants
  */
-export const parallelOrThrow = orThrow(parallel)
+export function parallelOrThrow<T>(
+  tasks: ReadonlyArray<() => Promise<T>>,
+  options?: ConcurrencyOptions
+): Promise<T[]> {
+  return orThrow(parallel<T>)(tasks, options)
+}

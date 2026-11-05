@@ -11,6 +11,8 @@ import { isSome } from '../guards'
  *
  * This is useful for operations that must all succeed.
  *
+ * In a pipe, write `collect()`. A bare `collect` runs correctly but loses the element type.
+ *
  * @param options - Array of Options to collect
  * @returns Option containing array of values, or None if any is None
  *
@@ -42,8 +44,8 @@ import { isSome } from '../guards'
  *
  * @see partition - for separating Some and None values
  */
-export function collect<T>(options: readonly Option<T>[]): Option<T[]>
 export function collect<T>(): (options: readonly Option<T>[]) => Option<T[]>
+export function collect<T>(options: readonly Option<T>[]): Option<T[]>
 export function collect(...args: unknown[]): unknown {
   return R.purry(collectImplementation, args)
 }

@@ -64,12 +64,11 @@ function unionImplementation<T>(
   items2: readonly T[],
   isEqual: Comparator<T> = defaultComparator
 ): T[] {
-  const result = [...items1]
+  const result: T[] = []
 
-  for (const item2 of items2) {
-    const exists = result.some((item1) => isEqual(item1, item2))
-    if (!exists) {
-      result.push(item2)
+  for (const item of [...items1, ...items2]) {
+    if (!result.some((kept) => isEqual(kept, item))) {
+      result.push(item)
     }
   }
 

@@ -6,9 +6,6 @@
 
 import type { Predicate } from '../types'
 
-/** The wide type of a threshold, so `gt(18)` tests any number and not only the literal 18. */
-type Widen<T> = T extends number ? number : T extends bigint ? bigint : never
-
 /**
  * Creates a predicate that tests if a value is greater than a threshold.
  *
@@ -33,8 +30,12 @@ type Widen<T> = T extends number ? number : T extends bigint ? bigint : never
  * @see lt - for less than comparison
  * @see between - for range comparison
  */
-export const gt = <T extends number | bigint>(threshold: T): Predicate<Widen<T>> => (value) =>
-  value > threshold
+export function gt(threshold: number): Predicate<number>
+export function gt(threshold: bigint): Predicate<bigint>
+export function gt<T extends number | bigint>(threshold: T): Predicate<T>
+export function gt<T extends number | bigint>(threshold: T): Predicate<T> {
+  return (value) => value > threshold
+}
 
 /**
  * Creates a predicate that tests if a value is greater than or equal to a threshold.
@@ -53,8 +54,12 @@ export const gt = <T extends number | bigint>(threshold: T): Predicate<Widen<T>>
  * @see gt - for exclusive comparison (>)
  * @see lte - for less than or equal comparison
  */
-export const gte = <T extends number | bigint>(threshold: T): Predicate<Widen<T>> => (value) =>
-  value >= threshold
+export function gte(threshold: number): Predicate<number>
+export function gte(threshold: bigint): Predicate<bigint>
+export function gte<T extends number | bigint>(threshold: T): Predicate<T>
+export function gte<T extends number | bigint>(threshold: T): Predicate<T> {
+  return (value) => value >= threshold
+}
 
 /**
  * Creates a predicate that tests if a value is less than a threshold.
@@ -82,8 +87,12 @@ export const gte = <T extends number | bigint>(threshold: T): Predicate<Widen<T>
  * @see gt - for greater than comparison
  * @see between - for range comparison
  */
-export const lt = <T extends number | bigint>(threshold: T): Predicate<Widen<T>> => (value) =>
-  value < threshold
+export function lt(threshold: number): Predicate<number>
+export function lt(threshold: bigint): Predicate<bigint>
+export function lt<T extends number | bigint>(threshold: T): Predicate<T>
+export function lt<T extends number | bigint>(threshold: T): Predicate<T> {
+  return (value) => value < threshold
+}
 
 /**
  * Creates a predicate that tests if a value is less than or equal to a threshold.
@@ -102,8 +111,12 @@ export const lt = <T extends number | bigint>(threshold: T): Predicate<Widen<T>>
  * @see lt - for exclusive comparison (<)
  * @see gte - for greater than or equal comparison
  */
-export const lte = <T extends number | bigint>(threshold: T): Predicate<Widen<T>> => (value) =>
-  value <= threshold
+export function lte(threshold: number): Predicate<number>
+export function lte(threshold: bigint): Predicate<bigint>
+export function lte<T extends number | bigint>(threshold: T): Predicate<T>
+export function lte<T extends number | bigint>(threshold: T): Predicate<T> {
+  return (value) => value <= threshold
+}
 
 /**
  * Creates a predicate that tests if a value equals another value.
@@ -179,8 +192,12 @@ export const neq = <T>(expected: T): Predicate<T> => (value) => value !== expect
  * @see gt - for greater than comparison
  * @see lt - for less than comparison
  */
-export const between = <T extends number | bigint>(min: T, max: T): Predicate<Widen<T>> => (value) =>
-  value >= min && value <= max
+export function between(min: number, max: number): Predicate<number>
+export function between(min: bigint, max: bigint): Predicate<bigint>
+export function between<T extends number | bigint>(min: T, max: T): Predicate<T>
+export function between<T extends number | bigint>(min: T, max: T): Predicate<T> {
+  return (value) => value >= min && value <= max
+}
 
 /**
  * Creates a predicate that tests if a string starts with a prefix.

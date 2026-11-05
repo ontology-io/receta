@@ -7,6 +7,8 @@ import { isOk } from '../guards'
  *
  * Returns a tuple of [okValues, errValues].
  *
+ * In a pipe, write `partition()`. A bare `partition` runs correctly but loses the element type.
+ *
  * @param results - Array of Results to partition
  * @returns Tuple of [array of Ok values, array of Err values]
  *
@@ -38,8 +40,8 @@ import { isOk } from '../guards'
  *
  * @see collect - for short-circuiting on first error
  */
-export function partition<T, E>(results: readonly Result<T, E>[]): [T[], E[]]
 export function partition<T>(): <E>(results: readonly Result<T, E>[]) => [T[], E[]]
+export function partition<T, E>(results: readonly Result<T, E>[]): [T[], E[]]
 export function partition(...args: unknown[]): unknown {
   return R.purry(partitionImplementation, args)
 }

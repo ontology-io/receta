@@ -164,5 +164,11 @@ export async function batch<T, U>(
  * @see batch - Result-returning variant (recommended)
  * @see orThrow - utility for creating throwing variants
  */
-export const batchOrThrow = orThrow(batch)
+export function batchOrThrow<T, U>(
+  items: readonly T[],
+  fn: (batch: readonly T[]) => Promise<U>,
+  options?: BatchOptions
+): Promise<U[]> {
+  return orThrow(batch<T, U>)(items, fn, options)
+}
 

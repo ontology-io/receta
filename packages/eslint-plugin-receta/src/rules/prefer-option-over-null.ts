@@ -1,9 +1,12 @@
 import { ESLintUtils } from '@typescript-eslint/utils'
 import type { TSESLint, TSESTree } from '@typescript-eslint/utils'
 import {
+  canChangeReturnType,
   findReturnStatements,
+  insertImport,
   isNullableReturnType,
   generateImportStatement,
+  resolveBinding,
   type FunctionNode,
 } from '../utils/ast-helpers.js'
 
@@ -12,6 +15,8 @@ const createRule = ESLintUtils.RuleCreator(
 )
 
 type MessageIds = 'preferOption' | 'useFromNullable' | 'nullableReturn'
+
+const OPTION_MODULE = '@ontologyio/receta/option'
 
 export default createRule<[], MessageIds>({
   name: 'prefer-option-over-null',
@@ -59,8 +64,36 @@ export default createRule<[], MessageIds>({
         const typeNode = returnType.typeAnnotation
         const baseTypeNode = findSingleNonNullType(typeNode)
 
+        const everyReturn = [node, ...returnStatements]
+        const optionBinding = resolveBinding(sourceCode, [node], OPTION_MODULE, 'Option', 'type')
+        const wrapBinding = resolveBinding(sourceCode, everyReturn, OPTION_MODULE, 'fromNullable')
+        const noneBinding = resolveBinding(sourceCode, everyReturn, OPTION_MODULE, 'none')
+        const wrapName = wrapBinding?.name ?? 'fromNullable'
+
+        const returnedValues = returnStatements.flatMap(stmt => stmt.argument ?? [])
+        const rewriteValue = (value: TSESTree.Expression): string => {
+          // fromNullable(null) can't infer T, and none() says the same thing
+          if (isEmptyValue(value)) return `${noneBinding?.name ?? 'none'}()`
+
+          // A comma expression has to stay one argument
+          const text = sourceCode.getText(value)
+          return `${wrapName}(${value.type === 'SequenceExpression' ? `(${text})` : text})`
+        }
+
+        const usesNone = returnedValues.some(isEmptyValue)
+        const usesWrap = returnedValues.some(
+          value => !isEmptyValue(value) && !isAlreadyWrappedInFromNullable(value, wrapName)
+        )
+
         // The two fixes only make sense together, so they share one decision
-        const canFix = baseTypeNode !== undefined && canRewriteToOption(node, returnStatements)
+        const canFix =
+          baseTypeNode !== undefined &&
+          optionBinding !== undefined &&
+          (!usesWrap || wrapBinding !== undefined) &&
+          (!usesNone || noneBinding !== undefined) &&
+          !returnedValues.flatMap(findPossibleValues).some(isJsx) &&
+          canRewriteToOption(node, returnStatements) &&
+          canChangeReturnType(node, sourceCode)
 
         context.report({
           node: typeNode,
@@ -70,19 +103,29 @@ export default createRule<[], MessageIds>({
                 const baseType = sourceCode.getText(baseTypeNode)
 
                 // Replace return type with Option<T>
-                yield fixer.replaceText(typeNode, `Option<${baseType}>`)
+                yield fixer.replaceText(typeNode, `${optionBinding.name}<${baseType}>`)
 
-                // Both names end up in the rewritten function
-                const missingImports = ['Option', 'fromNullable'].filter(
-                  name => !isImportedFromOption(sourceCode, name)
-                )
+                // Option is a type, so the import has to survive verbatimModuleSyntax
+                const missingImports = [
+                  ...(optionBinding.needsImport ? ['type Option'] : []),
+                  ...(usesWrap && wrapBinding?.needsImport ? ['fromNullable'] : []),
+                  ...(usesNone && noneBinding?.needsImport ? ['none'] : []),
+                ]
 
                 if (missingImports.length > 0) {
-                  const importStatement = generateImportStatement(
-                    missingImports,
-                    'receta/option'
+                  yield insertImport(
+                    fixer,
+                    sourceCode,
+                    generateImportStatement(missingImports, OPTION_MODULE)
                   )
-                  yield fixer.insertTextBeforeRange([0, 0], `${importStatement}\n`)
+                }
+
+                // One fix for the whole function. ESLint drops a fix that overlaps another
+                // and retries next pass, so separate fixes could land half of a function.
+                for (const argument of returnedValues) {
+                  if (!isAlreadyWrappedInFromNullable(argument, wrapName)) {
+                    yield fixer.replaceText(argument, rewriteValue(argument))
+                  }
                 }
               }
             : null,
@@ -90,22 +133,10 @@ export default createRule<[], MessageIds>({
 
         // Also check return statements and suggest wrapping with fromNullable
         for (const returnStmt of returnStatements) {
-          if (
-            returnStmt.argument &&
-            !isAlreadyWrappedInFromNullable(returnStmt.argument)
-          ) {
+          if (returnStmt.argument && !isAlreadyWrappedInFromNullable(returnStmt.argument, wrapName)) {
             context.report({
               node: returnStmt,
               messageId: 'useFromNullable',
-              fix: canFix
-                ? fixer => {
-                    const argText = sourceCode.getText(returnStmt.argument!)
-                    return fixer.replaceText(
-                      returnStmt.argument!,
-                      `fromNullable(${argText})`
-                    )
-                  }
-                : null,
             })
           }
         }
@@ -113,6 +144,24 @@ export default createRule<[], MessageIds>({
     }
   },
 })
+
+/**
+ * Check for JSX. A function that returns it is a component, and null is how a
+ * component renders nothing, so an Option there would crash at render.
+ */
+function isJsx(value: TSESTree.Node): boolean {
+  return value.type === 'JSXElement' || value.type === 'JSXFragment'
+}
+
+/**
+ * Check for a literal null or undefined, which has no value to wrap.
+ */
+function isEmptyValue(node: TSESTree.Node): boolean {
+  return (
+    (node.type === 'Literal' && node.raw === 'null') ||
+    (node.type === 'Identifier' && node.name === 'undefined')
+  )
+}
 
 /**
  * Find the null and undefined values an unannotated function can return.
@@ -137,9 +186,7 @@ function findNullableReturnValues(
   const values = returned.flatMap(findPossibleValues)
 
   // null is how a React component renders nothing
-  const isComponent = values.some(
-    value => value.type === 'JSXElement' || value.type === 'JSXFragment'
-  )
+  const isComponent = values.some(isJsx)
 
   if (isComponent || values.every(isNullish)) {
     return []
@@ -241,27 +288,13 @@ function alwaysExits(node: TSESTree.Statement | null): boolean {
   }
 }
 
-function isImportedFromOption(sourceCode: Readonly<TSESLint.SourceCode>, name: string): boolean {
-  return sourceCode.ast.body.some(
-    stmt =>
-      stmt.type === 'ImportDeclaration' &&
-      stmt.source.value === 'receta/option' &&
-      stmt.specifiers.some(
-        spec =>
-          spec.type === 'ImportSpecifier' &&
-          spec.imported.type === 'Identifier' &&
-          spec.imported.name === name
-      )
-  )
-}
-
 /**
  * Check if expression is already wrapped in fromNullable()
  */
-function isAlreadyWrappedInFromNullable(node: TSESTree.Node): boolean {
+function isAlreadyWrappedInFromNullable(node: TSESTree.Node, wrapName: string): boolean {
   return (
     node.type === 'CallExpression' &&
     node.callee.type === 'Identifier' &&
-    node.callee.name === 'fromNullable'
+    node.callee.name === wrapName
   )
 }

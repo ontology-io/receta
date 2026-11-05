@@ -6,6 +6,7 @@
 
 import * as R from 'remeda'
 import type { PlainObject } from '../types'
+import { setOwnKey } from '../../utils/setOwnKey'
 
 /**
  * Filters an object by keeping only entries whose values match a predicate.
@@ -66,7 +67,7 @@ function filterValuesImplementation<T extends PlainObject>(
 
   Object.entries(obj).forEach(([key, value]) => {
     if (predicate(value as T[keyof T], key as keyof T)) {
-      result[key as keyof T] = value as T[keyof T]
+      setOwnKey(result, key, value)
     }
   })
 

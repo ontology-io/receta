@@ -6,6 +6,7 @@
 
 import * as R from 'remeda'
 import type { PlainObject } from '../types'
+import { setOwnKey } from '../../utils/setOwnKey'
 
 /**
  * Type of key transformation to apply.
@@ -282,7 +283,7 @@ function transformKeysImplementation(
 
   for (const [key, value] of Object.entries(obj)) {
     const newKey = transformFn(key)
-    result[newKey] = transformValue(value)
+    setOwnKey(result, newKey, transformValue(value))
   }
 
   return result

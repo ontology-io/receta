@@ -6,6 +6,15 @@
 
 import * as R from 'remeda'
 import type { PlainObject } from '../types'
+import { isOptionsObject } from '../isOptionsObject'
+import { setOwnKey } from '../../utils/setOwnKey'
+
+const OPTION_TYPES = {
+  stripEmptyStrings: 'boolean',
+  stripEmptyArrays: 'boolean',
+  stripEmptyObjects: 'boolean',
+  deep: 'boolean',
+} as const
 
 /**
  * Options for stripEmpty operation.
@@ -78,6 +87,8 @@ function isEmpty(value: unknown, options: Required<StripEmptyOptions>): boolean 
  * sending data, and normalizing objects for comparison or storage.
  *
  * @param obj - The object to strip empty values from
+ * An object made only of option keys reads as options. To treat one as data, pass `{}` as the second argument.
+ *
  * @param options - Options controlling what is considered "empty"
  * @returns A new object with empty values removed
  *
@@ -146,7 +157,8 @@ function isEmpty(value: unknown, options: Required<StripEmptyOptions>): boolean 
  * )
  * // => { name: 'Alice', nested: { bio: '', age: null } }
  *
- * // In a pipe, wrap it. stripEmpty() returns {} instead of a function.
+ * // stripEmpty() works in a pipe. With options, wrap it, because TypeScript
+ * // reads stripEmpty({ deep: false }) as the data-first call.
  * pipe(
  *   apiPayload,
  *   (payload) => stripEmpty(payload)
@@ -159,21 +171,13 @@ function isEmpty(value: unknown, options: Required<StripEmptyOptions>): boolean 
 export function stripEmpty(obj: PlainObject, options?: StripEmptyOptions): PlainObject
 export function stripEmpty(options?: StripEmptyOptions): (obj: PlainObject) => PlainObject
 export function stripEmpty(objOrOptions?: PlainObject | StripEmptyOptions, maybeOptions?: StripEmptyOptions): any {
-  // Data-last: no arguments, or a first arg that looks like options (has stripEmpty* or deep keys)
-  if (
-    objOrOptions === undefined ||
-    (typeof objOrOptions === 'object' &&
-      !Array.isArray(objOrOptions) &&
-      ('stripEmptyStrings' in objOrOptions ||
-        'stripEmptyArrays' in objOrOptions ||
-        'stripEmptyObjects' in objOrOptions ||
-        'deep' in objOrOptions))
-  ) {
+  // Data-last: no arguments, or a lone argument made only of options
+  if (maybeOptions === undefined && (objOrOptions === undefined || isOptionsObject(objOrOptions, OPTION_TYPES))) {
     return (obj: PlainObject) => stripEmptyImplementation(obj, objOrOptions as StripEmptyOptions | undefined)
   }
 
   // Data-first
-  return stripEmptyImplementation(objOrOptions as PlainObject, maybeOptions)
+  return stripEmptyImplementation(objOrOptions as PlainObject ?? {}, maybeOptions)
 }
 
 function stripEmptyImplementation(
@@ -209,7 +213,7 @@ function stripEmptyImplementation(
     const processedValue = stripValue(value)
 
     if (!isEmpty(processedValue, opts)) {
-      result[key] = processedValue
+      setOwnKey(result, key, processedValue)
     }
   }
 

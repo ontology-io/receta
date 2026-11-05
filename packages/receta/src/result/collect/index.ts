@@ -12,6 +12,8 @@ import { isErr } from '../guards'
  * This is useful for validating multiple independent operations and
  * collecting all successes or short-circuiting on the first error.
  *
+ * In a pipe, write `collect()`. A bare `collect` runs correctly but loses the element type.
+ *
  * @param results - Array of Results to collect
  * @returns Result containing array of all values, or first error
  *
@@ -39,8 +41,8 @@ import { isErr } from '../guards'
  *
  * @see partition - for separating Ok and Err values
  */
-export function collect<T, E>(results: readonly Result<T, E>[]): Result<T[], E>
 export function collect<T>(): <E>(results: readonly Result<T, E>[]) => Result<T[], E>
+export function collect<T, E>(results: readonly Result<T, E>[]): Result<T[], E>
 export function collect(...args: unknown[]): unknown {
   return R.purry(collectImplementation, args)
 }

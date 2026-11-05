@@ -6,6 +6,10 @@
 
 import * as R from 'remeda'
 import type { FlatObject, FlattenOptions, PlainObject } from '../types'
+import { isOptionsObject } from '../isOptionsObject'
+import { setOwnKey } from '../../utils/setOwnKey'
+
+const OPTION_TYPES = { separator: 'string', maxDepth: 'number', flattenArrays: 'boolean' } as const
 
 /**
  * Flattens a nested object into a single-level object with dot-notation keys.
@@ -15,6 +19,8 @@ import type { FlatObject, FlattenOptions, PlainObject } from '../types'
  * and database operations.
  *
  * @param obj - The object to flatten
+ * An object made only of option keys reads as options. To treat one as data, pass `{}` as the second argument.
+ *
  * @param options - Flattening options (separator, maxDepth, flattenArrays)
  * @returns A flattened object with dot-notation keys
  *
@@ -33,8 +39,8 @@ import type { FlatObject, FlattenOptions, PlainObject } from '../types'
  * flatten({ a: { b: { c: 1 } } }, { maxDepth: 1 })
  * // => { 'a.b': { c: 1 } }
  *
- * // In a pipe, wrap it. flatten() returns {} instead of a function, and
- * // TypeScript reads flatten({ separator: '_' }) as the data-first call.
+ * // flatten() works in a pipe. With options, wrap it, because TypeScript
+ * // reads flatten({ separator: '_' }) as the data-first call.
  * pipe(
  *   nested,
  *   (obj) => flatten(obj, { separator: '_' })
@@ -46,14 +52,13 @@ import type { FlatObject, FlattenOptions, PlainObject } from '../types'
 export function flatten(obj: PlainObject, options?: FlattenOptions): FlatObject
 export function flatten(options?: FlattenOptions): (obj: PlainObject) => FlatObject
 export function flatten(objOrOptions?: PlainObject | FlattenOptions, maybeOptions?: FlattenOptions): any {
-  // Data-last: no arguments, or a first arg that looks like options (has separator/maxDepth/flattenArrays keys)
-  if (objOrOptions === undefined || (typeof objOrOptions === 'object' &&
-      ('separator' in objOrOptions || 'maxDepth' in objOrOptions || 'flattenArrays' in objOrOptions))) {
+  // Data-last: no arguments, or a lone argument made only of options
+  if (maybeOptions === undefined && (objOrOptions === undefined || isOptionsObject(objOrOptions, OPTION_TYPES))) {
     return (obj: PlainObject) => flattenImplementation(obj, objOrOptions as FlattenOptions | undefined)
   }
 
   // Data-first
-  return flattenImplementation(objOrOptions as PlainObject, maybeOptions)
+  return flattenImplementation(objOrOptions as PlainObject ?? {}, maybeOptions)
 }
 
 function flattenImplementation(obj: PlainObject, options?: FlattenOptions): FlatObject {
@@ -64,13 +69,13 @@ function flattenImplementation(obj: PlainObject, options?: FlattenOptions): Flat
   function recurse(current: unknown, path: string[], depth: number): void {
     // Stop at max depth (depth is 0-indexed, so depth >= maxDepth means we've reached the limit)
     if (depth >= maxDepth) {
-      result[path.join(separator)] = current
+      setOwnKey(result, path.join(separator), current)
       return
     }
 
     // Handle null/undefined
     if (current == null) {
-      result[path.join(separator)] = current
+      setOwnKey(result, path.join(separator), current)
       return
     }
 
@@ -78,14 +83,14 @@ function flattenImplementation(obj: PlainObject, options?: FlattenOptions): Flat
     if (Array.isArray(current)) {
       if (flattenArrays) {
         if (current.length === 0) {
-          result[path.join(separator)] = []
+          setOwnKey(result, path.join(separator), [])
         } else {
           current.forEach((item, index) => {
             recurse(item, [...path, String(index)], depth + 1)
           })
         }
       } else {
-        result[path.join(separator)] = current
+        setOwnKey(result, path.join(separator), current)
       }
       return
     }
@@ -95,7 +100,7 @@ function flattenImplementation(obj: PlainObject, options?: FlattenOptions): Flat
       const entries = Object.entries(current as Record<string, unknown>)
 
       if (entries.length === 0) {
-        result[path.join(separator)] = {}
+        setOwnKey(result, path.join(separator), {})
       } else {
         entries.forEach(([key, value]) => {
           recurse(value, [...path, key], depth + 1)
@@ -105,7 +110,7 @@ function flattenImplementation(obj: PlainObject, options?: FlattenOptions): Flat
     }
 
     // Handle primitives and other types
-    result[path.join(separator)] = current
+    setOwnKey(result, path.join(separator), current)
   }
 
   // Start recursion

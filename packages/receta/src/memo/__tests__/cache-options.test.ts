@@ -1,56 +1,57 @@
 import { describe, it, expect, vi } from 'bun:test'
-import { isNone, isSome, some } from '../../option'
+import { isNone, isSome, none, some } from '../../option'
 import { lruCache, ttlCache, weakCache } from '../caches'
 import { invalidateWhere } from '../invalidation'
 import { memoize } from '../memoize'
 import { memoizeAsync } from '../memoizeAsync'
 import { memoizeBy } from '../memoizeBy'
+import type { Cache } from '../types'
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 describe('the ttl option', () => {
   it('expires entries in memoize', async () => {
     const fn = vi.fn((n: number) => n * 2)
-    const memoized = memoize(fn, { ttl: 20 })
+    const memoized = memoize(fn, { ttl: 50 })
 
     memoized(1)
     memoized(1)
     expect(fn).toHaveBeenCalledTimes(1)
 
-    await pause(40)
+    await pause(80)
     memoized(1)
     expect(fn).toHaveBeenCalledTimes(2)
   })
 
   it('expires entries in memoizeBy', async () => {
     const fn = vi.fn((a: number, b: number) => a + b)
-    const memoized = memoizeBy(fn, (a, b) => `${a}:${b}`, { ttl: 20 })
+    const memoized = memoizeBy(fn, (a, b) => `${a}:${b}`, { ttl: 50 })
 
     memoized(1, 2)
     memoized(1, 2)
     expect(fn).toHaveBeenCalledTimes(1)
 
-    await pause(40)
+    await pause(80)
     memoized(1, 2)
     expect(fn).toHaveBeenCalledTimes(2)
   })
 
   it('expires entries in memoizeAsync', async () => {
     const fn = vi.fn(async (n: number) => n * 2)
-    const memoized = memoizeAsync(fn, { ttl: 20 })
+    const memoized = memoizeAsync(fn, { ttl: 50 })
 
     await memoized(1)
     await memoized(1)
     expect(fn).toHaveBeenCalledTimes(1)
 
-    await pause(40)
+    await pause(80)
     await memoized(1)
     expect(fn).toHaveBeenCalledTimes(2)
   })
 
   it('works with maxSize', async () => {
     const fn = vi.fn((n: number) => n * 2)
-    const memoized = memoize(fn, { ttl: 20, maxSize: 2 })
+    const memoized = memoize(fn, { ttl: 50, maxSize: 2 })
 
     memoized(1)
     memoized(2)
@@ -58,7 +59,7 @@ describe('the ttl option', () => {
     expect(memoized.cache.has(1)).toBe(false)
     expect(memoized.cache.has(3)).toBe(true)
 
-    await pause(40)
+    await pause(80)
     expect(memoized.cache.has(3)).toBe(false)
   })
 
@@ -185,5 +186,40 @@ describe('cached values that are empty', () => {
     expect(isNone(lruCache<string, number>(2).get('missing'))).toBe(true)
     expect(isNone(weakCache<object, number>().get({}))).toBe(true)
     expect(isSome(some(undefined))).toBe(true)
+  })
+})
+
+describe('custom caches', () => {
+  it('respects a cache that expires entries only in has', () => {
+    let expired = false
+    const stored = new Map<unknown, string>()
+    const staleCache: Cache<unknown, string> = {
+      get: (key) => (stored.has(key) ? some(stored.get(key) as string) : none()),
+      set: (key, value) => void stored.set(key, value),
+      has: (key) => !expired && stored.has(key),
+      delete: (key) => stored.delete(key),
+      clear: () => stored.clear(),
+    }
+    let calls = 0
+    const memoized = memoize((_key: string) => `fresh${(calls += 1)}`, { cache: staleCache })
+
+    expect(memoized('a')).toBe('fresh1')
+    expect(memoized('a')).toBe('fresh1')
+
+    expired = true
+    expect(memoized('a')).toBe('fresh2')
+  })
+
+  it('treats has true with an empty get as a miss', () => {
+    const racyCache: Cache<string, number> = {
+      get: () => none(),
+      set: () => undefined,
+      has: () => true,
+      delete: () => false,
+      clear: () => undefined,
+    }
+    const memoized = memoize((key: string) => key.length, { cache: racyCache })
+
+    expect(memoized('abc')).toBe(3)
   })
 })

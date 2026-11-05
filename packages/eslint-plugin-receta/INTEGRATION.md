@@ -99,8 +99,9 @@ export default [
 
 **Example output:**
 ```
+import { tryCatch } from '@ontologyio/receta/result'
 src/api/users.ts
-  12:3  warning  Use Result.tryCatch() instead of try-catch  receta/prefer-result-over-try-catch
+  12:3  warning  Use tryCatch() instead of try-catch  receta/prefer-result-over-try-catch
   45:8  warning  Use Option<T> instead of T | null          receta/prefer-option-over-null
 
 src/utils/transform.ts
@@ -323,10 +324,11 @@ Schedule 1-hour pairing session:
 Update code review checklist:
 
 ```markdown
+import { tryCatch, type Result } from '@ontologyio/receta/result'
 ## Code Review Checklist
 
 - [ ] No ESLint `receta/*` violations
-- [ ] Try-catch converted to Result.tryCatch()
+- [ ] Try-catch converted to tryCatch()
 - [ ] Nullable returns use Option<T>
 - [ ] Array transformations use R.pipe()
 - [ ] Error types are explicit (Result<T, E>)

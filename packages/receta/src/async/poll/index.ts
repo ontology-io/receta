@@ -93,8 +93,15 @@ export async function poll<T>(
     onPoll,
   } = options
 
+  // The loop can't be cancelled from outside, so it checks this before each attempt.
+  let timedOut = false
+
   const pollImplementation = async (): Promise<Result<T, PollError>> => {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      if (timedOut) {
+        return err({ type: 'timeout' as const, elapsed: timeoutMs ?? 0 })
+      }
+
       // Call onPoll callback if provided
       if (onPoll) {
         onPoll(attempt)
@@ -132,6 +139,7 @@ export async function poll<T>(
 
     // If timeout occurred, map to PollError
     if (isErr(result) && result.error instanceof TimeoutError) {
+      timedOut = true
       return err({ type: 'timeout' as const, elapsed: timeoutMs })
     }
 
