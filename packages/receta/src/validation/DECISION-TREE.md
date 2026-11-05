@@ -11,7 +11,7 @@ START: What validation do you need?
 │  └─ Use: validate(value, [rule1, rule2, ...])
 │
 ├─ MULTIPLE fields (form/object)?
-│  └─ Use: schema({ field1: rules, field2: rules })
+│  └─ Use: schema({ field1: validator, field2: validator }, value)
 │
 ├─ Array of validations?
 │  └─ Use: validateAll([val1, val2, ...])
