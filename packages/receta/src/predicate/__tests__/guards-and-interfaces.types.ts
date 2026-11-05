@@ -37,19 +37,8 @@ export const catsOrDogs: (Cat | Dog)[] = R.filter(pets, or(isCat, isDog))
 export const stringsOrNumbers: (string | number)[] = R.filter(mixed, or(isString, isNumber))
 export const tagged: ({ lives: number } & Tagged)[] = R.filter([] as unknown[], and(hasTag, hasLives))
 
-// not removes what the guard proved.
-export const onlyDogs: Dog[] = R.filter(pets, not(isCat))
-
-// A guard over unknown has nothing to exclude from, so not stays a plain predicate
-// rather than claiming the false branch is impossible.
-export const notString = (value: unknown) => {
-  if (not(isString)(value)) return 'other'
-  const stillString: unknown = value
-  return stillString
-}
-
-// A guard for a subtype of a non-union has nothing to exclude either, so not must not
-// claim the false branch is impossible.
+// not stays a plain predicate. Guards can't be negated safely: the false branch of a
+// guard over a subtype would be never, and generic code stops compiling.
 type Animal = { legs: number }
 type Barker = Animal & { bark(): void }
 type Email = string & { readonly brand: 'email' }
@@ -61,6 +50,13 @@ const animals: readonly Animal[] = []
 export const legs = (pet: Animal): number => (not(isBarker)(pet) ? pet.legs : pet.legs + 1)
 export const quiet: Animal[] = R.partition(animals, not(isBarker))[1]
 export const notEmail = (text: string): number => (not(isEmail)(text) ? text.length : text.length + 1)
+export const notUnion: (Cat | Dog)[] = R.filter(pets, not(isCat))
+export const notString = (value: unknown): unknown => (not(isString)(value) ? 'other' : value)
+
+export function dropNulls<T>(items: (T | null)[]): (T | null)[] {
+  const isNil = (item: T | null): item is null => item === null
+  return R.filter(items, not(isNil))
+}
 
 // Plain predicates keep their old types, spread included.
 const isAdult = (age: number) => age >= 18

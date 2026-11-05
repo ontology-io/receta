@@ -7,15 +7,6 @@
 import type { Predicate, TypePredicate } from '../types'
 
 /**
- * What `not` returns for a guard. When there is nothing to exclude, as with `unknown`
- * or a subtype of a non-union, it stays a plain predicate: a guard there would claim
- * its false branch can never happen.
- */
-type Negated<T, A extends T> = [T] extends [Exclude<T, A>]
-  ? Predicate<T>
-  : TypePredicate<T, Exclude<T, A>>
-
-/**
  * Combines multiple predicates with logical AND.
  *
  * Returns a predicate that is true only if all predicates return true.
@@ -150,11 +141,10 @@ export function or<T>(...predicates: Predicate<T>[]): Predicate<T> {
  * @see and - for logical AND
  * @see or - for logical OR
  */
-export function not<T, A extends T>(guard: TypePredicate<T, A>): Negated<T, A>
-export function not<T>(predicate: Predicate<T>): Predicate<T>
-export function not<T>(predicate: Predicate<T>): Predicate<T> {
-  return (value) => !predicate(value)
-}
+export const not =
+  <T>(predicate: Predicate<T>): Predicate<T> =>
+  (value) =>
+    !predicate(value)
 
 /**
  * Combines multiple predicates with logical XOR (exclusive or).
