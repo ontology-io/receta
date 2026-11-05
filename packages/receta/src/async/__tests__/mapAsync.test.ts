@@ -226,3 +226,19 @@ describe('Async.mapAsync', () => {
     })
   })
 })
+
+describe('mapAsync with a concurrency limit', () => {
+  const throwsSynchronously = (value: number): Promise<number> => {
+    if (value === 2) throw new Error('sync failure')
+    return Promise.resolve(value)
+  }
+
+  it('reports a synchronous throw with its index and item', async () => {
+    const result = await mapAsync([1, 2, 3, 4], throwsSynchronously, { concurrency: 1 })
+
+    expect(result).toMatchObject({
+      _tag: 'Err',
+      error: { type: 'map_async_error', index: 1, item: 2, error: new Error('sync failure') },
+    })
+  })
+})

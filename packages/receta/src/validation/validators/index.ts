@@ -6,6 +6,7 @@
 
 import type { Validator } from '../types'
 import { valid, invalid, fromPredicate } from '../constructors'
+import { isOk, tryCatch } from '../../result'
 
 // ============================================================================
 // String Validators
@@ -146,17 +147,7 @@ export const email = (errorMessage?: string): Validator<string, string, string> 
  * ```
  */
 export const url = (errorMessage?: string): Validator<string, string, string> =>
-  fromPredicate(
-    (s) => {
-      try {
-        new URL(s)
-        return true
-      } catch {
-        return false
-      }
-    },
-    errorMessage ?? 'Invalid URL'
-  )
+  fromPredicate((s) => isOk(tryCatch(() => new URL(s))), errorMessage ?? 'Invalid URL')
 
 /**
  * Validates string contains only alphanumeric characters.

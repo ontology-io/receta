@@ -1,5 +1,5 @@
 import type { ConcurrencyOptions } from '../types'
-import { ok, err, type Result, orThrow } from '../../result'
+import { ok, err, isOk, tryCatchAsync, type Result, orThrow } from '../../result'
 
 /**
  * Error type for mapAsync failures.
@@ -124,17 +124,20 @@ async function mapAsyncImplementation<T, U>(
     if (firstError) break
 
     const promise = (async () => {
-      try {
-        results[i] = await fn(item, i)
-      } catch (error) {
-        // Capture first error with context
-        if (!firstError) {
-          firstError = {
-            type: 'map_async_error' as const,
-            index: i,
-            item,
-            error,
-          }
+      const attempt = await tryCatchAsync(() => fn(item, i))
+
+      if (isOk(attempt)) {
+        results[i] = attempt.value
+        return
+      }
+
+      // Capture first error with context
+      if (!firstError) {
+        firstError = {
+          type: 'map_async_error' as const,
+          index: i,
+          item,
+          error: attempt.error,
         }
       }
     })()
