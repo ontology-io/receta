@@ -31,6 +31,16 @@ describe('data that shares a key with the options', () => {
     expect(stripEmpty({ deep: true }, {})).toEqual({ deep: true })
   })
 
+  it('ignores keys that only exist on the prototype chain', () => {
+    expect(flatten({ toString: undefined })).toEqual({ toString: undefined })
+  })
+
+  it('still returns {} for a missing object with options', () => {
+    const unsafeFlatten = flatten as (obj: unknown, options: object) => unknown
+
+    expect(unsafeFlatten(undefined, { separator: '-' })).toEqual({})
+  })
+
   it('keeps the data-last forms working', () => {
     expect(R.pipe({ a: { b: 1 } }, flatten({ separator: '_', maxDepth: 5 }))).toEqual({ a_b: 1 })
     expect(R.pipe({ a: '' }, stripEmpty({ deep: false, stripEmptyStrings: false }))).toEqual({ a: '' })

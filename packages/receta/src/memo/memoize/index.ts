@@ -1,6 +1,7 @@
 import { isSome } from '../../option'
 import type { Cache, MemoizeOptions, MemoizedFunction } from '../types'
 import { boundedCache } from '../caches/boundedCache'
+import { lookup } from '../caches/lookup'
 
 /**
  * Creates a memoized version of a function that caches results based on arguments.
@@ -40,7 +41,7 @@ export function memoize<Args extends readonly [unknown, ...unknown[]], R>(
     // Use first argument as cache key
     const key = args[0]
 
-    const cached = cache.get(key)
+    const cached = lookup(cache, key)
     if (isSome(cached)) return cached.value
 
     const result = fn(...args)

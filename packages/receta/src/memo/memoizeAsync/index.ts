@@ -1,6 +1,7 @@
 import { isSome } from '../../option'
 import type { Cache, KeyFn, MemoizeOptions, MemoizedAsyncFunction } from '../types'
 import { boundedCache } from '../caches/boundedCache'
+import { lookup } from '../caches/lookup'
 
 /**
  * Creates a memoized async function with request deduplication.
@@ -54,7 +55,7 @@ export function memoizeAsync<Args extends readonly unknown[], R>(
     const key = keyFn(...args)
 
     // Return cached promise if exists
-    const cached = cache.get(key)
+    const cached = lookup(cache, key)
     if (isSome(cached)) return cached.value
 
     // Create new promise and cache it immediately (for deduplication)

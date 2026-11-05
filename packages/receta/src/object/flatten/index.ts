@@ -38,8 +38,8 @@ const OPTION_TYPES = { separator: 'string', maxDepth: 'number', flattenArrays: '
  * flatten({ a: { b: { c: 1 } } }, { maxDepth: 1 })
  * // => { 'a.b': { c: 1 } }
  *
- * // In a pipe, wrap it. flatten() returns {} instead of a function, and
- * // TypeScript reads flatten({ separator: '_' }) as the data-first call.
+ * // flatten() works in a pipe. With options, wrap it, because TypeScript
+ * // reads flatten({ separator: '_' }) as the data-first call.
  * pipe(
  *   nested,
  *   (obj) => flatten(obj, { separator: '_' })
@@ -52,12 +52,12 @@ export function flatten(obj: PlainObject, options?: FlattenOptions): FlatObject
 export function flatten(options?: FlattenOptions): (obj: PlainObject) => FlatObject
 export function flatten(objOrOptions?: PlainObject | FlattenOptions, maybeOptions?: FlattenOptions): any {
   // Data-last: no arguments, or a lone argument made only of options
-  if (objOrOptions === undefined || (maybeOptions === undefined && isOptionsObject(objOrOptions, OPTION_TYPES))) {
+  if (maybeOptions === undefined && (objOrOptions === undefined || isOptionsObject(objOrOptions, OPTION_TYPES))) {
     return (obj: PlainObject) => flattenImplementation(obj, objOrOptions as FlattenOptions | undefined)
   }
 
   // Data-first
-  return flattenImplementation(objOrOptions as PlainObject, maybeOptions)
+  return flattenImplementation(objOrOptions as PlainObject ?? {}, maybeOptions)
 }
 
 function flattenImplementation(obj: PlainObject, options?: FlattenOptions): FlatObject {

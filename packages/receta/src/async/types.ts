@@ -80,8 +80,8 @@ export interface PollOptions {
 
   /**
    * Timeout in milliseconds for the entire polling operation. `maxAttempts`
-   * still applies, so raise it too for a long timeout. After a timeout the
-   * loop keeps calling the function until its attempts run out.
+   * still applies, so raise it too for a long timeout. A call already running
+   * when the timeout fires can't be cancelled, but no new one starts.
    */
   readonly timeout?: number
 

@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from 'bun:test'
-import { isNone, isSome, some } from '../../option'
+import { isNone, isSome, none, some } from '../../option'
 import { lruCache, ttlCache, weakCache } from '../caches'
 import { invalidateWhere } from '../invalidation'
 import { memoize } from '../memoize'
 import { memoizeAsync } from '../memoizeAsync'
 import { memoizeBy } from '../memoizeBy'
+import type { Cache } from '../types'
 
 const pause = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -185,5 +186,40 @@ describe('cached values that are empty', () => {
     expect(isNone(lruCache<string, number>(2).get('missing'))).toBe(true)
     expect(isNone(weakCache<object, number>().get({}))).toBe(true)
     expect(isSome(some(undefined))).toBe(true)
+  })
+})
+
+describe('custom caches', () => {
+  it('respects a cache that expires entries only in has', () => {
+    let expired = false
+    const stored = new Map<unknown, string>()
+    const staleCache: Cache<unknown, string> = {
+      get: (key) => (stored.has(key) ? some(stored.get(key) as string) : none()),
+      set: (key, value) => void stored.set(key, value),
+      has: (key) => !expired && stored.has(key),
+      delete: (key) => stored.delete(key),
+      clear: () => stored.clear(),
+    }
+    let calls = 0
+    const memoized = memoize((_key: string) => `fresh${(calls += 1)}`, { cache: staleCache })
+
+    expect(memoized('a')).toBe('fresh1')
+    expect(memoized('a')).toBe('fresh1')
+
+    expired = true
+    expect(memoized('a')).toBe('fresh2')
+  })
+
+  it('treats has true with an empty get as a miss', () => {
+    const racyCache: Cache<string, number> = {
+      get: () => none(),
+      set: () => undefined,
+      has: () => true,
+      delete: () => false,
+      clear: () => undefined,
+    }
+    const memoized = memoize((key: string) => key.length, { cache: racyCache })
+
+    expect(memoized('abc')).toBe(3)
   })
 })

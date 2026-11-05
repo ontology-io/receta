@@ -16,5 +16,5 @@ export const isOptionsObject = (value: unknown, optionTypes: OptionTypes): boole
   Object.keys(value).length > 0 &&
   Object.entries(value).every(
     ([key, option]) =>
-      key in optionTypes && (option === undefined || typeof option === optionTypes[key])
+      Object.hasOwn(optionTypes, key) && (option === undefined || typeof option === optionTypes[key])
   )
