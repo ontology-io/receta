@@ -116,9 +116,7 @@ jobs:
           - name: '@ontologyio/receta-testing'
             path: 'packages/receta-testing'
             id: 'receta-testing'
-          - name: '@receta/eslint-plugin'
-            path: 'packages/eslint-plugin-receta'
-            id: 'eslint-plugin-receta'
+          # The ESLint plugin stays on npm: ESLint runs on Node, and the plugin can't meet JSR's type rules.
 
     steps:
       - name: Check if package should be published
@@ -143,6 +141,10 @@ jobs:
         with:
           bun-version: latest
           no-cache: true
+
+      - name: Install dependencies
+        if: steps.should_publish.outputs.publish == 'true'
+        run: bun install --frozen-lockfile
 
       - name: Publish to JSR
         if: steps.should_publish.outputs.publish == 'true'
