@@ -274,7 +274,7 @@ After generating the module, remind the user to:
 | Transformers | verb | `map`, `flatMap`, `filter` |
 | Extractors | `unwrap*` | `unwrap`, `unwrapOr`, `unwrapOrElse` |
 | Converters | `to*`, `from*` | `toOption`, `fromNullable` |
-| Pattern matching | `match` | `match(value, { VariantA: ..., VariantB: ... })` |
+| Pattern matching | `match` | `match(value, { onVariantA: ..., onVariantB: ... })` |
 | Collectors | `collect` | `collect(items)` — aggregate array of types |
 | Partitioners | `partition` | `partition(items)` — split into [A[], B[]] |
 

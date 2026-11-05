@@ -20,7 +20,7 @@ import { eq } from '../comparison'
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { where, gt, eq } from 'receta/predicate'
+ * import { where, gt, lt, eq } from '@ontologyio/receta/predicate'
  *
  * interface User {
  *   age: number
@@ -36,8 +36,8 @@ import { eq } from '../comparison'
  *
  * // Filter with multiple conditions
  * R.filter(users, where({
- *   age: gt(18),
- *   active: Boolean  // shorthand for (v) => v === true
+ *   age: gt<number>(18),
+ *   active: Boolean  // shorthand for (v) => Boolean(v)
  * }))
  * // => [{ age: 25, name: 'Alice', active: true }]
  *
@@ -50,7 +50,7 @@ import { eq } from '../comparison'
  * R.filter(products, where({
  *   category: eq('electronics'),
  *   inStock: Boolean,
- *   price: (p) => p < 30
+ *   price: lt<number>(30)
  * }))
  * // => [{ price: 10, category: 'electronics', inStock: true }]
  * ```
@@ -81,7 +81,7 @@ export const where = <T extends Record<string, unknown>>(
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { oneOf } from 'receta/predicate'
+ * import { oneOf } from '@ontologyio/receta/predicate'
  *
  * const numbers = [1, 2, 3, 4, 5]
  * R.filter(numbers, oneOf([1, 3, 5])) // => [1, 3, 5]
@@ -99,7 +99,7 @@ export const where = <T extends Record<string, unknown>>(
  * ) // => pending and shipped orders
  *
  * // More concise with prop
- * import { prop } from 'receta/predicate'
+ * import { prop } from '@ontologyio/receta/predicate'
  * R.filter(orders, prop('status', oneOf(['pending', 'shipped'])))
  * ```
  *
@@ -121,7 +121,7 @@ export const oneOf =
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { prop, gt, oneOf } from 'receta/predicate'
+ * import { prop, gt, oneOf } from '@ontologyio/receta/predicate'
  *
  * const users = [
  *   { name: 'Alice', age: 25 },
@@ -130,7 +130,7 @@ export const oneOf =
  * ]
  *
  * // Test single property
- * R.filter(users, prop('age', gt(18))) // => Alice and Charlie
+ * R.filter(users, prop('age', gt<number>(18))) // => Alice and Charlie
  *
  * // Combine with other predicates
  * R.filter(users, prop('name', oneOf(['Alice', 'Bob'])))
@@ -142,8 +142,8 @@ export const oneOf =
  *   { id: 2, user: { country: 'UK' } },
  *   { id: 3, user: { country: 'US' } }
  * ]
- * // Using pipe for nested access
- * R.filter(orders, (o) => prop('country', eq('US'))(o.user))
+ * // Use by() for nested access
+ * R.filter(orders, by((o) => o.user.country, eq('US')))
  * // => US orders
  * ```
  *
@@ -156,10 +156,10 @@ export const prop =
     predicate(obj[key])
 
 /**
- * Creates a predicate that tests if an object has a specific shape.
+ * Creates a predicate that tests if an object has the property values in a pattern.
  *
- * Similar to `where`, but returns true only if the object has exactly
- * the properties specified in the pattern (strict matching).
+ * Similar to `where`, but compares values with strict equality (===) instead of
+ * running predicates. Properties not in the pattern are ignored.
  *
  * @param pattern - The pattern object to match against
  * @returns A predicate that tests if value matches the pattern
@@ -167,7 +167,7 @@ export const prop =
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { matchesShape } from 'receta/predicate'
+ * import { matchesShape } from '@ontologyio/receta/predicate'
  *
  * const events = [
  *   { type: 'click', x: 100, y: 200 },
@@ -206,13 +206,16 @@ export const matchesShape =
 /**
  * Creates a predicate that tests if an object has a specific property.
  *
+ * Describe the data with a `type` alias: an `interface` doesn't satisfy the
+ * `Record<string, unknown>` constraint.
+ *
  * @param key - The property key to check for
  * @returns A predicate that returns true if the object has the property
  *
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { hasProperty } from 'receta/predicate'
+ * import { hasProperty } from '@ontologyio/receta/predicate'
  *
  * const objects = [
  *   { name: 'Alice', age: 25 },
@@ -251,7 +254,7 @@ export const hasProperty =
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { satisfies } from 'receta/predicate'
+ * import { satisfies } from '@ontologyio/receta/predicate'
  *
  * const numbers = [1, 2, 3, 4, 5]
  * R.filter(numbers, satisfies((n) => n % 2 === 0)) // => [2, 4]
@@ -284,7 +287,7 @@ export const satisfies = <T>(predicate: Predicate<T>): Predicate<T> => predicate
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { by, gt } from 'receta/predicate'
+ * import { by, gt } from '@ontologyio/receta/predicate'
  *
  * const users = [
  *   { name: 'Alice', tags: ['admin', 'user'] },
@@ -295,7 +298,7 @@ export const satisfies = <T>(predicate: Predicate<T>): Predicate<T> => predicate
  * // Test derived values
  * R.filter(
  *   users,
- *   by((u) => u.tags.length, gt(1))
+ *   by((u) => u.tags.length, gt<number>(1))
  * )
  * // => Alice and Charlie (have multiple tags)
  *
@@ -307,7 +310,7 @@ export const satisfies = <T>(predicate: Predicate<T>): Predicate<T> => predicate
  * ]
  * R.filter(
  *   products,
- *   by((p) => p.price * (1 - p.discount), gt(80))
+ *   by((p) => p.price * (1 - p.discount), gt<number>(80))
  * )
  * // => products with final price > 80
  * ```

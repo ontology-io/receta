@@ -1,0 +1,63 @@
+---
+title: Installation
+description: Add Receta and Remeda, then import each module by its own path.
+---
+
+Receta needs TypeScript 5 or later and runs on Node 18 or later, Bun, Deno and in the browser.
+
+```bash
+bun add @ontologyio/receta remeda
+```
+
+```bash
+npm install @ontologyio/receta remeda
+```
+
+```bash
+deno add jsr:@ontologyio/receta
+```
+
+## Importing
+
+Each module has its own path. There's no import from the package root, so a bundle only ever holds the modules you use.
+
+```ts
+import { ok, err, map } from '@ontologyio/receta/result'
+import { fromNullable } from '@ontologyio/receta/option'
+import { mapAsync, retry } from '@ontologyio/receta/async'
+```
+
+The modules are `result`, `option`, `async`, `validation`, `predicate`, `collection`, `object`, `string`, `number`, `memo`, `lens`, `compare` and `function`.
+
+## Types and values
+
+`Result`, `Option` and `Validation` are types, not namespaces, so `Result.map(...)` doesn't exist. Import the functions by name:
+
+```ts
+import { map, type Result } from '@ontologyio/receta/result'
+
+const double = (value: Result<number, string>) => map(value, (n) => n * 2)
+```
+
+When two modules share a name, alias one with its module:
+
+```ts
+import { map } from '@ontologyio/receta/result'
+import { map as mapOption } from '@ontologyio/receta/option'
+```
+
+## Data first or data last
+
+Every transformer works both ways, so it reads well on its own and inside a pipe.
+
+```ts
+import * as R from 'remeda'
+import { map, ok } from '@ontologyio/receta/result'
+
+map(ok(5), (n) => n * 2) // => Ok(10)
+
+R.pipe(
+  ok(5),
+  map((n) => n * 2),
+) // => Ok(10)
+```

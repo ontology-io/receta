@@ -60,7 +60,7 @@ const getUsers = endpoint({
 #### **receta-forms**
 Form state management and validation workflows
 ```typescript
-import { Validation } from 'receta/validation'
+import { Validation } from '@ontologyio/receta/validation'
 import { createForm, field } from 'receta-forms'
 
 // Built on Receta's Validation
@@ -145,9 +145,9 @@ function UserProfile({ userId }: Props) {
   const user = useAsync(() => fetchUser(userId))
 
   return Result.match(user, {
-    Ok: (data) => <Profile user={data} />,
-    Err: (error) => <Error error={error} />,
-    Loading: () => <Spinner />
+    onOk: (data) => <Profile user={data} />,
+    onErr: (error) => <Error error={error} />,
+    onLoading: () => <Spinner />
   })
 }
 ```
@@ -163,8 +163,8 @@ app.get('/users/:id', asyncHandler(async (req, res) => {
   const result = await getUser(req.params.id)
 
   return Result.match(result, {
-    Ok: (user) => res.json(user),
-    Err: (error) => res.status(404).json(error)
+    onOk: (user) => res.json(user),
+    onErr: (error) => res.status(404).json(error)
   })
 }))
 ```
@@ -242,7 +242,7 @@ const checkAccess = (
 #### **receta-analytics**
 Analytics and metrics
 ```typescript
-import { collect, nest } from 'receta/collection'
+import { collect, nest } from '@ontologyio/receta/collection'
 import { track, aggregate, metric } from 'receta-analytics'
 
 // Built on Receta's collection patterns

@@ -7,6 +7,7 @@ import { lens } from '../lens'
  *
  * Allows immutable updates to array elements at a specific position.
  * If the index is out of bounds, `get` returns undefined and `set` has no effect.
+ * Setting `undefined` has no effect either, so this lens can't remove an element.
  *
  * @param idx - The array index to focus on
  * @returns A Lens focusing on the element at the specified index

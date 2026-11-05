@@ -16,7 +16,7 @@ import { purryConfig } from '../../utils'
  * @example
  * ```typescript
  * // Data-first
- * const nameLens = prop<User>('name')
+ * const nameLens = prop<User, 'name'>('name')
  * const user = { name: 'Alice', age: 30 }
  * view(nameLens, user) // 'Alice'
  * ```
@@ -28,7 +28,7 @@ import { purryConfig } from '../../utils'
  *
  * const result = R.pipe(
  *   user,
- *   view(prop<User>('name'))
+ *   view(prop<User, 'name'>('name'))
  * ) // 'Alice'
  * ```
  *

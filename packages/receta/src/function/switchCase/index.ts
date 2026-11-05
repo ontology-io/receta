@@ -46,7 +46,7 @@ import { purryConfig2 } from '../../utils'
  *
  * getStatusMessage(200)  // => 'Success'
  * getStatusMessage(404)  // => 'Not Found'
- * getStatusMessage(999)  // => 'Unknown Status'
+ * getStatusMessage(100)  // => 'Unknown Status'
  * ```
  *
  * @example

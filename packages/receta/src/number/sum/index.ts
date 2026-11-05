@@ -11,7 +11,9 @@
  * sum([1, 2, 3, 4]) // => 10
  * sum([]) // => 0
  * sum([-1, 1]) // => 0
- * sum([0.1, 0.2, 0.3]) // => 0.6
+ *
+ * // Floating-point rounding still applies
+ * sum([0.1, 0.2, 0.3]) // => 0.6000000000000001
  *
  * // Real-world: Shopping cart total
  * const cartTotal = (items: CartItem[]) =>

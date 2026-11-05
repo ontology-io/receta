@@ -1,0 +1,254 @@
+@import "tailwindcss";
+
+/*
+ * Tokens from design/receta-website.pen.
+ *
+ * --spacing is one design pixel, so `left-710` in code is `x: 710` in Pen, and
+ * every length scales with the root font size set in the base layer below.
+ */
+@theme {
+  --color-*: initial;
+  --color-ink: #14110e;
+  --color-ink-2: #1f1a16;
+  --color-ink-3: #2b2520;
+  --color-ink-4: #3a3129;
+  --color-ink-5: #4a3f34;
+  --color-ink-line: #453c33;
+  --color-on-ink: #f3ede2;
+  --color-on-ink-2: #b5aa9b;
+  --color-on-ink-3: #8c8174;
+  --color-paper: #f3ede2;
+  --color-paper-2: #e8e0d1;
+  --color-paper-line: #cfc4b1;
+  --color-on-paper: #16130f;
+  --color-on-paper-2: #574e43;
+  --color-on-paper-3: #665c51;
+  --color-err: #e2461c;
+  --color-err-text: #b5320c;
+  --color-ok: #17694a;
+  --color-ok-on-ink: #5cc595;
+  --color-ok-mist: #cfe5da;
+  --color-warn: #f0b429;
+  --color-code-string-ink: #e9be5c;
+  --color-code-type-ink: #7fcfa6;
+  --color-code-keyword-ink: #a2978a;
+  --color-code-string-paper: #8a5a00;
+
+  --spacing: 0.0625rem;
+  --breakpoint-lg: 72rem;
+
+  --text-display-1: 8.625rem;
+  --text-display-1--line-height: 1;
+  --text-display-1--letter-spacing: -0.028em;
+  --text-display-2: 7.875rem;
+  --text-display-2--line-height: 1;
+  --text-display-2--letter-spacing: -0.027em;
+  --text-display-3: 7rem;
+  --text-display-3--line-height: 1;
+  --text-display-3--letter-spacing: -0.027em;
+  --text-display-4: 5.75rem;
+  --text-display-4--line-height: 1.03;
+  --text-display-4--letter-spacing: -0.026em;
+  --text-display-5: 4.75rem;
+  --text-display-5--line-height: 1.05;
+  --text-display-5--letter-spacing: -0.024em;
+  --text-display-6: 3.875rem;
+  --text-display-6--line-height: 1.06;
+  --text-display-6--letter-spacing: -0.022em;
+  --text-title: 2.75rem;
+  --text-title--line-height: 1.1;
+  --text-aside: 1.875rem;
+  --text-aside--line-height: 1.24;
+  --text-lede: 1.5625rem;
+  --text-lede--line-height: 1.36;
+  --text-body: 1.375rem;
+  --text-body--line-height: 1.34;
+  --text-note: 1.25rem;
+  --text-note--line-height: 1.32;
+  --text-code-1: 2.625rem;
+  --text-code-2: 1.6875rem;
+  --text-code-3: 1.5rem;
+  --text-code-4: 1.1875rem;
+  --text-code-5: 1.0625rem;
+  --text-code-6: 0.9375rem;
+}
+
+@theme inline {
+  --font-human: var(--font-newsreader), Georgia, serif;
+  --font-machine: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+/* Below the stage breakpoint the page is one readable column at a normal root size. */
+@media (width < 72rem) {
+  :root {
+    --text-display-1: 4.375rem;
+    --text-display-2: 4rem;
+    --text-display-3: 4.125rem;
+    --text-display-4: 3.25rem;
+    --text-display-5: 2.75rem;
+    --text-display-6: 2.5rem;
+    --text-title: 1.8125rem;
+    --text-aside: 1.5rem;
+    --text-lede: 1.3125rem;
+    --text-body: 1.1875rem;
+    --text-note: 1.125rem;
+    --text-code-1: 1.5rem;
+    --text-code-2: 0.8125rem;
+    --text-code-3: 0.8125rem;
+    --text-code-4: 0.8125rem;
+    --text-code-5: 0.8125rem;
+    --text-code-6: 0.75rem;
+  }
+}
+
+/* Scrubbed motion only runs on the stage layout, and only when the reader allows motion. */
+@custom-variant scrub {
+  @media (width >= 72rem) {
+    &:where([data-motion] *) {
+      @slot;
+    }
+  }
+}
+
+@layer base {
+  html {
+    /* Pen draws Newsreader at its default optical size. At auto, display sizes run 11% wider. */
+    font-optical-sizing: none;
+    background-color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* The stage is 1440 by 900 design pixels, scaled to fit the window. */
+  @media (width >= 72rem) {
+    html {
+      font-size: clamp(11.5px, min(calc((100vw - 16px) / 90), calc(100vh / 56.25)), 26px);
+    }
+  }
+
+  body {
+    overflow-x: clip;
+  }
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+/* Moves a layer by the scene's scroll offset. parallax-30 travels at 0.30 of the page. */
+@utility parallax-* {
+  translate: 0 calc(var(--shift, 0) * (1 - --value(integer) / 100) * var(--spacing));
+}
+
+/* Mono labels never drop below 11px, however small the stage scales. */
+@utility label {
+  font-family: var(--font-machine);
+  font-size: max(0.8125rem, 11px);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+/* A line of the crime scene falling away, or closing ranks, as --fall goes from 0 to 1. */
+@utility fall-line {
+  translate: calc(var(--dx) * var(--fall, 0) * var(--spacing)) calc(var(--dy) * var(--fall, 0) * var(--spacing));
+  rotate: calc(var(--turn) * var(--fall, 0) * 1deg);
+}
+
+/* Evidence stamps in one marker at a time as --stamp goes from 0 to 1. */
+@utility stamp-in {
+  opacity: clamp(0, calc(var(--stamp, 1) * 3 - var(--order)), 1);
+  scale: calc(1.5 - 0.5 * clamp(0, calc(var(--stamp, 1) * 3 - var(--order)), 1));
+}
+
+/* Everything around the code clears the stage before the lines start to fall. */
+@utility fade-on-fall {
+  opacity: calc(1 - var(--clear, 0));
+}
+
+/* Each story line slides in from the right, later lines last. */
+@utility story-line {
+  --line-in: clamp(0, calc(var(--assemble, 1) * 2 - var(--order) * 0.12), 1);
+  opacity: var(--line-in);
+  translate: calc((1 - var(--line-in)) * 420 * var(--spacing)) 0;
+}
+
+/* The crime scene's code has gone by the time the story arrives. */
+@utility leave {
+  opacity: calc(1 - var(--assemble, 0) * 3);
+}
+
+/* Fades in with the story, for everything that doesn't slide. */
+@utility arrive {
+  opacity: var(--assemble, 1);
+}
+
+/* Slides a reveal in from the left as the block enters the viewport. */
+@utility reveal-in {
+  opacity: var(--reveal, 1);
+  translate: calc((1 - var(--reveal, 1)) * -24 * var(--spacing)) 0;
+}
+
+/* Draws an element left to right as the block enters the viewport. */
+@utility reveal-draw {
+  clip-path: inset(0 calc((1 - var(--reveal, 1)) * 100%) 0 0);
+}
+
+/* Paper rising through the ink. */
+@utility rise {
+  scale: 1 var(--horizon, 1);
+}
+
+/* A label or box travelling from the nesting to its station as --t goes from 0 to 1. */
+@utility fly {
+  translate: calc((1 - var(--t)) * var(--dx) * var(--spacing)) calc((1 - var(--t)) * var(--dy) * var(--spacing));
+  transform-origin: top left;
+}
+
+@utility fly-label {
+  scale: calc(var(--sx) + (1 - var(--sx)) * var(--t));
+  opacity: clamp(0, calc(var(--t) * 8), 1);
+}
+
+@utility fly-box {
+  scale: calc(var(--sx) + (1 - var(--sx)) * var(--t)) calc(var(--sy) + (1 - var(--sy)) * var(--t));
+  opacity: clamp(0, min(calc(var(--t) * 6), calc((1 - var(--t)) * 6)), 0.92);
+}
+
+/* The nesting steps back once its calls have left. */
+@utility nest-fade {
+  opacity: calc(1 - var(--nest-fade, 0) * 0.7);
+}
+
+/* The zoom camera. Code renders at its largest size and scales down, so it stays sharp. */
+@utility camera {
+  translate: calc(var(--cam-x, var(--rest-x)) * var(--spacing)) calc(var(--cam-y, var(--rest-y)) * var(--spacing));
+  scale: var(--cam-scale, var(--rest-scale));
+  transform-origin: 0 0;
+}
+
+/* Draws an SVG path with pathLength 1 as the block enters the viewport. */
+@utility draw-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--reveal, 1));
+}
+
+/* A scene's height on the stage. Inside a pin it fills the pin instead. */
+@utility stage-height {
+  height: var(--scene-height, calc(var(--stage-height) * var(--spacing)));
+}
+
+/* A pinned scene fills the window, however much taller the window is than the stage. */
+@utility pin-stage {
+  --scene-height: 100%;
+  height: max(100svh, calc(var(--stage-height) * var(--spacing)));
+}
+
+@utility pin-height {
+  height: calc(max(100svh, calc(var(--stage-height) * var(--spacing))) + var(--pin) * 1vh);
+}

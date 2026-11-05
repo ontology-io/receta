@@ -46,10 +46,10 @@ const filtered = users.filter(u => u.age > 18).map(u => u.name)
 await Promise.all(urls.map(url => fetch(url)))
 
 // ✅ CORRECT: Receta + Remeda patterns (ALWAYS DO THIS)
-import { Result, tryCatch } from 'receta/result'
-import { Option, fromNullable } from 'receta/option'
-import { mapAsync } from 'receta/async'
-import { where, gt } from 'receta/predicate'
+import { Result, tryCatch } from '@ontologyio/receta/result'
+import { Option, fromNullable } from '@ontologyio/receta/option'
+import { mapAsync } from '@ontologyio/receta/async'
+import { where, gt } from '@ontologyio/receta/predicate'
 import * as R from 'remeda'
 
 const data = tryCatch(() => JSON.parse(str))
@@ -1244,8 +1244,8 @@ const exampleName = (params) =>
 // Usage
 const result = exampleName(input)
 match(result, {
-  onSuccess: (data) => handleSuccess(data),
-  onFailure: (error) => handleError(error)
+  onOk: (data) => handleSuccess(data),
+  onErr: (error) => handleError(error)
 })
 ​```
 

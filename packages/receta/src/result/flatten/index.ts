@@ -20,7 +20,7 @@ import { isOk } from '../guards'
  * // Data-last (in pipe)
  * pipe(
  *   ok(ok(42)),
- *   flatten
+ *   flatten()
  * ) // => Ok(42)
  * ```
  *

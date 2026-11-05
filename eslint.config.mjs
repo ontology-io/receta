@@ -20,7 +20,6 @@ export default [
       'node_modules/**',
       'dist/**',
       'output/**',
-      'docs-site/**',
       'scripts/**',
       '*.config.js',
       '*.config.mjs',

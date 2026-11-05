@@ -10,6 +10,8 @@ export interface Cache<K, V> {
   has(key: K): boolean
   delete(key: K): boolean
   clear(): void
+  /** Visits each entry. `invalidateWhere` needs it, and a `weakCache` can't offer it. */
+  forEach?(callback: (value: V, key: K) => void): void
 }
 
 /**
@@ -35,7 +37,7 @@ export interface MemoizeOptions<K = string> {
 
   /**
    * Time-to-live for cached entries in milliseconds.
-   * Entries are removed after this duration.
+   * Applies to the built-in cache, alongside `maxSize`. Ignored when `cache` is passed.
    */
   ttl?: number
 }

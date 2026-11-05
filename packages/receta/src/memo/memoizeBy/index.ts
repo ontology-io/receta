@@ -1,5 +1,6 @@
-import { unwrap, some, none } from '../../option'
+import { isSome } from '../../option'
 import type { Cache, KeyFn, MemoizeOptions, MemoizedFunction } from '../types'
+import { boundedCache } from '../caches/boundedCache'
 
 /**
  * Creates a memoized function with custom key extraction.
@@ -44,37 +45,13 @@ export function memoizeBy<Args extends readonly unknown[], R, K>(
   keyFn: KeyFn<Args, K>,
   options: MemoizeOptions<K> = {}
 ): MemoizedFunction<Args, R> {
-  // Wrap Map to return Option values
-  const defaultCache = (): Cache<K, R> & { forEach?: Map<K, R>['forEach'] } => {
-    const map = new Map<K, R>()
-    return {
-      get: (key) => (map.has(key) ? some(map.get(key) as R) : none()),
-      set: (key, value) => {
-        map.set(key, value)
-        // Handle maxSize eviction
-        if (options.maxSize && map.size > options.maxSize) {
-          const firstKey = map.keys().next().value
-          if (firstKey !== undefined) {
-            map.delete(firstKey)
-          }
-        }
-      },
-      has: (key) => map.has(key),
-      delete: (key) => map.delete(key),
-      clear: () => map.clear(),
-      // Add forEach for invalidateWhere support
-      forEach: map.forEach.bind(map) as any,
-    }
-  }
-
-  const cache: Cache<K, R> = (options.cache as Cache<K, R>) ?? defaultCache()
+  const cache: Cache<K, R> = (options.cache as Cache<K, R>) ?? boundedCache(options)
 
   const memoized = (...args: Args): R => {
     const key = keyFn(...args)
 
-    if (cache.has(key)) {
-      return unwrap(cache.get(key))
-    }
+    const cached = cache.get(key)
+    if (isSome(cached)) return cached.value
 
     const result = fn(...args)
     cache.set(key, result)

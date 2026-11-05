@@ -16,6 +16,10 @@ export class TimeoutError extends Error {
  * If the promise doesn't resolve within the specified time,
  * returns an Err with TimeoutError for explicit error handling.
  *
+ * Only the timeout becomes an Err: if the promise rejects first, that rejection
+ * is rethrown. The promise keeps running after a timeout, because timeout stops
+ * waiting rather than cancelling the work.
+ *
  * @param promise - Promise to add timeout to
  * @param ms - Timeout in milliseconds
  * @returns Promise resolving to Result with value or TimeoutError
@@ -23,18 +27,18 @@ export class TimeoutError extends Error {
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { unwrapOr, mapErr } from 'receta/result'
+ * import { isErr, map, tapErr, unwrapOr } from '@ontologyio/receta/result'
  *
  * // Basic timeout
  * const result = await timeout(
- *   fetch('/api/data'),
+ *   fetch('/api/data').then(r => r.json()),
  *   5000 // 5 second timeout
  * )
  *
  * // Handle with Result pattern
  * const data = R.pipe(
  *   result,
- *   mapErr(error => console.error('Timeout:', error)),
+ *   tapErr(error => console.error('Timeout:', error)),
  *   unwrapOr({ fallback: 'data' })
  * )
  *

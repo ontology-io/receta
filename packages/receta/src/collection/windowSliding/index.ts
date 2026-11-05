@@ -29,7 +29,7 @@ import type { WindowSlidingConfig } from '../types'
  *   windowSliding({ size: 3 }),
  *   R.map(window => window.reduce((a, b) => a + b, 0) / window.length)
  * )
- * // => [101, 102.67, 103, 105]
+ * // => [101, 102.66666666666667, 103, 105]
  *
  * // N-gram analysis
  * const words = ['the', 'quick', 'brown', 'fox', 'jumps']

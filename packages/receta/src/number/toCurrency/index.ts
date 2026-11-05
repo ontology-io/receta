@@ -14,7 +14,7 @@ import type { CurrencyOptions } from '../types'
  * ```typescript
  * // Data-first
  * toCurrency(1234.56, { currency: 'USD' }) // => "$1,234.56"
- * toCurrency(1234.56, { currency: 'EUR', locale: 'de-DE' }) // => "1.234,56 €"
+ * toCurrency(1234.56, { currency: 'EUR', locale: 'de-DE' }) // => "1.234,56\u00a0€"
  * toCurrency(1234.56, { currency: 'GBP' }) // => "£1,234.56"
  * toCurrency(1234, { currency: 'JPY' }) // => "¥1,234" (no decimals)
  *

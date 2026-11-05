@@ -6,6 +6,9 @@
 
 import type { Predicate } from '../types'
 
+/** The wide type of a threshold, so `gt(18)` tests any number and not only the literal 18. */
+type Widen<T> = T extends number ? number : T extends bigint ? bigint : never
+
 /**
  * Creates a predicate that tests if a value is greater than a threshold.
  *
@@ -17,12 +20,12 @@ import type { Predicate } from '../types'
  * import * as R from 'remeda'
  *
  * const numbers = [1, 5, 10, 15, 20]
- * R.filter(numbers, gt(10)) // => [15, 20]
+ * R.filter(numbers, gt<number>(10)) // => [15, 20]
  *
  * // With pipe
  * R.pipe(
  *   numbers,
- *   R.filter(gt(10))
+ *   R.filter(gt<number>(10))
  * ) // => [15, 20]
  * ```
  *
@@ -30,7 +33,7 @@ import type { Predicate } from '../types'
  * @see lt - for less than comparison
  * @see between - for range comparison
  */
-export const gt = <T extends number | bigint>(threshold: T): Predicate<T> => (value) =>
+export const gt = <T extends number | bigint>(threshold: T): Predicate<Widen<T>> => (value) =>
   value > threshold
 
 /**
@@ -44,13 +47,13 @@ export const gt = <T extends number | bigint>(threshold: T): Predicate<T> => (va
  * import * as R from 'remeda'
  *
  * const numbers = [1, 5, 10, 15, 20]
- * R.filter(numbers, gte(10)) // => [10, 15, 20]
+ * R.filter(numbers, gte<number>(10)) // => [10, 15, 20]
  * ```
  *
  * @see gt - for exclusive comparison (>)
  * @see lte - for less than or equal comparison
  */
-export const gte = <T extends number | bigint>(threshold: T): Predicate<T> => (value) =>
+export const gte = <T extends number | bigint>(threshold: T): Predicate<Widen<T>> => (value) =>
   value >= threshold
 
 /**
@@ -64,7 +67,7 @@ export const gte = <T extends number | bigint>(threshold: T): Predicate<T> => (v
  * import * as R from 'remeda'
  *
  * const numbers = [1, 5, 10, 15, 20]
- * R.filter(numbers, lt(10)) // => [1, 5]
+ * R.filter(numbers, lt<number>(10)) // => [1, 5]
  *
  * // Useful for filtering by age, price, etc.
  * const products = [
@@ -72,14 +75,14 @@ export const gte = <T extends number | bigint>(threshold: T): Predicate<T> => (v
  *   { name: 'B', price: 15 },
  *   { name: 'C', price: 25 }
  * ]
- * R.filter(products, (p) => lt(20)(p.price)) // => products A and B
+ * R.filter(products, (p) => lt<number>(20)(p.price)) // => products A and B
  * ```
  *
  * @see lte - for inclusive comparison (<=)
  * @see gt - for greater than comparison
  * @see between - for range comparison
  */
-export const lt = <T extends number | bigint>(threshold: T): Predicate<T> => (value) =>
+export const lt = <T extends number | bigint>(threshold: T): Predicate<Widen<T>> => (value) =>
   value < threshold
 
 /**
@@ -93,13 +96,13 @@ export const lt = <T extends number | bigint>(threshold: T): Predicate<T> => (va
  * import * as R from 'remeda'
  *
  * const numbers = [1, 5, 10, 15, 20]
- * R.filter(numbers, lte(10)) // => [1, 5, 10]
+ * R.filter(numbers, lte<number>(10)) // => [1, 5, 10]
  * ```
  *
  * @see lt - for exclusive comparison (<)
  * @see gte - for greater than or equal comparison
  */
-export const lte = <T extends number | bigint>(threshold: T): Predicate<T> => (value) =>
+export const lte = <T extends number | bigint>(threshold: T): Predicate<Widen<T>> => (value) =>
   value <= threshold
 
 /**
@@ -161,7 +164,7 @@ export const neq = <T>(expected: T): Predicate<T> => (value) => value !== expect
  * import * as R from 'remeda'
  *
  * const numbers = [1, 5, 10, 15, 20, 25]
- * R.filter(numbers, between(10, 20)) // => [10, 15, 20]
+ * R.filter(numbers, between<number>(10, 20)) // => [10, 15, 20]
  *
  * // Real-world: Filter products by price range
  * const products = [
@@ -169,14 +172,14 @@ export const neq = <T>(expected: T): Predicate<T> => (value) => value !== expect
  *   { name: 'Standard', price: 15 },
  *   { name: 'Premium', price: 50 }
  * ]
- * R.filter(products, (p) => between(10, 30)(p.price))
+ * R.filter(products, (p) => between<number>(10, 30)(p.price))
  * // => [{ name: 'Standard', price: 15 }]
  * ```
  *
  * @see gt - for greater than comparison
  * @see lt - for less than comparison
  */
-export const between = <T extends number | bigint>(min: T, max: T): Predicate<T> => (value) =>
+export const between = <T extends number | bigint>(min: T, max: T): Predicate<Widen<T>> => (value) =>
   value >= min && value <= max
 
 /**
@@ -275,7 +278,7 @@ export const includes = (substring: string): Predicate<string> => (value) =>
  * // Real-world: Validate input format
  * const phoneNumbers = ['+1-555-0100', '555-0100', 'not-a-phone']
  * R.filter(phoneNumbers, matches(/^\+?\d{1,3}-\d{3}-\d{4}$/))
- * // => ['+1-555-0100', '555-0100']
+ * // => ['+1-555-0100']
  * ```
  *
  * @see includes - for simple substring testing
@@ -283,14 +286,14 @@ export const includes = (substring: string): Predicate<string> => (value) =>
 export const matches = (pattern: RegExp): Predicate<string> => (value) => pattern.test(value)
 
 /**
- * Creates a predicate that tests if a value is empty.
+ * A predicate that tests if a value is empty.
  *
  * Works with strings, arrays, and objects.
  * - Strings: empty if length === 0
  * - Arrays: empty if length === 0
  * - Objects: empty if has no own properties
  *
- * @returns A predicate that returns true if value is empty
+ * @returns True if value is empty
  *
  * @example
  * ```typescript
@@ -321,11 +324,11 @@ export const isEmpty: Predicate<string | readonly unknown[] | Record<string, unk
 }
 
 /**
- * Creates a predicate that tests if a value is not empty.
+ * A predicate that tests if a value is not empty.
  *
  * The inverse of `isEmpty`.
  *
- * @returns A predicate that returns true if value is not empty
+ * @returns True if value is not empty
  *
  * @example
  * ```typescript

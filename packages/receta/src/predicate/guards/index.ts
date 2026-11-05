@@ -17,7 +17,7 @@ import type { TypePredicate } from '../types'
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { isString } from 'receta/predicate'
+ * import { isString } from '@ontologyio/receta/predicate'
  *
  * const mixed: unknown[] = ['hello', 42, 'world', true]
  * const strings = R.filter(mixed, isString) // type: string[]
@@ -40,7 +40,7 @@ export const isString: TypePredicate<unknown, string> = (value): value is string
  * Type guard that checks if a value is a number.
  *
  * Narrows the type to `number` in TypeScript.
- * Returns false for NaN (use `isFiniteNumber` to include NaN).
+ * Returns false for NaN. Infinity passes: use `isFiniteNumber` to reject it too.
  *
  * @param value - The value to check
  * @returns True if value is a number and not NaN
@@ -48,7 +48,7 @@ export const isString: TypePredicate<unknown, string> = (value): value is string
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { isNumber } from 'receta/predicate'
+ * import { isNumber } from '@ontologyio/receta/predicate'
  *
  * const mixed: unknown[] = [42, 'hello', 100, null]
  * const numbers = R.filter(mixed, isNumber) // type: number[]
@@ -61,7 +61,7 @@ export const isString: TypePredicate<unknown, string> = (value): value is string
  * }
  * ```
  *
- * @see isFiniteNumber - to allow NaN
+ * @see isFiniteNumber - to also reject Infinity
  * @see isInteger - for integer type guard
  * @see isString - for string type guard
  */
@@ -78,7 +78,7 @@ export const isNumber: TypePredicate<unknown, number> = (value): value is number
  *
  * @example
  * ```typescript
- * import { isFiniteNumber } from 'receta/predicate'
+ * import { isFiniteNumber } from '@ontologyio/receta/predicate'
  *
  * isFiniteNumber(42) // => true
  * isFiniteNumber(Infinity) // => false
@@ -101,7 +101,7 @@ export const isFiniteNumber: TypePredicate<unknown, number> = (value): value is 
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { isInteger } from 'receta/predicate'
+ * import { isInteger } from '@ontologyio/receta/predicate'
  *
  * const numbers = [1, 1.5, 2, 2.5, 3]
  * R.filter(numbers, isInteger) // => [1, 2, 3]
@@ -124,7 +124,7 @@ export const isInteger: TypePredicate<unknown, number> = (value): value is numbe
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { isBoolean } from 'receta/predicate'
+ * import { isBoolean } from '@ontologyio/receta/predicate'
  *
  * const mixed: unknown[] = [true, 1, false, 'yes']
  * const booleans = R.filter(mixed, isBoolean) // type: boolean[]
@@ -146,7 +146,7 @@ export const isBoolean: TypePredicate<unknown, boolean> = (value): value is bool
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { isNull } from 'receta/predicate'
+ * import { isNull } from '@ontologyio/receta/predicate'
  *
  * const values: unknown[] = [null, undefined, 0, '']
  * R.filter(values, isNull) // => [null]
@@ -167,7 +167,7 @@ export const isNull: TypePredicate<unknown, null> = (value): value is null => va
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { isUndefined } from 'receta/predicate'
+ * import { isUndefined } from '@ontologyio/receta/predicate'
  *
  * const values: unknown[] = [null, undefined, 0, '']
  * R.filter(values, isUndefined) // => [undefined]
@@ -189,7 +189,7 @@ export const isUndefined: TypePredicate<unknown, undefined> = (value): value is 
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { isNullish, not } from 'receta/predicate'
+ * import { isNullish, not } from '@ontologyio/receta/predicate'
  *
  * const values: Array<string | null | undefined> = ['hello', null, 'world', undefined]
  * R.filter(values, not(isNullish)) // type: string[]
@@ -215,7 +215,7 @@ export const isNullish: TypePredicate<unknown, null | undefined> = (
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { isDefined } from 'receta/predicate'
+ * import { isDefined } from '@ontologyio/receta/predicate'
  *
  * const values: Array<string | null | undefined> = ['hello', null, 'world', undefined]
  * const defined = R.filter(values, isDefined) // type: string[]
@@ -234,7 +234,7 @@ export const isDefined = <T>(value: T): value is NonNullable<T> => value != null
  *
  * @example
  * ```typescript
- * import { isArray } from 'receta/predicate'
+ * import { isArray } from '@ontologyio/receta/predicate'
  *
  * const value: unknown = [1, 2, 3]
  * if (isArray(value)) {
@@ -249,16 +249,16 @@ export const isArray: TypePredicate<unknown, unknown[]> = (value): value is unkn
   Array.isArray(value)
 
 /**
- * Type guard that checks if a value is a plain object.
+ * Type guard that checks if a value is a non-null object that isn't an array.
  *
- * Returns false for arrays, functions, null, and other non-plain objects.
+ * Returns false for arrays, functions and null. Class instances such as Date and Map pass.
  *
  * @param value - The value to check
- * @returns True if value is a plain object
+ * @returns True if value is a non-null, non-array object
  *
  * @example
  * ```typescript
- * import { isObject } from 'receta/predicate'
+ * import { isObject } from '@ontologyio/receta/predicate'
  *
  * isObject({}) // => true
  * isObject({ a: 1 }) // => true
@@ -284,7 +284,7 @@ export const isObject: TypePredicate<unknown, Record<string, unknown>> = (
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { isFunction } from 'receta/predicate'
+ * import { isFunction } from '@ontologyio/receta/predicate'
  *
  * const mixed: unknown[] = [() => {}, 42, function() {}, 'test']
  * R.filter(mixed, isFunction) // type: Function[]
@@ -304,7 +304,7 @@ export const isFunction: TypePredicate<unknown, Function> = (value): value is Fu
  *
  * @example
  * ```typescript
- * import { isDate } from 'receta/predicate'
+ * import { isDate } from '@ontologyio/receta/predicate'
  *
  * isDate(new Date()) // => true
  * isDate('2024-01-01') // => false
@@ -322,7 +322,7 @@ export const isDate: TypePredicate<unknown, Date> = (value): value is Date =>
  *
  * @example
  * ```typescript
- * import { isRegExp } from 'receta/predicate'
+ * import { isRegExp } from '@ontologyio/receta/predicate'
  *
  * isRegExp(/test/) // => true
  * isRegExp(new RegExp('test')) // => true
@@ -340,7 +340,7 @@ export const isRegExp: TypePredicate<unknown, RegExp> = (value): value is RegExp
  *
  * @example
  * ```typescript
- * import { isError } from 'receta/predicate'
+ * import { isError } from '@ontologyio/receta/predicate'
  *
  * isError(new Error('fail')) // => true
  * isError(new TypeError('invalid')) // => true
@@ -358,7 +358,7 @@ export const isError: TypePredicate<unknown, Error> = (value): value is Error =>
  *
  * @example
  * ```typescript
- * import { isPromise } from 'receta/predicate'
+ * import { isPromise } from '@ontologyio/receta/predicate'
  *
  * isPromise(Promise.resolve(42)) // => true
  * isPromise(async () => {}) // => false (it's a function)
@@ -378,7 +378,7 @@ export const isPromise: TypePredicate<unknown, Promise<unknown>> = (
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { isInstanceOf } from 'receta/predicate'
+ * import { isInstanceOf } from '@ontologyio/receta/predicate'
  *
  * class User {
  *   constructor(public name: string) {}

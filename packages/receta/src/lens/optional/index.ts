@@ -21,7 +21,7 @@ import { lens } from '../lens'
  *   phone?: string
  * }
  *
- * const emailLens = prop<User>('email')
+ * const emailLens = prop<User, 'email'>('email')
  * const optionalEmailLens = optional(emailLens)
  *
  * const user1 = { name: 'Alice', email: 'alice@example.com' }
@@ -34,20 +34,22 @@ import { lens } from '../lens'
  * @example
  * ```typescript
  * // Setting through optional lens
- * import { some, none } from 'receta/option'
+ * import { some, none } from '@ontologyio/receta/option'
  *
  * const user = { name: 'Alice' }
  *
  * set(optionalEmailLens, some('alice@example.com'), user)
  * // => { name: 'Alice', email: 'alice@example.com' }
  *
- * set(optionalEmailLens, none, user)
+ * set(optionalEmailLens, none(), user)
  * // => { name: 'Alice', email: undefined }
  * ```
  *
  * @example
  * ```typescript
  * // Transforming optional values
+ * import { map } from '@ontologyio/receta/option'
+ *
  * over(
  *   optionalEmailLens,
  *   emailOpt => map(emailOpt, email => email.toLowerCase()),

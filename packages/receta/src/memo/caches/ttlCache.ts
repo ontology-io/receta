@@ -1,10 +1,5 @@
-import { type Option, fromNullable, some, none } from '../../option'
 import type { Cache } from '../types'
-
-interface CacheEntry<V> {
-  value: V
-  expiresAt: number
-}
+import { boundedCache } from './boundedCache'
 
 /**
  * Creates a time-to-live (TTL) cache that automatically expires entries.
@@ -14,7 +9,7 @@ interface CacheEntry<V> {
  *
  * @example
  * ```typescript
- * import { memoize, ttlCache } from 'receta/memo'
+ * import { memoize, ttlCache } from '@ontologyio/receta/memo'
  *
  * // Cache weather data for 5 minutes
  * const getWeather = memoize(fetchWeather, {
@@ -30,48 +25,5 @@ interface CacheEntry<V> {
  * @param ttlMs - Time-to-live in milliseconds
  */
 export function ttlCache<K, V>(ttlMs: number): Cache<K, V> {
-  const map = new Map<K, CacheEntry<V>>()
-
-  return {
-    get(key: K): Option<V> {
-      const entry = map.get(key)
-      if (!entry) return none()
-
-      // Check if expired
-      if (Date.now() > entry.expiresAt) {
-        map.delete(key)
-        return none()
-      }
-
-      return some(entry.value)
-    },
-
-    set(key: K, value: V): void {
-      map.set(key, {
-        value,
-        expiresAt: Date.now() + ttlMs,
-      })
-    },
-
-    has(key: K): boolean {
-      const entry = map.get(key)
-      if (!entry) return false
-
-      // Check if expired
-      if (Date.now() > entry.expiresAt) {
-        map.delete(key)
-        return false
-      }
-
-      return true
-    },
-
-    delete(key: K): boolean {
-      return map.delete(key)
-    },
-
-    clear(): void {
-      map.clear()
-    },
-  }
+  return boundedCache({ ttl: ttlMs })
 }

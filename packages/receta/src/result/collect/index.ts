@@ -26,13 +26,13 @@ import { isErr } from '../guards'
  * // => Err('fail')
  *
  * // Practical use case
- * const validateUser = (data: unknown) => pipe(
+ * const validateUser = (data: UserInput) => pipe(
  *   [
  *     validateName(data.name),
  *     validateEmail(data.email),
  *     validateAge(data.age)
  *   ],
- *   collect,
+ *   collect(),
  *   map(([name, email, age]) => ({ name, email, age }))
  * )
  * ```

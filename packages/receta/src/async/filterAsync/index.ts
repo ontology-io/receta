@@ -25,7 +25,7 @@ export interface FilterAsyncError {
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { unwrapOr, mapErr } from 'receta/result'
+ * import { unwrapOr, tapErr } from '@ontologyio/receta/result'
  *
  * // Data-first: Filter users who exist
  * const result = await filterAsync(
@@ -38,17 +38,14 @@ export interface FilterAsyncError {
  * )
  *
  * // Handle with Result pattern
- * const existingUsers = R.pipe(
- *   result,
- *   mapErr(error => console.error('Filter failed:', error)),
- *   unwrapOr([])
- * )
+ * const logged = tapErr(result, error => console.error('Filter failed:', error))
+ * const existingUsers = unwrapOr(logged, [])
  *
- * // Data-last (in pipe)
- * const filtered = await R.pipe(
+ * // Data-last (pipeAsync awaits each step)
+ * const filtered = await pipeAsync(
  *   urls,
- *   async (items) => filterAsync(items, isValid, { concurrency: 3 }),
- *   async (result) => unwrapOr(result, [])
+ *   filterAsync(isReachable, { concurrency: 3 }),
+ *   (result) => unwrapOr(result, [])
  * )
  * ```
  *
@@ -133,14 +130,14 @@ async function filterAsyncImplementation<T>(
  * ```typescript
  * // Throws on error
  * try {
- *   const existingUsers = await filterAsyncOrThrow(
+ *   const existingUsers = unwrap(await filterAsync(
  *     userIds,
  *     async (id) => {
  *       const res = await fetch(`/api/users/${id}`)
  *       return res.ok
  *     },
  *     { concurrency: 5 }
- *   )
+ *   ))
  * } catch (error) {
  *   console.error('Filter failed:', error)
  * }
@@ -148,5 +145,30 @@ async function filterAsyncImplementation<T>(
  *
  * @see filterAsync - Result-returning variant (recommended)
  * @see orThrow - utility for creating throwing variants
+ * @see unwrap - for getting the value out of a Result, or throwing
  */
-export const filterAsyncOrThrow = orThrow(filterAsync)
+export function filterAsyncOrThrow<T>(
+  items: readonly T[],
+  predicate: (item: T, index: number) => Promise<boolean>,
+  options?: ConcurrencyOptions
+): Promise<T[]>
+
+export function filterAsyncOrThrow<T>(
+  predicate: (item: T, index: number) => Promise<boolean>,
+  options?: ConcurrencyOptions
+): (items: readonly T[]) => Promise<T[]>
+
+export function filterAsyncOrThrow<T>(
+  itemsOrPredicate: readonly T[] | ((item: T, index: number) => Promise<boolean>),
+  predicateOrOptions?: ((item: T, index: number) => Promise<boolean>) | ConcurrencyOptions,
+  options?: ConcurrencyOptions
+): Promise<T[]> | ((items: readonly T[]) => Promise<T[]>) {
+  // Data-last
+  if (typeof itemsOrPredicate === 'function') {
+    return orThrow(filterAsync(itemsOrPredicate, predicateOrOptions as ConcurrencyOptions | undefined))
+  }
+
+  // Data-first
+  const predicate = predicateOrOptions as (item: T, index: number) => Promise<boolean>
+  return orThrow(filterAsync(predicate, options))(itemsOrPredicate)
+}

@@ -1,6 +1,6 @@
 import * as R from 'remeda'
-import { Option, fromNullable } from 'receta/option'
-import { Result } from 'receta/result'
+import { Option, fromNullable } from '@ontologyio/receta/option'
+import { Result } from '@ontologyio/receta/result'
 /**
  * Demo file showing vanilla code BEFORE eslint-plugin-receta autofix
  *

@@ -52,7 +52,7 @@ export function unwrap<T>(option: Option<T>): T {
  *   findUser(id),
  *   map(u => u.name),
  *   unwrapOr('Guest')
- * ) // => 'John' or 'Guest'
+ * ) // 'John' or 'Guest'
  * ```
  *
  * @see unwrapOrElse - for computing the default value lazily
@@ -84,7 +84,7 @@ function unwrapOrImplementation<T>(option: Option<T>, defaultValue: T): T {
  * ```typescript
  * // Data-first
  * unwrapOrElse(some(42), () => expensiveComputation()) // => 42
- * unwrapOrElse(none(), () => expensiveComputation()) // => computed value
+ * unwrapOrElse(none(), () => expensiveComputation()) // computed value
  *
  * // Data-last (in pipe)
  * pipe(

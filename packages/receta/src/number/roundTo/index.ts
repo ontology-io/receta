@@ -18,7 +18,7 @@ import * as R from 'remeda'
  * roundTo(4.10, 0.25) // => 4.00
  * roundTo(127, 5) // => 125
  * roundTo(128, 5) // => 130
- * roundTo(1.234, 0.1) // => 1.2
+ * roundTo(1.234, 0.1) // => 1.2000000000000002
  *
  * // Data-last (in pipe)
  * pipe(

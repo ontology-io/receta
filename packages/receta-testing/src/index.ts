@@ -8,8 +8,8 @@
  * ```typescript
  * import { expect } from 'vitest'
  * import { recetaMatchers, testFunctorLaws, testMonadLaws } from 'receta-test'
- * import { ok } from 'receta/result'
- * import * as Result from 'receta/result'
+ * import { ok } from '@ontologyio/receta/result'
+ * import * as Result from '@ontologyio/receta/result'
  *
  * // Extend Vitest with Receta matchers
  * expect.extend(recetaMatchers)

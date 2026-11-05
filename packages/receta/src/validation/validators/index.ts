@@ -22,7 +22,9 @@ import { isOk, tryCatch } from '../../result'
  * ```typescript
  * required('Name is required')('John') // => Valid('John')
  * required('Name is required')('') // => Invalid(['Name is required'])
- * required('Name is required')('  ') // => Invalid(['Name is required']) (whitespace only)
+ *
+ * // Whitespace only counts as empty
+ * required('Name is required')('  ') // => Invalid(['Name is required'])
  * ```
  */
 export const required = (errorMessage: string): Validator<string, string, string> =>

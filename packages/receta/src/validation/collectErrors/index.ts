@@ -12,11 +12,12 @@ import { isInvalid } from '../guards'
 /**
  * Collects an array of Validations into a single Validation, accumulating all errors.
  *
- * **This is the key difference from Result.collect**, which short-circuits on the first error.
+ * **This is the key difference from `collect` in the Result module**, which short-circuits on the first error.
  * collectErrors continues through all validations and accumulates every error found.
  *
  * If all Validations are Valid, returns Valid with an array of all values.
  * If any Validation is Invalid, returns Invalid with ALL accumulated errors.
+ * Every Validation in the array must hold the same value type. To mix types, use schema.
  *
  * @param validations - Array of Validations to collect
  * @returns Validation containing array of all values, or all accumulated errors
@@ -27,7 +28,7 @@ import { isInvalid } from '../guards'
  * collectErrors([valid(1), valid(2), valid(3)])
  * // => Valid([1, 2, 3])
  *
- * // Accumulates ALL errors (vs Result.collect which stops at first)
+ * // Accumulates ALL errors (vs collect from Result, which stops at first)
  * collectErrors([
  *   invalid(['error1']),
  *   invalid(['error2']),
@@ -45,11 +46,11 @@ import { isInvalid } from '../guards'
  * // => Invalid(['error1', 'error2'])
  *
  * // Real-world: Validate all form fields and show all errors
- * const validateForm = (data: FormData) =>
+ * const validateForm = (data: SignupForm) =>
  *   collectErrors([
  *     validateName(data.name),
  *     validateEmail(data.email),
- *     validateAge(data.age),
+ *     validateCountry(data.country),
  *     validatePassword(data.password)
  *   ])
  * // Returns all validation errors, not just the first one

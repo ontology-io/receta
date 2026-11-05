@@ -1,0 +1,43 @@
+{
+  "name": "@ontologyio/receta-website",
+  "private": true,
+  "description": "The official Receta website",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run generate:docs && next dev",
+    "build": "bun run generate:docs && next build",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p worker",
+    "test": "bun test src",
+    "preview": "bunx serve out",
+    "deploy": "bun run build && bun scripts/deploy.ts",
+    "check:examples": "bun scripts/generate-reference.ts && bun scripts/check-examples.ts",
+    "postinstall": "fumadocs-mdx",
+    "generate:docs": "bun scripts/generate-reference.ts && bun scripts/export-markdown.ts",
+    "check:links": "bun scripts/check-links.ts"
+  },
+  "dependencies": {
+    "@ontologyio/receta": "^0.4.1",
+    "fumadocs-core": "^16.17.10",
+    "fumadocs-mdx": "^15.4.10",
+    "fumadocs-ui": "^16.17.10",
+    "lenis": "^1.3.27",
+    "lucide-react": "^1.67.0",
+    "next": "^16",
+    "react": "^19",
+    "react-dom": "^19",
+    "remeda": "^2.58.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261104.1",
+    "@tailwindcss/postcss": "^4.3.4",
+    "@types/bun": "^1.4.4",
+    "@types/mdx": "^2.0.14",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "tailwindcss": "^4.3.4",
+    "typescript": "5",
+    "wrangler": "^4.157.0"
+  }
+}

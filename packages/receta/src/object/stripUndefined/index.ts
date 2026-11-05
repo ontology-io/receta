@@ -37,7 +37,7 @@ import type { PlainObject } from '../types'
  * pipe(
  *   formData,
  *   stripUndefined,
- *   validateShape(schema)
+ *   validateShape(userSchema)
  * )
  * ```
  *

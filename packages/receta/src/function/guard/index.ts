@@ -53,6 +53,8 @@ export type GuardPair<T, E> = readonly [predicate: Predicate<T>, error: E]
  *
  * @example
  * ```typescript
+ * import { map } from '@ontologyio/receta/result'
+ *
  * // In a pipe for validation chains
  * pipe(
  *   parseFormData(),
@@ -60,7 +62,7 @@ export type GuardPair<T, E> = readonly [predicate: Predicate<T>, error: E]
  *     [(data) => 'username' in data, 'Username is required'],
  *     [(data) => data.username.length >= 3, 'Username too short']
  *   ]),
- *   Result.map(createUser)
+ *   map(createUser)
  * )
  * ```
  *

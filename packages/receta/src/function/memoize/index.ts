@@ -36,7 +36,7 @@ import { memoize as memoizeImpl } from '../../memo/memoize'
  * @example
  * ```typescript
  * // For custom cache keys, use memo.memoizeBy
- * import { memoizeBy } from 'receta/memo'
+ * import { memoizeBy } from '@ontologyio/receta/memo'
  *
  * const fetchUser = memoizeBy(
  *   (id: string) => fetch(`/api/users/${id}`).then(r => r.json()),

@@ -73,7 +73,7 @@ export function invalid<E>(errors: E | readonly E[]): Invalid<E> {
  *
  * @example
  * ```typescript
- * import { gt } from 'receta/predicate'
+ * import { gte } from '@ontologyio/receta/predicate'
  *
  * // Simple predicate validator
  * const isPositive = fromPredicate(
@@ -85,7 +85,7 @@ export function invalid<E>(errors: E | readonly E[]): Invalid<E> {
  *
  * // Using predicate builders
  * const isAdult = fromPredicate(
- *   gt(18),
+ *   gte<number>(18),
  *   'Must be 18 or older'
  * )
  *
@@ -153,7 +153,7 @@ export function fromPredicateWithError<T, E>(
  *
  * @example
  * ```typescript
- * import { ok, err } from 'receta/result'
+ * import { ok, err, tryCatch as tryCatchResult } from '@ontologyio/receta/result'
  *
  * fromResult(ok(42))
  * // => Valid(42)
@@ -163,7 +163,7 @@ export function fromPredicateWithError<T, E>(
  *
  * // Real-world: Convert Result-based parsers to Validation
  * const parseJSON = <T>(str: string): Validation<T, string> =>
- *   fromResult(Result.tryCatch(() => JSON.parse(str) as T))
+ *   fromResult(tryCatchResult(() => JSON.parse(str) as T, String))
  * ```
  *
  * @see toResult - for converting Validation to Result
@@ -191,7 +191,7 @@ export function fromResult<T, E>(result: Result<T, E>): Validation<T, E> {
  * // => Valid({ name: 'John' })
  *
  * parseJSON('invalid json')
- * // => Invalid([SyntaxError: ...])
+ * // Invalid, holding the SyntaxError that JSON.parse threw
  * ```
  */
 export function tryCatch<T>(fn: () => T): Validation<T, unknown>
@@ -209,7 +209,7 @@ export function tryCatch<T>(fn: () => T): Validation<T, unknown>
  * const parseJSON = <T>(str: string): Validation<T, string> =>
  *   tryCatch(
  *     () => JSON.parse(str) as T,
- *     (e) => `JSON parse error: ${e.message}`
+ *     (e) => `JSON parse error: ${(e as Error).message}`
  *   )
  *
  * // Real-world: Parse with validation

@@ -41,8 +41,8 @@ function getDefaultTestCases<A>(baseValue: A): Array<FunctorTestCase<A>> {
  * @example
  * ```typescript
  * import { testFunctorLaws } from 'receta-test/laws'
- * import { ok } from 'receta/result'
- * import * as Result from 'receta/result'
+ * import { ok } from '@ontologyio/receta/result'
+ * import * as Result from '@ontologyio/receta/result'
  *
  * describe('Result', () => {
  *   testFunctorLaws({

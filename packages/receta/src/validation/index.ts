@@ -9,7 +9,7 @@
  *
  * @example
  * ```typescript
- * import { valid, invalid, validate, schema } from 'receta/validation'
+ * import { validate, schema, fromPredicate, required, minLength, email, min } from '@ontologyio/receta/validation'
  *
  * // Single field validation with multiple rules
  * const validatePassword = (password: string) =>
@@ -20,14 +20,20 @@
  *   ])
  *
  * // Multi-field validation (accumulates all errors)
- * const userSchema = schema({
- *   name: pipe(required, minLength(3)),
- *   email: pipe(required, email),
- *   age: pipe(required, min(18))
- * })
+ * const validateForm = (form: SignupForm) =>
+ *   schema({
+ *     name: validate([required('Name is required'), minLength(3)]),
+ *     email: validate([required('Email is required'), email()]),
+ *     age: min(18)
+ *   }, form)
  *
  * // Returns all field errors at once, not just the first one
- * validateForm(formData) // => Invalid([...all errors...])
+ * validateForm({ name: '', email: 'nope', age: 15 })
+ * // => Invalid([
+ * //   { field: 'name', errors: ['Name is required', 'Must be at least 3 characters'] },
+ * //   { field: 'email', errors: ['Invalid email address'] },
+ * //   { field: 'age', errors: ['Must be at least 18'] }
+ * // ])
  * ```
  */
 

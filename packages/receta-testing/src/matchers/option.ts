@@ -36,7 +36,7 @@ function isOptionLike(value: unknown): value is { _tag: 'Some' | 'None' } {
  * @example
  * ```typescript
  * import { expect } from 'vitest'
- * import { some, none } from 'receta/option'
+ * import { some, none } from '@ontologyio/receta/option'
  *
  * expect(some(5)).toBeSome()           // Pass
  * expect(some(5)).toBeSome(5)          // Pass
@@ -98,7 +98,7 @@ export const toBeSome: MatcherFunction = function (received: unknown, expectedVa
  * @example
  * ```typescript
  * import { expect } from 'vitest'
- * import { some, none } from 'receta/option'
+ * import { some, none } from '@ontologyio/receta/option'
  *
  * expect(none()).toBeNone()          // Pass
  * expect(some(5)).not.toBeNone()     // Pass
@@ -133,7 +133,7 @@ export const toBeNone: MatcherFunction = function (received: unknown) {
  * @example
  * ```typescript
  * import { expect } from 'vitest'
- * import { some, none } from 'receta/option'
+ * import { some, none } from '@ontologyio/receta/option'
  *
  * expect(some(5)).toEqualOption(some(5))   // Pass
  * expect(none()).toEqualOption(none())     // Pass

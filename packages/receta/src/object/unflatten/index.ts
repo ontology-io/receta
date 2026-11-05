@@ -32,10 +32,11 @@ import type { FlatObject, PlainObject, UnflattenOptions } from '../types'
  * unflatten({ 'items.0': 'a', 'items.1': 'b' })
  * // => { items: ['a', 'b'] }
  *
- * // Data-last (in pipe)
+ * // In a pipe, wrap it. unflatten() returns {} instead of a function, and
+ * // TypeScript reads unflatten({ separator: '_' }) as the data-first call.
  * pipe(
  *   flat,
- *   unflatten({ separator: '_' })
+ *   (obj) => unflatten(obj)
  * )
  * ```
  *
@@ -44,13 +45,13 @@ import type { FlatObject, PlainObject, UnflattenOptions } from '../types'
 export function unflatten(obj: FlatObject, options?: UnflattenOptions): PlainObject
 export function unflatten(options?: UnflattenOptions): (obj: FlatObject) => PlainObject
 export function unflatten(objOrOptions?: FlatObject | UnflattenOptions, maybeOptions?: UnflattenOptions): any {
-  // Data-last: if first arg looks like options (has separator key)
-  if (objOrOptions !== undefined && typeof objOrOptions === 'object' && 'separator' in objOrOptions && !Object.keys(objOrOptions).some(k => k.includes('.'))) {
-    return (obj: FlatObject) => unflattenImplementation(obj, objOrOptions as UnflattenOptions)
+  // Data-last: no arguments, or a first arg that looks like options (has separator key)
+  if (objOrOptions === undefined || (typeof objOrOptions === 'object' && 'separator' in objOrOptions && !Object.keys(objOrOptions).some(k => k.includes('.')))) {
+    return (obj: FlatObject) => unflattenImplementation(obj, objOrOptions as UnflattenOptions | undefined)
   }
 
   // Data-first
-  return unflattenImplementation(objOrOptions as FlatObject ?? {}, maybeOptions)
+  return unflattenImplementation(objOrOptions as FlatObject, maybeOptions)
 }
 
 function unflattenImplementation(obj: FlatObject, options?: UnflattenOptions): PlainObject {

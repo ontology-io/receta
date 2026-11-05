@@ -5,12 +5,13 @@ import { type Result, orThrow } from '../../result'
 /**
  * Executes an array of async tasks in parallel with optional concurrency limit.
  *
- * Similar to Promise.all but with concurrency control. Useful when you have
- * a list of async operations and want to limit how many run simultaneously.
+ * Similar to Promise.all but with concurrency control, and it returns a Result
+ * instead of rejecting. Useful when you have a list of async operations and want
+ * to limit how many run simultaneously.
  *
  * @param tasks - Array of async functions to execute
  * @param options - Concurrency options
- * @returns Promise resolving to array of results
+ * @returns Promise resolving to Result containing array of results or error
  *
  * @example
  * ```typescript
@@ -61,7 +62,7 @@ export async function parallel<T>(
  * @param tasks - Array of async functions to execute
  * @param options - Concurrency options
  * @returns Promise resolving to array of results
- * @throws Error if any task fails
+ * @throws MapAsyncError if any task fails
  *
  * @example
  * ```typescript

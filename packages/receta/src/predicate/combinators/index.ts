@@ -18,11 +18,11 @@ import type { Predicate } from '../types'
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { gt, lt, and } from 'receta/predicate'
+ * import { gt, lt, and } from '@ontologyio/receta/predicate'
  *
  * // Combine comparisons
  * const numbers = [1, 5, 10, 15, 20]
- * R.filter(numbers, and(gt(5), lt(15))) // => [10]
+ * R.filter(numbers, and(gt<number>(5), lt<number>(15))) // => [10]
  *
  * // Multiple conditions
  * const users = [
@@ -60,7 +60,7 @@ export const and =
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { eq, or } from 'receta/predicate'
+ * import { eq, or } from '@ontologyio/receta/predicate'
  *
  * // Match multiple values
  * const numbers = [1, 2, 3, 4, 5]
@@ -102,7 +102,7 @@ export const or =
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { eq, not, isEmpty } from 'receta/predicate'
+ * import { eq, not, isEmpty } from '@ontologyio/receta/predicate'
  *
  * const numbers = [1, 2, 3, 2, 1]
  * R.filter(numbers, not(eq(2))) // => [1, 3, 1]
@@ -139,11 +139,11 @@ export const not =
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { gt, lt, xor } from 'receta/predicate'
+ * import { gt, lt, xor } from '@ontologyio/receta/predicate'
  *
  * const numbers = [1, 5, 10, 15, 20]
  * // Keep numbers that are either < 8 OR > 12, but not both
- * R.filter(numbers, xor(lt(8), gt(12))) // => [1, 5, 15, 20]
+ * R.filter(numbers, xor(lt<number>(8), gt<number>(12))) // => [1, 5, 15, 20]
  * // 10 is excluded because it's neither < 8 nor > 12
  *
  * // Real-world: Exclusive features (must have one but not both)
@@ -185,7 +185,7 @@ export const xor =
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { always } from 'receta/predicate'
+ * import { always } from '@ontologyio/receta/predicate'
  *
  * // Keep all items
  * R.filter([1, 2, 3], always()) // => [1, 2, 3]
@@ -210,7 +210,7 @@ export const always = <T>(): Predicate<T> => () => true
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { never } from 'receta/predicate'
+ * import { never } from '@ontologyio/receta/predicate'
  *
  * // Filter out all items
  * R.filter([1, 2, 3], never()) // => []

@@ -1,4 +1,4 @@
-import { type Option, fromNullable, some, none } from '../../option'
+import { type Option, some, none } from '../../option'
 import type { Cache } from '../types'
 
 /**
@@ -9,7 +9,7 @@ import type { Cache } from '../types'
  *
  * @example
  * ```typescript
- * import { memoize, lruCache } from 'receta/memo'
+ * import { memoize, lruCache } from '@ontologyio/receta/memo'
  *
  * // Cache up to 100 users
  * const getUser = memoize(fetchUser, {
@@ -36,8 +36,8 @@ export function lruCache<K, V>(maxSize: number): Cache<K, V> {
 
   return {
     get(key: K): Option<V> {
-      const value = map.get(key)
-      if (value === undefined) return none()
+      if (!map.has(key)) return none()
+      const value = map.get(key) as V
 
       // Move to end (mark as recently used)
       map.delete(key)
@@ -74,6 +74,11 @@ export function lruCache<K, V>(maxSize: number): Cache<K, V> {
 
     clear(): void {
       map.clear()
+    },
+
+    // Reading through forEach doesn't count as use, so eviction order stays the same.
+    forEach(callback: (value: V, key: K) => void): void {
+      map.forEach((value, key) => callback(value, key))
     },
   }
 }

@@ -9,15 +9,18 @@ import * as R from 'remeda'
  * @example
  * ```typescript
  * // parseInt takes two arguments, which causes issues with map
- * ['1', '2', '3'].map(parseInt)           // => [1, NaN, NaN] (unexpected!)
- * ['1', '2', '3'].map(unary(parseInt))    // => [1, 2, 3] (correct)
+ * const digits = ['1', '2', '3']
+ *
+ * digits.map(parseInt)           // => [1, NaN, NaN]
+ * digits.map(unary(parseInt))    // => [1, 2, 3]
  * ```
  *
  * @example
  * ```typescript
  * const logFirst = unary(console.log)
+ * const letters = ['a', 'b', 'c']
  *
- * ['a', 'b', 'c'].forEach(logFirst)
+ * letters.forEach(logFirst)
  * // Logs:
  * // a
  * // b
@@ -50,16 +53,20 @@ export function unary<A, R>(fn: (a: A, ...rest: any[]) => R): (a: A) => R {
  * ```typescript
  * const add = (...nums: number[]) => nums.reduce((a, b) => a + b, 0)
  *
- * add(1, 2, 3, 4)           // => 10
- * binary(add)(1, 2, 3, 4)   // => 3 (only uses first two)
+ * add(1, 2, 3, 4)  // => 10
+ *
+ * // reduce also passes the index and the array, which binary drops
+ * const numbers = [1, 2, 3, 4]
+ * numbers.reduce(binary(add))  // => 10
  * ```
  *
  * @example
  * ```typescript
  * // Limiting callback arguments
  * const logTwo = binary(console.log)
+ * const letters = ['a', 'b', 'c']
  *
- * ['a', 'b', 'c'].forEach(logTwo)
+ * letters.forEach(logTwo)
  * // Logs:
  * // a 0
  * // b 1

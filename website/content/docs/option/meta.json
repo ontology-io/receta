@@ -1,0 +1,12 @@
+{
+  "title": "Option",
+  "pages": [
+    "index",
+    "constructors",
+    "transformers",
+    "extractors",
+    "combinators",
+    "patterns",
+    "migration"
+  ]
+}

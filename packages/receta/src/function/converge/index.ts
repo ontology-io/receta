@@ -14,11 +14,11 @@ import { purryConfig2 } from '../../utils'
  * @example
  * ```typescript
  * // Calculate average by dividing sum by length
- * const average = converge(
- *   (sum: number, length: number) => sum / length,
+ * const average = converge<number[], [number, number], number>(
+ *   (sum, length) => sum / length,
  *   [
- *     (nums: number[]) => nums.reduce((a, b) => a + b, 0),  // sum
- *     (nums: number[]) => nums.length                        // length
+ *     (nums) => nums.reduce((a, b) => a + b, 0),  // sum
+ *     (nums) => nums.length                        // length
  *   ]
  * )
  *
@@ -31,16 +31,16 @@ import { purryConfig2 } from '../../utils'
  * interface User { name: string; email: string }
  * interface Profile { displayName: string; username: string; domain: string }
  *
- * const buildProfile = converge(
- *   (name: string, username: string, domain: string): Profile => ({
+ * const buildProfile = converge<User, [string, string, string], Profile>(
+ *   (name, username, domain) => ({
  *     displayName: name,
  *     username,
  *     domain
  *   }),
  *   [
- *     (user: User) => user.name,
- *     (user: User) => user.email.split('@')[0],
- *     (user: User) => user.email.split('@')[1]
+ *     (user) => user.name,
+ *     (user) => user.email.split('@')[0]!,
+ *     (user) => user.email.split('@')[1]!
  *   ]
  * )
  *

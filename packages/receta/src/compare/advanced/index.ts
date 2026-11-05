@@ -24,11 +24,11 @@ import type { Comparator, ComparableExtractor } from '../types'
  *
  * // Case-sensitive (default) - uppercase comes first
  * files.sort(byString(f => f.name))
- * // => [App.tsx, README.md, index.ts, package.json]
+ * // Order: App.tsx, README.md, index.ts, package.json
  *
  * // Case-insensitive - alphabetical regardless of case
  * files.sort(caseInsensitive(f => f.name))
- * // => [App.tsx, index.ts, package.json, README.md]
+ * // Order: App.tsx, index.ts, package.json, README.md
  * ```
  *
  * @see byString - for more string comparison options

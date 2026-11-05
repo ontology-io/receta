@@ -22,34 +22,29 @@ type OrThrowVersion<F extends (...args: any[]) => Promise<Result<any, any>>> =
  *
  * Use this to create `*OrThrow` variants without duplicating logic.
  *
+ * Pass a function with a single signature: an overloaded function such as
+ * `mapAsync` types as `never`, so pass its curried form instead.
+ *
  * @param fn - Async function that returns Promise<Result<T, E>>
  * @returns Async function that returns Promise<T> and throws on Err
  *
  * @example
  * ```typescript
- * import { mapAsync } from 'receta/async'
- * import { orThrow } from 'receta/result'
+ * import { mapAsync } from '@ontologyio/receta/async'
+ * import { orThrow } from '@ontologyio/receta/result'
  *
  * // Create throwing variant
- * const mapAsyncOrThrow = orThrow(mapAsync)
+ * const fetchAllOrThrow = orThrow(
+ *   mapAsync(async (url: string) => fetch(url))
+ * )
  *
  * // Use it
  * try {
- *   const results = await mapAsyncOrThrow(
- *     urls,
- *     async (url) => fetch(url),
- *     { concurrency: 5 }
- *   )
+ *   const results = await fetchAllOrThrow(urls)
  *   console.log(results)
  * } catch (error) {
  *   console.error('Failed:', error)
  * }
- *
- * // Works with curried functions too
- * const fetchAllOrThrow = orThrow(
- *   mapAsync(async (url: string) => fetch(url))
- * )
- * const results = await fetchAllOrThrow(urls)
  * ```
  *
  * @see unwrap - for throwing extraction from a single Result

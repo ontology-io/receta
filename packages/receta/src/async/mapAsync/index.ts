@@ -20,7 +20,8 @@ export interface MapAsyncError {
  * This is more powerful than Promise.all(items.map(fn)) because it:
  * - Allows limiting concurrent operations (rate limiting, resource management)
  * - Returns Result for explicit error handling
- * - Provides detailed error information (which item failed)
+ * - Provides detailed error information (which item failed, when `concurrency`
+ *   is below the item count)
  *
  * @param items - Array of items to map over
  * @param fn - Async function to apply to each item
@@ -30,7 +31,7 @@ export interface MapAsyncError {
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { unwrapOr, mapErr } from 'receta/result'
+ * import { unwrapOr, tapErr } from '@ontologyio/receta/result'
  *
  * // Data-first: Fetch users with concurrency limit
  * const result = await mapAsync(
@@ -40,17 +41,14 @@ export interface MapAsyncError {
  * )
  *
  * // Handle with Result pattern
- * const users = R.pipe(
- *   result,
- *   mapErr(error => console.error('Failed at index:', error.index)),
- *   unwrapOr([])
- * )
+ * const logged = tapErr(result, error => console.error('Failed at index:', error.index))
+ * const users = unwrapOr(logged, [])
  *
- * // Data-last (in pipe)
- * const processed = await R.pipe(
+ * // Data-last (pipeAsync awaits each step)
+ * const processed = await pipeAsync(
  *   userIds,
- *   async (ids) => mapAsync(ids, fetchUser, { concurrency: 5 }),
- *   async (result) => unwrapOr(result, [])
+ *   mapAsync(fetchUser, { concurrency: 5 }),
+ *   (result) => unwrapOr(result, [])
  * )
  *
  * // Unlimited concurrency (same as Promise.all but safer)
@@ -185,21 +183,43 @@ async function mapAsyncImplementation<T, U>(
  * ```typescript
  * // Throws on error
  * try {
- *   const users = await mapAsyncOrThrow(
+ *   const users = unwrap(await mapAsync(
  *     userIds,
  *     async (id) => fetchUser(id),
  *     { concurrency: 5 }
- *   )
+ *   ))
  * } catch (error) {
  *   console.error('Failed:', error)
  * }
- *
- * // Equivalent to using orThrow directly
- * const mapAsyncOrThrow = orThrow(mapAsync)
  * ```
  *
  * @see mapAsync - Result-returning variant (recommended)
  * @see orThrow - utility for creating throwing variants
+ * @see unwrap - for getting the value out of a Result, or throwing
  */
-export const mapAsyncOrThrow = orThrow(mapAsync)
+export function mapAsyncOrThrow<T, U>(
+  items: readonly T[],
+  fn: (item: T, index: number) => Promise<U>,
+  options?: ConcurrencyOptions
+): Promise<U[]>
+
+export function mapAsyncOrThrow<T, U>(
+  fn: (item: T, index: number) => Promise<U>,
+  options?: ConcurrencyOptions
+): (items: readonly T[]) => Promise<U[]>
+
+export function mapAsyncOrThrow<T, U>(
+  itemsOrFn: readonly T[] | ((item: T, index: number) => Promise<U>),
+  fnOrOptions?: ((item: T, index: number) => Promise<U>) | ConcurrencyOptions,
+  options?: ConcurrencyOptions
+): Promise<U[]> | ((items: readonly T[]) => Promise<U[]>) {
+  // Data-last
+  if (typeof itemsOrFn === 'function') {
+    return orThrow(mapAsync(itemsOrFn, fnOrOptions as ConcurrencyOptions | undefined))
+  }
+
+  // Data-first
+  const fn = fnOrOptions as (item: T, index: number) => Promise<U>
+  return orThrow(mapAsync(fn, options))(itemsOrFn)
+}
 

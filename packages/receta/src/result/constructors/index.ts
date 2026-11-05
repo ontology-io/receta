@@ -50,7 +50,7 @@ export function err<E>(error: E): Err<E> {
  * // => Ok({ name: 'John' })
  *
  * parseJSON('invalid json')
- * // => Err(SyntaxError: ...)
+ * // Err(SyntaxError)
  * ```
  */
 export function tryCatch<T>(fn: () => T): Result<T, unknown>
@@ -103,7 +103,7 @@ export function tryCatch<T, E = unknown>(
  *   })
  *
  * const result = await fetchUser('123')
- * // => Ok({ name: 'John' }) or Err(NetworkError)
+ * // Ok({ name: 'John' }) or Err(NetworkError)
  * ```
  */
 export async function tryCatchAsync<T>(fn: () => Promise<T>): Promise<Result<T, unknown>>

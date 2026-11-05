@@ -1,0 +1,593 @@
+---
+title: "Combinators"
+description: "Combinators are the key feature of the Validation module. They allow you to combine multiple validations and accumulate ALL errors, not just the first one."
+---
+
+## Overview
+
+| Combinator | Purpose | Use When |
+|------------|---------|----------|
+| `collectErrors` | Accumulate errors from array | Independent validations |
+| `validate` | Apply validators to single value | Multiple rules for one field |
+| `validateAll` | Validate array elements | Bulk validation |
+| `schema` | Validate object fields | Form/API validation |
+| `partial` | Validate partial object | PATCH requests |
+
+## The Core Difference: Error Accumulation
+
+```typescript
+import { collect, err } from '@ontologyio/receta/result'
+// collect: STOPS at first error (fail-fast)
+collect([err('e1'), err('e2'), err('e3')])
+// => Err('e1')
+
+// collectErrors: ACCUMULATES all errors (fail-slow)
+collectErrors([invalid('e1'), invalid('e2'), invalid('e3')])
+// => Invalid(['e1', 'e2', 'e3'])
+```
+
+This is **why Validation exists**: better UX by showing users ALL problems at once.
+
+## collectErrors
+
+Accumulates ALL errors from an array of validations.
+
+```typescript title="Signature"
+collectErrors<T, E>(
+  validations: readonly Validation<T, E>[]
+): Validation<T[], E>
+```
+
+### Examples
+
+```typescript
+import { collectErrors, valid, invalid } from '@ontologyio/receta/validation'
+
+// All valid
+collectErrors([valid(1), valid(2), valid(3)])
+// => Valid([1, 2, 3])
+
+// Mix of valid and invalid - accumulates ALL errors
+collectErrors([
+  valid(1),
+  invalid(['error1']),
+  valid(2),
+  invalid(['error2', 'error3'])
+])
+// => Invalid(['error1', 'error2', 'error3'])
+
+// Multiple errors per validation
+collectErrors([
+  invalid(['e1', 'e2']),
+  invalid(['e3', 'e4'])
+])
+// => Invalid(['e1', 'e2', 'e3', 'e4'])
+```
+
+### Real-World: Form Validation
+
+```typescript
+const validateForm = (data: SignupForm) =>
+  collectErrors([
+    validateName(data.name),
+    validateEmail(data.email),
+    validatePassword(data.password),
+    validateCountry(data.country)
+  ])
+
+// Returns ALL field errors at once:
+// Invalid([
+//   'Name too short',
+//   'Invalid email',
+//   'Password needs uppercase',
+//   'Unsupported country'
+// ])
+```
+
+Every validation in the array must hold the same value type, so this suits a list of string fields. When a form mixes strings and numbers, use [`schema`](#schema).
+
+## validate
+
+Applies multiple validators to a single value, accumulating all errors. Pass only the validators and you get a validator back, ready to use as a `schema` field.
+
+```typescript title="Signature"
+validate<T, E>(
+  value: T,
+  validators: readonly Validator<T, T, E>[]
+): Validation<T, E>
+
+validate<T, E>(
+  validators: readonly Validator<T, T, E>[]
+): (value: T) => Validation<T, E>
+```
+
+### Examples
+
+```typescript
+import { validate, fromPredicate } from '@ontologyio/receta/validation'
+
+// Password validation with multiple rules
+const validatePassword = (password: string) =>
+  validate(password, [
+    fromPredicate(s => s.length >= 8, 'At least 8 characters'),
+    fromPredicate(s => /[A-Z]/.test(s), 'Need uppercase'),
+    fromPredicate(s => /[0-9]/.test(s), 'Need number'),
+    fromPredicate(s => /[^A-Za-z0-9]/.test(s), 'Need special char')
+  ])
+
+// Weak password shows ALL failures
+validatePassword('weak')
+// => Invalid([
+//   'At least 8 characters',
+//   'Need uppercase',
+//   'Need number',
+//   'Need special char'
+// ])
+
+// Strong password passes all
+validatePassword('Strong@Pass123')
+// => Valid('Strong@Pass123')
+```
+
+### Real-World: Username Validation
+
+```typescript
+const validateUsername = (username: string) =>
+  validate(username, [
+    required('Username required'),
+    minLength(3, 'Min 3 characters'),
+    maxLength(20, 'Max 20 characters'),
+    matches(/^[a-zA-Z0-9_]+$/, 'Only letters, numbers, underscores')
+  ])
+```
+
+Validators are synchronous, so a check that has to wait on a database runs after this one. See [Async Validation](./patterns.mdx#async-validation).
+
+### Real-World: Age Validation
+
+```typescript
+const validateAge = (age: number) =>
+  validate(age, [
+    min(0, 'Age cannot be negative'),
+    max(150, 'Age seems unrealistic'),
+    integer('Age must be whole number'),
+    fromPredicate(
+      (a) => a >= 18 || a <= 13,
+      'Must be 18+ or under 13 with parent consent'
+    )
+  ])
+```
+
+## validateAll
+
+Validates each element in an array with a single validator, accumulating errors.
+
+```typescript title="Signature"
+validateAll<T, U, E>(
+  values: readonly T[],
+  validator: Validator<T, U, E>
+): Validation<U[], E>
+```
+
+### Examples
+
+```typescript
+import { validateAll, valid, invalid } from '@ontologyio/receta/validation'
+
+const isPositive = (n: number) =>
+  n > 0 ? valid(n) : invalid(`${n} is not positive`)
+
+// All valid
+validateAll([1, 2, 3], isPositive)
+// => Valid([1, 2, 3])
+
+// Multiple failures - accumulates ALL
+validateAll([1, -2, 3, -4, 5], isPositive)
+// => Invalid(['-2 is not positive', '-4 is not positive'])
+```
+
+### Real-World: CSV Import
+
+The errors come back as one flat list, so each message has to say which row it's about.
+
+```typescript
+type ProductRow = {
+  name: string
+  price: number
+  sku: string
+}
+
+const validateProduct = (row: ProductRow): Validation<ProductRow, string> =>
+  row.price > 0 ? valid(row) : invalid(`${row.sku}: price must be positive`)
+
+const validateCSVImport = (rows: ProductRow[]) =>
+  validateAll(rows, validateProduct)
+
+// Returns the errors from ALL invalid rows
+const result = validateCSVImport(csvData)
+if (isInvalid(result)) {
+  console.log(`Found ${result.errors.length} errors`)
+  result.errors.forEach((error) => {
+    console.log(error)
+  })
+}
+```
+
+### Real-World: Batch API Validation
+
+```typescript
+const validateBatchCreate = (requests: unknown[]) =>
+  validateAll(requests, validateCreateUser)
+
+app.post('/api/users/batch', (req, res) => {
+  const validation = validateBatchCreate(req.body.users)
+
+  match(validation, {
+    onValid: (users) => {
+      // Create all users
+      res.status(201).json({ created: users.length })
+    },
+    onInvalid: (errors) => {
+      // Return all validation errors
+      res.status(400).json({
+        message: `${errors.length} validation errors`,
+        errors
+      })
+    }
+  })
+})
+```
+
+## schema
+
+Validates object fields independently, tracking which fields failed.
+
+```typescript title="Signature"
+schema<T extends Record<string, unknown>, E>(
+  schemaObj: ValidationSchema<T, E>,
+  value: T
+): Validation<T, FieldError<E>>
+```
+
+### Examples
+
+```typescript
+import { schema, validate, required, minLength, email, min, max } from '@ontologyio/receta/validation'
+
+const userSchema = {
+  name: (n: string) =>
+    validate(n, [required('Name required'), minLength(2)]),
+  email: (e: string) =>
+    validate(e, [required('Email required'), email()]),
+  age: (a: number) =>
+    validate(a, [min(18, 'Must be 18+'), max(120)])
+}
+
+// Valid user
+schema(userSchema, {
+  name: 'John',
+  email: 'john@example.com',
+  age: 25
+})
+// => Valid({ name: 'John', email: 'john@example.com', age: 25 })
+
+// Invalid user - shows which fields failed
+schema(userSchema, {
+  name: 'J',
+  email: 'invalid',
+  age: 15
+})
+// => Invalid([
+//   { field: 'name', errors: ['Must be at least 2 characters'] },
+//   { field: 'email', errors: ['Invalid email address'] },
+//   { field: 'age', errors: ['Must be 18+'] }
+// ])
+```
+
+### What schema Expects
+
+- **Always pass the value.** The data-last forms `schema(rules)` and `partial(rules)` compile, but they crash in 0.4.1 with `validator is not a function`. For a reusable validator, wrap the call: `(form: Form) => schema(rules, form)`.
+- **Declare shapes with `type`, not `interface`.** `schema` requires a `Record<string, unknown>`, and TypeScript won't accept an interface as one.
+- **Cover every required key.** Once the value has a declared type, each required key needs a validator. Optional keys can be left out.
+- **Name the error type when you need it.** `schema` can't infer it from the validators. Without a return type annotation, errors come back as `FieldError<unknown>`. Annotate the return type or write `schema<User, string>(...)`.
+- **A validator sees only its own field.** To compare fields, build the schema inside a function that closes over the form, or use `flatMap` after `schema`.
+- **The result is the object you passed in.** A validator can't convert a field or fill in a default, so shape the data first.
+- **Check the type of untrusted input first.** `required` and the other string validators throw on `undefined`. See [Create User Endpoint](./patterns.mdx#create-user-endpoint) for `unknown` input.
+
+### Real-World: Registration Form
+
+```typescript
+type RegistrationForm = {
+  username: string
+  email: string
+  password: string
+  confirmPassword: string
+  terms: boolean
+}
+
+// A function, so confirmPassword can see the form
+const registrationSchema = (form: RegistrationForm) => ({
+  username: (u: string) =>
+    validate(u, [
+      required('Username required'),
+      minLength(3),
+      maxLength(20),
+      matches(/^[a-zA-Z0-9_]+$/, 'Invalid characters')
+    ]),
+
+  email: (e: string) =>
+    validate(e, [required('Email required'), email()]),
+
+  password: (p: string) =>
+    validate(p, [
+      required('Password required'),
+      minLength(8),
+      matches(/[A-Z]/, 'Need uppercase'),
+      matches(/[0-9]/, 'Need number')
+    ]),
+
+  confirmPassword: (c: string) =>
+    c === form.password
+      ? valid(c)
+      : invalid('Passwords must match'),
+
+  terms: (t: boolean) =>
+    t === true
+      ? valid(t)
+      : invalid('You must accept the terms')
+})
+
+const handleSubmit = (formData: RegistrationForm) => {
+  const validation = schema(registrationSchema(formData), formData)
+
+  match(validation, {
+    onValid: (data) => {
+      // Submit to API
+      createAccount(data)
+    },
+    onInvalid: (errors) => {
+      // Show all field errors
+      errors.forEach(({ field, errors: fieldErrors }) => {
+        showFieldError(field, fieldErrors)
+      })
+    }
+  })
+}
+```
+
+### Real-World: API Request Validation
+
+```typescript
+app.post('/api/products', (req, res) => {
+  const productSchema = {
+    name: (n: string) =>
+      validate(n, [required('Name required'), maxLength(100)]),
+    price: (p: number) =>
+      validate(p, [min(0, 'Price cannot be negative'), finite()]),
+    category: oneOf(['electronics', 'books', 'clothing']),
+    tags: (t: string[]) =>
+      validate(t, [nonEmpty('At least one tag'), maxItems(10)])
+  }
+
+  const validation = schema(productSchema, req.body)
+
+  if (isInvalid(validation)) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      fields: validation.errors
+    })
+  }
+
+  const product = createProduct(validation.value)
+  res.status(201).json(product)
+})
+```
+
+### Real-World: Multi-Step Wizard
+
+Wizard steps hold different shapes, which `collectErrors` can't mix. As `schema` fields they fit, and each error's `field` names a failed step.
+
+```typescript
+const validateWizard = (data: WizardData) =>
+  schema({
+    step1: validateStep1,
+    step2: validateStep2,
+    step3: validateStep3,
+    step4: validateStep4,
+    step5: validateStep5
+  }, data)
+
+validateWizard(wizardData)
+// Shows user: "Errors in steps 2 and 4"
+// User can jump directly to problematic steps
+```
+
+## partial
+
+Validates partial objects (only present fields).
+
+```typescript title="Signature"
+partial<T extends Record<string, unknown>, E>(
+  schemaObj: ValidationSchema<T, E>,
+  value: Partial<T>
+): Validation<Partial<T>, FieldError<E>>
+```
+
+### Examples
+
+```typescript
+import { partial, validate, required, minLength, email, min, max } from '@ontologyio/receta/validation'
+
+const userSchema = {
+  name: (n: string) => validate(n, [required('Name required'), minLength(2)]),
+  email: (e: string) => validate(e, [required('Email required'), email()]),
+  age: (a: number) => validate(a, [min(18), max(120)])
+}
+
+// Only validates present fields
+partial(userSchema, { name: 'John' })
+// => Valid({ name: 'John' })
+
+partial(userSchema, { name: 'J', email: 'invalid' })
+// => Invalid([
+//   { field: 'name', errors: ['Must be at least 2 characters'] },
+//   { field: 'email', errors: ['Invalid email address'] }
+// ])
+
+// Missing fields not validated
+partial(userSchema, {})
+// => Valid({})
+```
+
+### Real-World: PATCH Request
+
+```typescript
+app.patch('/api/users/:id', (req, res) => {
+  const userSchema = {
+    name: (n: string) => validate(n, [minLength(2), maxLength(50)]),
+    email: (e: string) => email()(e),
+    age: (a: number) => validate(a, [min(18), max(120)])
+  }
+
+  // Only validate fields that are being updated
+  const validation = partial(userSchema, req.body)
+
+  if (isInvalid(validation)) {
+    return res.status(400).json({ errors: validation.errors })
+  }
+
+  const updated = updateUser(req.params.id, validation.value)
+  res.json(updated)
+})
+```
+
+### Real-World: Settings Update
+
+```typescript
+type UserSettings = {
+  notifications: boolean
+  theme: 'light' | 'dark'
+  language: string
+  timezone: string
+}
+
+const settingsSchema = {
+  notifications: (n: boolean) => valid(n),
+  theme: oneOf(['light', 'dark'] as const),
+  language: oneOf(['en', 'es', 'fr', 'de']),
+  timezone: (tz: string) =>
+    validate(tz, [
+      required('Timezone required'),
+      fromPredicate(isValidTimezone, 'Invalid timezone')
+    ])
+}
+
+const updateSettings = (userId: string, updates: Partial<UserSettings>) => {
+  const validation = partial(settingsSchema, updates)
+
+  return match(validation, {
+    onValid: (validated) => saveUserSettings(userId, validated),
+    onInvalid: (errors) => ({ error: 'Invalid settings', fields: errors })
+  })
+}
+```
+
+## Comparison with Result
+
+| Feature | `collect` (Result) | `collectErrors` (Validation) |
+|---------|---------------|------------------------|
+| Behavior | **Fail-fast** (stops at first error) | **Error accumulation** (checks all) |
+| Use case | Sequential operations | Independent validations |
+| Performance | Faster (early termination) | Slower (checks everything) |
+| UX | Shows one error | Shows all errors |
+| Example | Auth → DB → API | Form with 10 fields |
+
+### When to Use Which
+
+```typescript
+import { flatMap as flatMapResult } from '@ontologyio/receta/result'
+// ✅ Use Result for sequential operations
+pipe(
+  validateToken(token),
+  flatMapResult(getUser),           // Stop if token invalid
+  flatMapResult(checkPermissions)   // Stop if user not found
+)
+
+// ✅ Use Validation for independent checks
+collectErrors([
+  validateEmail(form.email),         // Check all fields
+  validatePassword(form.password),
+  validateAge(form.age)
+])
+```
+
+## Common Patterns
+
+### Pattern 1: Nested Validation
+
+```typescript
+const validateAddress = (addr: Address) =>
+  schema({
+    street: (s: string) => validate(s, [required('Street required')]),
+    city: (c: string) => validate(c, [required('City required')]),
+    zip: (z: string) => validate(z, [matches(/^\d{5}$/, 'Invalid ZIP')])
+  }, addr)
+
+const validateUser = (user: User) =>
+  schema({
+    name: (n: string) => validate(n, [required('Name required')]),
+    email: (e: string) => validate(e, [required('Email required'), email()]),
+    address: validateAddress  // Nested validation!
+  }, user)
+
+// An invalid ZIP nests under its parent field:
+// Invalid([
+//   { field: 'address', errors: [{ field: 'zip', errors: ['Invalid ZIP'] }] }
+// ])
+```
+
+### Pattern 2: Conditional Validation
+
+```typescript
+const validatePayment = (payment: Payment) => {
+  if (payment.method === 'card') {
+    return schema({
+      cardNumber: (c: string) => validate(c, [required('Card required'), matches(/^\d{16}$/, 'Must be 16 digits')]),
+      cvv: (c: string) => validate(c, [required('CVV required'), matches(/^\d{3,4}$/, 'Must be 3 or 4 digits')])
+    }, payment)
+  } else {
+    return schema({
+      accountNumber: (a: string) => validate(a, [required('Account required'), matches(/^\d{8,17}$/, 'Must be 8-17 digits')]),
+      routingNumber: (r: string) => validate(r, [required('Routing required'), matches(/^\d{9}$/, 'Must be 9 digits')])
+    }, payment)
+  }
+}
+```
+
+### Pattern 3: Cross-Field Validation
+
+```typescript
+type PasswordChange = {
+  newPassword: string
+  confirmPassword: string
+}
+
+const validatePasswordChange = (data: PasswordChange) =>
+  R.pipe(
+    schema<PasswordChange, string>({
+      newPassword: minLength(8),
+      confirmPassword: required('Confirmation required')
+    }, data),
+    flatMap((validated) =>
+      validated.newPassword === validated.confirmPassword
+        ? valid(validated)
+        : invalid<FieldError<string>>({ field: 'confirmPassword', errors: ['Passwords must match'] })
+    )
+  )
+```
+
+## Next Steps
+
+- **[Patterns](./patterns.mdx)** - Complete real-world validation recipes
+- **[Migration](./migration.mdx)** - Moving from Zod/Yup/try-catch
+- **[API Reference](../reference/validation.mdx)** - Full function reference

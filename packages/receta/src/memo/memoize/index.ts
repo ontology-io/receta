@@ -1,5 +1,6 @@
-import { unwrap, fromNullable, some, none } from '../../option'
+import { isSome } from '../../option'
 import type { Cache, MemoizeOptions, MemoizedFunction } from '../types'
+import { boundedCache } from '../caches/boundedCache'
 
 /**
  * Creates a memoized version of a function that caches results based on arguments.
@@ -23,7 +24,7 @@ import type { Cache, MemoizeOptions, MemoizedFunction } from '../types'
  * const getUser = memoize(fetchUser, { maxSize: 100 })
  *
  * // With TTL
- * const getWeather = memoize(fetchWeather, { ttl: 5 * 60 * 1000 }) // 5 min
+ * const getWeather = memoize(fetchWeather, { cache: ttlCache(5 * 60 * 1000) }) // 5 min
  * ```
  *
  * @see memoizeBy - for custom key extraction
@@ -33,38 +34,14 @@ export function memoize<Args extends readonly [unknown, ...unknown[]], R>(
   fn: (...args: Args) => R,
   options: MemoizeOptions = {}
 ): MemoizedFunction<Args, R> {
-  // Wrap Map to return Option values
-  const defaultCache = (): Cache<unknown, R> & { forEach?: Map<unknown, R>['forEach'] } => {
-    const map = new Map<unknown, R>()
-    return {
-      get: (key) => (map.has(key) ? some(map.get(key) as R) : none()),
-      set: (key, value) => {
-        map.set(key, value)
-        // Handle maxSize eviction
-        if (options.maxSize && map.size > options.maxSize) {
-          const firstKey = map.keys().next().value
-          if (firstKey !== undefined) {
-            map.delete(firstKey)
-          }
-        }
-      },
-      has: (key) => map.has(key),
-      delete: (key) => map.delete(key),
-      clear: () => map.clear(),
-      // Add forEach for invalidateWhere support
-      forEach: map.forEach.bind(map) as any,
-    }
-  }
-
-  const cache: Cache<unknown, R> = (options.cache as Cache<unknown, R>) ?? defaultCache()
+  const cache: Cache<unknown, R> = (options.cache as Cache<unknown, R>) ?? boundedCache(options)
 
   const memoized = (...args: Args): R => {
     // Use first argument as cache key
     const key = args[0]
 
-    if (cache.has(key)) {
-      return unwrap(cache.get(key))
-    }
+    const cached = cache.get(key)
+    if (isSome(cached)) return cached.value
 
     const result = fn(...args)
     cache.set(key, result)

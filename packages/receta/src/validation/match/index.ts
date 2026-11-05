@@ -62,10 +62,10 @@ export interface ValidationMatcher<T, E, R> {
  * })
  *
  * // Real-world: UI rendering
- * const renderForm = (validation: Validation<FormData, FieldError>) =>
+ * const renderForm = (validation: Validation<SignupForm, FieldError<string>>) =>
  *   match(validation, {
- *     onValid: (data) => <SuccessMessage data={data} />,
- *     onInvalid: (errors) => <Form errors={errors} />
+ *     onValid: (data) => renderSuccess(data),
+ *     onInvalid: (errors) => renderErrors(errors)
  *   })
  *
  * // Real-world: Error logging
@@ -75,7 +75,7 @@ export interface ValidationMatcher<T, E, R> {
  *     match({
  *       onValid: (validated) => {
  *         logger.info('Validation succeeded')
- *         return process(validated)
+ *         return handleData(validated)
  *       },
  *       onInvalid: (errors) => {
  *         logger.error('Validation failed', { errors })

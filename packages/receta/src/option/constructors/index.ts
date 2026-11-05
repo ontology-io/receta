@@ -26,7 +26,7 @@ export function some<T>(value: T): Some<T> {
  * @example
  * ```typescript
  * const result = none()
- * // => { _tag: 'None' }
+ * // => None
  * ```
  */
 export function none<T = never>(): None {

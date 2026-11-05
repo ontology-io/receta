@@ -9,7 +9,7 @@
  *
  * @example
  * ```typescript
- * import * as Obj from 'receta/object'
+ * import * as Obj from '@ontologyio/receta/object'
  * import { pipe } from 'remeda'
  *
  * // Flatten and transform

@@ -153,11 +153,9 @@ export type NestedMap<T> = {
 /**
  * Configuration for index operations with collision handling.
  *
- * @typeParam T - The type of items being indexed
- *
  * @example
  * ```typescript
- * const config: IndexConfig<User> = {
+ * const config: IndexConfig = {
  *   onCollision: 'error' // or 'first' | 'last'
  * }
  * ```

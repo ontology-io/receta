@@ -30,7 +30,7 @@ import type { PlainObject } from '../types'
  * // => { a: '1', b: '2', c: '3' }
  *
  * // With key and value
- * mapValues(obj, (value, key) => `${key}: ${value}`)
+ * mapValues(obj, (value, key) => `${String(key)}: ${value}`)
  *
  * // Data-last (in pipe)
  * pipe(

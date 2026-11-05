@@ -13,8 +13,9 @@ import { purryConfig } from '../../utils/purry'
  * Safely gets a value at a given path in an object, returning Option.
  *
  * Navigates nested object structures using a path (array of keys).
- * Returns Some(value) if the path exists, None if any part is undefined/null.
- * Safer than optional chaining as it composes with other Option operations.
+ * Returns None if the path runs through a missing or null value, or ends at
+ * undefined. A value of null at the end of the path comes back as Some(null).
+ * Unlike optional chaining, the result composes with other Option operations.
  *
  * @param path - The path to follow (array of keys)
  * @param obj - The object to navigate
@@ -22,6 +23,8 @@ import { purryConfig } from '../../utils/purry'
  *
  * @example
  * ```typescript
+ * import { map, unwrapOr } from '@ontologyio/receta/option'
+ *
  * // Data-first
  * const config = { database: { host: 'localhost', port: 5432 } }
  * getPath(['database', 'host'], config)
@@ -31,7 +34,7 @@ import { purryConfig } from '../../utils/purry'
  * // => None
  *
  * getPath(['api', 'key'], config)
- * // => None (intermediate path doesn't exist)
+ * // => None
  *
  * // Composing with Option
  * pipe(

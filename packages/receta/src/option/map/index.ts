@@ -19,7 +19,7 @@ import { some } from '../constructors'
  * ```typescript
  * // Data-first
  * map(some(5), x => x * 2) // => Some(10)
- * map(none(), x => x * 2) // => None
+ * map(none(), (x: number) => x * 2) // => None
  *
  * // Data-last (in pipe)
  * pipe(

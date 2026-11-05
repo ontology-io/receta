@@ -29,14 +29,13 @@ export interface Lens<S, A> {
 }
 
 /**
- * A path type that can be used to access nested properties.
+ * A dot-separated path to a nested property, such as `'address.city'`.
  *
- * Supports dot notation for nested object access.
+ * This is an alias for `string`: the path isn't checked against `T`.
  *
  * @example
  * ```typescript
- * type UserPath = Path<User>
- * // Can be: 'name' | 'email' | 'address.street' | 'address.city'
+ * const userPath: Path<User> = 'address.city'
  * ```
  */
 export type Path<T> = string

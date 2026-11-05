@@ -5,7 +5,7 @@ import type { MemoizedFunction, MemoizedAsyncFunction } from '../types'
  *
  * @example
  * ```typescript
- * import { memoize, clearCache } from 'receta/memo'
+ * import { memoize, clearCache } from '@ontologyio/receta/memo'
  *
  * const expensive = memoize((n: number) => fibonacci(n))
  *

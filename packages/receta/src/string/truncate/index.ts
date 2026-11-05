@@ -18,7 +18,7 @@ import type { TruncateOptions } from '../types'
  * // => 'Hello...'
  *
  * truncate('Hello world', { length: 8, ellipsis: '…' })
- * // => 'Hello…'
+ * // => 'Hello w…'
  *
  * truncate('The quick brown fox', { length: 15, words: true })
  * // => 'The quick...'
@@ -31,7 +31,7 @@ import type { TruncateOptions } from '../types'
  *   'A very long string that needs truncation',
  *   truncate({ length: 20, words: true })
  * )
- * // => 'A very long string...'
+ * // => 'A very long...'
  * ```
  *
  * @see words - to split a string into words

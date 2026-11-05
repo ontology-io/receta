@@ -12,10 +12,14 @@ export type PollError =
   | { readonly type: 'stopped'; readonly attempt: number }
 
 /**
- * Polls an async function until it returns a truthy value or reaches max attempts.
+ * Polls an async function until it returns a value or reaches max attempts.
  *
  * Useful for waiting on async operations like job completion, order status,
  * or resource availability. Returns Result for explicit error handling.
+ *
+ * `null`, `undefined` and `false` mean "not yet". Anything else, including `0`
+ * and `''`, stops polling and becomes the Ok value. If `fn` throws, the returned
+ * promise rejects instead of resolving to an Err.
  *
  * @param fn - Async function to poll
  * @param options - Polling options
@@ -24,7 +28,7 @@ export type PollError =
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { unwrapOr, mapErr } from 'receta/result'
+ * import { unwrapOr, mapErr } from '@ontologyio/receta/result'
  *
  * // Poll until job is complete
  * const result = await poll(
@@ -55,6 +59,7 @@ export type PollError =
  *   async () => fetchOrderStatus(orderId),
  *   {
  *     interval: 2000,
+ *     maxAttempts: 30,
  *     timeout: 60000, // Fail after 1 minute
  *     onPoll: (attempt) => console.log(`Checking... attempt ${attempt}`)
  *   }
@@ -68,6 +73,7 @@ export type PollError =
  *   },
  *   {
  *     interval: 500,
+ *     maxAttempts: 50,
  *     shouldContinue: (attempt) => attempt < 20
  *   }
  * )

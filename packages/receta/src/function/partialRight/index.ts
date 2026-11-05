@@ -17,16 +17,16 @@
  *
  * @example
  * ```typescript
- * // Useful when the data comes last
- * const formatDate = (format: string, locale: string, date: Date) =>
+ * // Useful when the settings come last
+ * const formatDate = (date: Date, format: string, locale: string) =>
  *   date.toLocaleDateString(locale, { dateStyle: format as any })
  *
  * const formatInUS = partialRight(formatDate, 'en-US')
  * const formatInFR = partialRight(formatDate, 'fr-FR')
  *
- * const today = new Date()
- * formatInUS('short', today)   // => '1/22/26'
- * formatInFR('short', today)   // => '22/01/2026'
+ * const launch = new Date('2026-01-22T12:00:00Z')
+ * formatInUS(launch, 'short')   // => '1/22/26'
+ * formatInFR(launch, 'short')   // => '22/01/2026'
  * ```
  *
  * @example
@@ -35,8 +35,8 @@
  * const log = (message: string, level: string, timestamp: string) =>
  *   `${timestamp} [${level}] ${message}`
  *
- * const logNow = partialRight(log, 'INFO', new Date().toISOString())
- * logNow('Application started')  // => '2026-01-22T... [INFO] Application started'
+ * const logNow = partialRight(log, 'INFO', '2026-01-22T10:00:00Z')
+ * logNow('Application started')  // => '2026-01-22T10:00:00Z [INFO] Application started'
  * ```
  *
  * @see partial - for left-to-right partial application

@@ -44,7 +44,8 @@ export interface RetryOptions {
 
   /**
    * Callback invoked on each retry attempt. Receives the actual (jittered,
-   * clamped) delay that will be waited.
+   * clamped) delay that will be waited. It isn't awaited, so it can't hold up
+   * the retry.
    */
   readonly onRetry?: (error: unknown, attempt: number, delay: number) => void
 }
@@ -78,7 +79,9 @@ export interface PollOptions {
   readonly maxAttempts?: number
 
   /**
-   * Timeout in milliseconds for the entire polling operation.
+   * Timeout in milliseconds for the entire polling operation. `maxAttempts`
+   * still applies, so raise it too for a long timeout. After a timeout the
+   * loop keeps calling the function until its attempts run out.
    */
   readonly timeout?: number
 
@@ -105,7 +108,8 @@ export interface BatchOptions {
   readonly batchSize?: number
 
   /**
-   * Delay in milliseconds between batches.
+   * Delay in milliseconds between batches. Above 0, batches run one at a time
+   * and `concurrency` is ignored.
    * @default 0
    */
   readonly delayBetweenBatches?: number

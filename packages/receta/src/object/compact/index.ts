@@ -33,7 +33,7 @@ import type { PlainObject } from '../types'
  * pipe(
  *   apiResponse,
  *   compact,
- *   validateShape(schema)
+ *   validateShape(userSchema)
  * )
  *
  * // Note: Keeps falsy values like 0, false, ''

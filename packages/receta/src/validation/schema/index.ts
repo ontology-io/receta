@@ -4,7 +4,6 @@
  * @module validation/schema
  */
 
-import * as R from 'remeda'
 import type { Validation, ValidationSchema, FieldError } from '../types'
 import { valid, invalid } from '../constructors'
 import { isInvalid } from '../guards'
@@ -16,13 +15,16 @@ import { isInvalid } from '../guards'
  * If all fields are valid, returns Valid with the object.
  * If any field is invalid, returns Invalid with FieldError objects for each failed field.
  *
+ * Valid holds the object you passed in, so a validator can't convert a field or fill in a default.
+ * Declare the object's shape with `type`, not `interface`, because `T` must extend `Record<string, unknown>`.
+ *
  * @param schemaObj - Schema mapping keys to validators
  * @param value - Object to validate
  * @returns Validation with the object, or field-level errors
  *
  * @example
  * ```typescript
- * interface User {
+ * type User = {
  *   name: string
  *   email: string
  *   age: number
@@ -47,8 +49,8 @@ import { isInvalid } from '../guards'
  * // ])
  *
  * // Real-world: Form validation
- * const validateRegistration = (formData: unknown) =>
- *   schema(userSchema, formData)
+ * const validateRegistration = (form: User) =>
+ *   schema(userSchema, form)
  *
  * const result = validateRegistration(formData)
  * if (isInvalid(result)) {
@@ -60,14 +62,8 @@ import { isInvalid } from '../guards'
  *
  * // Real-world: API request validation
  * const createUserSchema: ValidationSchema<CreateUserRequest, string> = {
- *   email: pipe(
- *     fromPredicate(s => s.length > 0, 'Email required'),
- *     flatMap(fromPredicate(s => s.includes('@'), 'Invalid email'))
- *   ),
- *   password: pipe(
- *     fromPredicate(s => s.length >= 8, 'Min 8 characters'),
- *     flatMap(fromPredicate(s => /[A-Z]/.test(s), 'Need uppercase'))
- *   )
+ *   email: validate([required('Email required'), email()]),
+ *   password: validate([minLength(8, 'Min 8 characters'), matches(/[A-Z]/, 'Need uppercase')])
  * }
  *
  * app.post('/api/users', (req, res) => {
@@ -90,8 +86,14 @@ export function schema<T extends Record<string, unknown>, E>(
 export function schema<T extends Record<string, unknown>, E>(
   schemaObj: ValidationSchema<T, E>
 ): (value: T) => Validation<T, FieldError<E>>
-export function schema(...args: unknown[]): unknown {
-  return R.purry(schemaImplementation, args)
+export function schema<T extends Record<string, unknown>, E>(
+  schemaObj: ValidationSchema<T, E>,
+  ...rest: [] | [value: T]
+): Validation<T, FieldError<E>> | ((value: T) => Validation<T, FieldError<E>>) {
+  // Not purry: it passes the data first, and here the rules come first.
+  return rest.length === 0
+    ? (value) => schemaImplementation(schemaObj, value)
+    : schemaImplementation(schemaObj, rest[0])
 }
 
 function schemaImplementation<T extends Record<string, unknown>, E>(
@@ -165,8 +167,14 @@ export function partial<T extends Record<string, unknown>, E>(
 export function partial<T extends Record<string, unknown>, E>(
   schemaObj: ValidationSchema<T, E>
 ): (value: Partial<T>) => Validation<Partial<T>, FieldError<E>>
-export function partial(...args: unknown[]): unknown {
-  return R.purry(partialImplementation, args)
+export function partial<T extends Record<string, unknown>, E>(
+  schemaObj: ValidationSchema<T, E>,
+  ...rest: [] | [value: Partial<T>]
+): Validation<Partial<T>, FieldError<E>> | ((value: Partial<T>) => Validation<Partial<T>, FieldError<E>>) {
+  // Not purry: it passes the data first, and here the rules come first.
+  return rest.length === 0
+    ? (value) => partialImplementation(schemaObj, value)
+    : partialImplementation(schemaObj, rest[0])
 }
 
 function partialImplementation<T extends Record<string, unknown>, E>(

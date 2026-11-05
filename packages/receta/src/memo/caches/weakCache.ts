@@ -1,4 +1,4 @@
-import { type Option, fromNullable } from '../../option'
+import { type Option, some, none } from '../../option'
 import type { Cache } from '../types'
 
 /**
@@ -16,7 +16,7 @@ import type { Cache } from '../types'
  *
  * @example
  * ```typescript
- * import { memoizeBy, weakCache } from 'receta/memo'
+ * import { memoizeBy, weakCache } from '@ontologyio/receta/memo'
  *
  * interface Node {
  *   id: string
@@ -40,7 +40,7 @@ export function weakCache<K extends object, V>(): Cache<K, V> {
 
   return {
     get(key: K): Option<V> {
-      return fromNullable(weak.get(key))
+      return weak.has(key) ? some(weak.get(key) as V) : none()
     },
 
     set(key: K, value: V): void {

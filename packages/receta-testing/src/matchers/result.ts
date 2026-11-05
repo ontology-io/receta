@@ -36,7 +36,7 @@ function isResultLike(value: unknown): value is { _tag: 'Ok' | 'Err' } {
  * @example
  * ```typescript
  * import { expect } from 'vitest'
- * import { ok, err } from 'receta/result'
+ * import { ok, err } from '@ontologyio/receta/result'
  *
  * expect(ok(5)).toBeOk()           // Pass
  * expect(ok(5)).toBeOk(5)          // Pass
@@ -100,7 +100,7 @@ export const toBeOk: MatcherFunction = function (received: unknown, expectedValu
  * @example
  * ```typescript
  * import { expect } from 'vitest'
- * import { ok, err } from 'receta/result'
+ * import { ok, err } from '@ontologyio/receta/result'
  *
  * expect(err('fail')).toBeErr()          // Pass
  * expect(err('fail')).toBeErr('fail')    // Pass
@@ -164,7 +164,7 @@ export const toBeErr: MatcherFunction = function (received: unknown, expectedErr
  * @example
  * ```typescript
  * import { expect } from 'vitest'
- * import { ok, err } from 'receta/result'
+ * import { ok, err } from '@ontologyio/receta/result'
  *
  * expect(ok(5)).toEqualResult(ok(5))           // Pass
  * expect(err('fail')).toEqualResult(err('fail')) // Pass

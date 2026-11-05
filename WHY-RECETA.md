@@ -77,8 +77,8 @@ async function processUserRequest(userId: string) {
 ```typescript
 // ✅ Pipeline of transformations — reads like English!
 import * as R from 'remeda'
-import { Result, tryCatchAsync } from 'receta/result'
-import { Option, fromNullable } from 'receta/option'
+import { Result, tryCatchAsync } from '@ontologyio/receta/result'
+import { Option, fromNullable } from '@ontologyio/receta/option'
 
 async function processUserRequest(
   userId: string
@@ -352,9 +352,9 @@ async function generateUserReport(userId: string) {
 ```typescript
 // ✅ 15 lines of declarative elegance
 import * as R from 'remeda'
-import { Result } from 'receta/result'
-import { nest } from 'receta/collection'
-import { gte } from 'receta/predicate'
+import { Result } from '@ontologyio/receta/result'
+import { nest } from '@ontologyio/receta/collection'
+import { gte } from '@ontologyio/receta/predicate'
 
 async function generateUserReport(
   userId: string
@@ -526,8 +526,8 @@ async function processPayment(orderId: string, amount: number) {
 **Receta approach:**
 ```typescript
 // ✅ Explicit, composable error handling
-import { Result, ok, err, tryCatchAsync } from 'receta/result'
-import { Option, fromNullable } from 'receta/option'
+import { Result, ok, err, tryCatchAsync } from '@ontologyio/receta/result'
+import { Option, fromNullable } from '@ontologyio/receta/option'
 import * as R from 'remeda'
 
 type PaymentError =
@@ -587,18 +587,18 @@ async function processPayment(
 }
 
 // Caller knows EXACTLY what can fail and handles each case
-import { cond } from 'receta/function'
+import { cond } from '@ontologyio/receta/function'
 
 R.pipe(
   await processPayment('order_123', 5000),
   Result.match({
-    Ok: (intent) =>
+    onOk: (intent) =>
       R.pipe(
         intent,
         R.tap(i => console.log('Payment successful:', i.id)),
         () => showSuccessToast('Payment processed!')
       ),
-    Err: (error) =>
+    onErr: (error) =>
       cond([
         [(e) => e.type === 'order_not_found', (e) => show404Error(e.orderId)],
         [(e) => e.type === 'order_already_processed', (e) => showWarning(`Order already ${e.status}`)],
@@ -645,7 +645,7 @@ function getUserTheme(userId: string): string {
 **Receta approach:**
 ```typescript
 // ✅ Explicit optional chaining with functional composition
-import { Option, fromNullable, getOrElse } from 'receta/option'
+import { Option, fromNullable, getOrElse } from '@ontologyio/receta/option'
 import * as R from 'remeda'
 
 function getUserTheme(userId: string): string {
@@ -673,8 +673,8 @@ async function getGitHubUserEmail(username: string): Promise<string> {
 }
 
 // ✅ Receta: Explicit handling of missing email
-import { Option, fromNullable, match } from 'receta/option'
-import { Result, tryCatchAsync } from 'receta/result'
+import { Option, fromNullable, match } from '@ontologyio/receta/option'
+import { Result, tryCatchAsync } from '@ontologyio/receta/result'
 
 async function getGitHubUserEmail(
   username: string
@@ -692,12 +692,12 @@ async function getGitHubUserEmail(
 R.pipe(
   await getGitHubUserEmail('torvalds'),
   Result.match({
-    Ok: (optionalEmail) =>
+    onOk: (optionalEmail) =>
       Option.match(optionalEmail, {
-        Some: (email) => R.tap(() => console.log('Email:', email))(email),
-        None: () => console.log('User has hidden their email')
+        onSome: (email) => R.tap(() => console.log('Email:', email))(email),
+        onNone: () => console.log('User has hidden their email')
       }),
-    Err: (error) => R.tap(() => console.error('Failed to fetch user:', error))(error)
+    onErr: (error) => R.tap(() => console.error('Failed to fetch user:', error))(error)
   })
 )
 ```
@@ -733,8 +733,8 @@ async function fetchUserDashboard(userId: string) {
 **Receta approach:**
 ```typescript
 // ✅ Controlled concurrency + granular error handling
-import { mapAsync } from 'receta/async'
-import { Result, tryCatchAsync } from 'receta/result'
+import { mapAsync } from '@ontologyio/receta/async'
+import { Result, tryCatchAsync } from '@ontologyio/receta/result'
 import * as R from 'remeda'
 
 async function fetchUserDashboard(
@@ -812,8 +812,8 @@ async function sendWebhook(url: string, payload: any) {
 **Receta approach:**
 ```typescript
 // ✅ Built-in retry with exponential backoff
-import { retry } from 'receta/async'
-import { Result } from 'receta/result'
+import { retry } from '@ontologyio/receta/async'
+import { Result } from '@ontologyio/receta/result'
 
 async function sendWebhook(
   url: string,
@@ -850,9 +850,9 @@ async function sendWebhook(
 R.pipe(
   await sendWebhook('https://api.example.com/webhooks', data),
   Result.match({
-    Ok: (response) =>
+    onOk: (response) =>
       R.tap(() => logger.info('Webhook sent successfully'))(response),
-    Err: (error) =>
+    onErr: (error) =>
       R.pipe(
         error,
         when(
@@ -903,8 +903,8 @@ function validateRegistration(input: any) {
 **Receta approach:**
 ```typescript
 // ✅ Composable validators with error accumulation
-import { Validation, validate, combine, field } from 'receta/validation'
-import { isEmail, minLength, maxLength, matches } from 'receta/string'
+import { Validation, validate, combine, field } from '@ontologyio/receta/validation'
+import { isEmail, minLength, maxLength, matches } from '@ontologyio/receta/string'
 import * as R from 'remeda'
 
 type RegistrationForm = {
@@ -951,13 +951,13 @@ R.pipe(
   formData,
   validateRegistration,
   Validation.match({
-    Valid: async (data) =>
+    onValid: async (data) =>
       R.pipe(
         data,
         async (d) => await createUser(d),
         () => showSuccess('Account created!')
       ),
-    Invalid: (errors) =>
+    onInvalid: (errors) =>
       R.pipe(
         [
           errors.email && ['email', errors.email.join(', ')],
@@ -992,7 +992,7 @@ const filteredProducts = products.filter(p =>
 **Receta approach:**
 ```typescript
 // ✅ Composable, reusable predicates
-import { where, between, oneOf, gte, and } from 'receta/predicate'
+import { where, between, oneOf, gte, and } from '@ontologyio/receta/predicate'
 import * as R from 'remeda'
 
 const isAffordable = between(10, 100)
@@ -1037,8 +1037,8 @@ const pendingOrders = ordersByStatus['pending'] || []
 **Receta approach:**
 ```typescript
 // ✅ Type-safe grouping with guaranteed keys
-import { nest } from 'receta/collection'
-import { Option } from 'receta/option'
+import { nest } from '@ontologyio/receta/collection'
+import { Option } from '@ontologyio/receta/option'
 
 const ordersByStatus = nest(orders, order => order.status)
 
@@ -1066,8 +1066,8 @@ function detectRoleChanges(oldRoles: string[], newRoles: string[]) {
 **Receta approach:**
 ```typescript
 // ✅ Built-in set operations with pipe
-import { diff } from 'receta/collection'
-import { when } from 'receta/function'
+import { diff } from '@ontologyio/receta/collection'
+import { when } from '@ontologyio/receta/function'
 import * as R from 'remeda'
 
 // Audit log with functional composition
@@ -1127,7 +1127,7 @@ const updateUserEmail = (state: AppState, userId: string, newEmail: string) => {
 **Receta approach:**
 ```typescript
 // ✅ Functional lenses for clean updates
-import { lens, prop, path, over, set } from 'receta/lens'
+import { lens, prop, path, over, set } from '@ontologyio/receta/lens'
 import * as R from 'remeda'
 
 // Define lenses once
@@ -1200,11 +1200,11 @@ const result = R.pipe(
 ```typescript
 // The full stack in action
 import * as R from 'remeda'
-import { Result, tryCatch } from 'receta/result'
-import { Option, fromNullable } from 'receta/option'
-import { where, gte, matches } from 'receta/predicate'
-import { mapAsync } from 'receta/async'
-import { diff } from 'receta/collection'
+import { Result, tryCatch } from '@ontologyio/receta/result'
+import { Option, fromNullable } from '@ontologyio/receta/option'
+import { where, gte, matches } from '@ontologyio/receta/predicate'
+import { mapAsync } from '@ontologyio/receta/async'
+import { diff } from '@ontologyio/receta/collection'
 
 // Real-world: Process incoming webhook events
 async function processWebhookEvents(
@@ -1364,9 +1364,9 @@ bun add receta remeda
 ```
 
 ```typescript
-import { Result, ok, err } from 'receta/result'
-import { Option, fromNullable } from 'receta/option'
-import { mapAsync, retry } from 'receta/async'
+import { Result, ok, err } from '@ontologyio/receta/result'
+import { Option, fromNullable } from '@ontologyio/receta/option'
+import { mapAsync, retry } from '@ontologyio/receta/async'
 import * as R from 'remeda'
 
 // Start small: Replace one try/catch with Result
@@ -1375,9 +1375,9 @@ import * as R from 'remeda'
 ```
 
 **Read the guides:**
-- [Result Guide](./docs/result/README.md)
-- [Option Guide](./docs/option/README.md)
-- [Async Guide](./docs/async/README.md)
+- [Result Guide](https://receta-website.khaled-mailhub.workers.dev/docs/result)
+- [Option Guide](https://receta-website.khaled-mailhub.workers.dev/docs/option)
+- [Async Guide](https://receta-website.khaled-mailhub.workers.dev/docs/async)
 - [All Modules](./CLAUDE.md#module-structure)
 
 ---

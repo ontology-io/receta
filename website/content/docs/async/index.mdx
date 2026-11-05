@@ -1,0 +1,846 @@
+---
+title: "Overview"
+description: "Async utilities provide battle-tested patterns for handling concurrent operations, rate limits, retries, and timeouts—making your async code reliable without manual Promise juggling."
+---
+
+## The Problem: Promises Are Low-Level Primitives
+
+### Real-World Example: Stripe API Rate Limiting
+
+```typescript
+// Traditional approach - overwhelming the API
+async function processRefunds(chargeIds: string[]) {
+  const promises = chargeIds.map(id =>
+    stripe.refunds.create({ charge: id })
+  )
+
+  // 💥 Fires 1000 requests simultaneously!
+  const results = await Promise.all(promises)
+  return results
+}
+
+// What goes wrong? 🤔
+// - Stripe rate limit: 100 req/sec → 429 Too Many Requests
+// - No retry logic → manual rerun needed
+// - No timeout → hangs forever on slow networks
+// - All-or-nothing → one failure kills everything
+// - Memory spike → loading 1000 responses at once
+```
+
+When you call `processRefunds()` with 1000 charge IDs:
+- **429 errors** flood in after request #100
+- Your **Lambda times out** waiting for responses
+- **Half the refunds succeed**, half fail (inconsistent state)
+- You have **no idea which ones** worked
+- You'll only discover this when customers complain
+
+### How Successful Products Handle This
+
+**Stripe's Best Practices** (from their docs):
+```text
+// They recommend:
+// - Rate limiting (100 req/sec)
+// - Exponential backoff on 429
+// - Idempotency keys for retries
+// - Batch operations where possible
+```
+
+**GitHub API** (actual rate limit headers):
+```
+X-RateLimit-Limit: 5000
+X-RateLimit-Remaining: 4999
+X-RateLimit-Reset: 1372700873
+Retry-After: 60
+```
+
+**Vercel Deployments** (actual deployment pattern):
+```text
+// Poll deployment status every 2 seconds
+// Timeout after 5 minutes
+// Retry on network errors
+// Cancel if user navigates away
+```
+
+**AWS Lambda Best Practices**:
+```text
+// Concurrency limits per region
+// Timeout configuration (max 15 minutes)
+// Retry with exponential backoff
+// Dead letter queues for failures
+```
+
+**What they have in common**: **Controlled concurrency**, **automatic retries**, **timeout protection**, and **graceful degradation**.
+
+## The Solution: Async Utilities
+
+```typescript
+import { mapAsync, retry, timeout } from '@ontologyio/receta/async'
+
+type StripeError = { statusCode?: number }
+
+async function processRefunds(chargeIds: string[]) {
+  return mapAsync(
+    chargeIds,
+    (id) =>
+      timeout(
+        // Retry on rate limits
+        retry(() => stripe.refunds.create({ charge: id }), {
+          maxAttempts: 3,
+          delay: 1000,
+          backoff: 2,
+          shouldRetry: (error) => (error as StripeError).statusCode === 429
+        }),
+        30000 // 30 second limit per refund, retries included
+      ),
+    { concurrency: 10 } // Max 10 concurrent requests
+  )
+}
+```
+
+**Now your code:**
+1. ✅ Never overwhelms Stripe's API (10 concurrent max)
+2. ✅ Automatically retries rate limits (exponential backoff)
+3. ✅ Stops waiting on stuck requests (30s per refund)
+4. ✅ Continues on individual failures (each refund gets its own Result)
+5. ✅ Returns both successes and failures (full visibility)
+
+## Why Async Utilities Over Manual Promise Handling?
+
+### Problem 1: Manual Concurrency Control is Complex
+
+```typescript
+// Traditional manual concurrency limiting
+async function processWithLimit<T, U>(
+  items: T[],
+  fn: (item: T) => Promise<U>,
+  limit: number
+): Promise<U[]> {
+  const results: U[] = []
+  const executing = new Set<Promise<void>>()
+
+  for (const [index, item] of items.entries()) {
+    const promise = fn(item).then(result => {
+      results[index] = result
+      executing.delete(promise)
+    })
+
+    executing.add(promise)
+
+    if (executing.size >= limit) {
+      await Promise.race(executing)
+    }
+  }
+
+  await Promise.all(executing)
+  return results
+}
+
+// 50 lines of boilerplate for EVERY async operation!
+```
+
+**With mapAsync:**
+```typescript
+const results = await mapAsync(
+  items,
+  fn,
+  { concurrency: 10 }
+)
+
+// 1 line. Done.
+```
+
+### Problem 2: Retry Logic is Error-Prone
+
+```typescript
+// Traditional retry with exponential backoff
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxAttempts: number = 3
+): Promise<T> {
+  let lastError: unknown
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error
+
+      if (attempt < maxAttempts - 1) {
+        const delay = Math.min(1000 * Math.pow(2, attempt), 10000)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    }
+  }
+
+  throw lastError
+}
+
+// Complex, easy to get wrong, hard to customize
+```
+
+**With retry:**
+```typescript
+const result = await retry(
+  fn,
+  {
+    maxAttempts: 3,
+    delay: 1000,
+    backoff: 2,
+    maxDelay: 10000
+  }
+)
+
+// Handles all edge cases, fully customizable
+```
+
+### Problem 3: Timeouts Take a Race and a Cleanup
+
+```typescript
+// Traditional timeout: a race, a timer, and cleanup in every project
+async function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number
+): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`Timeout after ${ms}ms`))
+    }, ms)
+  })
+
+  try {
+    return await Promise.race([promise, timeoutPromise])
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+// Problem: A timeout is one more exception to catch
+// and tell apart from every other failure
+```
+
+**With timeout:**
+```typescript
+const controller = new AbortController()
+const result = await timeout(fetch('/api/report', { signal: controller.signal }), 5000)
+
+// timeout stops waiting, but a promise can't be cancelled from outside
+// To stop the work too, pass it a signal and abort
+if (isErr(result)) controller.abort()
+```
+
+## Real-World Use Cases
+
+### 1. API Rate Limiting (Stripe, GitHub, Twitter)
+
+```typescript
+import { mapAsync, retry } from '@ontologyio/receta/async'
+import { isOk, partition } from '@ontologyio/receta/result'
+
+type StripeError = {
+  type: 'rate_limit' | 'card_error' | 'network'
+  message: string
+  statusCode?: number
+}
+
+async function bulkCreateCustomers(emails: string[]) {
+  return mapAsync(
+    emails,
+    (email) =>
+      retry(() => stripe.customers.create({ email }), {
+        maxAttempts: 5,
+        delay: 1000,
+        backoff: 2,
+        shouldRetry: (error) => {
+          // Retry on rate limits and network errors
+          const { statusCode, type } = error as StripeError
+          return statusCode === 429 || type === 'network'
+        },
+        onRetry: (error, attempt) => {
+          console.log(`Retry ${attempt} for ${email}:`, (error as StripeError).message)
+        }
+      }),
+    { concurrency: 10 } // Stripe allows 100/sec, we use 10 to be safe
+  )
+}
+
+// Usage
+const customers = await bulkCreateCustomers(emails)
+
+if (isOk(customers)) {
+  const [created, failed] = partition(customers.value)
+
+  console.log(`Created ${created.length} customers`)
+  console.log(`Failed ${failed.length} customers`)
+}
+```
+
+### 2. GitHub API Pagination with Rate Limit Respect
+
+```typescript
+import { retry, sleep, type RetryError } from '@ontologyio/receta/async'
+import { isErr, ok, type Result } from '@ontologyio/receta/result'
+
+type GitHubError = {
+  status: number
+  message: string
+}
+
+async function fetchAllRepoIssues(
+  owner: string,
+  repo: string
+): Promise<Result<Issue[], RetryError>> {
+  const issues: Issue[] = []
+  let page = 1
+
+  while (true) {
+    const result = await retry(
+      async () => {
+        const response = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/issues?page=${page}&per_page=100`,
+          {
+            headers: {
+              'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+              'Accept': 'application/vnd.github.v3+json'
+            }
+          }
+        )
+
+        // Check rate limit headers
+        const remaining = parseInt(response.headers.get('X-RateLimit-Remaining') || '0')
+        const resetTime = parseInt(response.headers.get('X-RateLimit-Reset') || '0')
+
+        if (remaining === 0) {
+          // retry's delay can't vary per error, so wait for the reset here
+          await sleep(resetTime * 1000 - Date.now())
+          throw {
+            status: 429,
+            message: 'Rate limit exceeded'
+          }
+        }
+
+        if (!response.ok) {
+          throw {
+            status: response.status,
+            message: await response.text()
+          }
+        }
+
+        return response.json()
+      },
+      {
+        maxAttempts: 3,
+        delay: 1000,
+        backoff: 2,
+        maxDelay: 60000,
+        shouldRetry: (error) => {
+          // Retry rate limits and server errors
+          const { status } = error as GitHubError
+          return status === 429 || status >= 500
+        }
+      }
+    )
+
+    if (isErr(result)) {
+      return result
+    }
+
+    const pageIssues = result.value
+
+    if (pageIssues.length === 0) {
+      break // No more pages
+    }
+
+    issues.push(...pageIssues)
+    page++
+
+    // Be nice to GitHub - small delay between pages
+    await sleep(100)
+  }
+
+  return ok(issues)
+}
+```
+
+### 3. Vercel Deployment Polling
+
+```typescript
+import { poll } from '@ontologyio/receta/async'
+import { type Result, err, flatMap, mapErr, match, ok } from '@ontologyio/receta/result'
+import * as R from 'remeda'
+
+type DeploymentStatus = 'QUEUED' | 'BUILDING' | 'READY' | 'ERROR'
+
+type Deployment = {
+  id: string
+  status: DeploymentStatus
+  url?: string
+  error?: string
+}
+
+async function waitForDeployment(
+  deploymentId: string
+): Promise<Result<Deployment, string>> {
+  const finished = await poll(
+    async () => {
+      const response = await fetch(
+        `https://api.vercel.com/v13/deployments/${deploymentId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${process.env.VERCEL_TOKEN}`
+          }
+        }
+      )
+
+      const deployment: Deployment = await response.json()
+      console.log(`Status: ${deployment.status}`)
+
+      // Stop when deployment is done (success or failure)
+      // null means "not yet", so poll tries again
+      return deployment.status === 'READY' || deployment.status === 'ERROR'
+        ? deployment
+        : null
+    },
+    {
+      interval: 2000,   // Check every 2 seconds
+      maxAttempts: 150, // The default of 10 would give up after 20 seconds
+      timeout: 300000   // 5 minute timeout
+    }
+  )
+
+  return R.pipe(
+    finished,
+    mapErr((error) => `Stopped waiting: ${error.type}`),
+    flatMap((deployment) =>
+      deployment.status === 'ERROR'
+        ? err(deployment.error || 'Deployment failed')
+        : ok(deployment)
+    )
+  )
+}
+
+// Usage
+const result = await waitForDeployment('dpl_xyz123')
+
+match(result, {
+  onOk: (deployment) => {
+    console.log(`✅ Deployed to: ${deployment.url}`)
+  },
+  onErr: (error) => {
+    console.log(`❌ Deployment failed: ${error}`)
+  }
+})
+```
+
+### 4. AWS Lambda Batch Processing
+
+```typescript
+import { mapAsync, chunk, timeout } from '@ontologyio/receta/async'
+import { collect, err, flatMap, isErr, ok, type Result } from '@ontologyio/receta/result'
+
+type S3Object = {
+  bucket: string
+  key: string
+  size: number
+}
+
+async function processBatchInLambda(
+  objects: S3Object[]
+): Promise<Result<ProcessedObject[], string>> {
+  // Lambda has 15 minute timeout and memory limits
+  // Process in chunks to avoid memory issues
+
+  const chunks = chunk(objects, 50) // Process 50 at a time
+  const results: ProcessedObject[] = []
+
+  for (const objectChunk of chunks) {
+    const chunkResults = await mapAsync(
+      objectChunk,
+      (obj) => timeout(processObject(obj), 60000), // 1 minute per object
+      { concurrency: 5 } // Process 5 objects concurrently
+    )
+
+    // Check if any failed: the whole map, or one object's timeout
+    const collected = flatMap(chunkResults, (timed) => collect(timed))
+    if (isErr(collected)) {
+      return err('Failed to process chunk')
+    }
+
+    results.push(...collected.value)
+
+    // Check remaining Lambda time
+    const remainingTime = context.getRemainingTimeInMillis()
+    if (remainingTime < 60000) {
+      // Less than 1 minute left - stop and return what we have
+      console.log('Lambda timeout approaching - stopping early')
+      break
+    }
+  }
+
+  return ok(results)
+}
+```
+
+### 5. Search Box with Debouncing
+
+```typescript
+import { debounce } from '@ontologyio/receta/async'
+import { type Result, match, tryCatchAsync } from '@ontologyio/receta/result'
+
+// Debounce search to avoid overwhelming the API
+const searchUsers = debounce(
+  (query: string): Promise<Result<User[], string>> =>
+    tryCatchAsync(
+      async () => {
+        const response = await fetch(`/api/users?q=${encodeURIComponent(query)}`)
+        return response.json()
+      },
+      () => 'Search failed'
+    ),
+  {
+    delay: 300,      // Wait 300ms after last call
+    leading: false,  // Don't execute on leading edge
+    trailing: true   // Execute on trailing edge
+  }
+)
+
+// Only the last keystroke of a burst runs
+// Earlier calls were replaced, so their promises never settle
+searchInput.addEventListener('input', async (event) => {
+  const result = await searchUsers(event.target.value)
+
+  match(result, {
+    onOk: renderUsers,
+    onErr: showError
+  })
+})
+```
+
+Debounce belongs where a newer call can replace an older one, such as a search box. Don't put it in front of a server handler: a request whose call was replaced would wait forever.
+
+### 6. Real-Time Data Sync with Throttling
+
+```typescript
+import { throttle } from '@ontologyio/receta/async'
+import { err, isOk, ok, type Result } from '@ontologyio/receta/result'
+
+type SyncEvent = {
+  id: string
+  type: 'create' | 'update' | 'delete'
+  data: unknown
+}
+
+// Sync changes to remote API, but don't overwhelm it
+const syncToRemote = throttle(
+  async (events: SyncEvent[]): Promise<Result<void, string>> => {
+    try {
+      await fetch('https://api.example.com/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ events })
+      })
+      return ok(undefined)
+    } catch (error) {
+      return err('Sync failed')
+    }
+  },
+  {
+    delay: 5000,         // At most once every 5 seconds
+    leading: true,       // Sync immediately on first change
+    trailing: true       // Sync accumulated changes after the delay
+  }
+)
+
+// In your app
+let eventBuffer: SyncEvent[] = []
+
+function handleDataChange(event: SyncEvent) {
+  // Buffer events
+  eventBuffer.push(event)
+
+  // Sync will be throttled automatically
+  syncToRemote(eventBuffer).then(result => {
+    if (isOk(result)) {
+      eventBuffer = [] // Clear buffer on success
+    }
+  })
+}
+```
+
+## Mental Model: Guardrails for Async Operations
+
+Think of async utilities as **guardrails** on a highway:
+
+```
+Input ──[Async Operation]──> Output
+         │                │
+         │ concurrency    │ timeout
+         │ retry          │ debounce
+         │ throttle       │ poll
+         │                │
+         └────[Safe]──────┘
+```
+
+- **Without guardrails**: Promises run wild, crash your app, overwhelm APIs
+- **With guardrails**: Controlled execution, automatic recovery, graceful failures
+
+## Core Utilities
+
+### Concurrency Control
+
+```typescript
+// mapAsync - Run operations with controlled concurrency
+mapAsync(items, fn, { concurrency: 10 })
+
+// filterAsync - Filter with async predicate
+filterAsync(items, asyncPredicate, { concurrency: 5 })
+
+// parallel - Run a list of tasks, optionally with a limit
+parallel(tasks, { concurrency: 5 })
+
+// sequential - Run tasks one at a time, in order
+sequential(tasks)
+```
+
+### Retry & Recovery
+
+```typescript
+// retry - Retry failed operations with backoff
+retry(fn, {
+  maxAttempts: 3,
+  delay: 1000,
+  backoff: 2,
+  shouldRetry: (error) => isRateLimit(error)
+})
+```
+
+### Timing Control
+
+```typescript
+// timeout - Add timeout to any promise
+timeout(promise, 5000)
+
+// sleep - Delay execution
+await sleep(1000)
+
+// debounce - Execute after silence period
+debounce(fn, { delay: 300 })
+
+// throttle - Execute at most once per delay
+throttle(fn, { delay: 1000 })
+```
+
+### Polling
+
+```typescript
+// poll - Repeat until fn returns something other than null, undefined or false
+poll(fn, {
+  interval: 2000,
+  maxAttempts: 30
+})
+```
+
+### Batching
+
+```typescript
+// batch - Run fn once per batch of items
+batch(items, processBatch, {
+  batchSize: 50,
+  delayBetweenBatches: 1000
+})
+
+// chunk - Split array into chunks
+chunk([1,2,3,4,5], 2) // [[1,2], [3,4], [5]]
+```
+
+## Integration with Result Pattern
+
+Async functions return a Result instead of throwing, for type-safe, composable error handling:
+
+### Why Result + Async?
+
+Instead of throwing exceptions, Result-returning functions make errors **explicit in type signatures**:
+
+```typescript
+import { retry } from '@ontologyio/receta/async'
+import { map, unwrapOr } from '@ontologyio/receta/result'
+
+// Before: Error handling with try-catch
+async function emailFor(id: string) {
+  try {
+    const user = await fetchUser(id)
+    return user.email
+  } catch (error) {
+    return 'noreply@example.com'
+  }
+}
+
+// After: Error handling with Result
+async function retriedEmailFor(id: string) {
+  const result = await retry(() => fetchUser(id))
+
+  return pipe(
+    result,
+    map(user => user.email),
+    unwrapOr('noreply@example.com')
+  )
+}
+```
+
+### Result-Returning Functions
+
+| Function | Returns | Error Type |
+|----------|---------|------------|
+| `retry()` | `Result<T, RetryError>` | `RetryError` |
+| `mapAsync()` | `Result<U[], MapAsyncError>` | `MapAsyncError` |
+| `filterAsync()` | `Result<T[], FilterAsyncError>` | `FilterAsyncError` |
+| `sequential()` | `Result<T[], SequentialError>` | `SequentialError` |
+| `timeout()` | `Result<T, TimeoutError>` | `TimeoutError` |
+| `poll()` | `Result<T, PollError>` | `PollError` |
+| `batch()` | `Result<U[], BatchError>` | `BatchError` |
+
+### Real-World: GitHub API with Result
+
+```typescript
+import * as R from 'remeda'
+import { retry, timeout } from '@ontologyio/receta/async'
+import { type Result, unwrapOr, map, mapErr, isErr } from '@ontologyio/receta/result'
+
+type Repo = { name: string; stars: number }
+type FetchError = { type: 'network' | 'timeout' | 'rate_limit'; message: string }
+
+const fetchRepo = async (owner: string, repo: string): Promise<Result<Repo, FetchError>> => {
+  // Combine retry + timeout for resilient API calls
+  const result = await retry(
+    async () => {
+      const res = await timeout(
+        fetch(`https://api.github.com/repos/${owner}/${repo}`),
+        5000
+      )
+
+      // retry only sees failures that throw
+      if (isErr(res)) {
+        throw res.error
+      }
+
+      const data = await res.value.json()
+      return { name: data.full_name, stars: data.stargazers_count }
+    },
+    { maxAttempts: 3, delay: 1000 }
+  )
+
+  return R.pipe(
+    result,
+    mapErr(error => ({
+      type: 'network' as const,
+      message: `Failed after ${error.attempts} attempts`
+    }))
+  )
+}
+
+// Usage - no try-catch needed!
+const repo = await fetchRepo('facebook', 'react')
+const stars = R.pipe(repo, map(r => r.stars), unwrapOr(0))
+```
+
+### Benefits
+
+✅ **Type-safe errors** - `Result<User, FetchError>` in signatures
+✅ **No exceptions** - Pure functional approach
+✅ **Composable** - Chain with `pipe`, `map`, `mapErr`
+✅ **Explicit** - Errors visible at compile time
+
+See [Patterns](./patterns.mdx) for more.
+
+## When to Use Async Utilities
+
+✅ **Use async utilities when:**
+- Making API calls that can be rate-limited (Stripe, GitHub, Twitter)
+- Processing large datasets that could overwhelm memory
+- Implementing real-time features (polling, webhooks, SSE)
+- Building reliable background jobs (retries, timeouts)
+- Handling user input that triggers async operations (debounce/throttle)
+- Working in resource-constrained environments (Lambda, Edge Functions)
+
+❌ **Don't use async utilities for:**
+- Single one-off promises (just use `await`)
+- Operations that must run completely unbounded
+- Synchronous operations (use regular array methods)
+- Real-time streams (use observables/async iterators instead)
+
+## Common Patterns
+
+### Pattern 1: API Client with Rate Limiting
+
+```typescript
+import Bottleneck from 'bottleneck'
+
+class StripeClient {
+  // Receta has no rate limiter, so pair retry with one such as Bottleneck
+  private limiter = new Bottleneck({ minTime: 10 }) // 100 requests per second
+
+  async createCharge(params: ChargeParams) {
+    return this.limiter.schedule(() =>
+      retry(
+        () => stripe.charges.create(params),
+        {
+          maxAttempts: 3,
+          delay: 1000,
+          backoff: 2,
+          shouldRetry: (e) => (e as { statusCode?: number }).statusCode === 429
+        }
+      )
+    )
+  }
+}
+```
+
+### Pattern 2: Batch Processing with Progress
+
+```typescript
+async function processBatchWithProgress<T, U>(
+  items: T[],
+  processor: (item: T) => Promise<U>,
+  onProgress: (completed: number, total: number) => void
+) {
+  let completed = 0
+
+  return mapAsync(
+    items,
+    async (item) => {
+      const result = await processor(item)
+      completed++
+      onProgress(completed, items.length)
+      return result
+    },
+    { concurrency: 10 }
+  )
+}
+
+// Usage
+await processBatchWithProgress(
+  users,
+  sendEmail,
+  (completed, total) => {
+    console.log(`Sent ${completed}/${total} emails`)
+  }
+)
+```
+
+### Pattern 3: Circuit Breaker
+
+Receta has no circuit breaker of its own. [Retry and Timeout Patterns](./retry-timeout.mdx#circuit-breaker-pattern) builds one from `retry` and `timeout`.
+
+## What's Next?
+
+- **[Concurrency Control](./concurrency.mdx)**: mapAsync, filterAsync, parallel, sequential
+- **[Retry and Timeout](./retry-timeout.mdx)**: Exponential backoff, custom retry logic, timeouts
+- **[Debounce and Throttle](./debounce-throttle.mdx)**: Rate limiting user input and events
+- **[Batching and Polling](./batching.mdx)**: batch, chunk, poll
+- **[Patterns](./patterns.mdx)**: Recipes for real APIs
+- **[Migration Guide](./migration.mdx)**: From Promise.all to mapAsync
+
+---
+
+**Key Takeaway**: Async utilities provide battle-tested patterns for concurrency, retries, and timing control—making your async code as reliable as Stripe, GitHub, and Vercel without the complexity of manual Promise management.

@@ -20,7 +20,7 @@ import { isSome } from '../guards'
  * // Data-last (in pipe)
  * pipe(
  *   some(some(5)),
- *   flatten,
+ *   flatten(),
  *   map(x => x * 2)
  * ) // => Some(10)
  * ```

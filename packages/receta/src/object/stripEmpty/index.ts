@@ -114,8 +114,7 @@ function isEmpty(value: unknown, options: Required<StripEmptyOptions>): boolean 
  * }
  *
  * stripEmpty(nested)
- * // => { user: { name: 'Alice', settings: {} } }
- * // Note: settings is empty but kept because stripEmptyObjects applies to top-level
+ * // => { user: { name: 'Alice' } }
  *
  * // Customize what to strip
  * stripEmpty(
@@ -133,11 +132,8 @@ function isEmpty(value: unknown, options: Required<StripEmptyOptions>): boolean 
  *   publishedAt: null
  * }
  *
- * pipe(
- *   formData,
- *   stripEmpty,
- *   (clean) => fetch('/api/posts', { method: 'POST', body: JSON.stringify(clean) })
- * )
+ * const clean = stripEmpty(formData)
+ * fetch('/api/posts', { method: 'POST', body: JSON.stringify(clean) })
  * // Sends: { title: 'New Post', body: 'Content here', draft: false }
  *
  * // Shallow stripping (not recursive)
@@ -150,10 +146,10 @@ function isEmpty(value: unknown, options: Required<StripEmptyOptions>): boolean 
  * )
  * // => { name: 'Alice', nested: { bio: '', age: null } }
  *
- * // Data-last (in pipe)
+ * // In a pipe, wrap it. stripEmpty() returns {} instead of a function.
  * pipe(
  *   apiPayload,
- *   stripEmpty()
+ *   (payload) => stripEmpty(payload)
  * )
  * ```
  *
@@ -163,21 +159,21 @@ function isEmpty(value: unknown, options: Required<StripEmptyOptions>): boolean 
 export function stripEmpty(obj: PlainObject, options?: StripEmptyOptions): PlainObject
 export function stripEmpty(options?: StripEmptyOptions): (obj: PlainObject) => PlainObject
 export function stripEmpty(objOrOptions?: PlainObject | StripEmptyOptions, maybeOptions?: StripEmptyOptions): any {
-  // Data-last: if first arg looks like options (has stripEmpty* or deep keys)
+  // Data-last: no arguments, or a first arg that looks like options (has stripEmpty* or deep keys)
   if (
-    objOrOptions !== undefined &&
-    typeof objOrOptions === 'object' &&
-    !Array.isArray(objOrOptions) &&
-    ('stripEmptyStrings' in objOrOptions ||
-      'stripEmptyArrays' in objOrOptions ||
-      'stripEmptyObjects' in objOrOptions ||
-      'deep' in objOrOptions)
+    objOrOptions === undefined ||
+    (typeof objOrOptions === 'object' &&
+      !Array.isArray(objOrOptions) &&
+      ('stripEmptyStrings' in objOrOptions ||
+        'stripEmptyArrays' in objOrOptions ||
+        'stripEmptyObjects' in objOrOptions ||
+        'deep' in objOrOptions))
   ) {
-    return (obj: PlainObject) => stripEmptyImplementation(obj, objOrOptions as StripEmptyOptions)
+    return (obj: PlainObject) => stripEmptyImplementation(obj, objOrOptions as StripEmptyOptions | undefined)
   }
 
   // Data-first
-  return stripEmptyImplementation(objOrOptions as PlainObject ?? {}, maybeOptions)
+  return stripEmptyImplementation(objOrOptions as PlainObject, maybeOptions)
 }
 
 function stripEmptyImplementation(
