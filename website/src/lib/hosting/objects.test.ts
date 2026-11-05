@@ -54,6 +54,9 @@ describe('contentType', () => {
   it('knows every type in the export', () => {
     expect(contentType('index.html')).toEqual(some('text/html; charset=utf-8'))
     expect(contentType('a.b.woff2')).toEqual(some('font/woff2'))
+    expect(contentType('og.png')).toEqual(some('image/png'))
+    expect(contentType('favicon.ico')).toEqual(some('image/x-icon'))
+    expect(contentType('sitemap.xml')).toEqual(some('application/xml; charset=utf-8'))
   })
 
   it('refuses a type it has never seen', () => {
