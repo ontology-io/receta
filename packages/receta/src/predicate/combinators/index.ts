@@ -4,7 +4,13 @@
  * @module predicate/combinators
  */
 
-import type { Predicate } from '../types'
+import type { Predicate, TypePredicate } from '../types'
+
+/**
+ * What `not` returns for a guard. Over `unknown` it stays a plain predicate: a guard
+ * there would have to claim its false branch can never happen.
+ */
+type Negated<T, A extends T> = unknown extends T ? Predicate<T> : TypePredicate<T, Exclude<T, A>>
 
 /**
  * Combines multiple predicates with logical AND.
@@ -43,10 +49,19 @@ import type { Predicate } from '../types'
  * @see or - for logical OR
  * @see not - for logical NOT
  */
-export const and =
-  <T>(...predicates: Predicate<T>[]): Predicate<T> =>
-  (value) =>
-    predicates.every((p) => p(value))
+export function and<T, A extends T, B extends T>(
+  first: TypePredicate<T, A>,
+  second: TypePredicate<T, B>
+): TypePredicate<T, A & B>
+export function and<T, A extends T, B extends T, C extends T>(
+  first: TypePredicate<T, A>,
+  second: TypePredicate<T, B>,
+  third: TypePredicate<T, C>
+): TypePredicate<T, A & B & C>
+export function and<T>(...predicates: Predicate<T>[]): Predicate<T>
+export function and<T>(...predicates: Predicate<T>[]): Predicate<T> {
+  return (value) => predicates.every((p) => p(value))
+}
 
 /**
  * Combines multiple predicates with logical OR.
@@ -86,10 +101,19 @@ export const and =
  * @see not - for logical NOT
  * @see oneOf - for checking against a list of values
  */
-export const or =
-  <T>(...predicates: Predicate<T>[]): Predicate<T> =>
-  (value) =>
-    predicates.some((p) => p(value))
+export function or<T, A extends T, B extends T>(
+  first: TypePredicate<T, A>,
+  second: TypePredicate<T, B>
+): TypePredicate<T, A | B>
+export function or<T, A extends T, B extends T, C extends T>(
+  first: TypePredicate<T, A>,
+  second: TypePredicate<T, B>,
+  third: TypePredicate<T, C>
+): TypePredicate<T, A | B | C>
+export function or<T>(...predicates: Predicate<T>[]): Predicate<T>
+export function or<T>(...predicates: Predicate<T>[]): Predicate<T> {
+  return (value) => predicates.some((p) => p(value))
+}
 
 /**
  * Negates a predicate.
@@ -123,10 +147,11 @@ export const or =
  * @see and - for logical AND
  * @see or - for logical OR
  */
-export const not =
-  <T>(predicate: Predicate<T>): Predicate<T> =>
-  (value) =>
-    !predicate(value)
+export function not<T, A extends T>(guard: TypePredicate<T, A>): Negated<T, A>
+export function not<T>(predicate: Predicate<T>): Predicate<T>
+export function not<T>(predicate: Predicate<T>): Predicate<T> {
+  return (value) => !predicate(value)
+}
 
 /**
  * Combines multiple predicates with logical XOR (exclusive or).

@@ -58,10 +58,11 @@ import { eq } from '../comparison'
  * @see oneOf - for checking if value is in a list
  * @see prop - for testing a single property
  */
-export const where = <T extends Record<string, unknown>>(
+export const where = <T extends object>(
   schema: PredicateSchema<T>
 ): Predicate<T> => {
-  const predicates: Predicate<T>[] = Object.entries(schema).map(
+  const fields = Object.entries(schema as Record<string, Predicate<unknown> | undefined>)
+  const predicates: Predicate<T>[] = fields.map(
     ([key, predicate]) => (obj: T) => {
       if (!predicate) return true
       return predicate(obj[key as keyof T])
@@ -193,7 +194,7 @@ export const prop =
  * @see eq - for equality comparison
  */
 export const matchesShape =
-  <T extends Record<string, unknown>>(pattern: Partial<T>): Predicate<T> =>
+  <T extends object>(pattern: Partial<T>): Predicate<T> =>
   (obj) => {
     for (const key in pattern) {
       if (obj[key] !== pattern[key]) {
@@ -205,9 +206,6 @@ export const matchesShape =
 
 /**
  * Creates a predicate that tests if an object has a specific property.
- *
- * Describe the data with a `type` alias: an `interface` doesn't satisfy the
- * `Record<string, unknown>` constraint.
  *
  * @param key - The property key to check for
  * @returns A predicate that returns true if the object has the property
@@ -239,7 +237,7 @@ export const matchesShape =
  * @see where - for testing multiple properties
  */
 export const hasProperty =
-  <T extends Record<string, unknown>, K extends string>(key: K): Predicate<T> =>
+  <T extends object, K extends string>(key: K): Predicate<T> =>
   (obj) =>
     key in obj
 

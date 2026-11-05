@@ -16,7 +16,6 @@ import { isInvalid } from '../guards'
  * If any field is invalid, returns Invalid with FieldError objects for each failed field.
  *
  * Valid holds the object you passed in, so a validator can't convert a field or fill in a default.
- * Declare the object's shape with `type`, not `interface`, because `T` must extend `Record<string, unknown>`.
  *
  * @param schemaObj - Schema mapping keys to validators
  * @param value - Object to validate
@@ -79,14 +78,14 @@ import { isInvalid } from '../guards'
  * @see validate - for applying multiple validators to a single value
  * @see collectErrors - for combining independent validations
  */
-export function schema<T extends Record<string, unknown>, E>(
+export function schema<T extends object, E>(
   schemaObj: ValidationSchema<T, E>,
   value: T
 ): Validation<T, FieldError<E>>
-export function schema<T extends Record<string, unknown>, E>(
+export function schema<T extends object, E>(
   schemaObj: ValidationSchema<T, E>
 ): (value: T) => Validation<T, FieldError<E>>
-export function schema<T extends Record<string, unknown>, E>(
+export function schema<T extends object, E>(
   schemaObj: ValidationSchema<T, E>,
   ...rest: [] | [value: T]
 ): Validation<T, FieldError<E>> | ((value: T) => Validation<T, FieldError<E>>) {
@@ -96,7 +95,7 @@ export function schema<T extends Record<string, unknown>, E>(
     : schemaImplementation(schemaObj, rest[0])
 }
 
-function schemaImplementation<T extends Record<string, unknown>, E>(
+function schemaImplementation<T extends object, E>(
   schemaObj: ValidationSchema<T, E>,
   value: T
 ): Validation<T, FieldError<E>> {
@@ -160,14 +159,14 @@ function schemaImplementation<T extends Record<string, unknown>, E>(
  *
  * @see schema - for validating complete objects
  */
-export function partial<T extends Record<string, unknown>, E>(
+export function partial<T extends object, E>(
   schemaObj: ValidationSchema<T, E>,
   value: Partial<T>
 ): Validation<Partial<T>, FieldError<E>>
-export function partial<T extends Record<string, unknown>, E>(
+export function partial<T extends object, E>(
   schemaObj: ValidationSchema<T, E>
 ): (value: Partial<T>) => Validation<Partial<T>, FieldError<E>>
-export function partial<T extends Record<string, unknown>, E>(
+export function partial<T extends object, E>(
   schemaObj: ValidationSchema<T, E>,
   ...rest: [] | [value: Partial<T>]
 ): Validation<Partial<T>, FieldError<E>> | ((value: Partial<T>) => Validation<Partial<T>, FieldError<E>>) {
@@ -177,7 +176,7 @@ export function partial<T extends Record<string, unknown>, E>(
     : partialImplementation(schemaObj, rest[0])
 }
 
-function partialImplementation<T extends Record<string, unknown>, E>(
+function partialImplementation<T extends object, E>(
   schemaObj: ValidationSchema<T, E>,
   value: Partial<T>
 ): Validation<Partial<T>, FieldError<E>> {
