@@ -45,12 +45,43 @@ function getConfig(key: string): Option<Config> {
 const maybeValue: Option<string> = fromNullable(getValue())
 ```
 
+## What Is Reported
+
+**Annotated functions** — A return type of `T | null`, `T | undefined` or `T | null | undefined`.
+
+**Unannotated functions** — A function that can return `null` or `undefined` and can also return a real value. Both sides of `a ? b : null` and `a ?? null` count.
+
+```typescript
+function getOrder(raw: string) {
+  const order = parse(raw)
+  if (!order) return null // Reported
+  return order.lines
+}
+```
+
+For unannotated functions, these are not reported:
+
+- `null` anywhere but a returned value, such as `let x = null`, `x === null` or `return { data: null }`
+- A function that only ever returns `null`, because nothing about it is optional
+- A bare `return`, which `consistent-return` already covers
+- A function that returns JSX, because `null` is how a React component renders nothing
+- An inline callback, an object property or a function typed through its variable (`const h: Handler = ...`), because the contract it has to fit is set elsewhere
+
 ## Autofix Behavior
 
 This rule provides two autofixes:
 
 1. **Return type conversion** — `T | null | undefined` → `Option<T>`
 2. **Return statement wrapping** — `return value` → `return fromNullable(value)`
+
+They are offered together, and only when every path out of the function goes through a `return value` the fix can wrap. These are reported without a fix:
+
+- Unannotated functions, because there is no return type to rewrite
+- Unions with several real members, such as `number | string | null`
+- Arrow functions with an expression body
+- A bare `return`, or a path that can run off the end of the function (a loop or `switch` as the last statement counts, because neither can be proven to exit)
+
+The rewritten function returns an `Option` instead of a raw value, so its callers need updating. Run `tsc` after `--fix` to find them.
 
 **Before:**
 

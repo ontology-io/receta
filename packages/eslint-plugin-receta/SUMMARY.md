@@ -51,8 +51,8 @@ All 3 rules support automatic code transformation:
 
 | Rule | Autofix | Safe? | Notes |
 |------|---------|-------|-------|
-| `prefer-result-over-try-catch` | ✅ | Yes | Only simple try-catch blocks |
-| `prefer-option-over-null` | ✅ | Yes | Updates types + wraps returns |
+| `prefer-result-over-try-catch` | ✅ | Yes | Lone `return` with an empty or rethrowing `catch`; callers need updating |
+| `prefer-option-over-null` | ✅ | Yes | Updates types + wraps returns; callers need updating |
 | `prefer-pipe-composition` | ✅ | Yes | 2+ chainable array methods |
 
 ### 2. Import Management
@@ -119,9 +119,9 @@ return result
 ```
 
 **When it autofixes:**
-- ✅ Simple try block with `return` statement
-- ✅ Catch clause only throws or logs
-- ❌ Complex error handling logic (manual refactor required)
+- ✅ Try block that is a single `return` statement
+- ✅ Catch clause that is empty or only rethrows what it caught
+- ❌ Anything else, including logging or wrapping in the catch (reported for a manual refactor)
 
 ### Rule 2: `prefer-option-over-null`
 
@@ -387,7 +387,7 @@ return R.pipe(
 ✅ Comprehensive tests
 ✅ Full documentation
 ✅ Real-world examples
-✅ Safe, non-breaking transformations
+✅ Conservative fixes that never drop code
 
 **Ready for:**
 - Internal use in Receta project

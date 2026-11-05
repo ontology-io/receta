@@ -1,4 +1,5 @@
 import type { ThrottleOptions } from '../types'
+import { match, tryCatchAsync } from '../../result'
 
 /**
  * Throttles an async function.
@@ -75,12 +76,7 @@ export function throttle<TArgs extends readonly unknown[], TReturn>(
         timeoutId = setTimeout(async () => {
           timeoutId = undefined
           lastExecution = Date.now()
-          try {
-            const result = await fn(...lastArgs!)
-            resolve(result)
-          } catch (error) {
-            reject(error)
-          }
+          match(await tryCatchAsync(() => fn(...lastArgs!)), { onOk: resolve, onErr: reject })
         }, remainingTime)
       })
     }

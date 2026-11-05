@@ -306,3 +306,23 @@ describe('Async.throttle', () => {
     })
   })
 })
+
+describe('throttle trailing edge failures', () => {
+  it('rejects when the function rejects', async () => {
+    const failsLater = async (): Promise<number> => {
+      throw new Error('async failure')
+    }
+    const throttled = throttle(failsLater, { delay: 5, leading: false, trailing: true })
+
+    await expect(throttled()).rejects.toThrow('async failure')
+  })
+
+  it('rejects when the function throws synchronously', async () => {
+    const throwsSynchronously = (): Promise<number> => {
+      throw new Error('sync failure')
+    }
+    const throttled = throttle(throwsSynchronously, { delay: 5, leading: false, trailing: true })
+
+    await expect(throttled()).rejects.toThrow('sync failure')
+  })
+})

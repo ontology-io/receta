@@ -50,12 +50,43 @@ function fetchData(url: string): Promise<Result<Response, Error>> {
 }
 ```
 
-## When Not To Use
+## What Is Reported
 
-This rule only applies to **simple** try-catch blocks. Complex error handling logic should be refactored manually:
+Every `try` with a `catch` is reported, whether or not the rule can fix it. There are three exceptions:
+
+- **`try`/`finally` with no `catch`** — It handles no error, so there is nothing to replace.
+- **A `catch` that already returns a failure value** — `return err(...)`, `return none()` or `return invalid(...)` on at least one path. The exception stops there, which is the point of the rule.
+- **An entry point guard** — A `catch` that ends the program with `throw` or `process.exit()`, at module scope, in a function named `main` or in a top-level IIFE. Nothing above it could receive a `Result`.
 
 ```typescript
-// Complex error handling — Rule won't autofix
+// Not reported: there is no caller to hand a Result to
+async function main() {
+  try {
+    await start()
+  } catch (e) {
+    console.error(e)
+    process.exit(1)
+  }
+}
+```
+
+## Autofix Behavior
+
+A fix is offered only when the rewrite keeps everything the `try` statement does. All of these must hold:
+
+- The `try` block is one `return` with a value
+- The `catch` is empty or only rethrows what it caught, because logging or wrapping the error would be lost
+- There is no `finally` block and no comment inside the statement
+- The `try` statement is the last statement of a function that is neither `async` nor a generator
+- The returned value is not an object literal or a comma expression
+- The name `result` is not already taken
+
+The rewritten function returns a `Result` instead of throwing, so its callers need updating. Run `tsc` after `--fix` to find them.
+
+Anything else is reported for a manual refactor:
+
+```typescript
+// Reported, but not autofixed
 function complexHandler() {
   try {
     const data = processData()

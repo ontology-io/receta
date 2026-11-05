@@ -95,7 +95,9 @@ function parseJSON(str: string): Result<any, SyntaxError> {
 }
 ```
 
-**Autofix:** Converts simple try-catch blocks to `Result.tryCatch()` and adds necessary imports.
+**Reports:** Every `try` with a `catch`, except where the failure is already a value or the `catch` ends the program at an entry point. See the [rule docs](docs/rules/prefer-result-over-try-catch.md).
+
+**Autofix:** Rewrites a lone `return` with an empty or rethrowing `catch` to `Result.tryCatch()` and adds necessary imports. Everything else is reported without a fix.
 
 ---
 
@@ -121,7 +123,9 @@ function findUser(id: string): Option<User> {
 }
 ```
 
-**Autofix:** Updates return types to `Option<T>` and wraps returns with `fromNullable()`.
+**Reports:** Nullable return types, and unannotated functions that can return `null` or `undefined` alongside a real value. See the [rule docs](docs/rules/prefer-option-over-null.md).
+
+**Autofix:** Updates return types to `Option<T>` and wraps returns with `fromNullable()`, when every path out of the function can be wrapped. Unannotated functions are reported without a fix.
 
 ---
 
@@ -172,12 +176,14 @@ This plugin enforces the **Receta/Remeda-first** principle:
 
 ## Autofix Safety
 
-All autofixes are designed to be **safe** and **non-breaking**:
+Rules report whether or not they can fix. A fix is offered only when the rewrite keeps everything the code does:
 
-- ✅ Preserves existing functionality
+- ✅ Never drops logging, error wrapping, `finally` blocks or comments
 - ✅ Adds missing imports automatically
-- ✅ Only converts simple patterns (complex cases require manual refactoring)
+- ✅ Only converts simple patterns (complex cases are reported for manual refactoring)
 - ✅ Tested with comprehensive test suites
+
+Fixes from `prefer-result-over-try-catch` and `prefer-option-over-null` change what a function returns, so its callers need updating. Run `tsc` after `--fix` to find them.
 
 **Run autofix:**
 
