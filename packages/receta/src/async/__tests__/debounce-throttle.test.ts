@@ -115,6 +115,60 @@ describe('Async.debounce', () => {
 
       expect(callCount).toBe(2) // Leading + trailing
     })
+
+    it('stays quiet for a whole burst, even one longer than the delay', async () => {
+      const calls: number[] = []
+      const fn = debounce(
+        async (x: number) => {
+          calls.push(x)
+        },
+        { delay: 100, leading: true, trailing: false }
+      )
+
+      // 180ms of calls, but never a 100ms gap, so it's all one burst
+      for (const x of [1, 2, 3, 4, 5, 6, 7]) {
+        fn(x)
+        await sleep(30)
+      }
+
+      expect(calls).toEqual([1])
+    })
+
+    it('runs on the leading edge again once the calls have paused', async () => {
+      const calls: number[] = []
+      const fn = debounce(
+        async (x: number) => {
+          calls.push(x)
+        },
+        { delay: 50, leading: true, trailing: false }
+      )
+
+      fn(1)
+      await sleep(20)
+      fn(2)
+      await sleep(80)
+      fn(3)
+
+      expect(calls).toEqual([1, 3])
+    })
+
+    it('gives a burst both edges even right after a trailing run', async () => {
+      const calls: number[] = []
+      const fn = debounce(
+        async (x: number) => {
+          calls.push(x)
+        },
+        { delay: 50, leading: true, trailing: true }
+      )
+
+      fn(1) // Leading edge
+      await sleep(20)
+      fn(2) // Trailing edge, 50ms from here
+      await sleep(70) // The trailing run was about 20ms ago, the last call 70ms ago
+      fn(3) // A new burst
+
+      expect(calls).toEqual([1, 2, 3])
+    })
   })
 
   describe('trailing edge (default)', () => {
@@ -248,6 +302,63 @@ describe('Async.throttle', () => {
       expect(callCount).toBe(1) // Trailing execution
     })
 
+    it('holds the first call for the whole delay when leading is off', async () => {
+      const calls: number[] = []
+      const fn = throttle(
+        async (x: number) => {
+          calls.push(x)
+        },
+        { delay: 100, leading: false }
+      )
+
+      fn(1)
+      await sleep(30)
+      expect(calls).toEqual([]) // Still inside the delay
+
+      fn(2)
+      await sleep(100)
+      expect(calls).toEqual([2]) // One run, with the latest arguments
+    })
+
+    it('holds a call after a quiet spell too when leading is off', async () => {
+      const calls: number[] = []
+      const fn = throttle(
+        async (x: number) => {
+          calls.push(x)
+        },
+        { delay: 50, leading: false }
+      )
+
+      fn(1)
+      await sleep(150) // The run, then a long silence
+      expect(calls).toEqual([1])
+
+      fn(2)
+      await sleep(15)
+      expect(calls).toEqual([1]) // A fresh delay, not an instant run
+
+      await sleep(60)
+      expect(calls).toEqual([1, 2])
+    })
+
+    it('keeps its pace under steady calls when leading is off', async () => {
+      const runs: number[] = []
+      const fn = throttle(
+        async () => {
+          runs.push(Date.now())
+        },
+        { delay: 60, leading: false }
+      )
+
+      for (const _ of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) {
+        fn()
+        await sleep(20)
+      }
+      await sleep(80)
+
+      expect(runs.length).toBeGreaterThanOrEqual(3)
+    })
+
     it('can enable both leading and trailing', async () => {
       let callCount = 0
       const fn = throttle(
@@ -265,6 +376,35 @@ describe('Async.throttle', () => {
 
       await sleep(30)
       expect(callCount).toBe(2) // Trailing executed
+    })
+
+    it('rejects rather than runs when both edges are off', async () => {
+      let callCount = 0
+      const fn = throttle(
+        async () => {
+          callCount++
+        },
+        { delay: 5, leading: false, trailing: false }
+      )
+
+      await expect(fn()).rejects.toThrow('leading and trailing are both false')
+      await expect(fn()).rejects.toThrow('leading and trailing are both false')
+      expect(callCount).toBe(0)
+    })
+
+    it('runs the first call on the leading edge whatever the delay', async () => {
+      let callCount = 0
+      const fn = throttle(
+        async () => {
+          callCount++
+          return callCount
+        },
+        { delay: Infinity, trailing: false }
+      )
+
+      expect(await fn()).toBe(1)
+      expect(await fn()).toBe(1) // Shares the leading run
+      expect(callCount).toBe(1)
     })
   })
 
