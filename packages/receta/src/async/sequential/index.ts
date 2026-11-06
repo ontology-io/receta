@@ -53,7 +53,7 @@ export interface SequentialError {
  *
  * // Process items with side effects in order
  * const logs = await sequential(
- *   events.map(event => () => processEvent(event))
+ *   R.map(events, event => () => processEvent(event))
  * )
  * ```
  *
@@ -94,16 +94,12 @@ export async function sequential<T>(
  *
  * @example
  * ```typescript
- * // Throws on error
- * try {
- *   const results = await sequentialOrThrow([
- *     () => createUser({ name: 'Alice' }),
- *     () => createPost({ title: 'Hello' }),
- *     () => publishPost({ id: 1 }),
- *   ])
- * } catch (error) {
- *   console.error('Task failed:', error)
- * }
+ * // throws a SequentialError if any task fails
+ * const results = await sequentialOrThrow([
+ *   () => createUser({ name: 'Alice' }),
+ *   () => createPost({ title: 'Hello' }),
+ *   () => publishPost({ id: 1 }),
+ * ])
  * ```
  *
  * @see sequential - Result-returning variant (recommended)

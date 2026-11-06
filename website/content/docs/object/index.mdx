@@ -61,7 +61,7 @@ interface User {
 
 **Traditional approach has hidden dangers:**
 
-```typescript
+```typescript vanilla
 // ❌ Problem 1: Unsafe nested access (runtime errors)
 const planName = stripeCustomer.subscriptions.data[0].plan.name // TypeError!
 
@@ -272,12 +272,13 @@ updatePath(['profile', 'views'], (n: number) => n + 1, user)
 
 ```typescript
 import { validateShape, stripUndefined, compact, stripEmpty } from '@ontologyio/receta/object'
+import { isNumber, isString } from '@ontologyio/receta/predicate'
 import { isOk } from '@ontologyio/receta/result'
 
 // ValidateShape: Runtime type checking
 const userSchema = {
-  id: (v: unknown): v is number => typeof v === 'number',
-  email: (v: unknown): v is string => typeof v === 'string' && v.includes('@')
+  id: isNumber,
+  email: (v: unknown): v is string => isString(v) && v.includes('@')
 }
 
 const result = validateShape(input, userSchema)
@@ -304,6 +305,7 @@ stripEmpty({ name: 'Alice', bio: '', tags: [], address: { city: '' } })
 
 ```typescript
 import { mapKeys, mapValues, filterKeys, filterValues, transformKeys } from '@ontologyio/receta/object'
+import { gte } from '@ontologyio/receta/predicate'
 
 // MapKeys: Transform all keys
 mapKeys({ name: 'Alice' }, (key) => key.toUpperCase())
@@ -320,7 +322,7 @@ mapValues(prices, (price) => price * 1.1)
 filterKeys(config, (key) => key.startsWith('api_'))
 
 // FilterValues: Keep matching values
-filterValues(scores, (score) => score >= 70)
+filterValues(scores, gte(70))
 ```
 
 ---
@@ -329,25 +331,32 @@ filterValues(scores, (score) => score >= 70)
 
 ### Problem 1: Lodash Mutates or Forces Cloning
 
-```typescript
+```typescript vanilla
 // ❌ Lodash: Manual deep cloning required
 import _ from 'lodash'
 
 const original = { a: { b: 1 } }
 const updated = _.set(_.cloneDeep(original), 'a.b', 2)
 // Verbose, error-prone, easy to forget cloneDeep
+```
 
+```typescript
 // ✅ Receta: Immutable by default
+import { setPath } from '@ontologyio/receta/object'
+
+const original = { a: { b: 1 } }
 const updated = setPath(['a', 'b'], 2, original)
 // Original unchanged, no cloning needed
 ```
 
 ### Problem 2: Optional Chaining Doesn't Compose
 
-```typescript
+```typescript vanilla
 // ❌ Vanilla: The path is fixed in the source and you get a bare value
 const value = obj?.deeply?.nested?.value ?? 'default'
+```
 
+```typescript
 // ✅ Receta: The path is a value, and the Option works in pipes
 const value = pipe(
   obj,
@@ -358,9 +367,10 @@ const value = pipe(
 
 ### Problem 3: No Pipeline Integration
 
-```typescript
-import { map } from '@ontologyio/receta/result'
+```typescript vanilla
 // ❌ Lodash: Forced to use chain() or nest calls
+import _ from 'lodash'
+
 const result = _.flatMap(
   _.filter(
     _.map(data, transform),
@@ -368,8 +378,14 @@ const result = _.flatMap(
   ),
   expand
 )
+```
 
+```typescript
 // ✅ Receta: Natural pipeline composition
+import { map } from '@ontologyio/receta/result'
+import { pipe } from 'remeda'
+import * as Obj from '@ontologyio/receta/object'
+
 const result = pipe(
   apiResponse,
   Obj.rename(keyMapping),
@@ -381,12 +397,14 @@ const result = pipe(
 
 ### Problem 4: No Built-in Validation
 
-```typescript
+```typescript vanilla
 // ❌ Lodash/Vanilla: Manual validation
 if (typeof obj.id === 'number' && typeof obj.email === 'string') {
   // Process...
 }
+```
 
+```typescript
 // ✅ Receta: First-class validation
 const result = validateShape(obj, userSchema)
 // Returns Result<T, ObjectError> with error details
@@ -413,6 +431,9 @@ const result = validateShape(obj, userSchema)
 
 ```typescript
 import { flatMap, map } from '@ontologyio/receta/result'
+import { pipe } from 'remeda'
+import { validateShape, stripUndefined } from '@ontologyio/receta/object'
+import * as Obj from '@ontologyio/receta/object'
 // Stripe payment → Your DB schema
 const normalizePayment = (stripePayment: unknown) =>
   pipe(
@@ -429,6 +450,8 @@ const normalizePayment = (stripePayment: unknown) =>
 
 ```typescript
 import { unwrapOr } from '@ontologyio/receta/result'
+import { pipe } from 'remeda'
+import * as Obj from '@ontologyio/receta/object'
 // Next.js-style deep merge
 const mergedConfig = pipe(
   [defaultConfig, envConfig, userConfig],
@@ -462,7 +485,7 @@ const buildWhere = (filters: Record<string, unknown>) =>
     Obj.compact,
     (active) => Obj.flatten(active, { separator: '_' }),
     Obj.mapKeys((key) => `table.${key}`),
-    Obj.filterValues((v) => v != null)
+    Obj.filterValues(R.isNonNullish)
   )
 ```
 

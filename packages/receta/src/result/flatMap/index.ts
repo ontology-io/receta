@@ -28,7 +28,7 @@ import { isOk } from '../guards'
  * // Data-last (in pipe) - chaining operations
  * pipe(
  *   tryCatch(() => readFile('config.json')),
- *   flatMap(str => tryCatch(() => JSON.parse(str))),
+ *   flatMap(parseJSON),
  *   flatMap(config => validateConfig(config)),
  *   map(config => config.port)
  * )

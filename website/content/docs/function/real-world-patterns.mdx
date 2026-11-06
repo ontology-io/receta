@@ -10,7 +10,8 @@ title: "Real-World Patterns"
 import { pipe } from 'remeda'
 import { partial } from '@ontologyio/receta/function'
 import { retry, type RetryError } from '@ontologyio/receta/async'
-import { mapErr, unwrapOr } from '@ontologyio/receta/result'
+import { fromResult } from '@ontologyio/receta/option'
+import { mapErr } from '@ontologyio/receta/result'
 
 interface FetchConfig {
   baseUrl: string
@@ -78,7 +79,7 @@ const api = createHttpClient({
 })
 
 const result = await api.get('/users/123')
-const user = unwrapOr(result, null)
+const user = fromResult(result) // None if every attempt failed
 ```
 
 ## Pattern 2: Multi-Stage Data Pipeline
@@ -86,7 +87,7 @@ const user = unwrapOr(result, null)
 ```typescript
 import * as R from 'remeda'
 import { when, unless, tap, converge, juxt } from '@ontologyio/receta/function'
-import { where, and } from '@ontologyio/receta/predicate'
+import { where, and, endsWith, isNotEmpty, not } from '@ontologyio/receta/predicate'
 
 type RawEvent = {
   id: string
@@ -103,9 +104,9 @@ interface ProcessedEvent extends RawEvent {
 }
 
 // Define predicates for validation
-const hasUserId = where<RawEvent>({ userId: (x) => x.length > 0 })
-const hasEventType = where<RawEvent>({ eventType: (x) => x.length > 0 })
-const hasTimestamp = where<RawEvent>({ timestamp: (x) => x.length > 0 })
+const hasUserId = where<RawEvent>({ userId: isNotEmpty })
+const hasEventType = where<RawEvent>({ eventType: isNotEmpty })
+const hasTimestamp = where<RawEvent>({ timestamp: isNotEmpty })
 const isValidEvent = and(hasUserId, hasEventType, hasTimestamp)
 
 // Multi-stage processing pipeline with Remeda
@@ -116,20 +117,18 @@ const processEvents = (events: RawEvent[]) =>
 
     // Stage 1: Normalization using Remeda's map + when
     R.map(when(
-      (evt) => !evt.timestamp.endsWith('Z'),
+      where<RawEvent>({ timestamp: not(endsWith('Z')) }),
       (evt) => ({ ...evt, timestamp: `${evt.timestamp}Z` })
     )),
     R.map((evt) => ({ ...evt, normalized: true })),
     tap((evts) => logger.debug('Normalized', { count: evts.length })),
 
     // Stage 2: Validation using Predicate module
-    R.filter((evt) => {
-      const valid = isValidEvent(evt)
-      if (!valid) {
-        logger.warn('Invalid event', { id: evt.id })
-      }
-      return valid
-    }),
+    tap((evts) => R.forEach(
+      R.filter(evts, not(isValidEvent)),
+      (evt) => logger.warn('Invalid event', { id: evt.id })
+    )),
+    R.filter(isValidEvent),
     R.map((evt) => ({ ...evt, validated: true } as ProcessedEvent)),
     tap((evts) => metrics.gauge('events.validated', evts.length)),
 
@@ -163,7 +162,7 @@ const processEvents = (events: RawEvent[]) =>
           // Unique users using Remeda
           (evts: ProcessedEvent[]) => R.uniqueBy(evts, (e) => e.userId).length,
           // Unique event types
-          (evts: ProcessedEvent[]) => R.pipe(evts, R.map(e => e.eventType), R.unique).length
+          (evts: ProcessedEvent[]) => R.uniqueBy(evts, (e) => e.eventType).length
         ]
       )
     ),
@@ -178,8 +177,12 @@ const processEvents = (events: RawEvent[]) =>
 ## Pattern 3: State Machine Implementation
 
 ```typescript
-import { cond, when } from '@ontologyio/receta/function'
-import { unwrapOr } from '@ontologyio/receta/option'
+import { mapAsync } from '@ontologyio/receta/async'
+import { cond } from '@ontologyio/receta/function'
+import { type Option, isSome, unwrap } from '@ontologyio/receta/option'
+import { oneOf } from '@ontologyio/receta/predicate'
+import { type Result, err, map, mapErr } from '@ontologyio/receta/result'
+import * as R from 'remeda'
 
 type OrderState = 'draft' | 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
 
@@ -197,6 +200,8 @@ interface StateTransition {
   actions: Array<(order: Order) => Promise<void>>
   validations: Array<(order: Order) => boolean>
 }
+
+const isCancellable = oneOf<OrderState>(['draft', 'pending'])
 
 const getTransition = (order: Order, action: string): Option<StateTransition> =>
   cond<[Order, string], StateTransition>([
@@ -242,7 +247,7 @@ const getTransition = (order: Order, action: string): Option<StateTransition> =>
     
     // Cancel order: any -> cancelled (with conditions)
     [
-      ([o, a]) => a === 'cancel' && ['draft', 'pending'].includes(o.state),
+      ([o, a]) => a === 'cancel' && isCancellable(o.state),
       ([o]) => ({
         newState: 'cancelled',
         actions: [refundPayment, sendCancellationEmail],
@@ -274,9 +279,13 @@ const transitionOrder = async (order: Order, action: string): Promise<Result<Ord
   }
   
   // Execute actions
-  await Promise.all(actions.map(action => action(updatedOrder)))
-  
-  return ok(updatedOrder)
+  const executed = await mapAsync(actions, (action) => action(updatedOrder))
+
+  return R.pipe(
+    executed,
+    map(() => updatedOrder),
+    mapErr((error) => `Action ${error.index} failed`)
+  )
 }
 ```
 
@@ -285,7 +294,7 @@ const transitionOrder = async (order: Order, action: string): Promise<Result<Ord
 ```typescript
 import { pipe } from 'remeda'
 import { when, unless, converge } from '@ontologyio/receta/function'
-import { ok, err, flatMap, isOk, map } from '@ontologyio/receta/result'
+import { type Result, ok, err, flatMap, isOk, map } from '@ontologyio/receta/result'
 
 interface UserRegistrationForm {
   email: string
@@ -481,7 +490,7 @@ const analyzeEvents = (events: Event[]) =>
         juxt([
           (evts: Event[]) => evts.length,
           (evts: Event[]) => R.uniqueBy(evts, e => e.userId).length,
-          (evts: Event[]) => R.pipe(evts, R.map(e => e.type), R.unique).length,
+          (evts: Event[]) => R.uniqueBy(evts, (e) => e.type).length,
           (evts: Event[]) => R.first(evts)?.timestamp,
           (evts: Event[]) => R.last(evts)?.timestamp
         ])

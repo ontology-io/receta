@@ -17,8 +17,8 @@ import { purryConfig2 } from '../../utils'
  * const average = converge<number[], [number, number], number>(
  *   (sum, length) => sum / length,
  *   [
- *     (nums) => nums.reduce((a, b) => a + b, 0),  // sum
- *     (nums) => nums.length                        // length
+ *     (nums) => R.sum(nums),  // sum
+ *     (nums) => nums.length   // length
  *   ]
  * )
  *

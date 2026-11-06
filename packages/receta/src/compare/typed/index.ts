@@ -24,11 +24,11 @@ import type { Comparator, ComparableExtractor, StringCompareOptions } from '../t
  * ]
  *
  * // Sort by occurred date (earliest first)
- * events.sort(byDate(e => e.occurredAt))
+ * R.sort(events, byDate(e => e.occurredAt))
  * // => [Launch (Jan 10), Meeting (Jan 15), Review (Jan 20)]
  *
  * // Sort by scheduled date descending (latest first)
- * events.sort(reverse(byDate(e => e.scheduledFor)))
+ * R.sort(events, reverse(byDate(e => e.scheduledFor)))
  * // => [Launch (Mar 1), Review (Feb 15), Meeting (Feb 1)]
  * ```
  *
@@ -71,11 +71,11 @@ export function byDate<T>(fn: ComparableExtractor<T, Date>): Comparator<T> {
  * ]
  *
  * // Sort by value (lowest first)
- * metrics.sort(byNumber(m => m.value))
+ * R.sort(metrics, byNumber(m => m.value))
  * // => [Disk (23.1), CPU (45.2), Memory (78.9)]
  *
  * // Sort by change (highest first)
- * metrics.sort(reverse(byNumber(m => m.change)))
+ * R.sort(metrics, reverse(byNumber(m => m.change)))
  * // => [CPU (+1.5), Disk (+0.8), Memory (-2.3)]
  * ```
  *
@@ -120,11 +120,11 @@ export function byNumber<T>(fn: ComparableExtractor<T, number>): Comparator<T> {
  * ]
  *
  * // Case-sensitive sort (default)
- * users.sort(byString(u => u.firstName))
+ * R.sort(users, byString(u => u.firstName))
  * // => [Bob, Charlie, alice] (uppercase comes first)
  *
  * // Case-insensitive sort
- * users.sort(byString(u => u.firstName, { caseSensitive: false }))
+ * R.sort(users, byString(u => u.firstName, { caseSensitive: false }))
  * // => [alice, Bob, Charlie]
  *
  * // Locale-aware sort
@@ -133,7 +133,7 @@ export function byNumber<T>(fn: ComparableExtractor<T, number>): Comparator<T> {
  *   { name: 'Mueller' },
  *   { name: 'Möller' }
  * ]
- * germanNames.sort(byString(n => n.name, { locale: 'de-DE' }))
+ * const sorted = R.sort(germanNames, byString(n => n.name, { locale: 'de-DE' }))
  * ```
  *
  * @see caseInsensitive - convenience function for case-insensitive sorting
@@ -188,15 +188,16 @@ export function byString<T>(
  * ]
  *
  * // Sort by completed (incomplete first)
- * tasks.sort(byBoolean(t => t.completed))
+ * R.sort(tasks, byBoolean(t => t.completed))
  * // => [Fix bug (false), Write docs (false), Review PR (true), Deploy (true)]
  *
  * // Sort by urgent (urgent first)
- * tasks.sort(reverse(byBoolean(t => t.urgent)))
+ * R.sort(tasks, reverse(byBoolean(t => t.urgent)))
  * // => [Fix bug (true), Deploy (true), Review PR (false), Write docs (false)]
  *
  * // Multi-level: urgent first, then incomplete first
- * tasks.sort(
+ * const sorted = R.sort(
+ *   tasks,
  *   compose(
  *     reverse(byBoolean(t => t.urgent)),
  *     byBoolean(t => t.completed)

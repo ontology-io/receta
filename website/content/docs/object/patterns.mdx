@@ -20,6 +20,7 @@ description: "Copy-paste ready patterns for common real-world scenarios. All exa
 ```typescript
 import { map } from '@ontologyio/receta/result'
 import * as Obj from '@ontologyio/receta/object'
+import { isNumber, isString } from '@ontologyio/receta/predicate'
 import { pipe } from 'remeda'
 
 // GitHub repository response → Your schema
@@ -27,14 +28,14 @@ const normalizeGitHubRepo = (apiResponse: unknown) =>
   pipe(
     apiResponse,
     Obj.validateShape({
-      name: (v: unknown): v is string => typeof v === 'string',
-      full_name: (v: unknown): v is string => typeof v === 'string',
+      name: isString,
+      full_name: isString,
       owner: {
-        login: (v: unknown): v is string => typeof v === 'string',
-        avatar_url: (v: unknown): v is string => typeof v === 'string'
+        login: isString,
+        avatar_url: isString
       },
-      stargazers_count: (v: unknown): v is number => typeof v === 'number',
-      created_at: (v: unknown): v is string => typeof v === 'string'
+      stargazers_count: isNumber,
+      created_at: isString
     }),
     map(Obj.rename({
       full_name: 'fullName',
@@ -55,6 +56,8 @@ const normalizeGitHubRepo = (apiResponse: unknown) =>
 ```typescript
 import { toResult } from '@ontologyio/receta/option'
 import { map as mapResult } from '@ontologyio/receta/result'
+import * as Obj from '@ontologyio/receta/object'
+import { pipe } from 'remeda'
 
 const cardBrandKey = 'charges.data.0.payment_method_details.card.brand'
 
@@ -90,6 +93,7 @@ const processPaymentIntent = (stripeResponse: Obj.PlainObject) =>
 ```typescript
 import { type Option } from '@ontologyio/receta/option'
 import { type Result } from '@ontologyio/receta/result'
+import * as Obj from '@ontologyio/receta/object'
 
 interface FormState<T> {
   data: T
@@ -137,6 +141,8 @@ userForm
 
 ```typescript
 import { flatMap } from '@ontologyio/receta/result'
+import * as Obj from '@ontologyio/receta/object'
+import { pipe } from 'remeda'
 const multiStepForm = {
   // Step 1: Personal Info
   validateStep1: (data: Obj.PlainObject) =>
@@ -175,6 +181,8 @@ const multiStepForm = {
 
 ```typescript
 import { unwrapOr } from '@ontologyio/receta/result'
+import { pipe } from 'remeda'
+import * as Obj from '@ontologyio/receta/object'
 // Next.js / Vite style config merging
 const loadConfig = () => {
   const base = {
@@ -211,6 +219,8 @@ const loadConfig = () => {
 
 ```typescript
 import { map, unwrapOr } from '@ontologyio/receta/option'
+import * as Obj from '@ontologyio/receta/object'
+import { pipe } from 'remeda'
 
 const getFeatureFlags = (remoteConfig: Obj.PlainObject) => {
   const defaults = {
@@ -276,13 +286,11 @@ const gdprMinimize = {
     ),
 
   // Export user data (GDPR right to access)
-  exportUserData: (userId: string) =>
-    fetchAllUserData(userId).then((data) =>
-      pipe(
-        Obj.flatten(data),
-        Obj.filterKeys((key) => !key.includes('_internal')),
-        (kept) => Obj.unflatten(kept)
-      )
+  exportUserData: async (userId: string) =>
+    pipe(
+      Obj.flatten(await fetchAllUserData(userId)),
+      Obj.filterKeys((key) => !key.includes('_internal')),
+      (kept) => Obj.unflatten(kept)
     )
 }
 ```
@@ -320,10 +328,11 @@ const buildWhereClause = (filters: Record<string, unknown>) =>
     (active) => Obj.flatten(active),
     Obj.mapKeys((key) => `table.${key}`),
     Obj.mapValues((value) =>
-      Array.isArray(value) ? `IN (${value.join(',')})` : `= '${value}'`
+      Array.isArray(value) ? `IN (${R.join(value, ',')})` : `= '${value}'`
     ),
-    Object.entries,
-    (entries) => entries.map(([key, value]) => `${key} ${value}`).join(' AND ')
+    R.entries(),
+    R.map(([key, value]) => `${key} ${value}`),
+    R.join(' AND ')
   )
 
 // Usage
@@ -344,11 +353,8 @@ const updateNestedUser = (userId: string, updates: DeepPartial<User>) =>
     (partial) => Obj.flatten(partial),
     Obj.filterKeys((key) => !key.includes('id')),  // Protect ID fields
     Obj.stripUndefined,
-    (flat) =>
-      Object.entries(flat).reduce(
-        (query, [path, value]) => query.update({ where: { id: userId }, data: { [path]: value } }),
-        prisma.user
-      )
+    (flat) => Obj.unflatten(flat),
+    (data) => prisma.user.update({ where: { id: userId }, data })
   )
 ```
 
@@ -358,6 +364,8 @@ const updateNestedUser = (userId: string, updates: DeepPartial<User>) =>
 
 ```typescript
 import { isErr, isOk, mapErr, tapErr } from '@ontologyio/receta/result'
+import { pipe } from 'remeda'
+import * as Obj from '@ontologyio/receta/object'
 
 // Complete payment processing pipeline
 const processPayment = async (stripeWebhook: unknown) => {

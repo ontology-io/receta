@@ -37,7 +37,7 @@ Returns true only if **all** predicates return true. Short-circuits on first fal
 
 ```typescript
 import * as R from 'remeda'
-import { and, gte, lt } from '@ontologyio/receta/predicate'
+import { and, gte, lt, where } from '@ontologyio/receta/predicate'
 
 // Age range: 18 ≤ age < 65
 const workingAge = and(gte(18), lt(65))
@@ -48,7 +48,7 @@ const users = [
   { name: 'Senior', age: 70 }
 ]
 
-R.filter(users, (u) => workingAge(u.age))
+R.filter(users, where({ age: workingAge }))
 // => [{ name: 'Adult', age: 30 }]
 ```
 
@@ -57,6 +57,7 @@ R.filter(users, (u) => workingAge(u.age))
 #### E-Commerce Product Filtering
 
 ```typescript
+import * as R from 'remeda'
 import { and, where, gt, lt, eq } from '@ontologyio/receta/predicate'
 
 interface Product {
@@ -115,30 +116,30 @@ if (canAccessModPanel(currentUser)) {
 #### API Query Filtering
 
 ```typescript
+const hasLabel = (label: string) => (labels: string[]) => labels.includes(label)
+
 // GitHub Issues: Open bugs assigned to someone
 const openAssignedBugs = where({
   state: eq('open'),
   assignee: not(isNull),
-  labels: (labels: string[]) => labels.includes('bug')
+  labels: hasLabel('bug')
 })
 
 // With additional filters
 const criticalBugs = and(
   openAssignedBugs,
-  where({
-    labels: (labels: string[]) => labels.includes('critical')
-  })
+  where({ labels: hasLabel('critical') })
 )
 ```
 
 ### Short-Circuit Behavior
 
 ```typescript
-import { and } from '@ontologyio/receta/predicate'
+import { and, gt } from '@ontologyio/receta/predicate'
 
 let expensiveCheckRan = false
 
-const cheapCheck = (n: number) => n > 0
+const cheapCheck = gt(0)
 const expensiveCheck = (n: number) => {
   expensiveCheckRan = true
   // Expensive computation here
@@ -185,7 +186,8 @@ Returns true if **any** predicate returns true. Short-circuits on first true.
 ### Basic Usage
 
 ```typescript
-import { or, eq } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
+import { or, eq, where } from '@ontologyio/receta/predicate'
 
 // Match admin or owner
 const isStaff = or(
@@ -200,7 +202,7 @@ const users = [
   { role: 'owner' }
 ]
 
-R.filter(users, (u) => isStaff(u.role))
+R.filter(users, where({ role: isStaff }))
 // => admin and owner
 ```
 
@@ -209,6 +211,9 @@ R.filter(users, (u) => isStaff(u.role))
 #### Order Status Filtering
 
 ```typescript
+import * as R from 'remeda'
+import { eq, oneOf, or, where } from '@ontologyio/receta/predicate'
+
 interface Order {
   id: number
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
@@ -222,10 +227,9 @@ const isActive = or(
   eq('shipped')
 )
 
-R.filter(orders, (o) => isActive(o.status))
+R.filter(orders, where({ status: isActive }))
 
 // Or using oneOf (cleaner for multiple values)
-import { oneOf } from '@ontologyio/receta/predicate'
 const isActive2 = oneOf(['pending', 'processing', 'shipped'])
 ```
 
@@ -244,7 +248,7 @@ const products = [
   { name: 'Premium', price: 600 }
 ]
 
-R.filter(products, (p) => budgetOrPremium(p.price))
+R.filter(products, where({ price: budgetOrPremium }))
 // => Basic ($30) and Premium ($600)
 ```
 
@@ -275,6 +279,7 @@ Inverts a predicate's result.
 ### Basic Usage
 
 ```typescript
+import * as R from 'remeda'
 import { not, isEmpty } from '@ontologyio/receta/predicate'
 
 const names = ['Alice', '', 'Bob', '', 'Charlie']
@@ -293,6 +298,9 @@ R.filter(names, isNotEmpty)
 #### Exclude Specific Values
 
 ```typescript
+import * as R from 'remeda'
+import { eq, neq, not, where } from '@ontologyio/receta/predicate'
+
 // All orders except cancelled
 const orders = [
   { id: 1, status: 'pending' },
@@ -300,9 +308,9 @@ const orders = [
   { id: 3, status: 'shipped' }
 ]
 
-R.filter(orders, (o) => not(eq('cancelled'))(o.status))
+R.filter(orders, where({ status: not(eq('cancelled')) }))
 // Or use neq
-R.filter(orders, (o) => neq('cancelled')(o.status))
+R.filter(orders, where({ status: neq('cancelled') }))
 ```
 
 #### Invert Complex Conditions
@@ -353,6 +361,7 @@ Returns true if **exactly one** predicate returns true.
 ### Basic Usage
 
 ```typescript
+import * as R from 'remeda'
 import { xor, lt, gt } from '@ontologyio/receta/predicate'
 
 // Numbers outside range 8-12 (< 8 OR > 12, but not both)
@@ -418,7 +427,8 @@ const never = <T>(): Predicate<T>  // Always returns false
 #### Conditional Filtering
 
 ```typescript
-import { always } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
+import { always, eq, where } from '@ontologyio/receta/predicate'
 
 const shouldFilter = config.env === 'production'
 
@@ -434,6 +444,8 @@ R.filter(users, predicate)
 #### Default Cases
 
 ```typescript
+import { type Predicate, always, eq, where } from '@ontologyio/receta/predicate'
+
 const getFilterPredicate = (role: string): Predicate<User> => {
   switch (role) {
     case 'admin': return where({ isAdmin: eq(true) })
@@ -446,10 +458,10 @@ const getFilterPredicate = (role: string): Predicate<User> => {
 #### Clear All / Keep All
 
 ```typescript
-import { never } from '@ontologyio/receta/predicate'
+import { always, eq, never, where } from '@ontologyio/receta/predicate'
 
 // Debug mode: don't filter logs
-const shouldShowLog = debugMode ? always<Log>() : (log) => log.level === 'error'
+const shouldShowLog = debugMode ? always<Log>() : where<Log>({ level: eq('error') })
 
 // Maintenance mode: block all requests
 const canAccess = maintenanceMode ? never<Request>() : checkPermissions
@@ -536,12 +548,13 @@ and(checkA, checkB, checkC, checkD)
 ### Pattern 1: Range Validation
 
 ```typescript
+import { and, between, gte, lte } from '@ontologyio/receta/predicate'
+
 // Value within range
 const inRange = (min: number, max: number) =>
   and(gte(min), lte(max))
 
 // Or use between()
-import { between } from '@ontologyio/receta/predicate'
 const inRange2 = between(18, 65) // Cleaner!
 ```
 

@@ -37,9 +37,10 @@ function ascending<T, C extends number | string | Date>(
 
 ```typescript
 import { ascending } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 const prices = [99.99, 49.99, 149.99, 29.99]
-prices.sort(ascending(x => x))
+R.sort(prices, ascending(x => x))
 // => [29.99, 49.99, 99.99, 149.99]
 ```
 
@@ -59,11 +60,11 @@ const products: Product[] = [
 ]
 
 // Sort by price (lowest first)
-products.sort(ascending(p => p.price))
+R.sort(products, ascending(p => p.price))
 // => [Mouse ($25), Keyboard ($80), Monitor ($300)]
 
 // Sort by stock (least in stock first)
-products.sort(ascending(p => p.stock))
+R.sort(products, ascending(p => p.stock))
 // => [Monitor (5), Keyboard (15), Mouse (30)]
 ```
 
@@ -81,7 +82,7 @@ const users: User[] = [
   { username: 'bob', email: 'bob@example.com' }
 ]
 
-users.sort(ascending(u => u.username))
+R.sort(users, ascending(u => u.username))
 // => [alice, bob, charlie]
 ```
 
@@ -99,7 +100,7 @@ const events: Event[] = [
   { name: 'Review', date: new Date('2024-02-20') }
 ]
 
-events.sort(ascending(e => e.date))
+R.sort(events, ascending(e => e.date))
 // => [Meeting (Feb 15), Review (Feb 20), Launch (Mar 1)]
 ```
 
@@ -114,10 +115,10 @@ interface Payment {
 }
 
 // Sort payments by amount (smallest first)
-payments.sort(ascending(p => p.amount))
+const smallestFirst = R.sort(payments, ascending(p => p.amount))
 
 // Sort by creation date (oldest first)
-payments.sort(ascending(p => p.createdAt))
+const oldestFirst = R.sort(payments, ascending(p => p.createdAt))
 ```
 
 ---
@@ -147,9 +148,10 @@ function descending<T, C extends number | string | Date>(
 
 ```typescript
 import { descending } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 const scores = [95, 87, 100, 92]
-scores.sort(descending(x => x))
+R.sort(scores, descending(x => x))
 // => [100, 95, 92, 87]
 ```
 
@@ -169,7 +171,7 @@ const players: Player[] = [
 ]
 
 // Highest score first
-players.sort(descending(p => p.score))
+R.sort(players, descending(p => p.score))
 // => [Bob (1500), Alice (1000), Charlie (800)]
 ```
 
@@ -189,11 +191,11 @@ const posts: BlogPost[] = [
 ]
 
 // Most recent posts first
-posts.sort(descending(p => p.publishedAt))
+R.sort(posts, descending(p => p.publishedAt))
 // => [Advanced Patterns (Feb 20), Best Practices (Jan 30), Intro (Jan 15)]
 
 // Most viewed first
-posts.sort(descending(p => p.views))
+R.sort(posts, descending(p => p.views))
 // => [Advanced Patterns (250), Best Practices (180), Intro (100)]
 ```
 
@@ -208,10 +210,10 @@ interface Issue {
 }
 
 // Most recently updated issues first
-issues.sort(descending(i => i.updatedAt))
+const recentlyUpdated = R.sort(issues, descending(i => i.updatedAt))
 
 // Most discussed issues first
-issues.sort(descending(i => i.comments))
+const mostDiscussed = R.sort(issues, descending(i => i.comments))
 ```
 
 ---
@@ -230,7 +232,7 @@ function natural<T>(fn: (value: T) => string): Comparator<T>
 
 Standard string sorting treats numbers lexicographically:
 
-```typescript
+```typescript vanilla
 // ❌ Lexicographic (wrong for numbers)
 ['file10.txt', 'file2.txt', 'file1.txt'].sort()
 // => ['file1.txt', 'file10.txt', 'file2.txt']
@@ -242,8 +244,9 @@ Natural sorting handles numbers within strings intelligently:
 ```typescript
 // ✅ Natural sorting (correct)
 import { natural } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
-['file10.txt', 'file2.txt', 'file1.txt'].sort(natural(x => x))
+R.sort(['file10.txt', 'file2.txt', 'file1.txt'], natural(x => x))
 // => ['file1.txt', 'file2.txt', 'file10.txt']
 //                  ↑ Correct! 2 comes before 10
 ```
@@ -262,6 +265,7 @@ import { natural } from '@ontologyio/receta/compare'
 
 ```typescript
 import { natural } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 const files = [
   'image10.png',
@@ -270,7 +274,7 @@ const files = [
   'image20.png'
 ]
 
-files.sort(natural(x => x))
+R.sort(files, natural(x => x))
 // => ['image1.png', 'image2.png', 'image10.png', 'image20.png']
 ```
 
@@ -289,7 +293,7 @@ const releases: Release[] = [
   { version: 'v2.0.0', date: new Date('2024-05-01') }
 ]
 
-releases.sort(natural(r => r.version))
+R.sort(releases, natural(r => r.version))
 // => [v1.2.0, v1.10.0, v1.20.0, v2.0.0]
 ```
 
@@ -307,7 +311,7 @@ const invoices: Invoice[] = [
   { number: 'INV-100', amount: 1000 }
 ]
 
-invoices.sort(natural(i => i.number))
+R.sort(invoices, natural(i => i.number))
 // => [INV-2, INV-10, INV-100]
 ```
 
@@ -328,7 +332,7 @@ const entries: FileEntry[] = [
 ]
 
 // Natural sort by filename
-entries.sort(natural(e => e.name))
+R.sort(entries, natural(e => e.name))
 // => [backup-1.zip, backup-2.zip, backup-10.zip, backup-20.zip]
 ```
 
@@ -356,8 +360,8 @@ function byKey<T, K extends keyof T>(key: K): Comparator<T>
 const products = [{ name: 'Monitor', price: 300 }, { name: 'Mouse', price: 25 }]
 
 // These are equivalent:
-products.sort(ascending(p => p.price))
-products.sort(byKey('price'))
+const withAscending = R.sort(products, ascending(p => p.price))
+const withByKey = R.sort(products, byKey('price'))
 
 // byKey() is shorter for simple cases
 // ascending() is more flexible (can transform values)
@@ -369,6 +373,7 @@ products.sort(byKey('price'))
 
 ```typescript
 import { byKey } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 interface Product {
   id: string
@@ -383,7 +388,7 @@ const products: Product[] = [
 ]
 
 // Sort by price
-products.sort(byKey('price'))
+R.sort(products, byKey('price'))
 // => [Mouse (25), Keyboard (80), Monitor (300)]
 ```
 
@@ -397,11 +402,11 @@ const products = [
 ]
 
 // Sort by name (alphabetically)
-products.sort(byKey('name'))
+R.sort(products, byKey('name'))
 // => [Keyboard, Monitor, Mouse]
 
 // Sort by id
-products.sort(byKey('id'))
+R.sort(products, byKey('id'))
 // => [a, b, c]
 ```
 
@@ -421,7 +426,7 @@ const events: Event[] = [
 ]
 
 // Sort by date (oldest first)
-events.sort(byKey('date'))
+R.sort(events, byKey('date'))
 // => [Workshop (Feb 10), Conference (Mar 15), Meetup (Apr 5)]
 ```
 
@@ -440,7 +445,7 @@ const employees: Employee[] = await fetchEmployees()
 
 // User clicks column header to sort
 function sortByColumn(column: keyof Employee) {
-  employees.sort(byKey(column))
+  return R.sort(employees, byKey(column))
 }
 
 sortByColumn('salary')    // Sort by salary
@@ -470,14 +475,14 @@ interface Task {
 }
 
 // Sort by combined score
-tasks.sort(ascending(t => t.priority * t.urgency))
+const sorted = R.sort(tasks, ascending(t => t.priority * t.urgency))
 ```
 
 ### Sort by String Length
 
 ```typescript
 const words = ['elephant', 'cat', 'dog', 'butterfly']
-words.sort(ascending(w => w.length))
+R.sort(words, ascending(w => w.length))
 // => ['cat', 'dog', 'elephant', 'butterfly']
 ```
 
@@ -490,7 +495,7 @@ interface User {
   }
 }
 
-users.sort(ascending(u => u.profile.age))
+const sorted = R.sort(users, ascending(u => u.profile.age))
 ```
 
 ### Toggle Sort Direction

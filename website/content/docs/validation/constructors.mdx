@@ -28,7 +28,7 @@ valid(value: T): Valid<T>
 ### Examples
 
 ```typescript
-import { valid } from '@ontologyio/receta/validation'
+import { valid, type Validation } from '@ontologyio/receta/validation'
 
 // Simple values
 valid(42)           // => Valid(42)
@@ -296,16 +296,11 @@ fromResult(err('error message'))
 ### Real-World: JSON Parsing
 
 ```typescript
-import { tryCatch as tryCatchResult, type Result } from '@ontologyio/receta/result'
+import { parseJSON } from '@ontologyio/receta/result'
+import { fromResult, mapInvalid, flatMap, type Validator, type Validation } from '@ontologyio/receta/validation'
+import { pipe } from 'remeda'
 
-// Result-based parser
-const parseJSON = <T>(str: string): Result<T, SyntaxError> =>
-  tryCatchResult(
-    () => JSON.parse(str) as T,
-    (e) => e as SyntaxError
-  )
-
-// Convert to Validation for form processing
+// parseJSON returns a Result, so convert it for form processing
 const parseAndValidate = <T>(
   str: string,
   validator: Validator<T, T, string>
@@ -336,7 +331,7 @@ tryCatch<T, E>(
 ### Examples
 
 ```typescript
-import { tryCatch } from '@ontologyio/receta/validation'
+import { tryCatch, type Validation } from '@ontologyio/receta/validation'
 
 // Basic usage
 const parseJSON = <T>(str: string): Validation<T, unknown> =>
@@ -414,7 +409,7 @@ tryCatchAsync<T, E>(
 ### Examples
 
 ```typescript
-import { tryCatchAsync } from '@ontologyio/receta/validation'
+import { tryCatchAsync, type Validation } from '@ontologyio/receta/validation'
 
 // Fetch with validation
 const fetchUser = async (id: string): Promise<Validation<User, unknown>> =>

@@ -290,18 +290,11 @@ const readConfig = async (path: string) =>
 const fetchWithTimeout = async (url: string, timeout: number) =>
   tryCatchAsync(
     async () => {
-      const controller = new AbortController()
-      const id = setTimeout(() => controller.abort(), timeout)
-
-      try {
-        const res = await fetch(url, { signal: controller.signal })
-        return res.json()
-      } finally {
-        clearTimeout(id)
-      }
+      const res = await fetch(url, { signal: AbortSignal.timeout(timeout) })
+      return res.json()
     },
     (error: any) => {
-      if (error.name === 'AbortError') {
+      if (error.name === 'TimeoutError') {
         return { type: 'timeout', url, timeout }
       }
       return { type: 'network', message: error.message }
@@ -315,7 +308,7 @@ const fetchWithTimeout = async (url: string, timeout: number) =>
 
 ## `fromNullable(value, error)` - Handle Missing Data
 
-**When to use**: Database queries, `Array.find()`, optional config values, dictionary lookups.
+**When to use**: Database queries, `R.find()`, optional config values, dictionary lookups.
 
 ### Real-World: Database Queries
 
@@ -336,7 +329,7 @@ const findUserByEmail = async (email: string) => {
 // Type: Result<User, { type: 'not_found', ... }>
 ```
 
-### Real-World: Array.find() - Finding Products
+### Real-World: R.find() - Finding Products
 
 ```typescript
 const products = [
@@ -346,7 +339,7 @@ const products = [
 
 const findProduct = (id: string) =>
   fromNullable(
-    products.find(p => p.id === id),
+    R.find(products, where({ id: eq(id) })),
     { type: 'product_not_found', id }
   )
 
@@ -393,7 +386,7 @@ const getUserIdFromQuery = (query: Record<string, string | undefined>) =>
 const getStoredUser = () =>
   pipe(
     fromNullable(localStorage.getItem('user'), 'No user in storage'),
-    flatMap(str => tryCatch(() => JSON.parse(str))),
+    flatMap(parseJSON),
     mapErr(() => 'Invalid user data in storage')
   )
 ```
@@ -410,7 +403,7 @@ const getStoredUser = () =>
 | Known failure | `err(error)` | Validation fails |
 | Might throw | `tryCatch(fn)` | `JSON.parse()` |
 | Async might throw | `tryCatchAsync(fn)` | `fetch()`, database |
-| Might be null | `fromNullable(value, error)` | `Array.find()`, `?.` |
+| Might be null | `fromNullable(value, error)` | `R.find()`, `?.` |
 
 ---
 

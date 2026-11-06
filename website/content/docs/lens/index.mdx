@@ -34,7 +34,7 @@ interface UserProfile {
 
 **Traditional approach with spread operators**:
 
-```typescript
+```typescript vanilla
 // ❌ Nested spread hell - error-prone and verbose
 const updateCity = (profile: UserProfile, newCity: string) => ({
   ...profile,
@@ -56,7 +56,7 @@ const broken = (profile: UserProfile, newCity: string) => ({
 
 **4 levels deep? Good luck:**
 
-```typescript
+```typescript vanilla
 // ❌ Update country code - this is painful
 const updateCountryCode = (profile: UserProfile, code: string) => ({
   ...profile,
@@ -76,7 +76,7 @@ Let's look at how successful products structure their state updates:
 
 **GitHub's PR Review State** (simplified):
 
-```typescript
+```typescript vanilla
 // GitHub needs to update review states deep in their data structure
 interface PRState {
   pr: {
@@ -120,7 +120,7 @@ const updateComment = (
 
 **Stripe Dashboard Settings** (simplified):
 
-```typescript
+```typescript vanilla
 // Stripe manages complex nested settings
 interface StripeSettings {
   account: {
@@ -198,6 +198,7 @@ setState((state) =>
 
 ```typescript
 import { prop, compose, over } from '@ontologyio/receta/lens'
+import * as R from 'remeda'
 
 type Review = PRState['pr']['reviews'][number]
 
@@ -213,7 +214,7 @@ const updateReviewState = (
 ) => {
   const reviewsPath = compose(prLens, reviewsLens)
   return over(reviewsPath, (reviews) =>
-    reviews.map((review) =>
+    R.map(reviews, (review) =>
       review.id === reviewId ? { ...review, state: newState } : review
     )
   )(state)
@@ -253,7 +254,7 @@ const updateSettings = (settings: StripeSettings) =>
 
 ### Problem 1: Spread Operators Don't Compose
 
-```typescript
+```typescript vanilla
 // ❌ Can't reuse this logic
 const updateCity = (profile: UserProfile) => ({
   ...profile,
@@ -274,7 +275,9 @@ const updateCountry = (profile: UserProfile) => ({
     },
   },
 })
+```
 
+```typescript
 // ✅ Lenses compose naturally
 const addressLens = prop<UserProfile, 'address'>('address')
 const cityLens = prop<Address, 'city'>('city')
@@ -291,7 +294,7 @@ const codePath = path<UserProfile, string>('address.country.code')
 
 ### Problem 2: Spread Operators Lose Type Information
 
-```typescript
+```typescript vanilla
 // ❌ TypeScript can't help you here
 const broken = (profile: UserProfile) => ({
   ...profile,
@@ -301,7 +304,9 @@ const broken = (profile: UserProfile) => ({
     cty: 'NYC', // Typo! Should be 'city'
   },
 })
+```
 
+```typescript
 // ✅ Lenses built from prop are checked against the type
 const addressLens = prop<UserProfile, 'address'>('address')
 const cityLens = prop<UserProfile['address'], 'city'>('city')
@@ -312,7 +317,7 @@ set(compose(addressLens, cityLens), 'NYC', profile) // a typo in 'city' won't co
 
 ### Problem 3: Spread Operators Don't Work in Pipelines
 
-```typescript
+```typescript vanilla
 // ❌ Can't chain spread updates naturally
 const result = updateCity(updateCountry(updateEmail(profile)))
 
@@ -329,7 +334,9 @@ const result = {
     },
   },
 }
+```
 
+```typescript
 // ✅ Lenses work perfectly in pipes
 const result = R.pipe(
   profile,
@@ -345,6 +352,7 @@ const result = R.pipe(
 
 ```typescript
 import { useState } from 'react'
+import { over, set } from '@ontologyio/receta/lens'
 
 // Complex state in React
 const [appState, setAppState] = useState<AppState>(initialState)

@@ -34,14 +34,14 @@ export type ObjectSchema<T extends PlainObject> = {
  *
  * @example
  * ```typescript
+ * import { isNumber, isString } from '@ontologyio/receta/predicate'
  * import { map } from '@ontologyio/receta/result'
  *
  * // Define schema with predicates
  * const userSchema = {
- *   id: (v: unknown): v is number => typeof v === 'number',
- *   name: (v: unknown): v is string => typeof v === 'string',
- *   email: (v: unknown): v is string =>
- *     typeof v === 'string' && v.includes('@')
+ *   id: isNumber,
+ *   name: isString,
+ *   email: (v: unknown): v is string => isString(v) && v.includes('@')
  * }
  *
  * // Data-first

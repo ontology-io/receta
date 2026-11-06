@@ -13,9 +13,9 @@ import { purryConfig } from '../../utils'
  *   [1, 2, 3, 4, 5],
  *   R.map(x => x * 2),
  *   tap(x => console.log('After doubling:', x)),  // [2, 4, 6, 8, 10]
- *   R.filter(x => x > 5),
+ *   R.filter(gt(5)),
  *   tap(x => console.log('After filtering:', x)), // [6, 8, 10]
- *   R.reduce((a, b) => a + b, 0)
+ *   R.sum()
  * )
  * ```
  *

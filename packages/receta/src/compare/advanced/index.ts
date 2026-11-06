@@ -23,11 +23,11 @@ import type { Comparator, ComparableExtractor } from '../types'
  * ]
  *
  * // Case-sensitive (default) - uppercase comes first
- * files.sort(byString(f => f.name))
+ * const caseSensitive = R.sort(files, byString(f => f.name))
  * // Order: App.tsx, README.md, index.ts, package.json
  *
  * // Case-insensitive - alphabetical regardless of case
- * files.sort(caseInsensitive(f => f.name))
+ * const ignoringCase = R.sort(files, caseInsensitive(f => f.name))
  * // Order: App.tsx, index.ts, package.json, README.md
  * ```
  *
@@ -68,7 +68,7 @@ export function caseInsensitive<T>(fn: ComparableExtractor<T, string>): Comparat
  * ]
  *
  * // German locale (handles umlauts correctly)
- * cities.sort(localeCompare(c => c.name, 'de-DE'))
+ * R.sort(cities, localeCompare(c => c.name, 'de-DE'))
  * // => [Åarhus, Berlin, München, Zürich]
  *
  * // French locale
@@ -77,7 +77,7 @@ export function caseInsensitive<T>(fn: ComparableExtractor<T, string>): Comparat
  *   { name: 'Eric' },
  *   { name: 'Émile' }
  * ]
- * names.sort(localeCompare(n => n.name, 'fr-FR'))
+ * R.sort(names, localeCompare(n => n.name, 'fr-FR'))
  * // => [Émile, Eric, Étienne]
  *
  * // English locale
@@ -86,7 +86,7 @@ export function caseInsensitive<T>(fn: ComparableExtractor<T, string>): Comparat
  *   { word: 'resume' },
  *   { word: 'result' }
  * ]
- * words.sort(localeCompare(w => w.word, 'en-US'))
+ * const sorted = R.sort(words, localeCompare(w => w.word, 'en-US'))
  * ```
  *
  * @see byString - for more string comparison options

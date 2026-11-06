@@ -17,14 +17,14 @@ import { none } from '../constructors'
  * @example
  * ```typescript
  * // Data-first
- * filter(some(5), x => x > 0) // => Some(5)
- * filter(some(-5), x => x > 0) // => None
- * filter(none(), x => x > 0) // => None
+ * filter(some(5), gt(0)) // => Some(5)
+ * filter(some(-5), gt(0)) // => None
+ * filter(none(), gt(0)) // => None
  *
  * // Data-last (in pipe)
  * pipe(
  *   fromNullable(user.age),
- *   filter(age => age >= 18),
+ *   filter(gte(18)),
  *   map(age => `Adult: ${age}`)
  * )
  * ```

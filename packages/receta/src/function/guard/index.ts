@@ -22,8 +22,8 @@ export type GuardPair<T, E> = readonly [predicate: Predicate<T>, error: E]
  * ```typescript
  * // User validation
  * const validateUser = guard<User, string>([
- *   [(u) => u.age >= 18, 'Must be 18 or older'],
- *   [(u) => u.email.includes('@'), 'Invalid email format'],
+ *   [where({ age: gte(18) }), 'Must be 18 or older'],
+ *   [where({ email: includes('@') }), 'Invalid email format'],
  *   [(u) => u.name.trim().length > 0, 'Name is required']
  * ])
  *
@@ -42,9 +42,9 @@ export type GuardPair<T, E> = readonly [predicate: Predicate<T>, error: E]
  * // Data-first
  * const result = guard<number, string>(
  *   [
- *     [(n) => n > 0, 'Must be positive'],
- *     [(n) => n < 100, 'Must be less than 100'],
- *     [(n) => Number.isInteger(n), 'Must be an integer']
+ *     [gt(0), 'Must be positive'],
+ *     [lt(100), 'Must be less than 100'],
+ *     [isInteger, 'Must be an integer']
  *   ],
  *   42
  * )
@@ -68,20 +68,23 @@ export type GuardPair<T, E> = readonly [predicate: Predicate<T>, error: E]
  *
  * @example
  * ```typescript
+ * import { guard } from '@ontologyio/receta/function'
+ * import { by, gte, matches } from '@ontologyio/receta/predicate'
+ *
  * // With structured errors
  * type ValidationError = { field: string; message: string }
  *
  * const validatePassword = guard<string, ValidationError>([
  *   [
- *     (pwd) => pwd.length >= 8,
+ *     by((pwd: string) => pwd.length, gte(8)),
  *     { field: 'password', message: 'Password must be at least 8 characters' }
  *   ],
  *   [
- *     (pwd) => /[A-Z]/.test(pwd),
+ *     matches(/[A-Z]/),
  *     { field: 'password', message: 'Password must contain uppercase letter' }
  *   ],
  *   [
- *     (pwd) => /[0-9]/.test(pwd),
+ *     matches(/[0-9]/),
  *     { field: 'password', message: 'Password must contain a number' }
  *   ]
  * ])

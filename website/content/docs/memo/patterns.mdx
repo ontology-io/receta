@@ -41,7 +41,7 @@ const process = memoizeBy(fn, x => x, { cache: weakCache() })
 ```typescript
 const getUser = memoize(fetchUser)
 
-async function updateUser(id: string, data: any) {
+async function updateUser(id: string, data: Partial<User>) {
   await db.update(id, data)
   getUser.cache.delete(id) // Invalidate
 }

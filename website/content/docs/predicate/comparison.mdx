@@ -21,6 +21,8 @@ description: "Comparison predicates test values against thresholds, ranges, and 
 | `isEmpty` | Empty check | `isEmpty('')` → true |
 | `isNotEmpty` | Non-empty check | `isNotEmpty('hi')` → true |
 
+Each of these tests a single value. To test a field of an object, put the predicate inside `where`, as the examples below do. [Builders](./builders.mdx) covers `where` in depth.
+
 ---
 
 ## Numeric Comparisons
@@ -29,7 +31,7 @@ description: "Comparison predicates test values against thresholds, ranges, and 
 
 ```typescript
 import * as R from 'remeda'
-import { gt } from '@ontologyio/receta/predicate'
+import { gt, where } from '@ontologyio/receta/predicate'
 
 // Filter adults
 const users = [
@@ -37,7 +39,7 @@ const users = [
   { name: 'Bob', age: 17 },
   { name: 'Charlie', age: 30 }
 ]
-R.filter(users, (u) => gt(18)(u.age))
+R.filter(users, where({ age: gt(18) }))
 // => [{ name: 'Alice', age: 25 }, { name: 'Charlie', age: 30 }]
 
 // Filter expensive products
@@ -45,20 +47,21 @@ const products = [
   { name: 'Phone', price: 500 },
   { name: 'Cable', price: 15 }
 ]
-R.filter(products, (p) => gt(100)(p.price))
+R.filter(products, where({ price: gt(100) }))
 // => [{ name: 'Phone', price: 500 }]
 ```
 
 **Real-world: Stripe transactions over $100**
 ```typescript
 const transactions = await fetchTransactions()
-const largePayments = R.filter(transactions, (t) => gt(10000)(t.amount)) // cents
+const largePayments = R.filter(transactions, where({ amount: gt(10000) })) // cents
 ```
 
 ### `gte(threshold)` - Greater Than or Equal
 
 ```typescript
-import { gte } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
+import { gte, where } from '@ontologyio/receta/predicate'
 
 // Filter passing scores (>= 60)
 const scores = [45, 60, 75, 55, 80]
@@ -71,23 +74,21 @@ const orders = [
   { id: 2, amount: 100 },
   { id: 3, amount: 75 }
 ]
-R.filter(orders, (o) => gte(75)(o.amount))
+R.filter(orders, where({ amount: gte(75) }))
 // => [{ id: 2, amount: 100 }, { id: 3, amount: 75 }]
 ```
 
 **Real-world: AWS EC2 instances with enough CPU**
 ```typescript
 const instances = await ec2.describeInstances()
-const powerfulInstances = R.filter(
-  instances,
-  (i) => gte(4)(i.cpuCount)
-)
+const powerfulInstances = R.filter(instances, where({ cpuCount: gte(4) }))
 ```
 
 ### `lt(threshold)` - Less Than
 
 ```typescript
-import { lt } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
+import { lt, where } from '@ontologyio/receta/predicate'
 
 // Filter budget items (< $50)
 const items = [
@@ -95,7 +96,7 @@ const items = [
   { name: 'Laptop', price: 1000 },
   { name: 'Pen', price: 2 }
 ]
-R.filter(items, (i) => lt(50)(i.price))
+R.filter(items, where({ price: lt(50) }))
 // => [{ name: 'Notebook', price: 5 }, { name: 'Pen', price: 2 }]
 
 // Low stock alerts
@@ -104,19 +105,20 @@ const inventory = [
   { sku: 'B', quantity: 50 },
   { sku: 'C', quantity: 2 }
 ]
-const lowStock = R.filter(inventory, (item) => lt(10)(item.quantity))
+const lowStock = R.filter(inventory, where({ quantity: lt(10) }))
 ```
 
 **Real-world: GitHub issues with few comments**
 ```typescript
 const issues = await octokit.issues.listForRepo()
-const needsAttention = R.filter(issues, (i) => lt(3)(i.comments))
+const needsAttention = R.filter(issues, where({ comments: lt(3) }))
 ```
 
 ### `lte(threshold)` - Less Than or Equal
 
 ```typescript
-import { lte } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
+import { lte, where } from '@ontologyio/receta/predicate'
 
 // Filter items within budget (≤ $100)
 const shoppingCart = [
@@ -124,14 +126,15 @@ const shoppingCart = [
   { name: 'Shoes', price: 100 },
   { name: 'Watch', price: 200 }
 ]
-R.filter(shoppingCart, (item) => lte(100)(item.price))
+R.filter(shoppingCart, where({ price: lte(100) }))
 // => [{ name: 'Shirt', price: 50 }, { name: 'Shoes', price: 100 }]
 ```
 
 ### `between(min, max)` - Range Check (Inclusive)
 
 ```typescript
-import { between } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
+import { between, where } from '@ontologyio/receta/predicate'
 
 // Filter by age range
 const users = [
@@ -140,7 +143,7 @@ const users = [
   { name: 'Middle', age: 45 },
   { name: 'Senior', age: 70 }
 ]
-const workingAge = R.filter(users, (u) => between(18, 65)(u.age))
+const workingAge = R.filter(users, where({ age: between(18, 65) }))
 // => [{ name: 'Young', age: 25 }, { name: 'Middle', age: 45 }]
 
 // Price range filtering
@@ -149,7 +152,7 @@ const products = [
   { name: 'Mid-range Phone', price: 500 },
   { name: 'Flagship Phone', price: 1200 }
 ]
-const affordable = R.filter(products, (p) => between(300, 800)(p.price))
+const affordable = R.filter(products, where({ price: between(300, 800) }))
 // => [{ name: 'Mid-range Phone', price: 500 }]
 ```
 
@@ -157,7 +160,7 @@ const affordable = R.filter(products, (p) => between(300, 800)(p.price))
 ```typescript
 // User selects price range [50, 200]
 const priceFilter = between(50, 200)
-const filtered = R.filter(products, (p) => priceFilter(p.price))
+const filtered = R.filter(products, where({ price: priceFilter }))
 ```
 
 ---
@@ -167,7 +170,8 @@ const filtered = R.filter(products, (p) => priceFilter(p.price))
 ### `eq(value)` - Equals (Strict ===)
 
 ```typescript
-import { eq } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
+import { eq, where } from '@ontologyio/receta/predicate'
 
 // Filter by status
 const orders = [
@@ -175,7 +179,7 @@ const orders = [
   { id: 2, status: 'shipped' },
   { id: 3, status: 'pending' }
 ]
-R.filter(orders, (o) => eq('pending')(o.status))
+R.filter(orders, where({ status: eq('pending') }))
 // => [{ id: 1, status: 'pending' }, { id: 3, status: 'pending' }]
 
 // Find exact matches
@@ -186,13 +190,14 @@ R.filter(numbers, eq(2))
 
 **Real-world: Filter Prisma records by status**
 ```typescript
-const activeUsers = R.filter(users, (u) => eq('ACTIVE')(u.status))
+const activeUsers = R.filter(users, where({ status: eq('ACTIVE') }))
 ```
 
 ### `neq(value)` - Not Equals (Strict !==)
 
 ```typescript
-import { neq } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
+import { neq, where } from '@ontologyio/receta/predicate'
 
 // Exclude specific value
 const numbers = [1, 2, 3, 2, 1]
@@ -205,7 +210,7 @@ const orders = [
   { id: 2, status: 'cancelled' },
   { id: 3, status: 'shipped' }
 ]
-const activeOrders = R.filter(orders, (o) => neq('cancelled')(o.status))
+const activeOrders = R.filter(orders, where({ status: neq('cancelled') }))
 ```
 
 ---
@@ -215,6 +220,7 @@ const activeOrders = R.filter(orders, (o) => neq('cancelled')(o.status))
 ### `startsWith(prefix)` - String Prefix
 
 ```typescript
+import * as R from 'remeda'
 import { startsWith } from '@ontologyio/receta/predicate'
 
 // Filter files by prefix
@@ -231,12 +237,13 @@ R.filter(users, startsWith('A'))
 **Real-world: Filter S3 keys by folder**
 ```typescript
 const objects = await s3.listObjects({ Bucket: 'my-bucket' })
-const images = R.filter(objects, (obj) => startsWith('images/')(obj.Key))
+const images = R.filter(objects, where({ Key: startsWith('images/') }))
 ```
 
 ### `endsWith(suffix)` - String Suffix
 
 ```typescript
+import * as R from 'remeda'
 import { endsWith } from '@ontologyio/receta/predicate'
 
 // Filter TypeScript files
@@ -252,15 +259,19 @@ R.filter(emails, endsWith('@gmail.com'))
 
 **Real-world: Filter image files**
 ```typescript
-const allowedExtensions = ['.jpg', '.png', '.gif']
-const isImage = (filename: string) =>
-  allowedExtensions.some(ext => endsWith(ext)(filename))
+import { endsWith, or } from '@ontologyio/receta/predicate'
+
+const isImage = or(endsWith('.jpg'), endsWith('.png'), endsWith('.gif'))
+
+isImage('photo.png')  // => true
+isImage('notes.txt')  // => false
 ```
 
 ### `includes(substring)` - Substring Match
 
 ```typescript
-import { includes } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
+import { includes, where } from '@ontologyio/receta/predicate'
 
 // Search functionality
 const products = [
@@ -269,7 +280,7 @@ const products = [
   { name: 'iPhone 15' }
 ]
 const searchTerm = 'iPhone'
-R.filter(products, (p) => includes(searchTerm)(p.name))
+R.filter(products, where({ name: includes(searchTerm) }))
 // => [{ name: 'iPhone 15 Pro' }, { name: 'iPhone 15' }]
 
 // Filter logs
@@ -285,12 +296,13 @@ R.filter(logs, includes('ERROR'))
 **Real-world: Full-text search in user names**
 ```typescript
 const searchUsers = (query: string) =>
-  R.filter(users, (u) => includes(query.toLowerCase())(u.name.toLowerCase()))
+  R.filter(users, by((u: User) => u.name.toLowerCase(), includes(query.toLowerCase())))
 ```
 
 ### `matches(regex)` - Regular Expression
 
 ```typescript
+import * as R from 'remeda'
 import { matches } from '@ontologyio/receta/predicate'
 
 // Validate email format
@@ -312,10 +324,13 @@ R.filter(mixed, matches(/^\d+$/))
 
 **Real-world: Validate API tokens**
 ```typescript
+import { matches } from '@ontologyio/receta/predicate'
+import { type Result, ok, err } from '@ontologyio/receta/result'
+
 const isValidToken = matches(/^[A-Za-z0-9_-]{32}$/)
-if (!isValidToken(token)) {
-  throw new Error('Invalid token format')
-}
+
+const checkToken = (token: string): Result<string, string> =>
+  isValidToken(token) ? ok(token) : err('Invalid token format')
 ```
 
 ---
@@ -327,6 +342,7 @@ if (!isValidToken(token)) {
 Works with strings, arrays, and objects.
 
 ```typescript
+import * as R from 'remeda'
 import { isEmpty } from '@ontologyio/receta/predicate'
 
 // Strings
@@ -344,18 +360,18 @@ R.filter([{}, { a: 1 }, {}], isEmpty)
 
 **Real-world: Remove empty form fields**
 ```typescript
+import * as R from 'remeda'
+import { isEmpty, not } from '@ontologyio/receta/predicate'
+
 const formData = { name: 'Alice', email: '', bio: 'Developer', phone: '' }
-const filled = R.pipe(
-  R.entries(formData),
-  R.filter(([_, value]) => !isEmpty(value)),
-  R.fromEntries
-)
+const filled = R.pickBy(formData, not(isEmpty))
 // => { name: 'Alice', bio: 'Developer' }
 ```
 
 ### `isNotEmpty` - Check if Not Empty
 
 ```typescript
+import * as R from 'remeda'
 import { isNotEmpty } from '@ontologyio/receta/predicate'
 
 // Filter non-empty strings
@@ -448,6 +464,8 @@ and(gte(18), lte(65))
 ### Pattern: Age Groups
 
 ```typescript
+import { between, gte, lt } from '@ontologyio/receta/predicate'
+
 const isChild = lt(13)
 const isTeen = between(13, 19)
 const isAdult = between(20, 64)
@@ -457,6 +475,8 @@ const isSenior = gte(65)
 ### Pattern: Price Ranges
 
 ```typescript
+import { between, gt, lt } from '@ontologyio/receta/predicate'
+
 const isBudget = lt(50)
 const isMidRange = between(50, 200)
 const isPremium = gt(200)
@@ -465,6 +485,8 @@ const isPremium = gt(200)
 ### Pattern: String Validation
 
 ```typescript
+import { matches } from '@ontologyio/receta/predicate'
+
 const isEmail = matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
 const isPhone = matches(/^\+?\d{10,}$/)
 const isURL = matches(/^https?:\/\/.+/)

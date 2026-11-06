@@ -242,7 +242,7 @@ const updateQuantity = (cart: Cart, itemId: string, delta: number): Cart => {
   return R.pipe(
     cart,
     over(itemsLens, (items) =>
-      items.map((item) =>
+      R.map(items, (item) =>
         item.id === itemId
           ? { ...item, quantity: item.quantity + delta }
           : item
@@ -252,7 +252,7 @@ const updateQuantity = (cart: Cart, itemId: string, delta: number): Cart => {
     (updated) =>
       set(
         totalLens,
-        updated.items.reduce((sum, item) => sum + item.quantity * item.price, 0),
+        R.sumBy(updated.items, (item) => item.quantity * item.price),
         updated
       )
   )
@@ -262,6 +262,10 @@ const updateQuantity = (cart: Cart, itemId: string, delta: number): Cart => {
 ### Real-World: Text Normalization
 
 ```typescript
+import * as R from 'remeda'
+import { over, prop } from '@ontologyio/receta/lens'
+import { normalizeWhitespace } from '@ontologyio/receta/string'
+
 interface Article {
   title: string
   content: string
@@ -277,8 +281,8 @@ const normalizeArticle = (article: Article): Article =>
   R.pipe(
     article,
     over(titleLens, (title) => title.trim()),
-    over(contentLens, (content) => content.trim().replace(/\s+/g, ' ')),
-    over(tagsLens, (tags) => tags.map((tag) => tag.toLowerCase().trim()))
+    over(contentLens, normalizeWhitespace),
+    over(tagsLens, (tags) => R.map(tags, (tag) => tag.toLowerCase().trim()))
   )
 ```
 
@@ -307,6 +311,9 @@ const incrementIfEven = (state: State): State => {
 ### Pattern 2: Chained Transformations
 
 ```typescript
+import * as R from 'remeda'
+import { over, prop, set } from '@ontologyio/receta/lens'
+
 // Multiple transformations in sequence
 const processUser = (user: User): User =>
   R.pipe(
@@ -321,6 +328,9 @@ const processUser = (user: User): User =>
 ### Pattern 3: Accumulating Results
 
 ```typescript
+import * as R from 'remeda'
+import { over, prop } from '@ontologyio/receta/lens'
+
 interface Stats {
   count: number
   sum: number
@@ -408,13 +418,15 @@ R.pipe(
 
 ### Mistake 1: Forgetting Immutability
 
-```typescript
+```typescript vanilla
 // ❌ Wrong - mutating directly
 const wrong = (user: User) => {
   user.name = 'Bob' // MUTATION!
   return user
 }
+```
 
+```typescript
 // ✅ Correct - using lens
 const correct = (user: User) => set(nameLens, 'Bob', user)
 ```

@@ -21,10 +21,10 @@ import { lookup } from '../caches/lookup'
  * })
  *
  * // Concurrent calls - only 1 fetch happens
- * const [a, b, c] = await Promise.all([
- *   fetchUser('123'),
- *   fetchUser('123'),
- *   fetchUser('123')
+ * const users = await parallel([
+ *   () => fetchUser('123'),
+ *   () => fetchUser('123'),
+ *   () => fetchUser('123')
  * ]) // All return same result from single API call
  *
  * // With TTL

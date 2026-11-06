@@ -23,16 +23,19 @@ description: "Step-by-step guide to migrating from Lodash or vanilla JavaScript 
 
 ### Step 1: Replace Deep Get/Set
 
-```typescript
+```typescript vanilla
 // ❌ Lodash
 import _ from 'lodash'
 
 const value = _.get(obj, 'deeply.nested.value', 'default')
 _.set(_.cloneDeep(obj), 'deeply.nested.value', 'new')
+```
 
+```typescript
 // ✅ Receta
 import { getPath, setPath } from '@ontologyio/receta/object'
 import { unwrapOr } from '@ontologyio/receta/option'
+import { pipe } from 'remeda'
 
 const value = pipe(
   obj,
@@ -44,21 +47,25 @@ const updated = setPath(['deeply', 'nested', 'value'], 'new', obj)
 
 ### Step 2: Replace Pick/Omit with Mask
 
-```typescript
+```typescript vanilla
 // ❌ Lodash
 const safe = _.pick(user, ['id', 'email'])
+```
 
+```typescript
 // ✅ Receta (security-focused)
 const safe = mask(user, ['id', 'email'])
 ```
 
 ### Step 3: Replace mapKeys/mapValues
 
-```typescript
+```typescript vanilla
 // ❌ Lodash
 _.mapKeys(obj, (value, key) => key.toUpperCase())
 _.mapValues(obj, (value) => value * 2)
+```
 
+```typescript
 // ✅ Receta (mapKeys passes the key first)
 mapKeys(obj, (key, value) => key.toUpperCase())
 mapValues(obj, (value) => value * 2)
@@ -66,24 +73,30 @@ mapValues(obj, (value) => value * 2)
 
 ### Step 4: Replace Deep Merge
 
-```typescript
+```typescript vanilla
 // ❌ Lodash
 _.merge(_.cloneDeep(obj1), obj2, obj3)
+```
 
+```typescript
 // ✅ Receta
 deepMerge([obj1, obj2, obj3])
 ```
 
 ### Step 5: Add Validation
 
-```typescript
-import { flatMap, fromResult } from '@ontologyio/receta/option'
-
+```typescript vanilla
 // ❌ Lodash (no validation)
 const config = _.get(data, 'config', {})
 // Hope it's the right shape!
+```
 
+```typescript
 // ✅ Receta (with validation)
+import { flatMap, fromResult, unwrapOr } from '@ontologyio/receta/option'
+import { pipe } from 'remeda'
+import { getPath, validateShape } from '@ontologyio/receta/object'
+
 const config = pipe(
   data,
   getPath(['config']),
@@ -98,14 +111,16 @@ const config = pipe(
 
 ### Pattern: Nested Updates
 
-```typescript
+```typescript vanilla
 // ❌ Before
 const renameUser = (state: State) => {
   const updated = _.cloneDeep(state)
   _.set(updated, 'user.profile.name', 'Alice')
   return updated
 }
+```
 
+```typescript
 // ✅ After
 const renameUser = (state: State) =>
   setPath(['user', 'profile', 'name'], 'Alice', state)
@@ -113,15 +128,20 @@ const renameUser = (state: State) =>
 
 ### Pattern: Safe Access
 
-```typescript
-import { tap } from '@ontologyio/receta/option'
+```typescript vanilla
 // ❌ Before
 const email = _.get(user, 'profile.contact.email')
 if (email) {
   sendEmail(email)
 }
+```
 
+```typescript
 // ✅ After
+import { tap } from '@ontologyio/receta/option'
+import { pipe } from 'remeda'
+import { getPath } from '@ontologyio/receta/object'
+
 pipe(
   user,
   getPath<string>(['profile', 'contact', 'email']),
@@ -131,13 +151,15 @@ pipe(
 
 ### Pattern: Transformation Pipeline
 
-```typescript
+```typescript vanilla
 // ❌ Before
 let result = _.cloneDeep(apiResponse)
 result = _.mapKeys(result, (v, k) => _.camelCase(k))
 result = _.omit(result, ['_internal', '_cache'])
 result = _.mapValues(result, (v) => typeof v === 'string' ? v.trim() : v)
+```
 
+```typescript
 // ✅ After
 const result = pipe(
   apiResponse,

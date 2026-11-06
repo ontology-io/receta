@@ -38,6 +38,7 @@ f(2) // => square(double(addOne(2))) => square(double(3)) => square(6) => 36
 
 ```typescript
 import { pipe } from 'remeda'
+import { compose } from '@ontologyio/receta/function'
 
 // compose: right-to-left (mathematical notation)
 const f = compose(c, b, a)  // c(b(a(x)))
@@ -88,12 +89,13 @@ TypeScript can't infer the input type from the list of functions, so a standalon
 
 ```typescript
 import { converge } from '@ontologyio/receta/function'
+import * as R from 'remeda'
 
 // Calculate average
 const average = converge<number[], [number, number], number>(
   (sum, length) => sum / length,
   [
-    (nums) => nums.reduce((a, b) => a + b, 0),
+    (nums) => R.sum(nums),
     (nums) => nums.length
   ]
 )
@@ -120,7 +122,7 @@ const buildSummary = converge<number[], [number, number, number, number], Record
     range: max - min
   }),
   [
-    (nums: number[]) => nums.reduce((a, b) => a + b, 0),
+    (nums: number[]) => R.sum(nums),
     (nums: number[]) => nums.length,
     (nums: number[]) => Math.max(...nums),
     (nums: number[]) => Math.min(...nums)
@@ -164,7 +166,7 @@ const buildProfile = converge<User, [string, string, string, any], Profile>(
     (user: User) => user.email.split('@')[0]!,
     (user: User) => user.email.split('@')[1]!,
     (user: User) => {
-      const total = user.scores.reduce((a, b) => a + b, 0)
+      const total = R.sum(user.scores)
       const avg = total / user.scores.length
       return {
         totalScore: total,
@@ -207,12 +209,13 @@ function juxt<Fns extends readonly ((...args: any[]) => any)[]>(
 
 ```typescript
 import { juxt } from '@ontologyio/receta/function'
+import * as R from 'remeda'
 
 const analyze = juxt([
   (nums: number[]) => nums.length,
   (nums: number[]) => Math.min(...nums),
   (nums: number[]) => Math.max(...nums),
-  (nums: number[]) => nums.reduce((a, b) => a + b, 0) / nums.length
+  (nums: number[]) => R.sum(nums) / nums.length
 ])
 
 analyze([1, 2, 3, 4, 5])
@@ -223,7 +226,7 @@ analyze([1, 2, 3, 4, 5])
 ### Difference Between juxt and converge
 
 ```typescript
-const sum = (nums: number[]) => nums.reduce((a, b) => a + b, 0)
+const sum = (nums: number[]) => R.sum(nums)
 const count = (nums: number[]) => nums.length
 const max = (nums: number[]) => Math.max(...nums)
 const data = [1, 2, 9, 3, 0]
@@ -251,10 +254,10 @@ interface SalesRecord {
 
 const extractMetrics = juxt([
   (records: SalesRecord[]) => records.length,
-  (records: SalesRecord[]) => records.reduce((sum, r) => sum + r.amount, 0),
-  (records: SalesRecord[]) => Math.max(...records.map(r => r.amount)),
-  (records: SalesRecord[]) => Math.min(...records.map(r => r.amount)),
-  (records: SalesRecord[]) => new Set(records.map(r => r.region)).size
+  (records: SalesRecord[]) => R.sumBy(records, (r) => r.amount),
+  (records: SalesRecord[]) => Math.max(...R.map(records, r => r.amount)),
+  (records: SalesRecord[]) => Math.min(...R.map(records, r => r.amount)),
+  (records: SalesRecord[]) => R.uniqueBy(records, (r) => r.region).length
 ])
 
 const sales: SalesRecord[] = [
@@ -328,7 +331,7 @@ const results = ap(validators, inputs)
 // ]
 
 // Reshape into validation matrix
-const matrix = inputs.map((input, i) => ({
+const matrix = R.map(inputs, (input, i) => ({
   input,
   validations: {
     notEmpty: results[i],
@@ -344,6 +347,7 @@ You can nest these combinators for powerful transformations:
 
 ```typescript
 import { converge, juxt } from '@ontologyio/receta/function'
+import * as R from 'remeda'
 
 type Analysis = { stats: Record<string, number>; uniqueCount: number }
 
@@ -362,11 +366,11 @@ const analyzeData = converge<number[], [readonly number[], number], Analysis>(
   [
     juxt([
       (data: number[]) => data.length,
-      (data: number[]) => data.reduce((a, b) => a + b, 0),
+      (data: number[]) => R.sum(data),
       (data: number[]) => Math.max(...data),
       (data: number[]) => Math.min(...data)
     ]),
-    (data: number[]) => new Set(data).size
+    (data: number[]) => R.unique(data).length
   ]
 )
 

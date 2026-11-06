@@ -53,16 +53,18 @@ const strings = R.filter(mixed, isString)
 **Real-world: Parse API responses**
 
 ```typescript
+import { type Option, some, none } from '@ontologyio/receta/option'
+import { isString } from '@ontologyio/receta/predicate'
+
 interface ApiResponse {
   data: unknown
 }
 
-const parseUserName = (response: ApiResponse): string | null => {
-  if (isString(response.data)) {
-    return response.data
-  }
-  return null
-}
+const parseUserName = (response: ApiResponse): Option<string> =>
+  isString(response.data) ? some(response.data) : none()
+
+parseUserName({ data: 'Alice' })  // => Some('Alice')
+parseUserName({ data: 42 })       // => None
 ```
 
 ### isNumber
@@ -70,6 +72,7 @@ const parseUserName = (response: ApiResponse): string | null => {
 Excludes `NaN` (unlike `typeof value === 'number'`).
 
 ```typescript
+import * as R from 'remeda'
 import { isNumber } from '@ontologyio/receta/predicate'
 
 const mixed: unknown[] = [42, 'hello', 100, NaN, null]
@@ -86,12 +89,12 @@ if (isNumber(value)) {
 **Real-world: Validate numeric input**
 
 ```typescript
-const parseQuantity = (input: unknown): number | null => {
-  if (isNumber(input) && input > 0) {
-    return Math.floor(input)
-  }
-  return null
-}
+const parseQuantity = (input: unknown): Option<number> =>
+  isNumber(input) && input > 0 ? some(Math.floor(input)) : none()
+
+parseQuantity(2.5)  // => Some(2)
+parseQuantity(-1)   // => None
+parseQuantity('3')  // => None
 ```
 
 ### isFiniteNumber
@@ -110,18 +113,21 @@ isFiniteNumber(NaN)       // => false
 **Real-world: Validate calculations**
 
 ```typescript
-const safeDivide = (a: number, b: number): number | null => {
+const safeDivide = (a: number, b: number): Option<number> => {
   const result = a / b
-  return isFiniteNumber(result) ? result : null
+  return isFiniteNumber(result) ? some(result) : none()
 }
 
-safeDivide(10, 2)  // => 5
-safeDivide(10, 0)  // => null (Infinity)
+safeDivide(10, 2)  // => Some(5)
+
+// 10 / 0 is Infinity
+safeDivide(10, 0)  // => None
 ```
 
 ### isInteger
 
 ```typescript
+import * as R from 'remeda'
 import { isInteger } from '@ontologyio/receta/predicate'
 
 const numbers = [1, 1.5, 2, 2.5, 3]
@@ -140,6 +146,7 @@ const validateId = (value: unknown): value is number => {
 ### isBoolean
 
 ```typescript
+import * as R from 'remeda'
 import { isBoolean } from '@ontologyio/receta/predicate'
 
 const mixed: unknown[] = [true, 1, false, 'yes', 0]
@@ -155,6 +162,7 @@ const booleans = R.filter(mixed, isBoolean)
 ### isNull
 
 ```typescript
+import * as R from 'remeda'
 import { isNull } from '@ontologyio/receta/predicate'
 
 const values: unknown[] = [null, undefined, 0, '', false]
@@ -165,6 +173,7 @@ R.filter(values, isNull)
 ### isUndefined
 
 ```typescript
+import * as R from 'remeda'
 import { isUndefined } from '@ontologyio/receta/predicate'
 
 const values: unknown[] = [null, undefined, 0, '']
@@ -177,6 +186,7 @@ R.filter(values, isUndefined)
 Checks for `null` OR `undefined` (uses `== null`).
 
 ```typescript
+import * as R from 'remeda'
 import { isNullish, not } from '@ontologyio/receta/predicate'
 
 const values: Array<string | null | undefined> = ['hello', null, 'world', undefined]
@@ -209,6 +219,7 @@ const cleanUser = (user: ApiUser) => {
 The inverse of `isNullish`. Narrows out `null` and `undefined`.
 
 ```typescript
+import * as R from 'remeda'
 import { isDefined } from '@ontologyio/receta/predicate'
 
 const values: Array<string | null | undefined> = ['hello', null, 'world', undefined]
@@ -254,6 +265,7 @@ const emails = R.pipe(
 
 ```typescript
 import { isArray } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
 
 const value: unknown = [1, 2, 3]
 if (isArray(value)) {
@@ -264,7 +276,7 @@ if (isArray(value)) {
 // Check if config value is array
 const config: Record<string, unknown> = { hosts: ['a', 'b'] }
 if (isArray(config.hosts)) {
-  config.hosts.forEach((host) => connect(host))
+  R.forEach(config.hosts, (host) => connect(host))
 }
 ```
 
@@ -286,19 +298,27 @@ isObject(new Date())   // => true (any non-array object)
 **Real-world: Validate JSON**
 
 ```typescript
-const parseConfig = (json: string): Record<string, unknown> | null => {
-  try {
-    const parsed = JSON.parse(json)
-    return isObject(parsed) ? parsed : null
-  } catch {
-    return null
-  }
-}
+import * as R from 'remeda'
+import { type Option, flatMap, fromResult, none, some } from '@ontologyio/receta/option'
+import { isObject } from '@ontologyio/receta/predicate'
+import { parseJSON } from '@ontologyio/receta/result'
+
+const parseConfig = (json: string): Option<Record<string, unknown>> =>
+  R.pipe(
+    parseJSON(json),
+    fromResult,
+    flatMap((parsed) => (isObject(parsed) ? some(parsed) : none()))
+  )
+
+parseConfig('{"port": 3000}')  // => Some({ port: 3000 })
+parseConfig('[1, 2, 3]')       // => None
+parseConfig('not json')        // => None
 ```
 
 ### isFunction
 
 ```typescript
+import * as R from 'remeda'
 import { isFunction } from '@ontologyio/receta/predicate'
 
 const mixed: unknown[] = [() => {}, 42, function() {}, 'test', class Foo {}]
@@ -320,6 +340,7 @@ const runCallback = (cb: unknown) => {
 ### isDate
 
 ```typescript
+import { type Option, some, none } from '@ontologyio/receta/option'
 import { isDate } from '@ontologyio/receta/predicate'
 
 isDate(new Date())      // => true
@@ -327,9 +348,8 @@ isDate('2024-01-01')    // => false (string)
 isDate(Date.now())      // => false (number)
 
 // Validate date input
-const parseDate = (value: unknown): Date | null => {
-  return isDate(value) ? value : null
-}
+const parseDate = (value: unknown): Option<Date> =>
+  isDate(value) ? some(value) : none()
 ```
 
 ### isError
@@ -387,6 +407,7 @@ isRegExp('/test/')            // => false (string)
 Create custom type guards for classes.
 
 ```typescript
+import * as R from 'remeda'
 import { isInstanceOf } from '@ontologyio/receta/predicate'
 
 class User {
@@ -436,6 +457,7 @@ const handleError = (error: unknown) => {
 One of the most powerful uses of type guards:
 
 ```typescript
+import * as R from 'remeda'
 import { isString, isNumber } from '@ontologyio/receta/predicate'
 
 // API returns mixed types
@@ -503,13 +525,12 @@ const parseUser = (data: unknown): Result<User, string> => {
 
 ```typescript
 import { type Option, some, none } from '@ontologyio/receta/option'
-import { isNumber } from '@ontologyio/receta/predicate'
+import { between, isNumber } from '@ontologyio/receta/predicate'
 
-const parsePort = (value: unknown): Option<number> => {
-  return isNumber(value) && value > 0 && value < 65536
-    ? some(value)
-    : none()
-}
+const isPortRange = between(1, 65535)
+
+const parsePort = (value: unknown): Option<number> =>
+  isNumber(value) && isPortRange(value) ? some(value) : none()
 ```
 
 ---
@@ -519,6 +540,7 @@ const parsePort = (value: unknown): Option<number> => {
 `and` returns a plain `Predicate`, so it checks a value without narrowing it. To keep the narrowing, combine guards with `&&` in a guard of your own:
 
 ```typescript
+import * as R from 'remeda'
 import { isObject, isString, isNumber } from '@ontologyio/receta/predicate'
 
 // Filter for valid users (objects with string name and number age > 18)
@@ -575,16 +597,19 @@ const validateForm = (form: FormData): Result<ValidForm, string> => {
 ### Pattern 2: Environment Variables
 
 ```typescript
-const getEnvNumber = (key: string): number | null => {
-  const value = process.env[key]
-  if (!isDefined(value)) return null
+import * as R from 'remeda'
+import { type Option, filter, fromNullable, map, unwrapOr } from '@ontologyio/receta/option'
+import { isFiniteNumber } from '@ontologyio/receta/predicate'
 
-  const num = Number(value)
-  return isFiniteNumber(num) ? num : null
-}
+const getEnvNumber = (key: string): Option<number> =>
+  R.pipe(
+    fromNullable(process.env[key]),
+    map(Number),
+    filter<number>(isFiniteNumber)
+  )
 
-const PORT = getEnvNumber('PORT') ?? 3000
-const MAX_CONNECTIONS = getEnvNumber('MAX_CONNECTIONS') ?? 100
+const PORT = unwrapOr(getEnvNumber('PORT'), 3000)
+const MAX_CONNECTIONS = unwrapOr(getEnvNumber('MAX_CONNECTIONS'), 100)
 ```
 
 ### Pattern 3: API Response Parsing
@@ -606,14 +631,17 @@ const parseGitHubUser = (data: unknown): Option<GitHubUser> => {
 ### Pattern 4: Safe JSON Parsing
 
 ```typescript
-const safeJsonParse = <T>(json: string): Option<T> => {
-  try {
-    const parsed = JSON.parse(json)
-    return isDefined(parsed) ? some(parsed) : none()
-  } catch {
-    return none()
-  }
-}
+import * as R from 'remeda'
+import { type Option, filter, fromResult } from '@ontologyio/receta/option'
+import { isDefined } from '@ontologyio/receta/predicate'
+import { parseJSON } from '@ontologyio/receta/result'
+
+const safeJsonParse = <T>(json: string): Option<T> =>
+  R.pipe(parseJSON<T>(json), fromResult, filter<T>(isDefined))
+
+safeJsonParse('{"id": 1}')  // => Some({ id: 1 })
+safeJsonParse('null')       // => None
+safeJsonParse('not json')   // => None
 ```
 
 ---

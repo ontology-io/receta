@@ -107,7 +107,7 @@ interface SortConfig {
 }
 
 export function buildTableComparator(configs: SortConfig[]): Comparator<Employee> {
-  const comparators = configs.map(({ column, direction }) => {
+  const comparators = R.map(configs, ({ column, direction }) => {
     let base: Comparator<Employee>
 
     switch (column) {
@@ -137,7 +137,7 @@ const comparator = buildTableComparator([
   { column: 'name', direction: 'asc' }
 ])
 
-employees.sort(comparator)
+const sorted = R.sort(employees, comparator)
 ```
 
 ## File Browser
@@ -394,6 +394,11 @@ export const sortLeaderboardSpeedrun = compose(
 ## API Response Pagination
 
 ```typescript
+import { paginate } from '@ontologyio/receta/collection'
+import { ascending, reverse, type Comparator } from '@ontologyio/receta/compare'
+import { fromNullable, map, match, type Option } from '@ontologyio/receta/option'
+import * as R from 'remeda'
+
 interface PaginatedRequest {
   sortBy?: string
   sortOrder?: 'asc' | 'desc'
@@ -403,25 +408,26 @@ interface PaginatedRequest {
 
 function buildAPIComparator<T extends Record<string, any>>(
   request: PaginatedRequest
-): Comparator<T> | null {
-  if (!request.sortBy) return null
-
-  const extractor = (item: T) => item[request.sortBy!]
-  const base = ascending(extractor)
-
-  return request.sortOrder === 'desc' ? reverse(base) : base
+): Option<Comparator<T>> {
+  return R.pipe(
+    fromNullable(request.sortBy),
+    map((sortBy) => {
+      const base = ascending((item: T) => item[sortBy])
+      return request.sortOrder === 'desc' ? reverse(base) : base
+    })
+  )
 }
 
 // Usage in API handler
 async function handleListRequest(req: PaginatedRequest) {
-  let items = await fetchItems()
+  const items = await fetchItems()
 
-  const comparator = buildAPIComparator(req)
-  if (comparator) {
-    items = items.sort(comparator)
-  }
+  const sorted = match(buildAPIComparator(req), {
+    onSome: (comparator) => R.sort(items, comparator),
+    onNone: () => items
+  })
 
-  return paginate(items, { page: req.page, pageSize: req.pageSize })
+  return paginate(sorted, { page: req.page, pageSize: req.pageSize })
 }
 ```
 

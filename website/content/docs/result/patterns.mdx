@@ -187,7 +187,7 @@ const checkEmailAvailable = async (email: string): Promise<Result<string, Valida
 ```typescript
 // CSV import with detailed error reporting
 const importUsers = async (rows: CSVRow[]) => {
-  const results = rows.map((row, index) =>
+  const results = R.map(rows, (row, index) =>
     mapErr(validateUserRow(row), error => ({
       row: index + 1,
       data: row,
@@ -271,7 +271,7 @@ const createOrderWithItems = async (
         })
 
         await tx.orderItem.createMany({
-          data: items.map(item => ({
+          data: R.map(items, item => ({
             orderId: order.id,
             productId: item.productId,
             quantity: item.quantity
@@ -317,6 +317,10 @@ const loadConfig = async (path: string): Promise<Result<AppConfig, ConfigError>>
 ### Image Upload with Validation
 
 ```typescript
+import { oneOf } from '@ontologyio/receta/predicate'
+import { type Result, err, flatMap, map, mapErr, ok, tapErr } from '@ontologyio/receta/result'
+import * as R from 'remeda'
+
 const uploadAvatar = async (file: File): Promise<Result<string, string>> =>
   R.pipe(
     validateImageFile(file),
@@ -330,12 +334,12 @@ const uploadAvatar = async (file: File): Promise<Result<string, string>> =>
 
 const validateImageFile = (file: File): Result<File, Error> => {
   const maxSize = 5 * 1024 * 1024 // 5MB
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+  const isAllowedType = oneOf(['image/jpeg', 'image/png', 'image/webp'])
 
   if (file.size > maxSize) {
     return err(new Error('File too large (max 5MB)'))
   }
-  if (!allowedTypes.includes(file.type)) {
+  if (!isAllowedType(file.type)) {
     return err(new Error('Invalid file type (must be JPG, PNG, or WebP)'))
   }
   return ok(file)
@@ -446,28 +450,31 @@ const checkoutFlow = async (
 ### Parallel Processing with Limits
 
 ```typescript
-const processBatch = async <T, E>(
+import { mapAsync } from '@ontologyio/receta/async'
+import { type Result, isOk, map, partition } from '@ontologyio/receta/result'
+import * as R from 'remeda'
+
+const processBatch = async <T, U, E>(
   items: T[],
-  processor: (item: T) => Promise<Result<unknown, E>>,
+  processor: (item: T) => Promise<Result<U, E>>,
   concurrency = 5
-) => {
-  const chunks = R.chunk(items, concurrency)
-  const results: Result<unknown, E>[] = []
-
-  for (const chunk of chunks) {
-    const chunkResults = await Promise.all(chunk.map(processor))
-    results.push(...chunkResults)
-  }
-
-  return partition(results)
-}
+) =>
+  R.pipe(
+    await mapAsync(items, item => processor(item), { concurrency }),
+    map(partition())
+  )
 
 // Usage: Send 1000 emails, 10 at a time
-const [sent, failed] = await processBatch(
+const report = await processBatch(
   recipients,
   (email) => sendEmail(email, template),
   10
 )
+
+if (isOk(report)) {
+  const [sent, failed] = report.value
+  console.log(`${sent.length} sent, ${failed.length} failed`)
+}
 ```
 
 ---
@@ -476,34 +483,23 @@ const [sent, failed] = await processBatch(
 
 ### Retry with Exponential Backoff
 
+`retry` only retries on a throw, and a returned `Err` counts as success. `orThrow` turns each `Err` into a throw so `retry` tries again.
+
 ```typescript
-const withRetry = async <T, E>(
+import { retry } from '@ontologyio/receta/async'
+import { type Result, orThrow } from '@ontologyio/receta/result'
+
+const withRetry = <T, E>(
   operation: () => Promise<Result<T, E>>,
-  maxRetries = 3,
+  maxAttempts = 3,
   baseDelay = 1000
-): Promise<Result<T, E>> => {
-  let attempt = 0
-
-  while (attempt < maxRetries) {
-    const result = await operation()
-
-    if (isOk(result)) {
-      return result
-    }
-
-    attempt++
-    if (attempt < maxRetries) {
-      const delay = baseDelay * Math.pow(2, attempt - 1)
-      await new Promise(resolve => setTimeout(resolve, delay))
-    }
-  }
-
-  return operation() // Final attempt
-}
+) => retry(orThrow(operation), { maxAttempts, delay: baseDelay, backoff: 2 })
 
 // Usage
 const user = await withRetry(() => fetchUser(id), 3, 1000)
 ```
+
+If every attempt fails, you get an `Err` holding a `RetryError`, and its `lastError` is the last failure.
 
 ### Fallback Chain
 

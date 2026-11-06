@@ -18,7 +18,7 @@ title: "Overview"
 
 ### The Problem: Repeated Expensive Work
 
-```typescript
+```typescript vanilla
 // Expensive computation
 function fibonacci(n: number): number {
   if (n <= 1) return n
@@ -94,10 +94,15 @@ import { memoize } from '@ontologyio/receta/memo'
 ### Step 2: Wrap Your Function
 
 ```typescript
+import { memoize } from '@ontologyio/receta/memo'
+import { fromNullable, type Option } from '@ontologyio/receta/option'
+import { eq, where } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
+
 // Original function
-function getUserById(id: string): User {
+function getUserById(id: string): Option<User> {
   console.log(`Fetching user ${id}`)
-  return database.users.find(u => u.id === id)!
+  return fromNullable(R.find(database.users, where({ id: eq(id) })))
 }
 
 // Memoized version
@@ -211,7 +216,7 @@ resizeImage({ url: 'photo.jpg', width: 800, height: 600 }) // Cached
 
 ### Without Memoization
 
-```typescript
+```typescript vanilla
 // ❌ Problems:
 // - Repeated work
 // - Slow performance
@@ -240,6 +245,7 @@ const [a, b, c] = await Promise.all([
 // - Efficient resource use
 // - Request deduplication
 
+import { parallel } from '@ontologyio/receta/async'
 import { memoizeAsync } from '@ontologyio/receta/memo'
 
 const getWeather = memoizeAsync(async (city: string) => {
@@ -247,10 +253,10 @@ const getWeather = memoizeAsync(async (city: string) => {
   return res.json()
 })
 
-const [a, b, c] = await Promise.all([
-  getWeather('NYC'), // API call
-  getWeather('NYC'), // Deduplicated!
-  getWeather('NYC')  // Deduplicated!
+const reports = await parallel([
+  () => getWeather('NYC'), // API call
+  () => getWeather('NYC'), // Deduplicated!
+  () => getWeather('NYC')  // Deduplicated!
 ]) // Only 1 API call!
 ```
 
@@ -411,16 +417,17 @@ const add = memoizeBy(
 ### Pitfall 3: Unbounded Cache Growth
 
 ```typescript
+import { lruCache, memoize } from '@ontologyio/receta/memo'
+import * as R from 'remeda'
+
 // ❌ Bad: Unbounded cache
 const process = memoize(expensiveProcess)
 
-for (let i = 0; i < 1000000; i++) {
+R.forEach(R.range(0, 1000000), (i) => {
   process(i) // Cache grows to 1M entries! (OOM)
-}
+})
 
 // ✅ Good: Use LRU cache
-import { lruCache } from '@ontologyio/receta/memo'
-
 const process = memoize(expensiveProcess, {
   cache: lruCache(1000) // Max 1000 entries
 })

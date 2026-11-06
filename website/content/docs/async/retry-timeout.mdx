@@ -366,14 +366,16 @@ const robustFetch = async (url: string) => {
 
 Hand-written retry and timeout helpers usually throw, making error handling verbose and error-prone. Receta's return errors as values:
 
-```typescript
+```typescript vanilla
 // Traditional: Requires try-catch
 try {
   const data = await fetchWithManualRetry('/api/data')
 } catch (error) {
   // Error handling here
 }
+```
 
+```typescript
 // Result: Errors as values
 const result = await retry(() => fetch('/api/data'))
 if (isOk(result)) {
@@ -416,7 +418,7 @@ When `shouldRetry` returns false you get the same error, with `attempts` countin
 
 ```typescript
 import { retry } from '@ontologyio/receta/async'
-import { unwrapOr, mapErr, isOk } from '@ontologyio/receta/result'
+import { tapErr, unwrapOr } from '@ontologyio/receta/result'
 import * as R from 'remeda'
 
 const connectToDatabase = async (): Promise<Database> => {
@@ -437,10 +439,7 @@ const connectToDatabase = async (): Promise<Database> => {
 
   return R.pipe(
     result,
-    mapErr(error => {
-      logger.error(`DB connection failed after ${error.attempts} attempts`)
-      return error
-    }),
+    tapErr(error => logger.error(`DB connection failed after ${error.attempts} attempts`)),
     unwrapOr(fallbackDatabase)
   )
 }
@@ -550,7 +549,7 @@ class TimeoutError extends Error {
 
 ```typescript
 import { timeout } from '@ontologyio/receta/async'
-import { unwrapOr, mapErr, isErr } from '@ontologyio/receta/result'
+import { tapErr, unwrapOr } from '@ontologyio/receta/result'
 import * as R from 'remeda'
 
 const fetchWithTimeout = async (url: string) => {
@@ -561,10 +560,7 @@ const fetchWithTimeout = async (url: string) => {
 
   return R.pipe(
     result,
-    mapErr(error => {
-      logger.warn(`Request to ${url} failed: ${error.message}`)
-      return error
-    }),
+    tapErr(error => logger.warn(`Request to ${url} failed: ${error.message}`)),
     unwrapOr({ error: 'Request timed out' })
   )
 }
@@ -787,7 +783,7 @@ Prevent cascading failures by stopping requests after repeated failures:
 
 ```typescript
 import { timeout } from '@ontologyio/receta/async'
-import { unwrap } from '@ontologyio/receta/result'
+import { err, flatten, isOk, tryCatchAsync, type Result } from '@ontologyio/receta/result'
 
 class CircuitBreaker {
   private failures = 0
@@ -800,23 +796,26 @@ class CircuitBreaker {
     private resetTimeout: number = 30000  // 30 seconds
   ) {}
 
-  async execute<T>(operation: () => Promise<T>): Promise<T> {
+  async execute<T>(operation: () => Promise<T>): Promise<Result<T, unknown>> {
     // Check if circuit is open
     if (this.state === 'open') {
       const timeSinceFailure = Date.now() - this.lastFailureTime
 
       if (timeSinceFailure < this.resetTimeout) {
-        throw new Error('Circuit breaker is open')
+        return err(new Error('Circuit breaker is open'))
       }
 
       // Try to close circuit
       this.state = 'half-open'
     }
 
-    try {
-      // Execute with timeout
-      const result = unwrap(await timeout(operation(), this.timeout))
+    // Execute with timeout
+    // A timeout is an Err, and tryCatchAsync catches anything operation rejects with
+    const result = flatten(
+      await tryCatchAsync(() => timeout(operation(), this.timeout))
+    )
 
+    if (isOk(result)) {
       // Success - reset failures
       if (this.state === 'half-open') {
         this.state = 'closed'
@@ -824,17 +823,17 @@ class CircuitBreaker {
       }
 
       return result
-    } catch (error) {
-      this.failures++
-      this.lastFailureTime = Date.now()
-
-      // Open circuit if threshold exceeded
-      if (this.failures >= this.threshold) {
-        this.state = 'open'
-      }
-
-      throw error
     }
+
+    this.failures++
+    this.lastFailureTime = Date.now()
+
+    // Open circuit if threshold exceeded
+    if (this.failures >= this.threshold) {
+      this.state = 'open'
+    }
+
+    return result
   }
 }
 
@@ -1072,6 +1071,7 @@ const result = await uploadToS3(
 ```typescript
 import { mapAsync, retry, timeout, TimeoutError } from '@ontologyio/receta/async'
 import { partition, unwrap, unwrapOr } from '@ontologyio/receta/result'
+import * as R from 'remeda'
 
 interface WebhookPayload {
   event: string
@@ -1158,7 +1158,7 @@ const deliverWebhooks = async (
   console.log(`Webhook delivery: ${delivered.length}/${endpoints.length} successful`)
 
   if (failed.length > 0) {
-    console.error('Failed webhooks:', failed.map(({ lastError }) => lastError))
+    console.error('Failed webhooks:', R.map(failed, ({ lastError }) => lastError))
   }
 
   return {
@@ -1429,19 +1429,21 @@ const fetchUserUnsafe = async (id: string): Promise<User> => {
 
 ### 1. Not Limiting Retry Attempts
 
-```typescript
+```typescript vanilla
 // Bad: Infinite retry loop
 const badRetry = async () => {
   while (true) {
     try {
       return await operation()
     } catch {
-      await sleep(1000)
+      await new Promise(resolve => setTimeout(resolve, 1000))
       // Continues forever!
     }
   }
 }
+```
 
+```typescript
 // Good: Use retry with limits
 const goodRetry = async () => {
   return retry(operation, { maxAttempts: 3 })
@@ -1564,11 +1566,11 @@ const good = async (ids: string[]) => {
 ### 7. Not Handling Timeout vs Operation Errors
 
 ```typescript
-// Bad: A timeout is an Err, so it never reaches the catch
-try {
-  await timeout(operation(), 5000)
-} catch (error) {
-  console.error('Failed')  // Only the operation's own errors land here
+// Bad: Only a timeout is an Err, so a rejection from operation still throws
+const timed = await timeout(operation(), 5000)
+
+if (isErr(timed)) {
+  console.error('Failed')  // Only the timeout lands here
 }
 
 // Good: Put both failures in one Result, then tell them apart

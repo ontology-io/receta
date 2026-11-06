@@ -153,7 +153,7 @@ export function fromPredicateWithError<T, E>(
  *
  * @example
  * ```typescript
- * import { ok, err, tryCatch as tryCatchResult } from '@ontologyio/receta/result'
+ * import { ok, err, parseJSON } from '@ontologyio/receta/result'
  *
  * fromResult(ok(42))
  * // => Valid(42)
@@ -162,8 +162,8 @@ export function fromPredicateWithError<T, E>(
  * // => Invalid(['failed'])
  *
  * // Real-world: Convert Result-based parsers to Validation
- * const parseJSON = <T>(str: string): Validation<T, string> =>
- *   fromResult(tryCatchResult(() => JSON.parse(str) as T, String))
+ * const parseBody = <T>(str: string): Validation<T, SyntaxError> =>
+ *   fromResult(parseJSON<T>(str))
  * ```
  *
  * @see toResult - for converting Validation to Result

@@ -8,6 +8,7 @@ title: "Error Handling"
 
 ```typescript
 import { memoizeAsync } from '@ontologyio/receta/memo'
+import { tryCatchAsync } from '@ontologyio/receta/result'
 
 let callCount = 0
 
@@ -20,19 +21,24 @@ const flaky = memoizeAsync(async (id: string) => {
 })
 
 // First call fails
-await flaky('123').catch(e => console.log(e.message))
-// Console: "First call fails"
+const first = await tryCatchAsync(() => flaky('123'), (e) => (e as Error).message)
+// => Err('First call fails')
 
 // Second call retries (error was not cached)
 const result = await flaky('123')
-// Returns: "Success: 123"
+// => 'Success: 123'
 ```
 
 **Key Behavior**: Failed promises are automatically removed from cache, allowing retries.
 
+Only a rejected promise is removed, so keep `tryCatchAsync` outside the memoized function, as above. Inside it, a failure becomes an `Err` that resolves normally, and that `Err` stays cached.
+
 ## Cache Invalidation on Error
 
 ```typescript
+import { memoizeAsync } from '@ontologyio/receta/memo'
+import { tapErr, tryCatchAsync } from '@ontologyio/receta/result'
+
 const fetchData = memoizeAsync(async (id: string) => {
   const res = await fetch(`/api/data/${id}`)
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -40,8 +46,10 @@ const fetchData = memoizeAsync(async (id: string) => {
 })
 
 // Network error
-await fetchData('123').catch(e => {
-  console.log('Failed:', e.message)
+const result = await tryCatchAsync(() => fetchData('123'))
+
+tapErr(result, (e) => {
+  console.log('Failed:', e)
   // Cache entry for '123' is automatically removed
 })
 
@@ -54,7 +62,7 @@ await fetchData('123') // Will retry the fetch
 ### Single Entry Invalidation
 
 ```typescript
-import { memoizeAsync, clearCache } from '@ontologyio/receta/memo'
+import { memoizeAsync } from '@ontologyio/receta/memo'
 
 const getUser = memoizeAsync(async (id: string) => {
   return await db.users.findById(id)
@@ -126,7 +134,7 @@ async function deleteUser(id: string) {
 ### Full Cache Clear
 
 ```typescript
-import { clearCache } from '@ontologyio/receta/memo'
+import { clearCache, memoize } from '@ontologyio/receta/memo'
 
 const getUser = memoize(fetchUser)
 

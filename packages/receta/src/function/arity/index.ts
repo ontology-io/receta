@@ -11,8 +11,8 @@ import * as R from 'remeda'
  * // parseInt takes two arguments, which causes issues with map
  * const digits = ['1', '2', '3']
  *
- * digits.map(parseInt)           // => [1, NaN, NaN]
- * digits.map(unary(parseInt))    // => [1, 2, 3]
+ * R.map(digits, parseInt)           // => [1, NaN, NaN]
+ * R.map(digits, unary(parseInt))    // => [1, 2, 3]
  * ```
  *
  * @example
@@ -20,7 +20,7 @@ import * as R from 'remeda'
  * const logFirst = unary(console.log)
  * const letters = ['a', 'b', 'c']
  *
- * letters.forEach(logFirst)
+ * R.forEach(letters, logFirst)
  * // Logs:
  * // a
  * // b
@@ -34,7 +34,7 @@ import * as R from 'remeda'
  * const parseNumber = unary(Number)
  * const inputs = ['42', '3.14', '100']
  *
- * inputs.map(parseNumber)  // => [42, 3.14, 100]
+ * R.map(inputs, parseNumber)  // => [42, 3.14, 100]
  * ```
  */
 export function unary<A, R>(fn: (a: A, ...rest: any[]) => R): (a: A) => R {
@@ -51,13 +51,13 @@ export function unary<A, R>(fn: (a: A, ...rest: any[]) => R): (a: A) => R {
  *
  * @example
  * ```typescript
- * const add = (...nums: number[]) => nums.reduce((a, b) => a + b, 0)
+ * const add = (...nums: number[]) => R.sum(nums)
  *
  * add(1, 2, 3, 4)  // => 10
  *
  * // reduce also passes the index and the array, which binary drops
  * const numbers = [1, 2, 3, 4]
- * numbers.reduce(binary(add))  // => 10
+ * R.reduce(numbers, binary(add), 0)  // => 10
  * ```
  *
  * @example
@@ -66,7 +66,7 @@ export function unary<A, R>(fn: (a: A, ...rest: any[]) => R): (a: A) => R {
  * const logTwo = binary(console.log)
  * const letters = ['a', 'b', 'c']
  *
- * letters.forEach(logTwo)
+ * R.forEach(letters, logTwo)
  * // Logs:
  * // a 0
  * // b 1
@@ -88,7 +88,7 @@ export function binary<A, B, R>(fn: (a: A, b: B, ...rest: any[]) => R): (a: A, b
  *
  * @example
  * ```typescript
- * const sum = (...nums: number[]) => nums.reduce((a, b) => a + b, 0)
+ * const sum = (...nums: number[]) => R.sum(nums)
  *
  * const sumTwo = nAry(2, sum)
  * sumTwo(1, 2, 3, 4, 5)  // => 3 (only sums first two)

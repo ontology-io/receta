@@ -13,7 +13,7 @@ import { purryConfig2 } from '../../utils'
  * @example
  * ```typescript
  * const ensurePositive = when(
- *   (n: number) => n < 0,
+ *   lt(0),
  *   (n) => Math.abs(n)
  * )
  *
@@ -26,7 +26,7 @@ import { purryConfig2 } from '../../utils'
  * ```typescript
  * // Data-first
  * const result = when(
- *   (str: string) => str.length === 0,
+ *   eq(''),
  *   () => 'default',
  *   ''
  * )

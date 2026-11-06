@@ -17,6 +17,7 @@ description: "Combinators are the key feature of the Validation module. They all
 
 ```typescript
 import { collect, err } from '@ontologyio/receta/result'
+import { collectErrors, invalid } from '@ontologyio/receta/validation'
 // collect: STOPS at first error (fail-fast)
 collect([err('e1'), err('e2'), err('e3')])
 // => Err('e1')
@@ -207,7 +208,7 @@ const validateCSVImport = (rows: ProductRow[]) =>
 const result = validateCSVImport(csvData)
 if (isInvalid(result)) {
   console.log(`Found ${result.errors.length} errors`)
-  result.errors.forEach((error) => {
+  R.forEach(result.errors, (error) => {
     console.log(error)
   })
 }
@@ -346,7 +347,7 @@ const handleSubmit = (formData: RegistrationForm) => {
     },
     onInvalid: (errors) => {
       // Show all field errors
-      errors.forEach(({ field, errors: fieldErrors }) => {
+      R.forEach(errors, ({ field, errors: fieldErrors }) => {
         showFieldError(field, fieldErrors)
       })
     }
@@ -505,6 +506,8 @@ const updateSettings = (userId: string, updates: Partial<UserSettings>) => {
 
 ```typescript
 import { flatMap as flatMapResult } from '@ontologyio/receta/result'
+import { pipe } from 'remeda'
+import { collectErrors } from '@ontologyio/receta/validation'
 // ✅ Use Result for sequential operations
 pipe(
   validateToken(token),

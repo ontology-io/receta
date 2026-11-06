@@ -18,8 +18,9 @@ Best for: Admin dashboards, reports, search results with page numbers.
 
 ```typescript
 import { paginate } from '@ontologyio/receta/collection'
+import * as R from 'remeda'
 
-const items = Array.from({ length: 100 }, (_, i) => ({ id: i + 1 }))
+const items = R.times(100, i => ({ id: i + 1 }))
 
 const page1 = paginate(items, { page: 1, pageSize: 20 })
 // {
@@ -72,8 +73,9 @@ Best for: Social feeds, messaging apps, real-time data, infinite scroll.
 
 ```typescript
 import { paginateCursor } from '@ontologyio/receta/collection'
+import * as R from 'remeda'
 
-const messages = Array.from({ length: 50 }, (_, i) => ({ id: `msg_${i + 1}` }))
+const messages = R.times(50, i => ({ id: `msg_${i + 1}` }))
 
 // First page
 const page1 = paginateCursor(messages, m => m.id, { limit: 20 })
@@ -125,6 +127,8 @@ app.get('/api/events', async (req, res) => {
 
 ```tsx
 import { useState } from 'react'
+import { match, tryCatchAsync } from '@ontologyio/receta/result'
+import * as R from 'remeda'
 
 // React component with infinite scroll
 function MessageList() {
@@ -133,17 +137,24 @@ function MessageList() {
   const [hasMore, setHasMore] = useState(true)
 
   const loadMore = async () => {
-    const response = await fetch(`/api/messages?cursor=${cursor}&limit=20`)
-    const data = await response.json()
+    const page = await tryCatchAsync(async () => {
+      const response = await fetch(`/api/messages?cursor=${cursor ?? ''}&limit=20`)
+      return response.json()
+    })
 
-    setMessages(prev => [...prev, ...data.items])
-    setCursor(data.nextCursor)
-    setHasMore(data.hasMore)
+    match(page, {
+      onOk: (data) => {
+        setMessages(prev => [...prev, ...data.items])
+        setCursor(data.nextCursor)
+        setHasMore(data.hasMore)
+      },
+      onErr: (error) => console.error('Could not load messages', error)
+    })
   }
 
   return (
     <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
-      {messages.map(msg => <MessageItem key={msg.id} message={msg} />)}
+      {R.map(messages, msg => <MessageItem key={msg.id} message={msg} />)}
     </InfiniteScroll>
   )
 }

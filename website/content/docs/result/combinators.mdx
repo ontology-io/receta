@@ -11,7 +11,7 @@ description: "Working with Multiple Results"
 |----------|---------|-------------------|
 | `collect(results)` | All-or-nothing validation | Stripe: charge only if ALL validations pass |
 | `partition(results)` | Separate successes from failures | Bulk import: show which succeeded/failed |
-| `fromNullable(value, error)` | Convert nullable to Result | Array.find() → Result |
+| `fromNullable(value, error)` | Convert nullable to Result | `R.find()` → Result |
 
 ---
 
@@ -70,17 +70,24 @@ match(result, {
 
 ### Real-World: Database Transaction (All or Nothing)
 
+`parallel` and `mapAsync` resolve to a `Result` of their own, which only fails if a task throws. A task that returns an `Err` hasn't failed, so you get one `Result` per task, and `flatMap(collect())` turns them into a single `Result`.
+
 ```typescript
+import { parallel } from '@ontologyio/receta/async'
+import { collect, flatMap, isErr, ok } from '@ontologyio/receta/result'
+import * as R from 'remeda'
+
 // Create user with profile and preferences atomically
 const createUserWithProfile = async (data: SignupData) => {
-  const operations = [
-    createUser(data.email, data.password),
-    createProfile(data.name, data.bio),
-    createPreferences(data.theme, data.notifications)
-  ]
-
   // ALL must succeed or transaction rolls back
-  const created = collect(await Promise.all(operations))
+  const created = R.pipe(
+    await parallel([
+      () => createUser(data.email, data.password),
+      () => createProfile(data.name, data.bio),
+      () => createPreferences(data.theme, data.notifications)
+    ]),
+    flatMap(collect())
+  )
 
   if (isErr(created)) {
     // Rollback all operations
@@ -101,6 +108,10 @@ const createUserWithProfile = async (data: SignupData) => {
 ### Real-World: Multi-Step API Workflow
 
 ```typescript
+import { mapAsync } from '@ontologyio/receta/async'
+import { collect, flatMap, isErr, map } from '@ontologyio/receta/result'
+import * as R from 'remeda'
+
 // GitHub: Create repo with initial files
 const createRepoWithFiles = async (
   name: string,
@@ -114,13 +125,13 @@ const createRepoWithFiles = async (
   }
 
   // Step 2: Upload all files (all must succeed)
-  const fileUploads = files.map(file =>
-    uploadFile(repo.value.id, file.path, file.content)
-  )
-
-  return pipe(
-    await Promise.all(fileUploads),
-    collect(), // All files must upload successfully
+  return R.pipe(
+    await mapAsync(
+      files,
+      file => uploadFile(repo.value.id, file.path, file.content),
+      { concurrency: 5 }
+    ),
+    flatMap(collect()), // All files must upload successfully
     map(uploads => ({
       repo: repo.value,
       files: uploads
@@ -166,10 +177,11 @@ const config = unwrap(loadConfig()) // Safe to unwrap in startup
 
 ```typescript
 import { partition } from '@ontologyio/receta/result'
+import * as R from 'remeda'
 
 const importUsers = async (csvRows: string[][]) => {
   // Validate each row
-  const results = csvRows.map((row, index) =>
+  const results = R.map(csvRows, (row, index) =>
     mapErr(validateUserRow(row), error => ({
       row: index + 1,
       error
@@ -185,7 +197,7 @@ const importUsers = async (csvRows: string[][]) => {
   return {
     imported: validUsers.length,
     failed: errors.length,
-    errors: errors.map(e => `Row ${e.row}: ${e.error}`)
+    errors: R.map(errors, e => `Row ${e.row}: ${e.error}`)
   }
 }
 
@@ -203,27 +215,35 @@ const importUsers = async (csvRows: string[][]) => {
 
 ### Real-World: Stripe Batch Payments
 
+Each mapper returns its failure as an `Err` instead of throwing, so `mapAsync` keeps going and every charge gets a `Result` for `partition`.
+
 ```typescript
 // Process multiple payments, track successes and failures
 const batchCharge = async (charges: ChargeRequest[]) => {
-  const results = await Promise.all(
-    charges.map(async charge =>
+  const results = await mapAsync(
+    charges,
+    async charge =>
       pipe(
         await processPayment(charge.customerId, charge.amount),
         map(payment => ({ customerId: charge.customerId, payment })),
         mapErr(error => ({ customerId: charge.customerId, error }))
-      )
-    )
+      ),
+    { concurrency: 5 }
   )
 
-  const [successful, failed] = partition(results)
+  if (isErr(results)) {
+    return results
+  }
 
-  // Send success receipts
-  await Promise.all(
-    successful.map(({ customerId, payment }) =>
-      sendReceipt(customerId, payment.id)
-    )
+  const [successful, failed] = partition(results.value)
+
+  // Send success receipts. The payments went through, so a failed receipt is only logged
+  const receipts = await mapAsync(
+    successful,
+    ({ customerId, payment }) => sendReceipt(customerId, payment.id),
+    { concurrency: 5 }
   )
+  tapErr(receipts, error => console.error('Receipts failed:', error))
 
   // Alert about failures
   if (failed.length > 0) {
@@ -233,39 +253,35 @@ const batchCharge = async (charges: ChargeRequest[]) => {
     })
   }
 
-  return {
+  return ok({
     successful: successful.length,
     failed: failed.length,
-    failedCustomers: failed.map(f => f.customerId)
-  }
+    failedCustomers: R.map(failed, f => f.customerId)
+  })
 }
 ```
 
 ### Real-World: Image Processing Pipeline
 
 ```typescript
-// Resize multiple images, continue even if some fail
-const resizeImages = async (images: File[]) => {
-  const results = await Promise.all(
-    images.map(async (file, index) =>
-      pipe(
-        validateImage(file),
-        flatMap(valid => resizeImage(valid, { width: 800, height: 600 })),
-        flatMap(resized => uploadToS3(resized)),
-        mapErr(error => ({ filename: file.name, index, error }))
-      )
-    )
+const processImage = async (file: File, index: number) =>
+  pipe(
+    validateImage(file),
+    flatMap(valid => resizeImage(valid, { width: 800, height: 600 })),
+    flatMap(resized => uploadToS3(resized)),
+    mapErr(error => ({ filename: file.name, index, error }))
   )
 
-  const [uploaded, failures] = partition(results)
-
-  return {
-    uploadedUrls: uploaded,
-    failures: failures.map(f =>
-      `${f.filename}: ${f.error.message}`
-    )
-  }
-}
+// Resize multiple images, continue even if some fail
+const resizeImages = async (images: File[]) =>
+  pipe(
+    await mapAsync(images, processImage, { concurrency: 4 }),
+    map(partition()),
+    map(([uploaded, failures]) => ({
+      uploadedUrls: uploaded,
+      failures: R.map(failures, f => `${f.filename}: ${f.error.message}`)
+    }))
+  )
 
 // UI shows:
 // ✅ 8 images uploaded successfully
@@ -277,40 +293,40 @@ const resizeImages = async (images: File[]) => {
 ### Real-World: API Health Checks
 
 ```typescript
-// Check all services, report which are healthy/unhealthy
-const healthCheck = async () => {
-  const services = [
-    { name: 'database', check: () => db.query('SELECT 1') },
-    { name: 'redis', check: () => redis.ping() },
-    { name: 'stripe', check: () => stripe.balance.retrieve() },
-    { name: 's3', check: () => s3.listBuckets() }
-  ]
+type Service = { name: string; check: () => Promise<unknown> }
 
-  const results = await Promise.all(
-    services.map(async ({ name, check }) =>
-      pipe(
-        await tryCatchAsync(check),
-        map(() => name),
-        mapErr((error: any) => ({ service: name, error: error.message }))
-      )
-    )
+const services: Service[] = [
+  { name: 'database', check: () => db.query('SELECT 1') },
+  { name: 'redis', check: () => redis.ping() },
+  { name: 'stripe', check: () => stripe.balance.retrieve() },
+  { name: 's3', check: () => s3.listBuckets() }
+]
+
+const checkService = async ({ name, check }: Service) =>
+  pipe(
+    await tryCatchAsync(check),
+    map(() => name),
+    mapErr((error: any) => ({ service: name, error: error.message }))
   )
 
-  const [healthy, unhealthy] = partition(results)
-
-  return {
-    status: unhealthy.length === 0 ? 'healthy' : 'degraded',
-    healthy,
-    unhealthy: unhealthy.map(s => `${s.service}: ${s.error}`)
-  }
-}
+// Check all services, report which are healthy/unhealthy
+const healthCheck = async () =>
+  pipe(
+    await mapAsync(services, checkService),
+    map(partition()),
+    map(([healthy, unhealthy]) => ({
+      status: unhealthy.length === 0 ? 'healthy' : 'degraded',
+      healthy,
+      unhealthy: R.map(unhealthy, s => `${s.service}: ${s.error}`)
+    }))
+  )
 
 // Response:
-// {
+// Ok({
 //   status: 'degraded',
 //   healthy: ['database', 'redis', 's3'],
 //   unhealthy: ['stripe: Connection timeout']
-// }
+// })
 ```
 
 ### Real-World: Notification Delivery
@@ -318,16 +334,21 @@ const healthCheck = async () => {
 ```typescript
 // Send email to multiple recipients
 const sendBulkEmail = async (recipients: string[], template: EmailTemplate) => {
-  const results = await Promise.all(
-    recipients.map(async email =>
+  const results = await mapAsync(
+    recipients,
+    async email =>
       mapErr(await sendEmail(email, template), error => ({
         email,
         reason: error.message
-      }))
-    )
+      })),
+    { concurrency: 10 }
   )
 
-  const [sent, failed] = partition(results)
+  if (isErr(results)) {
+    return results
+  }
+
+  const [sent, failed] = partition(results.value)
 
   // Log metrics
   analytics.track('bulk_email', {
@@ -341,7 +362,7 @@ const sendBulkEmail = async (recipients: string[], template: EmailTemplate) => {
     await retryFailedEmails(failed)
   }
 
-  return { sent, failed }
+  return ok({ sent, failed })
 }
 ```
 
@@ -349,12 +370,14 @@ const sendBulkEmail = async (recipients: string[], template: EmailTemplate) => {
 
 ## `fromNullable(value, error)` - Handle Optional Values
 
-**When to use**: Array.find(), dictionary lookups, optional fields.
+**When to use**: `R.find()`, dictionary lookups, optional fields.
 
 ### Real-World: Finding Records
 
 ```typescript
-import { fromNullable } from '@ontologyio/receta/result'
+import { eq, where } from '@ontologyio/receta/predicate'
+import { type Result, fromNullable, map, unwrapOr } from '@ontologyio/receta/result'
+import * as R from 'remeda'
 
 const users = [
   { id: '1', email: 'alice@example.com' },
@@ -363,12 +386,12 @@ const users = [
 
 const findUserById = (id: string): Result<User, string> =>
   fromNullable(
-    users.find(u => u.id === id),
+    R.find(users, where({ id: eq(id) })),
     `User not found: ${id}`
   )
 
 // Usage
-pipe(
+R.pipe(
   findUserById('1'),
   map(user => user.email),
   unwrapOr('noreply@example.com')
@@ -382,7 +405,7 @@ pipe(
 const getCartItem = (cart: CartItem[], productId: string) =>
   pipe(
     fromNullable(
-      cart.find(item => item.productId === productId),
+      R.find(cart, where({ productId: eq(productId) })),
       { type: 'not_in_cart', productId }
     ),
     match({
@@ -446,7 +469,7 @@ pipe(
 ```typescript
 const validateAndImportUsers = async (rows: unknown[]) => {
   // Step 1: Validate all (partition to see all errors)
-  const validated = rows.map(validateUser)
+  const validated = R.map(rows, validateUser)
   const [valid, invalid] = partition(validated)
 
   if (invalid.length > 0) {
@@ -457,8 +480,7 @@ const validateAndImportUsers = async (rows: unknown[]) => {
   }
 
   // Step 2: Import all (collect for atomicity)
-  const imported = await Promise.all(valid.map(createUser))
-  return collect(imported)
+  return pipe(await mapAsync(valid, createUser), flatMap(collect()))
 }
 ```
 
@@ -502,7 +524,7 @@ const setupAccount = async (data: AccountData) => {
 | Config validation | ✅ All required | ❌ | ✅ Per field |
 | Payment processing | ✅ Atomic | ❌ | ❌ |
 | Health checks | ❌ | ✅ Show all failures | ❌ |
-| Array.find() | ❌ | ❌ | ✅ |
+| `R.find()` | ❌ | ❌ | ✅ |
 | Optional fields | ❌ | ✅ Best effort | ✅ Per field |
 
 ---

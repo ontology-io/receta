@@ -234,27 +234,29 @@ const signupUser = async (email: string, password: string) => {
 
 ### Real-World: API Pagination
 
+Each page says where the next one is, so the function calls itself until a page has no `next_page`.
+
 ```typescript
-const fetchAllPages = async (url: string) => {
-  let results: Item[] = []
-  let nextUrl: string | null = url
+const fetchPage = (url: string) =>
+  tryCatchAsync(async () => {
+    const res = await fetch(url)
+    return res.json()
+  })
 
-  while (nextUrl) {
-    const pageUrl: string = nextUrl
-    const result = await tryCatchAsync(async () => {
-      const res = await fetch(pageUrl)
-      return res.json()
-    })
+const fetchAllPages = async (
+  url: string,
+  fetched: Item[] = []
+): Promise<Result<Item[], unknown>> => {
+  const page = await fetchPage(url)
 
-    if (isErr(result)) {
-      return result // Propagate error
-    }
-
-    results = [...results, ...result.value.items]
-    nextUrl = result.value.next_page
+  if (isErr(page)) {
+    return page // Propagate error
   }
 
-  return ok(results)
+  const items = [...fetched, ...page.value.items]
+  const { next_page } = page.value
+
+  return next_page ? fetchAllPages(next_page, items) : ok(items)
 }
 ```
 
@@ -307,7 +309,7 @@ const getPrimaryEmail = (username: string) =>
   pipe(
     fetchUser(username),              // Result<User, ApiError>
     map(user => user.emails),         // Result<Email[], ApiError>
-    map(emails => emails.find(e => e.primary)), // Result<Email | undefined, ApiError>
+    map(emails => R.find(emails, e => e.primary)), // Result<Email | undefined, ApiError>
     map(email => fromNullable(email, 'No primary email')), // Result<Result<Email, string>, ApiError>
     flatten()                          // Result<Email, ApiError | string>
   )

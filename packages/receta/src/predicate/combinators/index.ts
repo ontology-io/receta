@@ -18,22 +18,28 @@ import type { Predicate, TypePredicate } from '../types'
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { gt, lt, and } from '@ontologyio/receta/predicate'
+ * import { gt, gte, lt, and, where } from '@ontologyio/receta/predicate'
  *
  * // Combine comparisons
  * const numbers = [1, 5, 10, 15, 20]
  * R.filter(numbers, and(gt(5), lt(15))) // => [10]
  *
  * // Multiple conditions
- * const users = [
+ * interface User {
+ *   age: number
+ *   active: boolean
+ *   verified: boolean
+ * }
+ *
+ * const users: User[] = [
  *   { age: 25, active: true, verified: true },
  *   { age: 30, active: false, verified: true },
  *   { age: 35, active: true, verified: false }
  * ]
  * R.filter(
  *   users,
- *   and(
- *     (u) => u.age >= 25,
+ *   and<User>(
+ *     where({ age: gte(25) }),
  *     (u) => u.active,
  *     (u) => u.verified
  *   )
@@ -203,14 +209,14 @@ export const xor =
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { always } from '@ontologyio/receta/predicate'
+ * import { always, gt } from '@ontologyio/receta/predicate'
  *
  * // Keep all items
  * R.filter([1, 2, 3], always()) // => [1, 2, 3]
  *
  * // Real-world: Default case in conditional filtering
  * const shouldFilter = Math.random() > 0.5
- * const predicate = shouldFilter ? (n: number) => n > 5 : always<number>()
+ * const predicate = shouldFilter ? gt(5) : always<number>()
  * R.filter([1, 5, 10], predicate)
  * ```
  *
@@ -228,14 +234,14 @@ export const always = <T>(): Predicate<T> => () => true
  * @example
  * ```typescript
  * import * as R from 'remeda'
- * import { never } from '@ontologyio/receta/predicate'
+ * import { eq, never, where } from '@ontologyio/receta/predicate'
  *
  * // Filter out all items
  * R.filter([1, 2, 3], never()) // => []
  *
  * // Real-world: Disable filtering temporarily
  * const isDebugMode = process.env.DEBUG === 'true'
- * const predicate = isDebugMode ? never<Log>() : (log) => log.level === 'error'
+ * const predicate = isDebugMode ? never<Log>() : where<Log>({ level: eq('error') })
  * ```
  *
  * @see always - for a predicate that always returns true

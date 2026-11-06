@@ -128,19 +128,15 @@ async function filterAsyncImplementation<T>(
  *
  * @example
  * ```typescript
- * // Throws on error
- * try {
- *   const existingUsers = await filterAsyncOrThrow(
- *     userIds,
- *     async (id) => {
- *       const res = await fetch(`/api/users/${id}`)
- *       return res.ok
- *     },
- *     { concurrency: 5 }
- *   )
- * } catch (error) {
- *   console.error('Filter failed:', error)
- * }
+ * // throws a FilterAsyncError if any predicate fails
+ * const existingUsers = await filterAsyncOrThrow(
+ *   userIds,
+ *   async (id) => {
+ *     const res = await fetch(`/api/users/${id}`)
+ *     return res.ok
+ *   },
+ *   { concurrency: 5 }
+ * )
  * ```
  *
  * @see filterAsync - Result-returning variant (recommended)

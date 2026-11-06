@@ -100,7 +100,10 @@ diff(
 ## Real-World: Stripe Webhook Events
 
 ```typescript
+import { mapAsync } from '@ontologyio/receta/async'
 import { diff } from '@ontologyio/receta/collection'
+import { map } from '@ontologyio/receta/result'
+import * as R from 'remeda'
 
 interface Customer {
   id: string
@@ -115,39 +118,34 @@ async function syncCustomers(localCustomers: Customer[]) {
 
   const changes = diff(localCustomers, stripeCustomers.data, c => c.id)
 
-  // Send webhook events for each type of change
-  for (const customer of changes.added) {
-    await webhook.send({
+  // One webhook event for each change
+  const events = [
+    ...R.map(changes.added, customer => ({
       type: 'customer.created',
       data: { object: customer }
-    })
-  }
-
-  for (const { old, new: updated } of changes.updated) {
-    await webhook.send({
+    })),
+    ...R.map(changes.updated, ({ old, new: updated }) => ({
       type: 'customer.updated',
       data: {
         object: updated,
         previous_attributes: diffAttributes(old, updated)
       }
-    })
-  }
-
-  for (const customer of changes.removed) {
-    await webhook.send({
+    })),
+    ...R.map(changes.removed, customer => ({
       type: 'customer.deleted',
       data: { object: customer }
-    })
-  }
+    }))
+  ]
 
-  return changes
+  // Send them one at a time, stopping at the first failure
+  const sent = await mapAsync(events, event => webhook.send(event), { concurrency: 1 })
+
+  return map(sent, () => changes)
 }
 
-function diffAttributes(old: Customer, updated: Customer) {
-  const attrs: Partial<Customer> = {}
-  if (old.email !== updated.email) attrs.email = old.email
-  if (old.name !== updated.name) attrs.name = old.name
-  return attrs
+// The old values of the fields that changed
+function diffAttributes(old: Customer, updated: Customer): Partial<Customer> {
+  return R.pickBy(R.pick(old, ['email', 'name']), (value, field) => value !== updated[field])
 }
 ```
 
@@ -169,7 +167,7 @@ function trackOrderChanges(
   const changes = diff(previousOrders, currentOrders, o => o.id)
 
   // Notify customers of status changes
-  for (const { old, new: updated } of changes.updated) {
+  R.forEach(changes.updated, ({ old, new: updated }) => {
     if (old.status !== updated.status) {
       sendCustomerNotification(updated.customerId, {
         orderId: updated.id,
@@ -178,7 +176,7 @@ function trackOrderChanges(
         message: getStatusMessage(updated.status)
       })
     }
-  }
+  })
 
   // Alert for new orders
   if (changes.added.length > 0) {
@@ -220,10 +218,10 @@ function reconcileOptimisticState(
   const confirmed = changes.unchanged
 
   // Failed optimistic updates (removed from server response)
-  const failed = changes.removed.filter(t => t.optimistic)
+  const failed = R.filter(changes.removed, where<Todo>({ optimistic: Boolean }))
 
   // Server made additional changes
-  const serverUpdated = changes.updated.map(u => u.new)
+  const serverUpdated = R.map(changes.updated, u => u.new)
 
   // New items from other clients
   const fromOthers = changes.added
@@ -245,6 +243,9 @@ interface Document {
   lastModifiedBy: string
 }
 
+const editedBySomeoneElse = ({ old, new: updated }: UpdatedItem<Document>) =>
+  old.lastModifiedBy !== updated.lastModifiedBy
+
 function handleDocumentUpdates(
   localDocs: Document[],
   serverDocs: Document[]
@@ -257,15 +258,12 @@ function handleDocumentUpdates(
   )
 
   // Merge conflicts: local and server both changed
-  const conflicts = changes.updated.filter(
-    ({ old, new: updated }) =>
-      old.lastModifiedBy !== updated.lastModifiedBy
-  )
+  const conflicts = R.filter(changes.updated, editedBySomeoneElse)
 
   if (conflicts.length > 0) {
     return {
       type: 'conflict',
-      conflicts: conflicts.map(c => ({
+      conflicts: R.map(conflicts, c => ({
         documentId: c.old.id,
         localVersion: c.old,
         serverVersion: c.new
@@ -284,38 +282,32 @@ function handleDocumentUpdates(
 ## Detecting Specific Field Changes
 
 ```typescript
+import { diff } from '@ontologyio/receta/collection'
 import { mask } from '@ontologyio/receta/object'
+import * as R from 'remeda'
 
 function detectFieldChanges<T extends Record<string, any>>(
   old: T,
   updated: T,
   fields: (keyof T)[]
 ): Partial<T> {
-  const changed: Partial<T> = {}
-
-  for (const field of fields) {
-    if (old[field] !== updated[field]) {
-      changed[field] = old[field]
-    }
-  }
-
-  return changed
+  return R.pickBy(R.pick(old, fields), (value, field) => value !== updated[field])
 }
 
 // Usage with diff
 const changes = diff(oldUsers, newUsers, u => u.id)
 
-for (const { old, new: updated } of changes.updated) {
+R.forEach(changes.updated, ({ old, new: updated }) => {
   const fieldChanges = detectFieldChanges(old, updated, ['email', 'role'])
 
-  if (Object.keys(fieldChanges).length > 0) {
+  if (R.keys(fieldChanges).length > 0) {
     auditLog.record({
       userId: updated.id,
       changedFields: fieldChanges,
-      newValues: mask(updated, Object.keys(fieldChanges))
+      newValues: mask(updated, R.keys(fieldChanges))
     })
   }
-}
+})
 ```
 
 ## Performance Optimization
@@ -355,7 +347,7 @@ diff(
 
 ```typescript
 const { updated } = diff(old, current, getId)
-updated.forEach(({ old, new: item }) => notify(item))
+R.forEach(updated, ({ old, new: item }) => notify(item))
 ```
 
 ### Pattern 2: Batch Changes
@@ -366,8 +358,8 @@ const changes = diff(old, current, getId)
 if (changes.added.length + changes.updated.length + changes.removed.length > 0) {
   await batchUpdate({
     insert: changes.added,
-    update: changes.updated.map(u => u.new),
-    delete: changes.removed.map(r => r.id)
+    update: R.map(changes.updated, u => u.new),
+    delete: R.map(changes.removed, r => r.id)
   })
 }
 ```
@@ -395,41 +387,31 @@ console.log(summarizeChanges(changes))
 function createAuditEntries<T extends { id: string }>(
   changes: DiffResult<T>,
   userId: string
-) {
-  const entries: AuditEntry<T>[] = []
-
-  for (const item of changes.added) {
-    entries.push({
+): AuditEntry<T>[] {
+  return [
+    ...R.map(changes.added, item => ({
       action: 'create',
       entityId: item.id,
       by: userId,
       timestamp: new Date(),
       data: item
-    })
-  }
-
-  for (const { old, new: updated } of changes.updated) {
-    entries.push({
+    })),
+    ...R.map(changes.updated, ({ old, new: updated }) => ({
       action: 'update',
       entityId: updated.id,
       by: userId,
       timestamp: new Date(),
       before: old,
       after: updated
-    })
-  }
-
-  for (const item of changes.removed) {
-    entries.push({
+    })),
+    ...R.map(changes.removed, item => ({
       action: 'delete',
       entityId: item.id,
       by: userId,
       timestamp: new Date(),
       data: item
-    })
-  }
-
-  return entries
+    }))
+  ]
 }
 ```
 
@@ -437,6 +419,7 @@ function createAuditEntries<T extends { id: string }>(
 
 ```typescript
 import { pipe } from 'remeda'
+import { diff } from '@ontologyio/receta/collection'
 
 const syncPipeline = pipe(
   localData,
@@ -457,7 +440,7 @@ const changes = diff(oldUsers, newUsers, u => u.id)
 // changes: DiffResult<User>
 
 // Narrowing updated items
-changes.updated.forEach(({ old, new: updated }) => {
+R.forEach(changes.updated, ({ old, new: updated }) => {
   // old: User, updated: User
   if (old.role !== updated.role) {
     // Type-safe field access

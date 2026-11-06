@@ -25,7 +25,11 @@ import { memoize as memoizeImpl } from '../../memo/memoize'
  * // Memoizing expensive computations
  * const expensiveCalc = memoize((data: string) => {
  *   console.log('Computing...')
- *   return data.split('').reverse().join('')
+ *   return R.pipe(
+ *     data.split(''),
+ *     R.reverse(),
+ *     R.join(''),
+ *   )
  * })
  *
  * expensiveCalc('hello')  // Logs "Computing...", returns "olleh"

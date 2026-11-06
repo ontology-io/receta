@@ -16,7 +16,7 @@ import type { ReturnTypes } from '../types'
  *   (nums: number[]) => nums.length,
  *   (nums: number[]) => Math.min(...nums),
  *   (nums: number[]) => Math.max(...nums),
- *   (nums: number[]) => nums.reduce((a, b) => a + b, 0) / nums.length
+ *   (nums: number[]) => R.sum(nums) / nums.length
  * ])
  *
  * analyze([1, 2, 3, 4, 5])

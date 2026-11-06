@@ -91,42 +91,25 @@ interface SearchFilters {
   tags?: string[]
 }
 
-const buildProductFilter = (filters: SearchFilters): Predicate<Product> => {
-  const predicates: Predicate<Product>[] = []
-
-  if (filters.category) {
-    predicates.push(where({ category: eq(filters.category) }))
-  }
-
-  if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-    const min = filters.minPrice ?? 0
-    const max = filters.maxPrice ?? Infinity
-    predicates.push(where({ price: between(min, max) }))
-  }
-
-  if (filters.minRating) {
-    predicates.push(where({ rating: gte(filters.minRating) }))
-  }
-
-  if (filters.brands && filters.brands.length > 0) {
-    predicates.push(where({ brand: oneOf(filters.brands) }))
-  }
-
-  if (filters.onlyInStock) {
-    predicates.push(where({ inStock: eq(true) }))
-  }
-
-  if (filters.tags && filters.tags.length > 0) {
-    predicates.push(
-      where({
-        tags: (productTags: string[]) =>
-          filters.tags!.some(tag => productTags.includes(tag))
-      })
-    )
-  }
-
-  return predicates.length > 0 ? and(...predicates) : always<Product>()
-}
+// A filter the user left out becomes always(), which lets every product through
+const buildProductFilter = ({
+  category,
+  minPrice = 0,
+  maxPrice = Infinity,
+  minRating = 0,
+  brands = [],
+  onlyInStock = false,
+  tags = []
+}: SearchFilters): Predicate<Product> =>
+  and<Product>(
+    category ? where({ category: eq(category) }) : always(),
+    where({ price: between(minPrice, maxPrice), rating: gte(minRating) }),
+    isEmpty(brands) ? always() : where({ brand: oneOf(brands) }),
+    onlyInStock ? where({ inStock: eq(true) }) : always(),
+    isEmpty(tags)
+      ? always()
+      : where({ tags: (productTags: string[]) => tags.some(oneOf(productTags)) })
+  )
 
 // Usage
 const searchResults = R.filter(
@@ -254,9 +237,7 @@ const isTrusted = or<User>(
     isVerified,
     highReputation,
     where({ accountAgeDays: gte(180) }),
-    where({
-      flags: by((flags: string[]) => flags.length, eq(0))
-    })
+    where({ flags: isEmpty })
   )
 )
 ```
@@ -278,7 +259,7 @@ const canView = (user: User, resource: Resource): boolean =>
     // Public resources
     () => resource.public,
     // Collaborators
-    (u) => resource.collaborators.includes(u.id),
+    where({ id: oneOf(resource.collaborators) }),
     // Admins can view everything
     isAdmin
   )(user)
@@ -291,7 +272,7 @@ const canEdit = (user: User, resource: Resource): boolean =>
     isAdmin,
     // Verified collaborators can edit
     and<User>(
-      (u) => resource.collaborators.includes(u.id),
+      where({ id: oneOf(resource.collaborators) }),
       isVerified
     )
   )(user)
@@ -353,7 +334,7 @@ const isCritical = hasLabel('critical')
 const needsTriage = and<Issue>(
   open,
   unassigned,
-  where({ labels: (labels: string[]) => labels.length === 0 })
+  where({ labels: isEmpty })
 )
 
 // Stale issues (open, no activity in 90 days)
@@ -434,6 +415,9 @@ const disputed = and<Charge>(
 ### Signup Form Validation
 
 ```typescript
+import { and, by, eq, gte, matches, satisfies, where } from '@ontologyio/receta/predicate'
+import { fromPredicate, validate } from '@ontologyio/receta/validation'
+
 interface SignupForm {
   email: string
   password: string
@@ -458,37 +442,28 @@ const isStrongPassword = and(
 // Age validation
 const isAdult = gte(18)
 
-// Validate entire form
-const validateSignup = (form: SignupForm): string[] => {
-  const errors: string[] = []
+const passwordsMatch = satisfies((form: SignupForm) =>
+  form.password === form.confirmPassword
+)
 
-  if (!isValidEmail(form.email)) {
-    errors.push('Invalid email address')
-  }
-
-  if (!isStrongPassword(form.password)) {
-    errors.push('Password must be 8+ chars with uppercase, lowercase, number, and special char')
-  }
-
-  if (form.password !== form.confirmPassword) {
-    errors.push('Passwords do not match')
-  }
-
-  if (!isAdult(form.age)) {
-    errors.push('Must be 18 or older')
-  }
-
-  if (!form.agreeToTerms) {
-    errors.push('Must agree to terms and conditions')
-  }
-
-  return errors
-}
+// Validate entire form. Every failed check adds its message.
+const validateSignup = validate<SignupForm, string>([
+  fromPredicate(where<SignupForm>({ email: isValidEmail }), 'Invalid email address'),
+  fromPredicate(
+    where<SignupForm>({ password: isStrongPassword }),
+    'Password must be 8+ chars with uppercase, lowercase, number, and special char'
+  ),
+  fromPredicate(passwordsMatch, 'Passwords do not match'),
+  fromPredicate(where<SignupForm>({ age: isAdult }), 'Must be 18 or older'),
+  fromPredicate(where<SignupForm>({ agreeToTerms: eq(true) }), 'Must agree to terms and conditions')
+])
 ```
 
 ### Multi-Step Form Validation
 
 ```typescript
+import { between, by, isNotEmpty, matches, oneOf, where } from '@ontologyio/receta/predicate'
+
 interface Step1Data {
   firstName: string
   lastName: string
@@ -549,13 +524,14 @@ interface Article {
 const searchArticles = (
   articles: Article[],
   query: string,
-  filters?: {
+  filters: {
     author?: string
     tags?: string[]
     onlyFeatured?: boolean
     minViews?: number
-  }
+  } = {}
 ) => {
+  const { author, tags = [], onlyFeatured = false, minViews = 0 } = filters
   const searchTerm = query.toLowerCase()
 
   // Text search predicate
@@ -564,31 +540,19 @@ const searchArticles = (
     by((a: Article) => a.content.toLowerCase(), includes(searchTerm))
   )
 
-  // Build filter predicates
-  const predicates: Predicate<Article>[] = [matchesSearch]
-
-  if (filters?.author) {
-    predicates.push(where({ author: eq(filters.author) }))
-  }
-
-  if (filters?.tags && filters.tags.length > 0) {
-    predicates.push(
-      where({
-        tags: (articleTags: string[]) =>
-          filters.tags!.some(tag => articleTags.includes(tag))
-      })
+  // Combine the search with whichever filters were given
+  return R.filter(
+    articles,
+    and<Article>(
+      matchesSearch,
+      author ? where({ author: eq(author) }) : always(),
+      isEmpty(tags)
+        ? always()
+        : where({ tags: (articleTags: string[]) => tags.some(oneOf(articleTags)) }),
+      onlyFeatured ? where({ featured: eq(true) }) : always(),
+      where({ viewCount: gte(minViews) })
     )
-  }
-
-  if (filters?.onlyFeatured) {
-    predicates.push(where({ featured: eq(true) }))
-  }
-
-  if (filters?.minViews) {
-    predicates.push(where({ viewCount: gte(filters.minViews) }))
-  }
-
-  return R.filter(articles, and(...predicates))
+  )
 }
 ```
 
@@ -597,17 +561,8 @@ const searchArticles = (
 ```typescript
 // Count results per facet
 const getFacetCounts = (products: Product[]) => {
-  const categories = R.pipe(
-    products,
-    R.groupBy((p) => p.category),
-    R.mapValues((items) => items.length)
-  )
-
-  const brands = R.pipe(
-    products,
-    R.groupBy((p) => p.brand),
-    R.mapValues((items) => items.length)
-  )
+  const categories = R.countBy(products, (p) => p.category)
+  const brands = R.countBy(products, (p) => p.brand)
 
   const priceRanges = {
     under50: R.filter(products, where({ price: lt(50) })).length,
@@ -761,16 +716,14 @@ const needsReview = or<Post>(
   where({ flagCount: gte(3) }),
   where({
     reportedReasons: (reasons: string[]) =>
-      reasons.some(r => ['spam', 'hate', 'violence'].includes(r))
+      reasons.some(oneOf(['spam', 'hate', 'violence']))
   })
 )
 
 // Auto-approve (trusted author, no flags)
 const autoApprove = and<Post>(
   where({ flagCount: eq(0) }),
-  where({
-    authorId: (id: string) => trustedAuthors.includes(id)
-  })
+  where({ authorId: oneOf(trustedAuthors) })
 )
 
 // Needs manual review (somewhere in between)

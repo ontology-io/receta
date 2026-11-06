@@ -17,7 +17,7 @@ Sorting seems simple until you need to:
 
 Here's what you typically write:
 
-```typescript
+```typescript vanilla
 interface Issue {
   status: 'open' | 'closed'
   priority: 'low' | 'medium' | 'high'
@@ -72,12 +72,14 @@ All these products need **reusable, composable sorting logic**.
 
 ```typescript
 import { ascending, compose, byDate } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 // ✅ Readable, reusable, composable
 const statusOrder = { open: 0, closed: 1 }
 const priorityOrder = { high: 0, medium: 1, low: 2 }
 
-issues.sort(
+const sorted = R.sort(
+  issues,
   compose(
     ascending(i => statusOrder[i.status]),
     ascending(i => priorityOrder[i.priority]),
@@ -85,6 +87,8 @@ issues.sort(
   )
 )
 ```
+
+`R.sort` returns a sorted copy and leaves `issues` as it was, so keep what it returns.
 
 **Benefits:**
 1. **Reusable** - Extract `byPriority = ascending(i => priorityOrder[i.priority])`
@@ -97,7 +101,7 @@ issues.sort(
 
 ### Problem 1: Array.sort() Doesn't Compose
 
-```typescript
+```typescript vanilla
 // ❌ Can't reuse or combine
 const sortByPrice = (a: Product, b: Product) => a.price - b.price
 const sortByStock = (a: Product, b: Product) => a.stock - b.stock
@@ -108,6 +112,7 @@ const sortByStock = (a: Product, b: Product) => a.stock - b.stock
 ```typescript
 // ✅ Comparators compose naturally
 import { ascending, compose } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 const byPrice = ascending((p: Product) => p.price)
 const byStock = ascending((p: Product) => p.stock)
@@ -115,33 +120,37 @@ const byStock = ascending((p: Product) => p.stock)
 // Compose them!
 const byPriceThenStock = compose(byPrice, byStock)
 
-products.sort(byPriceThenStock)
+const sorted = R.sort(products, byPriceThenStock)
 ```
 
 ### Problem 2: Array.sort() Loses Type Information
 
-```typescript
+```typescript vanilla
 // ❌ No type safety
 items.sort((a, b) => a.createdAd - b.createdAt) // Typo! Runtime error
+```
 
+```typescript
 // ✅ TypeScript catches typos
 import { byDate } from '@ontologyio/receta/compare'
-items.sort(byDate(i => i.createdAd)) // ❌ Compile error: Property 'createdAd' doesn't exist
+import * as R from 'remeda'
+
+const sorted = R.sort(items, byDate(i => i.createdAd)) // ❌ Compile error: Property 'createdAd' doesn't exist
 ```
 
 ### Problem 3: Array.sort() Doesn't Work in Pipelines
 
-```typescript
-// ❌ Have to break out of the pipe
-const result = R.pipe(
-  items,
-  R.filter(isActive),
-  // Can't pass a comparator here easily
-  (items) => [...items].sort((a, b) => a.priority - b.priority)
-)
+```typescript vanilla
+// ❌ A method isn't a pipeline step, so it needs a wrapper, and a copy because it sorts in place
+const sortByPriority = (list: Item[]) => [...list].sort((a, b) => a.priority - b.priority)
 
+const result = sortByPriority(items.filter(isActive))
+```
+
+```typescript
 // ✅ Works seamlessly with Remeda
 import { ascending } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 const result = R.pipe(
   items,
@@ -152,14 +161,18 @@ const result = R.pipe(
 
 ### Problem 4: Array.sort() Hides Null Handling
 
-```typescript
+```typescript vanilla
 // ❌ A null quietly counts as 0, so it lands among the real values
 items.sort((a, b) => (a.value ?? 0) - (b.value ?? 0))
+```
 
+```typescript
 // ✅ Say where nulls go: false sorts before true
 import { ascending, byBoolean, compose } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
-items.sort(
+const sorted = R.sort(
+  items,
   compose(
     byBoolean(i => i.value === null), // Items with no value go last
     ascending(i => i.value ?? 0)
@@ -175,6 +188,7 @@ Sort by multiple columns with different directions:
 
 ```typescript
 import { compose, ascending, descending } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 interface Employee {
   department: string
@@ -183,7 +197,8 @@ interface Employee {
 }
 
 // Sort by department (asc), then salary (desc)
-employees.sort(
+const sorted = R.sort(
+  employees,
   compose(
     ascending(e => e.department),
     descending(e => e.salary)
@@ -196,7 +211,7 @@ employees.sort(
 Handle complex sorting from query params:
 
 ```typescript
-import { ascending, descending, byDate, compose } from '@ontologyio/receta/compare'
+import { ascending, byDate, reverse, type Comparator } from '@ontologyio/receta/compare'
 
 interface SearchParams {
   sortBy: 'date' | 'relevance' | 'price'
@@ -220,6 +235,7 @@ Natural sorting for file names:
 
 ```typescript
 import { natural, compose, ascending } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 interface FileEntry {
   type: 'file' | 'directory'
@@ -227,7 +243,8 @@ interface FileEntry {
 }
 
 // Directories first, then natural sort by name
-files.sort(
+R.sort(
+  files,
   compose(
     ascending(f => f.type === 'directory' ? 0 : 1),
     natural(f => f.name)
@@ -242,6 +259,7 @@ Sort players by score, breaking ties by time:
 
 ```typescript
 import { withTiebreaker, descending, ascending } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 interface Player {
   name: string
@@ -250,7 +268,8 @@ interface Player {
 }
 
 // Highest score first, fastest time breaks ties
-players.sort(
+const sorted = R.sort(
+  players,
   withTiebreaker(
     descending(p => p.score),
     ascending(p => p.completionTime)
@@ -264,9 +283,10 @@ Locale-aware string sorting:
 
 ```typescript
 import { localeCompare } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 const germanCities = ['München', 'Berlin', 'Zürich']
-germanCities.sort(localeCompare(x => x, 'de-DE'))
+R.sort(germanCities, localeCompare(x => x, 'de-DE'))
 // => Correctly handles ü, ö, ä according to German rules
 ```
 
@@ -277,7 +297,7 @@ Think of comparators as **Lego bricks** for sorting:
 ```
 ┌─────────────────────────────────────────────┐
 │              Final Comparator               │
-│  (What you pass to array.sort())            │
+│  (What you pass to R.sort())                │
 └─────────────────────────────────────────────┘
                     ▲
                     │
@@ -384,18 +404,23 @@ Different types need different comparisons:
 
 ### vs Lodash `_.orderBy`
 
-```typescript
+```typescript vanilla
 // Lodash
 _.orderBy(users, ['status', 'priority', 'createdAt'], ['asc', 'desc', 'asc'])
 
 // ❌ Problems:
 // - Property names are strings (no type safety)
-// - Limited to object properties (can't use computed values)
 // - Order array must match property array
 // - No composition or reusability
+```
 
+```typescript
 // Compare
-users.sort(
+import { ascending, byDate, compose, descending } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
+
+const sorted = R.sort(
+  users,
   compose(
     ascending(u => u.status),
     descending(u => u.priority),
@@ -408,22 +433,27 @@ users.sort(
 
 ### vs Native `Intl.Collator`
 
-```typescript
+```typescript vanilla
 // Intl.Collator (good for strings)
 const collator = new Intl.Collator('de-DE')
 names.sort((a, b) => collator.compare(a, b))
 
 // ❌ Only works for strings, verbose for objects
+```
 
+```typescript
 // Compare (uses String.prototype.localeCompare)
-names.sort(localeCompare(x => x, 'de-DE'))
+import { localeCompare } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
+
+const sorted = R.sort(names, localeCompare(x => x, 'de-DE'))
 
 // ✅ Works with objects, composable, cleaner syntax
 ```
 
 ### vs Ramda `R.sortBy`
 
-```typescript
+```typescript vanilla
 // Ramda
 import { sortBy, prop } from 'ramda'
 
@@ -432,9 +462,14 @@ sortBy(prop('age'), users)
 // ❌ Can only sort by one property
 // ❌ Always ascending
 // ❌ No type inference
+```
 
+```typescript
 // Compare
-users.sort(ascending(u => u.age))
+import { ascending } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
+
+const sorted = R.sort(users, ascending(u => u.age))
 
 // ✅ Full TypeScript support
 // ✅ Composable for multi-level sorting

@@ -57,7 +57,7 @@ import { isInvalid } from '../guards'
  *
  * // Real-world: Bulk validation with full error reporting
  * const validateUsers = (users: unknown[]) =>
- *   collectErrors(users.map(validateUser))
+ *   collectErrors(R.map(users, validateUser))
  * // Get all invalid users with their errors
  * ```
  *

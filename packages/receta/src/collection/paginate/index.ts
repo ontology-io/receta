@@ -18,7 +18,7 @@ import type {
  * @example
  * ```typescript
  * // Data-first
- * const users = Array.from({ length: 100 }, (_, i) => ({ id: i }))
+ * const users = R.times(100, i => ({ id: i }))
  *
  * paginate(users, { page: 1, pageSize: 20 })
  * // => {
@@ -85,7 +85,7 @@ function paginateImplementation<T>(
  * @example
  * ```typescript
  * // Data-first
- * const messages = Array.from({ length: 25 }, (_, i) => ({ id: `msg_${i + 1}` }))
+ * const messages = R.times(25, i => ({ id: `msg_${i + 1}` }))
  *
  * paginateCursor(messages, (m) => m.id, { limit: 10 })
  * // => {

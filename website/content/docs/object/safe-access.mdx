@@ -81,6 +81,8 @@ const loadDbConfig = (config: PlainObject) => {
 
 ```typescript
 import { match, toResult } from '@ontologyio/receta/option'
+import { getPath, type PlainObject } from '@ontologyio/receta/object'
+import { pipe } from 'remeda'
 
 // GitHub API: extract nested data safely
 const getRepoStars = (apiResponse: PlainObject) =>
@@ -124,13 +126,16 @@ const missingUser = getPath(['users', 99, 'email'], data)
 
 ```typescript
 import { map, flatMap, filter } from '@ontologyio/receta/option'
+import { getPath, type PlainObject } from '@ontologyio/receta/object'
+import { pipe } from 'remeda'
+import { gte } from '@ontologyio/receta/predicate'
 
 // Extract and transform nested value
 const getUserAge = (data: PlainObject) =>
   pipe(
     data,
     getPath<number>(['user', 'profile', 'age']),
-    filter(age => age >= 18),  // Only adults
+    filter(gte(18)),  // Only adults
     map(age => `${age} years old`)
   )
 // Some('30 years old') for an adult, None otherwise
@@ -176,13 +181,15 @@ function setPath(path: ObjectPath, value: unknown): <T extends PlainObject>(obj:
 
 ### Why setPath Over Mutation?
 
-```typescript
+```typescript vanilla
 // ❌ Mutation: side effects, hard to track
 function updateConfig(config) {
   config.database.host = 'prod.example.com'
   return config  // Original mutated!
 }
+```
 
+```typescript
 // ✅ setPath: immutable, predictable
 const updated = setPath(['database', 'host'], 'prod.example.com', config)
 // Original unchanged, new object returned
@@ -338,7 +345,7 @@ type Cart = {
 
 // Increment item quantity
 const incrementQuantity = (cart: Cart, itemId: string) => {
-  const itemIndex = cart.items.findIndex(item => item.id === itemId)
+  const itemIndex = R.findIndex(cart.items, where({ id: eq(itemId) }))
 
   return pipe(
     cart,
@@ -400,13 +407,15 @@ const ensureAge = (state: State) => {
 
 ### vs Optional Chaining (`?.`)
 
-```typescript
+```typescript vanilla
 // Optional chaining
 const value = obj?.deeply?.nested?.value ?? 'default'
 
 // Pros: Native, concise for simple cases
 // Cons: Path fixed in the source, nothing to chain on the result
+```
 
+```typescript
 // getPath
 const value = pipe(
   obj,
@@ -420,7 +429,7 @@ const value = pipe(
 
 ### vs Lodash get/set
 
-```typescript
+```typescript vanilla
 // Lodash get
 _.get(obj, 'deeply.nested.value', 'default')
 
@@ -429,14 +438,16 @@ _.set(obj, 'deeply.nested.value', 'new')
 
 // Lodash setWith (immutable, but requires cloneDeep)
 _.setWith(_.cloneDeep(obj), 'deeply.nested.value', 'new')
+```
 
+```typescript
 // Receta: immutable by default, type-safe
 setPath(['deeply', 'nested', 'value'], 'new', obj)
 ```
 
 ### vs Immer
 
-```typescript
+```typescript vanilla
 // Immer
 produce(obj, draft => {
   draft.deeply.nested.value = 'new'
@@ -444,7 +455,9 @@ produce(obj, draft => {
 
 // Pros: Mutation-like syntax
 // Cons: Magic, runtime overhead, not composable
+```
 
+```typescript
 // Receta
 setPath(['deeply', 'nested', 'value'], 'new', obj)
 
@@ -470,6 +483,11 @@ setPath(['deeply', 'nested', 'value'], 'new', obj)
 ### Pattern 1: Safe Config Access with Fallbacks
 
 ```typescript
+import { between } from '@ontologyio/receta/predicate'
+import { getPath, type PlainObject } from '@ontologyio/receta/object'
+import { pipe } from 'remeda'
+import { unwrapOr, map, filter } from '@ontologyio/receta/option'
+
 const getAppConfig = (rawConfig: PlainObject): AppConfig => ({
   apiUrl: pipe(
     rawConfig,
@@ -485,7 +503,7 @@ const getAppConfig = (rawConfig: PlainObject): AppConfig => ({
   retries: pipe(
     rawConfig,
     getPath<number>(['api', 'retries']),
-    filter(n => n >= 0 && n <= 5),  // Validate range
+    filter(between(0, 5)),  // Validate range
     unwrapOr(3)
   )
 })
@@ -544,25 +562,23 @@ const capitalizeUserName = (state: State) =>
 ### Pattern 4: Bulk Updates
 
 ```typescript
-// Update multiple paths
+// Where each field lives, as data
+const profilePaths: Record<string, ObjectPath> = {
+  name: ['profile', 'name'],
+  email: ['contact', 'email'],
+  bio: ['profile', 'bio']
+}
+
+// Update multiple paths, skipping fields that are empty
 const updateUserProfile = (
   user: User,
   updates: { name?: string; email?: string; bio?: string }
-) => {
-  let result = user
-
-  if (updates.name) {
-    result = setPath(['profile', 'name'], updates.name, result)
-  }
-  if (updates.email) {
-    result = setPath(['contact', 'email'], updates.email, result)
-  }
-  if (updates.bio) {
-    result = setPath(['profile', 'bio'], updates.bio, result)
-  }
-
-  return result
-}
+) =>
+  R.reduce(
+    R.entries(stripEmpty(updates)),
+    (result, [field, value]) => setPath(profilePaths[field], value, result),
+    user
+  )
 ```
 
 ### Pattern 5: Conditional Updates
@@ -577,6 +593,9 @@ const incrementIfExists = (state: State, path: ObjectPath) =>
 
 ```typescript
 import { collect, map as mapResult } from '@ontologyio/receta/result'
+import { getPath, type PlainObject } from '@ontologyio/receta/object'
+import { pipe } from 'remeda'
+import { toResult, unwrapOr } from '@ontologyio/receta/option'
 
 // Extract multiple values from API response
 const extractUserData = (apiResponse: PlainObject) => {

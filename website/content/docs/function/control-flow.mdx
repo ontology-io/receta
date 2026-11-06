@@ -38,13 +38,15 @@ This is `tap`'s killer use case:
 
 ```typescript
 import { pipe, map, filter } from 'remeda'
+import { tap } from '@ontologyio/receta/function'
+import { gt } from '@ontologyio/receta/predicate'
 
 const processData = pipe(
   [1, 2, 3, 4, 5],
   tap((data) => console.log('Input:', data)),
   map((x) => x * 2),
   tap((data) => console.log('After doubling:', data)),
-  filter((x) => x > 5),
+  filter(gt(5)),
   tap((data) => console.log('After filtering:', data))
 )
 
@@ -84,6 +86,7 @@ const processUser = (userId: string) =>
 
 ```typescript
 import { piped } from 'remeda'
+import { tap } from '@ontologyio/receta/function'
 
 const trackEvent = (event: string, data: any) => {
   // Send to analytics service
@@ -320,6 +323,7 @@ You can combine these utilities for powerful pipelines:
 ```typescript
 import { piped } from 'remeda'
 import { tap, tryCatch, memoize } from '@ontologyio/receta/function'
+import { map } from '@ontologyio/receta/result'
 
 const processData = piped(
   tap((input) => logger.debug('Processing', input)),

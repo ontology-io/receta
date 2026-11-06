@@ -49,7 +49,7 @@ export function none<T = never>(): None {
  * fromNullable(undefined) // => None
  *
  * // With array find
- * const user = fromNullable(users.find(u => u.id === id))
+ * const user = fromNullable(R.find(users, where({ id: eq(id) })))
  * ```
  */
 export function fromNullable<T>(value: T | null | undefined): Option<T> {

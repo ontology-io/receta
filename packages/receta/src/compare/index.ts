@@ -9,6 +9,7 @@
  * @example
  * ```typescript
  * import { ascending, compose, byDate } from '@ontologyio/receta/compare'
+ * import * as R from 'remeda'
  *
  * interface Issue {
  *   status: string
@@ -17,7 +18,8 @@
  * }
  *
  * // Multi-level sorting
- * issues.sort(
+ * const sorted = R.sort(
+ *   issues,
  *   compose(
  *     ascending(i => i.status),
  *     ascending(i => i.priority),

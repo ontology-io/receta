@@ -29,7 +29,7 @@ import * as R from 'remeda'
  *   pipe(
  *     percentage(current, total),
  *     (p) => p * 100,
- *     Math.round
+ *     round()
  *   )
  * ```
  *

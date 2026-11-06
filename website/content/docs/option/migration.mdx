@@ -22,8 +22,10 @@ sendEmail(email.toUpperCase()) // 💥 Runtime error!
 **After: Option**
 ```typescript
 function getUserEmail(id: string): Option<string> {
-  const user = users.find(u => u.id === id)
-  return user ? some(user.email) : none()
+  return R.pipe(
+    fromNullable(R.find(users, where({ id: eq(id) }))),
+    map(user => user.email)
+  )
 }
 
 // Type system forces you to handle absence
@@ -55,42 +57,46 @@ function parseNumber(str: string): Option<number>
 
 ### From Explicit null/undefined
 
-```typescript
+```typescript vanilla
 // ❌ Before
 function findUser(id: string): User | undefined {
   const user = users.find(u => u.id === id)
   return user ?? undefined
 }
+```
 
+```typescript
 // ✅ After
 function findUser(id: string): Option<User> {
-  const user = users.find(u => u.id === id)
+  const user = R.find(users, where({ id: eq(id) }))
   return user ? some(user) : none()
 }
 
 // Or simpler:
 function findUser(id: string): Option<User> {
-  return fromNullable(users.find(u => u.id === id))
+  return fromNullable(R.find(users, where({ id: eq(id) })))
 }
 ```
 
 ### From Array Methods
 
-```typescript
+```typescript vanilla
 // ❌ Before
 const first = arr[0] ?? undefined
 const found = arr.find(predicate) ?? undefined
+```
 
+```typescript
 // ✅ After
-const first = fromNullable(arr[0])
-const found = fromNullable(arr.find(predicate))
+const first = fromNullable(R.first(arr))
+const found = fromNullable(R.find(arr, predicate))
 ```
 
 ## Step 3: Replace Null Checks
 
 ### From if statements
 
-```typescript
+```typescript vanilla
 // ❌ Before
 const user = findUser(id)
 if (user !== undefined) {
@@ -98,7 +104,9 @@ if (user !== undefined) {
 } else {
   console.log('Not found')
 }
+```
 
+```typescript
 // ✅ After
 const user = findUser(id)
 match(user, {
@@ -109,10 +117,12 @@ match(user, {
 
 ### From Optional Chaining
 
-```typescript
+```typescript vanilla
 // ❌ Before
 const email = user?.email?.toLowerCase()
+```
 
+```typescript
 // ✅ After
 const email = pipe(
   fromNullable(user),
@@ -123,10 +133,12 @@ const email = pipe(
 
 ### From Nullish Coalescing
 
-```typescript
+```typescript vanilla
 // ❌ Before
 const timeout = config.timeout ?? 5000
+```
 
+```typescript
 // ✅ After
 const timeout = unwrapOr(fromNullable(config.timeout), 5000)
 ```
@@ -135,7 +147,7 @@ const timeout = unwrapOr(fromNullable(config.timeout), 5000)
 
 ### From Multiple Checks
 
-```typescript
+```typescript vanilla
 // ❌ Before
 function getTeamLeadEmail(userId: string): string | undefined {
   const user = users.find(u => u.id === userId)
@@ -149,7 +161,9 @@ function getTeamLeadEmail(userId: string): string | undefined {
 
   return lead.email
 }
+```
 
+```typescript
 // ✅ After
 function getTeamLeadEmail(userId: string): Option<string> {
   return pipe(
@@ -165,20 +179,24 @@ function getTeamLeadEmail(userId: string): Option<string> {
 
 ### Simple Defaults
 
-```typescript
+```typescript vanilla
 // ❌ Before
 const value = maybeValue ?? defaultValue
+```
 
+```typescript
 // ✅ After
 const value = unwrapOr(maybeValue, defaultValue)
 ```
 
 ### Computed Defaults
 
-```typescript
+```typescript vanilla
 // ❌ Before
 const value = maybeValue ?? expensiveComputation()
+```
 
+```typescript
 // ✅ After
 const value = unwrapOrElse(maybeValue, () => expensiveComputation())
 ```
@@ -210,10 +228,8 @@ Bridge between old and new code:
 // New code using Option
 declare function findUserOption(id: string): Option<User>
 
-// Legacy wrapper
-function findUser(id: string): User | undefined {
-  return toNullable(findUserOption(id))
-}
+// Legacy wrapper for callers that still expect null
+const findUser = (id: string) => toNullable(findUserOption(id))
 
 // Gradually phase out legacy wrapper
 ```

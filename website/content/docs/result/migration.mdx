@@ -27,7 +27,7 @@ description: "From try-catch to Result"
 
 ### Before: Hidden Exceptions
 
-```typescript
+```typescript vanilla
 // ❌ No indication this can fail
 function parseJSON(str: string) {
   return JSON.parse(str) // Throws SyntaxError
@@ -53,11 +53,13 @@ function parseJSON<T>(str: string): Result<T, SyntaxError> {
 
 function getUser(id: string): Result<User, string> {
   return fromNullable(
-    users.find(u => u.id === id),
+    R.find(users, where({ id: eq(id) })),
     'User not found'
   )
 }
 ```
+
+Receta already ships this `parseJSON`, so import [`parseJSON`](../reference/result.mdx#parsejson) rather than writing it. Wrap your own throwing functions the same way.
 
 ---
 
@@ -66,7 +68,7 @@ function getUser(id: string): Result<User, string> {
 ### Pattern 1: Simple try-catch
 
 **Before:**
-```typescript
+```typescript vanilla
 function loadConfig() {
   try {
     const content = fs.readFileSync('config.json', 'utf8')
@@ -83,7 +85,7 @@ function loadConfig() {
 function loadConfig(): Config {
   return pipe(
     tryCatch(() => fs.readFileSync('config.json', 'utf8')),
-    flatMap(content => tryCatch(() => JSON.parse(content))),
+    flatMap(content => parseJSON<Config>(content)),
     tapErr(error => console.error('Failed to load config:', error)),
     unwrapOr(defaultConfig)
   )
@@ -93,7 +95,7 @@ function loadConfig(): Config {
 ### Pattern 2: Nested try-catch
 
 **Before:**
-```typescript
+```typescript vanilla
 async function createUser(email: string, password: string) {
   try {
     const hash = await bcrypt.hash(password, 10)
@@ -127,16 +129,17 @@ async function createUser(
   )
   if (isErr(hash)) return hash
 
-  return pipe(
-    await tryCatchAsync(
-      () => db.user.create({ email, passwordHash: hash.value }),
-      (error) => `Database error: ${error}`
-    ),
-    tap(user => {
-      // Email is optional - don't fail the whole operation
-      sendWelcomeEmail(user.email).catch(console.error)
-    })
+  const user = await tryCatchAsync(
+    () => db.user.create({ email, passwordHash: hash.value }),
+    (error) => `Database error: ${error}`
   )
+  if (isErr(user)) return user
+
+  // Email is optional - don't fail the whole operation
+  const welcome = await tryCatchAsync(() => sendWelcomeEmail(user.value.email))
+  tapErr(welcome, console.error)
+
+  return user
 }
 ```
 
@@ -145,7 +148,7 @@ async function createUser(
 ### Pattern 3: Error Re-throwing
 
 **Before:**
-```typescript
+```typescript vanilla
 async function fetchUserData(id: string) {
   try {
     const user = await fetchUser(id)
@@ -186,7 +189,7 @@ async function fetchUserData(
 
 ### Before: try-catch at Call Site
 
-```typescript
+```typescript vanilla
 import type { Request, Response } from 'express'
 
 async function handler(req: Request, res: Response) {
@@ -224,7 +227,7 @@ async function handler(req: Request, res: Response) {
 
 ### Before: Sequential try-catch
 
-```typescript
+```typescript vanilla
 async function processOrder(orderId: string) {
   try {
     const order = await fetchOrder(orderId)
@@ -268,7 +271,7 @@ When the steps are synchronous, the same logic is a `pipe` of `flatMap` calls.
 
 ### Before: Null Checks Everywhere
 
-```typescript
+```typescript vanilla
 function getUserEmail(userId: string): string | null {
   const user = users.find(u => u.id === userId)
   if (!user) return null
@@ -291,7 +294,7 @@ if (email === null) {
 function getUserEmail(userId: string): Result<string, string> {
   return pipe(
     fromNullable(
-      users.find(u => u.id === userId),
+      R.find(users, where({ id: eq(userId) })),
       'User not found'
     ),
     flatMap(user =>
@@ -314,7 +317,7 @@ match(email, {
 
 ### Before: Throwing Validators
 
-```typescript
+```typescript vanilla
 function validateUser(data: unknown): User {
   if (!data || typeof data !== 'object') {
     throw new Error('Invalid data')
@@ -373,7 +376,7 @@ match(created, {
 
 ### Before: try-catch in Routes
 
-```typescript
+```typescript vanilla
 app.post('/api/users', async (req, res) => {
   try {
     const user = await db.user.create({ data: req.body })

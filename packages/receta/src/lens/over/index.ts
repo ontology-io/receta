@@ -58,7 +58,7 @@ import { purryConfig2 } from '../../utils'
  *
  * over(
  *   itemsLens,
- *   items => items.map(item =>
+ *   items => R.map(items, item =>
  *     item.id === 'abc' ? { ...item, quantity: item.quantity + 1 } : item
  *   ),
  *   state
