@@ -1,7 +1,9 @@
 // Serves the static export from R2. A bucket can't answer "/" with index.html on its
-// own, so this Worker maps URLs to objects and does nothing else. Start at serveSite.
+// own, so this Worker maps URLs to objects, after sending old addresses to the site's
+// one public address. Start at serveSite.
 import { fromNullable, match } from '@ontologyio/receta/option'
 import { isDocsPage, NOT_FOUND_KEY, objectKey } from '../src/lib/hosting/objects'
+import { canonicalRedirect } from '../src/lib/hosting/redirects'
 
 type Env = { readonly SITE: R2Bucket }
 
@@ -9,6 +11,13 @@ const READ_METHODS = new Set(['GET', 'HEAD'])
 
 const serveSite = async (request: Request, env: Env): Promise<Response> => {
   if (!READ_METHODS.has(request.method)) return methodNotAllowed()
+  return match(canonicalRedirect(request.url), {
+    onSome: async (location) => Response.redirect(location, 301),
+    onNone: () => serveObject(request, env),
+  })
+}
+
+const serveObject = async (request: Request, env: Env): Promise<Response> => {
   const key = objectKey(new URL(request.url).pathname, request.headers.get('accept') ?? '')
   const stored = await env.SITE.get(key, { onlyIf: request.headers })
   return match(fromNullable(stored), {

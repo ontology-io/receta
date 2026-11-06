@@ -3,7 +3,12 @@
   "name": "receta-website",
   "main": "worker/index.ts",
   "compatibility_date": "2026-10-01",
+  // Stays on so links to the old address can still reach the Worker and be redirected.
   "workers_dev": true,
   "preview_urls": false,
+  "routes": [
+    { "pattern": "receta.dev", "custom_domain": true },
+    { "pattern": "www.receta.dev", "custom_domain": true }
+  ],
   "r2_buckets": [{ "binding": "SITE", "bucket_name": "receta-website" }]
 }

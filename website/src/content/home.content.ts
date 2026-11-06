@@ -3,8 +3,8 @@
 
 const INSTALL_COMMAND = 'bun add @ontologyio/receta remeda'
 
-/** Where the site lives. Change this one line when the domain is ready. */
-export const SITE_URL = 'https://receta-website.khaled-mailhub.workers.dev'
+/** The site's one public address. Canonicals, the sitemap and the Worker's redirects read it. */
+export const SITE_URL = 'https://receta.dev'
 
 /** The published version the site describes. A test keeps it equal to the installed package. */
 export const RECETA_VERSION = '0.4.2'
