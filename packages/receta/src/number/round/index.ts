@@ -5,6 +5,9 @@ import * as R from 'remeda'
  *
  * Uses proper rounding (half away from zero).
  *
+ * One number is always the data-last form, because the value can't be told apart from the
+ * decimals. `round(3.7)` returns a function, so write `round(3.7, 0)` to round a value.
+ *
  * @param value - The number to round
  * @param decimals - Number of decimal places (default: 0)
  * @returns The rounded number
@@ -30,7 +33,7 @@ import * as R from 'remeda'
  *
  * @see toPrecision - for significant digits
  */
-export function round(value: number, decimals?: number): number
+export function round(value: number, decimals: number): number
 export function round(decimals?: number): (value: number) => number
 export function round(...args: any[]): any {
   // Data-first: round(value, decimals?) - only if we have 2 args
