@@ -1,0 +1,268 @@
+---
+title: "Receta vs neverthrow: a neverthrow alternative"
+description: "Looking for a neverthrow alternative? Compare Receta and neverthrow on plain data, async chaining, bundle size and migration, with code run in both."
+---
+
+Both libraries give TypeScript a `Result` type, so a failure shows up in a function's signature instead of being thrown. neverthrow does that one job, and it's the established choice. Receta makes `Result` a plain value and adds the tools around it: `Option`, retries, concurrency limits, validation and more.
+
+**Choose neverthrow** if you want one small, proven dependency, or if your code is mostly chains of async steps.
+
+**Choose Receta** if your results cross a boundary such as server to client, or if you'd otherwise add separate packages for retries, concurrency and validation.
+
+> We make Receta, so read this with that in mind. Every sample and number here was run on November 6, 2026, against neverthrow 8.2.0 and Receta 0.4.2. If something is out of date or unfair to neverthrow, [open an issue](https://github.com/ontology-io/receta/issues).
+
+## At a glance
+
+|  | neverthrow | Receta |
+| --- | --- | --- |
+| **Style** | Methods on a `Result` class | Functions on plain objects, used with `pipe` |
+| **Scope** | `Result` | `Result`, `Option`, async, validation and 9 more modules |
+| **Chaining async steps** | `ResultAsync`, no `await` needed | `await` each step |
+| **Survives JSON and `structuredClone`** | No, the methods are lost | Yes |
+| **Runtime dependencies** | None | [Remeda](https://remedajs.com) |
+| **Size of the example below** | 2.1 KB gzipped | 1.4 KB gzipped |
+| **Install size** | 112 KB | 2.2 MB, plus Remeda |
+| **First npm release** | April 2019 | February 2026 |
+| **Latest npm release** | 8.2.0, February 2025 | 0.4.2, November 2026 |
+| **Weekly npm downloads** | About 5.1 million | About 200 |
+| **License** | MIT | MIT |
+
+Downloads are for the week ending November 4, 2026.
+
+## The same code in both
+
+This function parses a config string and reports the port. It can fail in two ways, and both versions return the same text for valid JSON, a port of the wrong type, and broken JSON.
+
+With neverthrow, each step is a method on the result:
+
+```ts nocheck
+import { err, fromThrowable, ok, type Result } from 'neverthrow'
+
+type ConfigError = { code: 'INVALID_JSON' } | { code: 'INVALID_PORT' }
+type Config = { port: number }
+
+const parseJson = fromThrowable(
+  (raw: string): unknown => JSON.parse(raw),
+  (): ConfigError => ({ code: 'INVALID_JSON' }),
+)
+
+const requirePort = (value: unknown): Result<Config, ConfigError> => {
+  const port = (value as { port?: unknown }).port
+  return typeof port === 'number' ? ok({ port }) : err({ code: 'INVALID_PORT' })
+}
+
+const describePort = (raw: string): string =>
+  parseJson(raw)
+    .andThen(requirePort)
+    .map((config) => config.port)
+    .match(
+      (port) => `Listening on ${port}`,
+      (error) => `Bad config: ${error.code}`,
+    )
+```
+
+With Receta, each step is a stage in a pipe:
+
+```ts
+import * as R from 'remeda'
+import { err, flatMap, map, match, ok, tryCatch, type Result } from '@ontologyio/receta/result'
+
+type ConfigError = { code: 'INVALID_JSON' } | { code: 'INVALID_PORT' }
+type Config = { port: number }
+
+const parseJson = (raw: string): Result<unknown, ConfigError> =>
+  tryCatch(
+    () => JSON.parse(raw) as unknown,
+    (): ConfigError => ({ code: 'INVALID_JSON' }),
+  )
+
+const requirePort = (value: unknown): Result<Config, ConfigError> => {
+  const port = (value as { port?: unknown }).port
+  return typeof port === 'number' ? ok({ port }) : err({ code: 'INVALID_PORT' })
+}
+
+const describePort = (raw: string): string =>
+  R.pipe(
+    parseJson(raw),
+    flatMap(requirePort),
+    map((config) => config.port),
+    match({
+      onOk: (port) => `Listening on ${port}`,
+      onErr: (error) => `Bad config: ${error.code}`,
+    }),
+  )
+
+describePort('{"port":3000}') // => 'Listening on 3000'
+describePort('not json') // => 'Bad config: INVALID_JSON'
+```
+
+The two are close to the same length. Methods give you autocomplete after the dot and need no import per operation. Functions let you write your own operations that work like the built-in ones, and let a bundler drop what you don't use.
+
+## Where they really differ
+
+### Plain data or class instances
+
+A Receta `Result` is an ordinary object:
+
+```ts
+import { ok } from '@ontologyio/receta/result'
+
+JSON.stringify(ok(1)) // => '{"_tag":"Ok","value":1}'
+```
+
+A neverthrow `Result` is an instance of a class, and its behaviour lives on that class:
+
+```ts nocheck
+import { ok } from 'neverthrow'
+
+JSON.stringify(ok(1)) // '{"value":1}'
+structuredClone(ok(1)).isOk // undefined, the methods are gone
+```
+
+This matters when a result leaves the process or the thread: a worker's `postMessage`, a queue, a cache. It also matters in Next.js, which refuses to pass class instances from a Server Component to a Client Component. With neverthrow you convert at each boundary. With Receta the result crosses as it is, and `isOk` still works on the other side.
+
+If your results never leave the function that made them, this difference won't affect you.
+
+### Async chaining
+
+**neverthrow is better here.** `ResultAsync` wraps a promise of a result, so you can keep chaining without stopping to `await`:
+
+```ts nocheck
+import { ResultAsync } from 'neverthrow'
+
+const loadOrders = (id: string): ResultAsync<Order[], ApiError> =>
+  ResultAsync.fromPromise(fetchUser(id), toApiError).andThen((user) =>
+    ResultAsync.fromPromise(fetchOrders(user), toApiError),
+  )
+```
+
+Receta's `flatMap` has no async form, so each step needs an `await` and an early return:
+
+```ts
+import { isErr, tryCatchAsync, type Result } from '@ontologyio/receta/result'
+
+type Order = { total: number }
+type ApiError = { code: 'REQUEST_FAILED' }
+
+const loadOrders = async (id: string): Promise<Result<Order[], ApiError>> => {
+  const user = await tryCatchAsync(() => fetchUser(id), toApiError)
+  if (isErr(user)) return user
+  return tryCatchAsync(() => fetchOrders(user.value), toApiError)
+}
+```
+
+That's fine for two steps and tiring for six. neverthrow also has `safeTry`, which gives you early returns through a generator, and `orElse` for recovering from an error. Receta has no `safeTry`, and you recover with `match`.
+
+### Everything around Result
+
+neverthrow stops at `Result`, and that focus is a large part of its appeal. For the rest, you pick other packages.
+
+Receta includes those pieces, and they return a `Result` you can keep piping:
+
+```ts
+import { mapAsync, retry } from '@ontologyio/receta/async'
+
+const users = await mapAsync(ids, fetchUser, { concurrency: 5 })
+const report = await retry(() => fetchReport(id), { maxAttempts: 3, delay: 200 })
+```
+
+Validation reports every problem at once, not just the first:
+
+```ts
+import { fromPredicate, schema, type ValidationSchema } from '@ontologyio/receta/validation'
+
+type Signup = { email: string; age: number }
+
+const rules: ValidationSchema<Signup, string> = {
+  email: fromPredicate((email: string) => email.includes('@'), 'Email must contain @'),
+  age: fromPredicate((age: number) => age >= 18, 'Must be 18 or over'),
+}
+
+const validateSignup = schema(rules)
+
+validateSignup({ email: 'nope', age: 12 })
+// Invalid, with one error for email and one for age
+```
+
+There's also [`Option`](./option/index.mdx) for values that may be missing, which neverthrow doesn't have. See [Choose a module](./choose-a-module.mdx) for the rest.
+
+### Lint rules
+
+The two plugins solve different problems.
+
+neverthrow's README recommends [`eslint-plugin-neverthrow`](https://www.npmjs.com/package/eslint-plugin-neverthrow), which fails the lint when a `Result` is ignored. That plugin's latest release is from May 2022, so check that it works with your ESLint version. Receta has no rule like it.
+
+`@ontologyio/eslint-plugin-receta` finds code that hasn't moved yet: `try/catch`, functions that return `null`, and array method chains. It can rewrite many of them for you.
+
+### Bundle size
+
+Neither library will be what makes your app heavy. Measured with esbuild, minified, then gzipped:
+
+| What you import | neverthrow | Receta |
+| --- | --- | --- |
+| Just `ok` | 2.0 KB | 0.1 KB |
+| The async example above | 2.1 KB | 0.3 KB |
+| The config example above, with `R.pipe` | 2.1 KB | 1.4 KB |
+
+neverthrow's size barely moves, because its methods live on classes and a bundler keeps all of them. Receta's grows with what you import.
+
+Receta is the larger install, at 2.2 MB unpacked against 112 KB. More than half of that is source maps, so it costs disk space, not bundle size.
+
+## When to choose neverthrow
+
+- You want `Result` and nothing else, with no runtime dependencies.
+- Your code is mostly chains of async steps that can fail.
+- You want a long track record. neverthrow has been on npm since 2019, with millions of weekly downloads. Receta is young, has few users so far, and is at 0.4, so its API can still change.
+- Your team prefers method chains and autocomplete after the dot.
+- You want the linter to fail when a `Result` is ignored.
+
+## When to choose Receta
+
+- Your results cross a boundary: server to client, workers, queues or caches.
+- You already use Remeda, or you like working in `pipe`.
+- You'd otherwise install separate packages for retries, concurrency, validation or missing values.
+- You want lint rules that find the `try/catch` and `null` returns still in your code.
+
+## Moving from neverthrow
+
+You don't have to move everything at once. Convert at the edge of the code you've migrated:
+
+```ts nocheck
+import type { Result as NeverthrowResult } from 'neverthrow'
+import { err, ok, type Result } from '@ontologyio/receta/result'
+
+const fromNeverthrow = <T, E>(result: NeverthrowResult<T, E>): Result<T, E> =>
+  result.match<Result<T, E>>(
+    (value) => ok(value),
+    (error) => err(error),
+  )
+```
+
+Each row below was run in both libraries and gave the same result:
+
+| neverthrow | Receta |
+| --- | --- |
+| `ok(value)`, `err(error)` | `ok(value)`, `err(error)` |
+| `result.isOk()`, `result.isErr()` | `isOk(result)`, `isErr(result)` |
+| `result.map(fn)` | `map(result, fn)` |
+| `result.mapErr(fn)` | `mapErr(result, fn)` |
+| `result.andThen(fn)` | `flatMap(result, fn)` |
+| `result.orElse(fn)` | `match(result, { onOk: (value) => ok(value), onErr: fn })` |
+| `result.match(onOk, onErr)` | `match(result, { onOk, onErr })` |
+| `result.unwrapOr(fallback)` | `unwrapOr(result, fallback)` |
+| `result.andTee(fn)` | `tap(result, fn)` |
+| `result.orTee(fn)` | `tapErr(result, fn)` |
+| `result._unsafeUnwrap()` | `unwrap(result)` |
+| `fromThrowable(fn, toError)()` | `tryCatch(fn, toError)` |
+| `ResultAsync.fromPromise(promise, toError)` | `tryCatchAsync(() => promise, toError)` |
+| `Result.combine(results)` | `collect(results)` |
+| `Result.combineWithAllErrors(results)` | `partition(results)`, which returns `[values, errors]` |
+
+Two things have no direct equivalent: `ResultAsync` chaining and `safeTry`.
+
+## Next steps
+
+- [Install Receta](./installation.mdx)
+- [Read the Result guide](./result/index.mdx)
+- [Move from try/catch to Result](./result/migration.mdx)
+- [Read neverthrow's documentation](https://github.com/supermacro/neverthrow)
