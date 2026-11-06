@@ -508,21 +508,11 @@ const sanitizeUser = (dbUser: DbUser) =>
 
 Think of the Object module as a **safe construction toolkit** for object manipulation:
 
-```
-Traditional approach:       Receta approach:
+<ObjectPaths>
 
-┌──────────────┐           ┌──────────────┐
-│   Raw Object │           │   Raw Object │
-└──────┬───────┘           └──────┬───────┘
-       │                          │
-       │ Manual ops               │ Safe ops
-       │ (error-prone)            │ (type-safe)
-       ↓                          ↓
-┌──────────────┐           ┌──────────────┐
-│   Hope it    │           │  Validated   │
-│   works! 🤞  │           │  Result<T>   │
-└──────────────┘           └──────────────┘
-```
+Both paths start from a raw object. Manual operations are error-prone and leave you hoping it works. Safe operations are type-safe and end in a validated `Result<T>`.
+
+</ObjectPaths>
 
 **Key principles:**
 1. **Immutable**: Original objects never change
@@ -555,38 +545,22 @@ Traditional approach:       Receta approach:
 
 ### Decision Tree
 
-```
+<DecisionTree>
+
 Need to work with objects?
-│
-├─ Just reading a known property?
-│  → Use optional chaining: obj?.prop
-│
-├─ Creating/updating one level deep?
-│  → Use spread: { ...obj, newKey: value }
-│
-├─ Working with nested structure?
-│  │
-│  ├─ Safe access needed?
-│  │  → Use getPath() → Option<T>
-│  │
-│  ├─ Need to update?
-│  │  → Use setPath() / updatePath()
-│  │
-│  └─ Need to flatten?
-│     → Use flatten() / unflatten()
-│
-├─ Transforming many keys/values?
-│  → Use mapKeys() / mapValues()
-│
-├─ Merging configs/data?
-│  → Use deepMerge()
-│
-├─ Sanitizing for API/security?
-│  → Use mask() + stripUndefined()
-│
-└─ Validating unknown data?
-   → Use validateShape() → Result<T>
-```
+
+- Just reading a known property? → Use optional chaining: `obj?.prop`
+- Creating or updating one level deep? → Use spread: `{ ...obj, newKey: value }`
+- Working with nested structure?
+  - Safe access needed? → Use `getPath()`, which returns `Option<T>`
+  - Need to update? → Use `setPath()` / `updatePath()`
+  - Need to flatten? → Use `flatten()` / `unflatten()`
+- Transforming many keys or values? → Use `mapKeys()` / `mapValues()`
+- Merging configs or data? → Use `deepMerge()`
+- Sanitizing for API or security? → Use `mask()` + `stripUndefined()`
+- Validating unknown data? → Use `validateShape()`, which returns `Result<T>`
+
+</DecisionTree>
 
 ---
 

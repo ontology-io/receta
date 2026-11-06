@@ -608,20 +608,19 @@ const truncateBio = (profile: Profile, maxLength: number): Profile => {
 
 ### Decision Tree
 
-```text
+<DecisionTree>
+
 Do you need custom logic (e.g., computed values)?
-├─ Yes → use lens()
-└─ No
-   ├─ Single property?
-   │  ├─ Required → use prop()
-   │  └─ Optional → use prop() + optional()
-   │
-   ├─ Nested property?
-   │  └─ use path()
-   │
-   └─ Array element?
-      └─ use index()
-```
+
+- Yes → use `lens()`
+- No
+  - Single property?
+    - Required → use `prop()`
+    - Optional → use `prop()` + `optional()`
+  - Nested property? → use `path()`
+  - Array element? → use `index()`
+
+</DecisionTree>
 
 ### Examples
 

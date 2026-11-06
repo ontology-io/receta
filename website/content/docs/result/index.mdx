@@ -271,17 +271,7 @@ const parseUserInput = (raw: unknown) =>
 
 Think of your code as a **railway track**:
 
-```
-Input ──[Success Track]──> Output
-         ╱            ╲
-        ╱              ╲
-   [Ok]                [Err]
-    ║                    ║
-    ║                    ║
-    ▼                    ▼
-  Continue            Short-circuit
-  pipeline            to error handler
-```
+<RailwayTrack />
 
 - **Ok values** stay on the success track
 - **Err values** switch to the error track and skip all remaining operations

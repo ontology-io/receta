@@ -1,0 +1,225 @@
+/*
+ * Figures whose content is plain markdown: a list stays a list, so it reads the same in the
+ * .md export. Drawn figures are in src/components/docs/figures and use utilities instead.
+ */
+
+.figure-tree,
+.figure-checklist,
+.figure-pipeline {
+  margin-block: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 0.75rem;
+  background: var(--color-fd-card);
+  font-size: 1.0625rem;
+  line-height: 1.4;
+}
+
+:is(.figure-tree, .figure-checklist, .figure-pipeline) ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+:is(.figure-tree, .figure-checklist, .figure-pipeline) code {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+}
+
+/* Answers are what a reader came for, so they carry the colour. */
+.figure-tree code {
+  padding: 0.1em 0.4em;
+  border-radius: 0.3rem;
+  background: var(--color-ok-soft);
+  color: var(--color-ok);
+  white-space: nowrap;
+}
+
+.figure-tree a {
+  text-decoration: none;
+}
+
+.figure-tree a:hover code {
+  background: var(--color-ok);
+  color: var(--color-fd-card);
+}
+
+.figure-tree > p {
+  margin: 0 0 0.5rem;
+  font-size: 1.1875rem;
+  font-weight: 500;
+}
+
+/* A tree: each branch hangs off a real line, with no box-drawing characters. */
+.figure-tree[data-layout='tree'] li {
+  position: relative;
+  padding: 0.3rem 0 0.3rem 1.5rem;
+  color: var(--color-fd-muted-foreground);
+}
+
+.figure-tree[data-layout='tree'] li:has(> ul) {
+  color: var(--color-fd-foreground);
+}
+
+.figure-tree[data-layout='tree'] li::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0.25rem;
+  width: 1px;
+  background: var(--color-fd-border);
+  content: '';
+}
+
+.figure-tree[data-layout='tree'] li:last-child::before {
+  bottom: auto;
+  height: 1rem;
+}
+
+.figure-tree[data-layout='tree'] li::after {
+  position: absolute;
+  top: 1rem;
+  left: 0.25rem;
+  width: 1rem;
+  height: 1px;
+  background: var(--color-fd-border);
+  content: '';
+}
+
+.figure-tree[data-layout='tree'] li > ul {
+  margin-top: 0.15rem;
+}
+
+/* Cards: for a tree too wide to scan, each first-level question gets its own card. */
+.figure-tree[data-layout='cards'] {
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.figure-tree[data-layout='cards'] > ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: 0.75rem;
+}
+
+.figure-tree[data-layout='cards'] > ul > li {
+  padding: 0.875rem 1rem 0.5rem;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 0.75rem;
+  background: var(--color-fd-card);
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.figure-tree[data-layout='cards'] > ul > li:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+.figure-tree[data-layout='cards'] li li {
+  margin-top: 0.5rem;
+  padding-block: 0.5rem;
+  border-top: 1px solid var(--color-fd-border);
+  color: var(--color-fd-muted-foreground);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.figure-tree[data-layout='cards'] li li + li {
+  margin-top: 0;
+}
+
+/* A report: every line passed or failed, from a markdown task list. */
+.figure-checklist p {
+  margin: 0;
+}
+
+.figure-checklist > p:first-child {
+  margin-bottom: 0.625rem;
+  font-weight: 500;
+}
+
+.figure-checklist ul + p {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-fd-border);
+}
+
+.figure-checklist ul ~ p {
+  color: var(--color-fd-muted-foreground);
+}
+
+.figure-checklist ul ~ p + p {
+  margin-top: 0.25rem;
+}
+
+.figure-checklist li {
+  position: relative;
+  padding: 0.2rem 0 0.2rem 1.75rem;
+}
+
+.figure-checklist li input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.figure-checklist li::before {
+  position: absolute;
+  top: 0.3rem;
+  left: 0;
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-err-soft);
+  color: var(--color-err);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  content: '✕';
+}
+
+.figure-checklist li:has(input:checked)::before {
+  background: var(--color-ok-soft);
+  color: var(--color-ok);
+  content: '✓';
+}
+
+/* A pipeline: values sit in boxes, and the operation between two boxes rides the rail. */
+.figure-pipeline > p {
+  margin: 0 0 1rem;
+  color: var(--color-fd-muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.figure-pipeline code {
+  font-size: 0.875rem;
+}
+
+.figure-pipeline li:nth-child(odd) {
+  padding: 0.5rem 0.75rem;
+  overflow-wrap: anywhere;
+  border: 1px solid var(--color-fd-border);
+  border-radius: 0.5rem;
+  background: var(--color-fd-background);
+}
+
+.figure-pipeline li:nth-child(even) {
+  margin-left: 1.25rem;
+  padding: 0.5rem 0 0.5rem 0.875rem;
+  overflow-wrap: anywhere;
+  border-left: 2px solid var(--color-ok);
+  color: var(--color-ok);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+}
+
+.figure-pipeline li:last-child {
+  border-color: color-mix(in oklab, var(--color-ok) 40%, transparent);
+  background: var(--color-ok-soft);
+  color: var(--color-ok);
+}

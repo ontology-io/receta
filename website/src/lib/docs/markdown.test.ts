@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'bun:test'
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { Glob } from 'bun'
+import * as R from 'remeda'
 import { llmsFull, llmsIndex, pageMarkdown, pageRoute, parsePage } from './markdown'
+
+const CONTENT = join(import.meta.dir, '../../../content/docs')
 
 const page = parsePage(
   'result/patterns.mdx',
@@ -14,6 +20,43 @@ describe('parsePage', () => {
       description: 'Real recipes.',
       body: 'Body text.',
     })
+  })
+})
+
+describe('parsePage with figures', () => {
+  const body = (text: string) => parsePage('a.mdx', `---\ntitle: A\n---\n\n${text}\n`).body
+
+  it('keeps the words of a figure and drops its tags', () => {
+    expect(body('Before.\n\n<Timeline name="debounce">\n\nIt waits.\n\n</Timeline>\n\nAfter.')).toBe(
+      'Before.\n\nIt waits.\n\nAfter.',
+    )
+  })
+
+  it('drops a figure with no words of its own', () => {
+    expect(body('Before.\n\n<OptionBoxes />\n\nAfter.')).toBe('Before.\n\nAfter.')
+  })
+
+  it('leaves JSX inside a code fence alone', () => {
+    const fence = '```tsx\n<SearchBox>\n\n\n</SearchBox>\n```'
+    expect(body(fence)).toBe(fence)
+  })
+
+  it('leaves a type in running text alone', () => {
+    expect(body('Returns `Option<T>` here.')).toBe('Returns `Option<T>` here.')
+  })
+})
+
+describe('every docs page', () => {
+  it('leaves no component tags in its plain text', async () => {
+    const paths = await Array.fromAsync(new Glob('**/*.mdx').scan({ cwd: CONTENT }))
+    const leaks = await Promise.all(
+      R.map(paths, async (path) => {
+        const { body } = parsePage(path, await readFile(join(CONTENT, path), 'utf8'))
+        const prose = body.replace(/^```[\s\S]*?^```[ \t]*$/gm, '')
+        return /^<\/?[A-Z]/m.test(prose) ? [path] : []
+      }),
+    )
+    expect(R.flat(leaks)).toEqual([])
   })
 })
 

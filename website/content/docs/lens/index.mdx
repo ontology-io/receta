@@ -476,17 +476,11 @@ const productionConfig = R.pipe(
 
 Think of a lens as **focusing glasses** that let you zoom into a specific part of a data structure:
 
-```text
-┌─────────────────────────────────┐
-│      UserProfile (whole)        │
-│  ┌───────────────────────────┐  │
-│  │      address              │  │
-│  │  ┌─────────────────────┐  │  │
-│  │  │      city           │  │  │  ← Lens focuses here
-│  │  └─────────────────────┘  │  │
-│  └───────────────────────────┘  │
-└─────────────────────────────────┘
-```
+<LensFocus>
+
+A lens on `city` looks through `UserProfile` and `address`, and leaves everything else out of focus.
+
+</LensFocus>
 
 **Operations**:
 - `view(lens, data)` - Look through the lens (read)

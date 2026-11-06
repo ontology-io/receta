@@ -340,19 +340,21 @@ const allPermissions = union(
 
 Think of collections as flowing through a pipeline of transformations:
 
-```
-Raw Data → Group → Pick a Group → Paginate → Index → Ready for Use
+<Pipeline>
 
-[1000 items]
-    ↓ groupByPath('payment.status')
-{ paid: [100 items], pending: [50 items], ... }
-    ↓ grouped.paid
-[100 items]
-    ↓ paginate({ page: 1, pageSize: 20 })
-{ items: [20 items], page: 1, hasNext: true, ... }
-    ↓ page.items, then indexByUnique(i => i.id)
-Ok({ item_1: {...}, item_2: {...} })
-```
+Raw data → Group → Pick a group → Paginate → Index → Ready for use
+
+- `[1000 items]`
+- ↓ `groupByPath('payment.status')`
+- `{ paid: [100 items], pending: [50 items], ... }`
+- ↓ `grouped.paid`
+- `[100 items]`
+- ↓ `paginate({ page: 1, pageSize: 20 })`
+- `{ items: [20 items], page: 1, hasNext: true, ... }`
+- ↓ `page.items`, then `indexByUnique(i => i.id)`
+- `Ok({ item_1: {...}, item_2: {...} })`
+
+</Pipeline>
 
 ## When to Use Collection
 

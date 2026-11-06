@@ -567,15 +567,11 @@ async function handleDataChange(event: SyncEvent) {
 
 Think of async utilities as **guardrails** on a highway:
 
-```
-Input ──[Async Operation]──> Output
-         │                │
-         │ concurrency    │ timeout
-         │ retry          │ debounce
-         │ throttle       │ poll
-         │                │
-         └────[Safe]──────┘
-```
+<AsyncGuardrails>
+
+`concurrency`, `retry`, `throttle`, `timeout`, `debounce` and `poll` run alongside the operation and keep the road from input to output safe.
+
+</AsyncGuardrails>
 
 - **Without guardrails**: Promises run wild, crash your app, overwhelm APIs
 - **With guardrails**: Controlled execution, automatic recovery, graceful failures

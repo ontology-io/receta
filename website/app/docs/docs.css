@@ -1,6 +1,7 @@
 @import 'tailwindcss' source(none);
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
+@import './figures.css';
 
 @source '../../src/components/docs';
 
@@ -8,11 +9,19 @@
 @theme inline {
   --font-sans: var(--font-newsreader), Georgia, serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-err: var(--err);
+  --color-err-soft: var(--err-soft);
 }
 
 /* Paper by day, ink by night: the same tokens as the site in app/(site)/globals.css. */
 :root {
   --stop: #e2461c;
+  --ok: #17694a;
+  --ok-soft: #cfe5da;
+  --err: #b5320c;
+  --err-soft: #f5d9cb;
   --color-fd-background: #f3ede2;
   --color-fd-foreground: #16130f;
   --color-fd-muted: #e8e0d1;
@@ -32,6 +41,10 @@
 }
 
 .dark {
+  --ok: #5cc595;
+  --ok-soft: #1d3529;
+  --err: #f0693f;
+  --err-soft: #3b1f15;
   --color-fd-background: #14110e;
   --color-fd-foreground: #f3ede2;
   --color-fd-muted: #1f1a16;
