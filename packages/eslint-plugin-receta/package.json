@@ -16,7 +16,7 @@
   "bugs": {
     "url": "https://github.com/ontology-io/receta/issues"
   },
-  "homepage": "https://github.com/ontology-io/receta#readme",
+  "homepage": "https://receta.dev",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
