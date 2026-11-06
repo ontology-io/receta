@@ -9,10 +9,25 @@ import { and } from '../combinators'
 import { eq } from '../comparison'
 
 /**
+ * A schema checked against the type the result is used on. `[T][...]` keeps `T` from being
+ * read off the schema, which TypeScript 5.4 calls `NoInfer`, and Receta supports versions
+ * before it. With no such type `T` has no keys, so this accepts nothing and `where` falls
+ * through to reading the type off the schema. A schema in a variable depends on that, since
+ * only an object literal gets checked for extra properties.
+ */
+type SchemaFromContext<T> = [keyof T] extends [never]
+  ? never
+  : PredicateSchema<[T][T extends unknown ? 0 : never]>
+
+/**
  * Creates a predicate that tests object properties against a schema.
  *
  * Each key in the schema maps to a predicate that tests the corresponding property.
  * All predicates must pass for the overall predicate to return true.
+ *
+ * Inside a call like `R.filter(users, where(...))` the schema is checked against the
+ * element type, so an optional field or a field typed as a union of literals works
+ * without writing `where<User>`.
  *
  * @param schema - A map of property names to predicates
  * @returns A predicate that tests if all schema predicates pass
@@ -58,9 +73,9 @@ import { eq } from '../comparison'
  * @see oneOf - for checking if value is in a list
  * @see prop - for testing a single property
  */
-export const where = <T extends object>(
-  schema: PredicateSchema<T>
-): Predicate<T> => {
+export function where<T extends object>(schema: SchemaFromContext<T>): Predicate<T>
+export function where<T extends object>(schema: PredicateSchema<T>): Predicate<T>
+export function where<T extends object>(schema: PredicateSchema<T>): Predicate<T> {
   const fields = Object.entries(schema as Record<string, Predicate<unknown> | undefined>)
   const predicates: Predicate<T>[] = fields.map(
     ([key, predicate]) => (obj: T) => {
@@ -108,9 +123,9 @@ export const where = <T extends object>(
  * @see or - for combining multiple predicates
  */
 export const oneOf =
-  <T>(values: readonly T[]): Predicate<T> =>
+  <V extends T, T = V>(values: readonly V[]): Predicate<T> =>
   (value) =>
-    values.includes(value)
+    (values as readonly T[]).includes(value)
 
 /**
  * Creates a predicate that tests a specific property of an object.

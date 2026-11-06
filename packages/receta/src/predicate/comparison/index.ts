@@ -143,7 +143,10 @@ export function lte<T extends number | bigint>(threshold: T): Predicate<T> {
  *
  * @see neq - for inequality comparison
  */
-export const eq = <T>(expected: T): Predicate<T> => (value) => value === expected
+export const eq =
+  <V extends T, T = V>(expected: V): Predicate<T> =>
+  (value) =>
+    value === expected
 
 /**
  * Creates a predicate that tests if a value does not equal another value.
@@ -163,7 +166,10 @@ export const eq = <T>(expected: T): Predicate<T> => (value) => value === expecte
  *
  * @see eq - for equality comparison
  */
-export const neq = <T>(expected: T): Predicate<T> => (value) => value !== expected
+export const neq =
+  <V extends T, T = V>(expected: V): Predicate<T> =>
+  (value) =>
+    value !== expected
 
 /**
  * Creates a predicate that tests if a value is within a range (inclusive).
