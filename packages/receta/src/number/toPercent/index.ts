@@ -6,6 +6,9 @@ import * as R from 'remeda'
  * Multiplies the value by 100 and adds a percent sign.
  * For example, 0.25 becomes "25%", 1.5 becomes "150%".
  *
+ * One number is always the data-last form, because the value can't be told apart from the
+ * decimals. `toPercent(0.5)` returns a function, so write `toPercent(0.5, 0)` to format a value.
+ *
  * @param value - The number to format as percentage (0.5 = 50%)
  * @param decimals - Number of decimal places (default: 0)
  * @returns The formatted percentage string
@@ -34,7 +37,7 @@ import * as R from 'remeda'
  *
  * @see percentage - for calculating percentages
  */
-export function toPercent(value: number, decimals?: number): string
+export function toPercent(value: number, decimals: number): string
 export function toPercent(decimals?: number): (value: number) => string
 export function toPercent(...args: any[]): any {
   // Data-first: toPercent(value, decimals?) - needs 2 args
