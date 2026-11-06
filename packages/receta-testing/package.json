@@ -4,6 +4,7 @@
   "description": "Testing utilities for @ontologyio/receta — matchers, law testers, and fast-check arbitraries",
   "author": "Khaled Maher",
   "license": "MIT",
+  "homepage": "https://receta.dev",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
