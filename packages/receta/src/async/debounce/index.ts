@@ -1,5 +1,6 @@
 import type { DebounceOptions } from '../types'
 import { match, tryCatchAsync } from '../../result'
+import { rejectQuietly } from '../../utils/rejectQuietly'
 
 /** The calls waiting for one run. They share a promise, so handling any of them handles all. */
 type Batch<T> = {
@@ -16,13 +17,6 @@ const createBatch = <T>(): Batch<T> => {
     reject = fail
   })
   return { promise, resolve, reject }
-}
-
-/** Rejects for a caller who awaits, without crashing a process that ignores the promise. */
-const rejectQuietly = (message: string): Promise<never> => {
-  const rejected = Promise.reject(new Error(message))
-  rejected.catch(() => undefined)
-  return rejected
 }
 
 const NOTHING_CAN_RUN = 'debounce: leading and trailing are both false, so fn never runs'

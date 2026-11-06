@@ -1,5 +1,8 @@
 import type { ThrottleOptions } from '../types'
 import { match, tryCatchAsync } from '../../result'
+import { rejectQuietly } from '../../utils/rejectQuietly'
+
+const NOTHING_CAN_RUN = 'throttle: leading and trailing are both false, so fn never runs'
 
 /**
  * Throttles an async function.
@@ -12,7 +15,8 @@ import { match, tryCatchAsync } from '../../result'
  *
  * Calls made during the delay share one promise for the next trailing run, which
  * uses the latest arguments. With `leading: false`, a call after a quiet spell waits
- * out a whole delay too. There is no `cancel` or `flush`.
+ * out a whole delay too. If `leading` and `trailing` are both false, nothing can run,
+ * so every call rejects. There is no `cancel` or `flush`.
  *
  * @param fn - Async function to throttle
  * @param options - Throttle options
@@ -52,7 +56,7 @@ export function throttle<TArgs extends readonly unknown[], TReturn>(
 ): (...args: TArgs) => Promise<TReturn> {
   const { delay, leading = true, trailing = true } = options
 
-  let lastExecution = 0
+  let lastExecution = -Infinity
   let timeoutId: ReturnType<typeof setTimeout> | undefined
   let lastArgs: TArgs | undefined
   let lastPromise: Promise<TReturn> | undefined
@@ -85,7 +89,7 @@ export function throttle<TArgs extends readonly unknown[], TReturn>(
       })
     }
 
-    // Return the last promise or create a new one
-    return lastPromise || Promise.resolve(fn(...args))
+    // Either edge has made a promise by now, so only both edges off leaves none
+    return lastPromise ?? rejectQuietly(NOTHING_CAN_RUN)
   }
 }

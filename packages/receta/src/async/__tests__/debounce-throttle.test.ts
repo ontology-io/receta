@@ -377,6 +377,35 @@ describe('Async.throttle', () => {
       await sleep(30)
       expect(callCount).toBe(2) // Trailing executed
     })
+
+    it('rejects rather than runs when both edges are off', async () => {
+      let callCount = 0
+      const fn = throttle(
+        async () => {
+          callCount++
+        },
+        { delay: 5, leading: false, trailing: false }
+      )
+
+      await expect(fn()).rejects.toThrow('leading and trailing are both false')
+      await expect(fn()).rejects.toThrow('leading and trailing are both false')
+      expect(callCount).toBe(0)
+    })
+
+    it('runs the first call on the leading edge whatever the delay', async () => {
+      let callCount = 0
+      const fn = throttle(
+        async () => {
+          callCount++
+          return callCount
+        },
+        { delay: Infinity, trailing: false }
+      )
+
+      expect(await fn()).toBe(1)
+      expect(await fn()).toBe(1) // Shares the leading run
+      expect(callCount).toBe(1)
+    })
   })
 
   describe('error handling', () => {
