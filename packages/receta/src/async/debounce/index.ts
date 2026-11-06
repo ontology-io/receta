@@ -36,6 +36,9 @@ const NOTHING_CAN_RUN = 'debounce: leading and trailing are both false, so fn ne
  * Useful for rate-limiting API calls, search inputs, or any operation
  * that shouldn't run on every invocation.
  *
+ * With `leading`, a call runs at once only after `delay` of silence since the last
+ * call, so a burst gets one leading run however long it lasts.
+ *
  * Every call settles. A call that a newer one replaces gets the result of the run
  * that replaced it, and with `trailing: false`, a call ignored during the delay gets
  * the result of the last leading run. If `leading` and `trailing` are both false,
@@ -79,13 +82,12 @@ export function debounce<TArgs extends readonly unknown[], TReturn>(
   const { delay, leading = false, trailing = true } = options
 
   let timeoutId: ReturnType<typeof setTimeout> | undefined
-  let lastInvocation = 0
+  let lastCall = -Infinity
   let lastRun: Promise<TReturn> | undefined
   // A later call replaces the arguments of a waiting call, never its promise.
   let batch: Batch<TReturn> | undefined
 
   const run = async (args: TArgs, running: Batch<TReturn>): Promise<void> => {
-    lastInvocation = Date.now()
     batch = undefined
 
     match(await tryCatchAsync(() => fn(...args)), {
@@ -95,7 +97,9 @@ export function debounce<TArgs extends readonly unknown[], TReturn>(
   }
 
   return (...args: TArgs): Promise<TReturn> => {
-    const shouldExecuteLeading = leading && Date.now() - lastInvocation >= delay
+    const now = Date.now()
+    const shouldExecuteLeading = leading && now - lastCall >= delay
+    lastCall = now
 
     if (timeoutId !== undefined) {
       clearTimeout(timeoutId)
