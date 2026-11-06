@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4](https://github.com/ontology-io/receta/compare/receta@v0.4.3...receta@v0.4.4) (2026-11-06)
+
+
+### Bug Fixes
+
+* correct the leading and trailing edges in debounce and throttle ([95f3967](https://github.com/ontology-io/receta/commit/95f39679cd5b48fb7818e3f73e618f429c78225b))
+* make leading mean what the docs say in debounce and throttle ([a785b2a](https://github.com/ontology-io/receta/commit/a785b2affd3df3a9b103e8edfacb944ed463c926))
+* reject in throttle when leading and trailing are both false ([5609fa2](https://github.com/ontology-io/receta/commit/5609fa224f177326ce840f261eb1a1dfb282a5ac))
+
 ## [0.4.3](https://github.com/ontology-io/receta/compare/receta@v0.4.2...receta@v0.4.3) (2026-11-06)
 
 

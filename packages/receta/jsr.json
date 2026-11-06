@@ -1,6 +1,6 @@
 {
   "name": "@ontologyio/receta",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "license": "MIT",
   "exports": {
     "./result": "./src/result/index.ts",
