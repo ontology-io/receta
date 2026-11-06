@@ -6,9 +6,12 @@
   // Stays on so links to the old address can still reach the Worker and be redirected.
   "workers_dev": true,
   "preview_urls": false,
+  // Routes rather than custom domains, because a custom domain won't replace the proxied
+  // records Cloudflare imported from Squarespace. Routes need those records to exist, so
+  // deleting them takes the site down, even though their targets are never reached.
   "routes": [
-    { "pattern": "receta.dev", "custom_domain": true },
-    { "pattern": "www.receta.dev", "custom_domain": true }
+    { "pattern": "receta.dev/*", "zone_name": "receta.dev" },
+    { "pattern": "www.receta.dev/*", "zone_name": "receta.dev" }
   ],
   "r2_buckets": [{ "binding": "SITE", "bucket_name": "receta-website" }]
 }
