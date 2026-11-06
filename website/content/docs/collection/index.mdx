@@ -7,7 +7,7 @@ description: "Higher-level patterns for working with collections — hierarchica
 
 Working with arrays of data is fundamental to every application, but common operations are surprisingly painful:
 
-```typescript
+```typescript vanilla
 // ❌ Manual hierarchical grouping - brittle and verbose
 const commentsByUserAndPost: Record<number, Record<number, Comment[]>> = {}
 for (const comment of comments) {
@@ -44,7 +44,7 @@ for (const user of users) {
 
 Reddit displays comments hierarchically (by user, then by post) with pagination, change detection for live updates, and indexed lookups for performance. The manual approach is hundreds of lines:
 
-```typescript
+```typescript vanilla
 // Traditional Reddit-style comment system
 class CommentManager {
   private comments: Comment[] = []
@@ -170,7 +170,7 @@ const usersById = indexByUnique(users, u => u.id, { onCollision: 'error' })
 
 ### Problem 1: Manual Grouping Doesn't Scale
 
-```typescript
+```typescript vanilla
 // ❌ What happens with 3 levels? 4 levels? N levels?
 const grouped: Record<string, Record<string, Record<string, Item[]>>> = {}
 for (const item of items) {
@@ -183,50 +183,58 @@ for (const item of items) {
   }
   grouped[item.category][item.subcategory][item.type].push(item)
 }
+```
 
+```typescript
 // ✅ Scales to any depth
 nest(items, ['category', 'subcategory', 'type'])
 ```
 
 ### Problem 2: Change Detection Loses Context
 
-```typescript
+```typescript vanilla
 // ❌ Just arrays - no context about what changed
 const added = newItems.filter(isNew)
 const removed = oldItems.filter(isGone)
 // Lost: WHICH item changed? What was the old value?
+```
 
+```typescript
 // ✅ Full change context
 const changes = diff(oldItems, newItems, i => i.id)
-changes.updated.forEach(({ old, new: updated }) => {
+R.forEach(changes.updated, ({ old, new: updated }) => {
   console.log(`Item ${old.id} changed from ${old.name} to ${updated.name}`)
 })
 ```
 
 ### Problem 3: Pagination Math Is Easy to Get Wrong
 
-```typescript
+```typescript vanilla
 // ❌ Off-by-one errors, edge cases
 const start = (page - 1) * pageSize
 const end = start + pageSize
 const items = allItems.slice(start, end)
 const hasNext = end < allItems.length
 // And you still have to build the metadata yourself
+```
 
+```typescript
 // ✅ One call, consistent metadata
-paginate(allItems, { page, pageSize })
+paginate(allItems, { page: 2, pageSize: 20 })
 // => { items, page, pageSize, total, hasNext, hasPrevious }
 ```
 
 ### Problem 4: Duplicate Keys Fail Silently
 
-```typescript
+```typescript vanilla
 // ❌ Duplicate keys silently overwrite
 const byId: Record<string, User> = {}
 for (const user of users) {
   byId[user.id] = user // Lost data if duplicate ID!
 }
+```
 
+```typescript
 // ✅ Explicit error handling with Result
 const byIdResult = indexByUnique(users, u => u.id)
 if (isErr(byIdResult)) {
@@ -236,11 +244,13 @@ if (isErr(byIdResult)) {
 
 ### Problem 5: Set Operations Need Custom Comparators
 
-```typescript
+```typescript vanilla
 // ❌ Doesn't work with objects
 const merged = [...set1, ...set2] // Duplicates!
 const uniqueMerged = [...new Set([...set1, ...set2])] // Still duplicates!
+```
 
+```typescript
 // ✅ Works with objects + custom equality
 union(users1, users2, (a, b) => a.id === b.id)
 intersect(assigned, completed, (a, b) => a.taskId === b.taskId)
@@ -264,11 +274,11 @@ const feed = pipe(
 ```typescript
 // Detect order status changes for notifications
 const changes = diff(oldOrders, newOrders, o => o.id)
-for (const { old, new: updated } of changes.updated) {
+R.forEach(changes.updated, ({ old, new: updated }) => {
   if (old.status !== updated.status) {
     sendNotification(`Order ${updated.id} is now ${updated.status}`)
   }
-}
+})
 ```
 
 ### 3. API Endpoints (Pagination)

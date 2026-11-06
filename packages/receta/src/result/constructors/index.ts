@@ -64,13 +64,9 @@ export function tryCatch<T>(fn: () => T): Result<T, unknown>
  *
  * @example
  * ```typescript
- * const parseNumber = (str: string) =>
+ * const parseUrl = (str: string) =>
  *   tryCatch(
- *     () => {
- *       const n = Number(str)
- *       if (Number.isNaN(n)) throw new Error('Invalid number')
- *       return n
- *     },
+ *     () => new URL(str),
  *     (e) => `Parse error: ${e}`
  *   )
  * ```

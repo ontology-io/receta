@@ -9,7 +9,7 @@ description: "From Inline Filters to Predicates"
 
 ### Before: Inline Filters
 
-```typescript
+```typescript vanilla
 // ❌ Problems:
 const activeAdults = users.filter(u => u.age >= 18 && u.active === true)
 const activeStaff = users.filter(u => u.age >= 18 && u.active === true && (u.role === 'admin' || u.role === 'moderator'))
@@ -27,6 +27,7 @@ const premiumUsers = users.filter(u => u.age >= 18 && u.active === true && u.pre
 
 ```typescript
 // ✅ Benefits:
+import * as R from 'remeda'
 import { where, and, gte, eq, oneOf } from '@ontologyio/receta/predicate'
 
 const isActiveAdult = where({ age: gte(18), active: eq(true) })
@@ -77,7 +78,7 @@ Replace inline filters with named predicates.
 
 #### Before
 
-```typescript
+```typescript vanilla
 const expensiveProducts = products.filter(p => p.price > 100)
 const budgetProducts = products.filter(p => p.price <= 50)
 const midRangeProducts = products.filter(p => p.price >= 50 && p.price <= 200)
@@ -100,15 +101,12 @@ const isMidRange = between(50, 200)
 
 #### Step 3: Refactor
 
-```typescript
-const expensiveProducts = R.filter(products, (p) => isExpensive(p.price))
-const budgetProducts = R.filter(products, (p) => isBudget(p.price))
-const midRangeProducts = R.filter(products, (p) => isMidRange(p.price))
+`where()` applies each predicate to a field:
 
-// Or with where():
-const expensiveProducts2 = R.filter(products, where({ price: gt(100) }))
-const budgetProducts2 = R.filter(products, where({ price: lte(50) }))
-const midRangeProducts2 = R.filter(products, where({ price: between(50, 200) }))
+```typescript
+const expensiveProducts = R.filter(products, where({ price: isExpensive }))
+const budgetProducts = R.filter(products, where({ price: isBudget }))
+const midRangeProducts = R.filter(products, where({ price: isMidRange }))
 ```
 
 ---
@@ -117,7 +115,7 @@ const midRangeProducts2 = R.filter(products, where({ price: between(50, 200) }))
 
 #### Before
 
-```typescript
+```typescript vanilla
 const activeOrders = orders.filter(o =>
   o.status === 'pending' || o.status === 'processing' || o.status === 'shipped'
 )
@@ -138,12 +136,8 @@ const isCompletedStatus = oneOf(['delivered', 'cancelled'])
 #### Step 2: Refactor
 
 ```typescript
-const activeOrders = R.filter(orders, (o) => isActiveStatus(o.status))
-const completedOrders = R.filter(orders, (o) => isCompletedStatus(o.status))
-
-// Or with where():
-const activeOrders2 = R.filter(orders, where({ status: isActiveStatus }))
-const completedOrders2 = R.filter(orders, where({ status: isCompletedStatus }))
+const activeOrders = R.filter(orders, where({ status: isActiveStatus }))
+const completedOrders = R.filter(orders, where({ status: isCompletedStatus }))
 ```
 
 ---
@@ -152,7 +146,7 @@ const completedOrders2 = R.filter(orders, where({ status: isCompletedStatus }))
 
 #### Before
 
-```typescript
+```typescript vanilla
 const eligibleUsers = users.filter(u =>
   u.age >= 18 &&
   u.verified === true &&
@@ -193,7 +187,7 @@ const eligibleUsers = R.filter(users, isEligible)
 
 #### Before
 
-```typescript
+```typescript vanilla
 const data: unknown[] = [/* mixed types */]
 
 const strings = data.filter(x => typeof x === 'string')
@@ -206,6 +200,7 @@ const validObjects = data.filter(x =>
 #### Step 1: Use Type Guards
 
 ```typescript
+import * as R from 'remeda'
 import { isString, isNumber, isObject } from '@ontologyio/receta/predicate'
 
 const strings = R.filter(data, isString) // Type: string[]
@@ -221,7 +216,7 @@ const validObjects = R.filter(data, isObject) // Type: Record<string, unknown>[]
 
 #### Before
 
-```typescript
+```typescript vanilla
 const canEdit = users.filter(u =>
   u.id === post.authorId ||
   (u.role === 'admin' && u.verified) ||
@@ -257,7 +252,7 @@ const canEdit = R.filter(users, canEditPost)
 
 #### Before
 
-```typescript
+```typescript vanilla
 const usOrders = orders.filter(o => o.customer.country === 'US')
 const verifiedOrders = orders.filter(o => o.customer.verified === true)
 const usVerifiedOrders = orders.filter(o =>
@@ -304,7 +299,7 @@ const usVerifiedOrders = R.filter(orders, hasUSVerifiedCustomer)
 
 #### Before
 
-```typescript
+```typescript vanilla
 const popularUsers = users.filter(u => u.followers.length > 1000)
 const recentPosts = posts.filter(p => {
   const daysSince = (Date.now() - p.createdAt.getTime()) / (24 * 60 * 60 * 1000)
@@ -342,11 +337,13 @@ You don't need to refactor everything at once!
 
 Find the most duplicated filter logic and extract it first.
 
-```typescript
+```typescript vanilla
 // 1. Find duplicates
 // ❌ Repeated everywhere:
 users.filter(u => u.age >= 18 && u.verified)
+```
 
+```typescript
 // 2. Extract
 const isVerifiedAdult = where({ age: gte(18), verified: eq(true) })
 
@@ -370,6 +367,7 @@ export const isActiveStaff = and<User>(isActive, isStaff)
 
 ```typescript
 // Usage
+import * as R from 'remeda'
 import * as UserPred from './predicates/user'
 
 R.filter(users, UserPred.isVerifiedAdult)
@@ -380,10 +378,12 @@ R.filter(users, UserPred.isActiveStaff)
 
 Old and new can live side-by-side:
 
-```typescript
+```typescript vanilla
 // ✅ Keep existing code working
 const oldFilter = users.filter(u => u.age >= 18)
+```
 
+```typescript
 // ✅ New code uses predicates
 const newFilter = R.filter(users, where({ age: gte(18) }))
 ```
@@ -423,10 +423,12 @@ and(
 
 ### Pitfall 3: Not Using Built-Ins
 
-```typescript
+```typescript vanilla
 // ❌ Reinventing the wheel
 const notEmpty = (s: string) => s.length > 0
+```
 
+```typescript
 // ✅ Use built-in
 import { isNotEmpty } from '@ontologyio/receta/predicate'
 ```
@@ -452,7 +454,7 @@ R.filter(users, isVerifiedAdult)
 
 ### Before (Hard to Test)
 
-```typescript
+```typescript vanilla
 // Can't test filter logic in isolation
 const getActiveUsers = (users: User[]) =>
   users.filter(u => u.age >= 18 && u.verified && u.status === 'active')
@@ -461,6 +463,7 @@ const getActiveUsers = (users: User[]) =>
 ### After (Easy to Test)
 
 ```typescript
+import * as R from 'remeda'
 import { describe, it, expect } from 'vitest'
 
 // Test predicates independently
@@ -509,43 +512,55 @@ Use this checklist when migrating code:
 
 ### E-Commerce
 
-```typescript
+```typescript vanilla
 // Before
 products.filter(p => p.price > 100 && p.inStock && p.rating >= 4.0)
+```
 
+```typescript
 // After
 const qualityExpensive = where({
   price: gt(100),
   inStock: eq(true),
   rating: gte(4.0)
 })
+
+R.filter(products, qualityExpensive)
 ```
 
 ### User Management
 
-```typescript
+```typescript vanilla
 // Before
 users.filter(u => (u.role === 'admin' || u.role === 'mod') && u.verified)
+```
 
+```typescript
 // After
 const isVerifiedStaff = where({
   role: oneOf(['admin', 'mod']),
   verified: eq(true)
 })
+
+R.filter(users, isVerifiedStaff)
 ```
 
 ### API Filtering
 
-```typescript
+```typescript vanilla
 // Before
 issues.filter(i => i.state === 'open' && i.labels.includes('bug') && i.assignee !== null)
+```
 
+```typescript
 // After
 const openAssignedBugs = where({
   state: eq('open'),
   labels: (labels: string[]) => labels.includes('bug'),
   assignee: not(isNull)
 })
+
+R.filter(issues, openAssignedBugs)
 ```
 
 ---

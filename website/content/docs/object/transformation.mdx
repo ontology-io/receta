@@ -27,6 +27,9 @@ function mapKeys<T extends PlainObject>(
 ### Real-World: snake_case → camelCase
 
 ```typescript
+import { mapKeys } from '@ontologyio/receta/object'
+import { camelCase } from '@ontologyio/receta/string'
+
 // API response normalization
 const apiResponse = {
   user_id: 123,
@@ -36,9 +39,7 @@ const apiResponse = {
   created_at: '2024-01-01'
 }
 
-const normalized = mapKeys(apiResponse, (key) =>
-  key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
-)
+const normalized = mapKeys(apiResponse, (key) => camelCase(key))
 // { userId: 123, firstName: 'Alice', lastName: 'Smith', ... }
 ```
 
@@ -85,9 +86,7 @@ const prices = {
 }
 
 // Apply 10% tax
-const withTax = mapValues(prices, (price) =>
-  Math.round(price * 1.1 * 100) / 100
-)
+const withTax = mapValues(prices, (price) => round(price * 1.1, 2))
 // => { apple: 1.65, banana: 0.55, orange: 2.2 }
 ```
 
@@ -177,7 +176,7 @@ const scores = {
   diana: 72
 }
 
-const passing = filterValues(scores, (score) => score >= 70)
+const passing = filterValues(scores, gte(70))
 // => { alice: 95, charlie: 88, diana: 72 }
 ```
 
@@ -226,7 +225,7 @@ const process = (apiData: PlainObject) =>
     filterKeys((key) => !key.startsWith('_')), // Remove private
     transformKeys('camelCase'),             // Normalize keys
     mapValues((v) => typeof v === 'string' ? v.trim() : v), // Trim strings
-    filterValues((v) => v != null),         // Remove nullish
+    filterValues(R.isNonNullish),           // Remove nullish
     compact                                 // Final cleanup
   )
 ```

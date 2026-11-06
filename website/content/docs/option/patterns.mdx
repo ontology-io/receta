@@ -12,7 +12,7 @@ title: "Option Patterns & Recipes"
 type User = { id: string; name: string; email: string }
 
 const findUserById = (id: string): Option<User> =>
-  fromNullable(users.find(u => u.id === id))
+  fromNullable(R.find(users, where({ id: eq(id) })))
 
 const getUserEmail = (id: string): string =>
   R.pipe(
@@ -49,7 +49,7 @@ const config = {
   timeout: pipe(
     getEnv('TIMEOUT'),
     map(Number),
-    filter(n => !isNaN(n) && n > 0),
+    filter(gt(0)),
     unwrapOr(5000)
   ),
   debug: unwrapOr(getEnv('DEBUG'), 'false') === 'true'
@@ -77,18 +77,22 @@ if (getFeatureFlag('new-ui')) {
 ### Multi-Field Validation
 
 ```typescript
+import { type Option, filter, flatMap, fromNullable, fromResult, map } from '@ontologyio/receta/option'
+import { between, includes } from '@ontologyio/receta/predicate'
+import { parseNumber } from '@ontologyio/receta/result'
+import { pipe } from 'remeda'
+
 const validateEmail = (email: string): Option<string> =>
   pipe(
     fromNullable(email),
     filter(e => e.length >= 3),
-    filter(e => e.includes('@'))
+    filter(includes('@'))
   )
 
 const validateAge = (age: string): Option<number> =>
   pipe(
-    tryCatch(() => Number(age)),
-    filter(n => !isNaN(n)),
-    filter(n => n >= 18 && n <= 120)
+    fromResult(parseNumber(age)),
+    filter(between(18, 120))
   )
 
 const validateForm = (form: SignupForm): Option<ValidForm> =>
@@ -103,6 +107,10 @@ const validateForm = (form: SignupForm): Option<ValidForm> =>
 ### Optional Fields
 
 ```typescript
+import { filter, fromNullable, toNullable } from '@ontologyio/receta/option'
+import { matches, startsWith } from '@ontologyio/receta/predicate'
+import { pipe } from 'remeda'
+
 type ProfileForm = {
   name: string  // Required
   email: string  // Required
@@ -115,12 +123,12 @@ const processForm = (form: ProfileForm) => ({
   email: form.email,
   phone: pipe(
     fromNullable(form.phone),
-    filter(p => /^\d{10}$/.test(p)),
+    filter(matches(/^\d{10}$/)),
     toNullable()
   ),
   website: pipe(
     fromNullable(form.website),
-    filter(w => w.startsWith('http')),
+    filter(startsWith('http')),
     toNullable()
   )
 })
@@ -202,10 +210,8 @@ const config = parseConfig(configStr, isValidConfig)
 ```typescript
 const parsePositiveInt = (str: string): Option<number> =>
   pipe(
-    tryCatch(() => Number(str)),
-    filter(n => !isNaN(n)),
-    filter(n => Number.isInteger(n)),
-    filter(n => n > 0)
+    fromResult(parseNumber(str)),
+    filter(and(isInteger, gt(0)))
   )
 ```
 
@@ -213,7 +219,7 @@ const parsePositiveInt = (str: string): Option<number> =>
 
 ```typescript
 const processUserIds = (ids: string[]): User[] => {
-  const results = ids.map(findUserById)
+  const results = R.map(ids, findUserById)
   const [users, failedCount] = partition(results)
 
   logger.info(`Processed ${users.length}, Failed: ${failedCount}`)

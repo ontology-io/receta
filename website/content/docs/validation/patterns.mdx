@@ -87,6 +87,8 @@ Use it from a React form. `match` needs both handlers to return the same type, s
 
 ```tsx
 import { useState, type FormEvent } from 'react'
+import * as R from 'remeda'
+import { match, type FieldError } from '@ontologyio/receta/validation'
 
 const RegistrationPage = () => {
   const [formData, setFormData] = useState<RegistrationForm>(emptyForm)
@@ -106,7 +108,7 @@ const RegistrationPage = () => {
       onInvalid: async (fieldErrors) => {
         // Show all errors at once
         setErrors(fieldErrors)
-        fieldErrors.forEach(({ field, errors }) => {
+        R.forEach(fieldErrors, ({ field, errors }) => {
           showFieldError(field, errors)
         })
       }
@@ -116,7 +118,7 @@ const RegistrationPage = () => {
   return (
     <form onSubmit={handleSubmit}>
       {/* Form fields */}
-      {errors.map(({ field, errors: fieldErrors }) => (
+      {R.map(errors, ({ field, errors: fieldErrors }) => (
         <ErrorMessage key={field} field={field} errors={fieldErrors} />
       ))}
     </form>
@@ -361,7 +363,7 @@ app.patch('/api/users/:id', (req, res) => {
 
 ```typescript
 app.post('/api/users/batch', (req, res) => {
-  if (!Array.isArray(req.body.users)) {
+  if (!R.isArray(req.body.users)) {
     return res.status(400).json({ error: 'users must be an array' })
   }
 
@@ -419,12 +421,12 @@ const validateProduct = (row: unknown, rowNumber: number): Validation<ProductRow
   typeof row === 'object' && row !== null
     ? pipe(
         schema(productSchema, row as ProductRow),
-        mapInvalid(({ field, errors }) => `Row ${rowNumber}, ${field}: ${errors.join(', ')}`)
+        mapInvalid(({ field, errors }) => `Row ${rowNumber}, ${field}: ${R.join(errors, ', ')}`)
       )
     : invalid(`Row ${rowNumber}: Invalid data format`)
 
 const importCSV = (csvData: unknown[]) => {
-  const validations = csvData.map((row, idx) => validateProduct(row, idx + 1))
+  const validations = R.map(csvData, (row, idx) => validateProduct(row, idx + 1))
   const result = collectErrors(validations)
 
   return match(result, {
@@ -461,20 +463,16 @@ const validateWithPartialSuccess = <T, E>(
   items: unknown[],
   validator: (item: unknown, rowNumber: number) => Validation<T, E>
 ): ValidationResult<T, E> => {
-  const valid: T[] = []
-  const invalid: Array<{ index: number; errors: readonly E[] }> = []
+  const checked = R.map(items, (item, index) => validator(item, index + 1))
 
-  items.forEach((item, index) => {
-    const validation = validator(item, index + 1)
-
-    if (isValid(validation)) {
-      valid.push(validation.value)
-    } else {
-      invalid.push({ index, errors: validation.errors })
-    }
-  })
-
-  return { valid, invalid }
+  return {
+    valid: R.flatMap(checked, (validation) =>
+      isValid(validation) ? [validation.value] : []
+    ),
+    invalid: R.flatMap(checked, (validation, index) =>
+      isInvalid(validation) ? [{ index, errors: validation.errors }] : []
+    )
+  }
 }
 
 // Usage
@@ -486,8 +484,8 @@ if (result.valid.length > 0) {
 
 if (result.invalid.length > 0) {
   console.log(`Skipped ${result.invalid.length} invalid rows:`)
-  result.invalid.forEach(({ errors }) => {
-    console.log(`  ${errors.join(', ')}`)
+  R.forEach(result.invalid, ({ errors }) => {
+    console.log(`  ${R.join(errors, ', ')}`)
   })
 }
 ```
@@ -549,6 +547,8 @@ Then, in the component:
 
 ```tsx
 import { useState } from 'react'
+import * as R from 'remeda'
+import { match } from '@ontologyio/receta/validation'
 
 const WizardComponent = () => {
   const [currentStep, setCurrentStep] = useState(1)
@@ -564,9 +564,9 @@ const WizardComponent = () => {
       },
       onInvalid: async (errors) => {
         // Show which steps have errors
-        const errorSteps = errors.map(({ field }) => field)
+        const errorSteps = R.map(errors, ({ field }) => field)
 
-        alert(`Please fix errors in: ${errorSteps.join(', ')}`)
+        alert(`Please fix errors in: ${R.join(errorSteps, ', ')}`)
       }
     })
   }
@@ -792,8 +792,8 @@ const configValidation = validateConfig(readConfig(process.env))
 
 if (isInvalid(configValidation)) {
   console.error('Configuration validation failed:')
-  configValidation.errors.forEach(({ field, errors }) => {
-    console.error(`  ${field}: ${errors.join(', ')}`)
+  R.forEach(configValidation.errors, ({ field, errors }) => {
+    console.error(`  ${field}: ${R.join(errors, ', ')}`)
   })
   process.exit(1)
 }

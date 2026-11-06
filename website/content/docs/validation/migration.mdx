@@ -15,7 +15,7 @@ description: "Step-by-step guide for migrating from try-catch, Zod, Yup, or othe
 
 ### Before: try-catch Validation
 
-```typescript
+```typescript vanilla
 // ❌ Old approach: Shows one error at a time
 function validateUser(data: any) {
   if (!data.email) {
@@ -46,7 +46,8 @@ try {
 
 ```typescript
 // ✅ New approach: Shows ALL errors at once
-import { schema, validate, required, email, minLength } from '@ontologyio/receta/validation'
+import { schema, validate, required, email, minLength, match } from '@ontologyio/receta/validation'
+import * as R from 'remeda'
 
 const validateUser = (data: UserData) => {
   return schema({
@@ -72,7 +73,7 @@ match(validation, {
   },
   onInvalid: async (errors) => {
     // Shows ALL errors at once!
-    errors.forEach(({ field, errors }) => {
+    R.forEach(errors, ({ field, errors }) => {
       showFieldError(field, errors)
     })
   }
@@ -83,7 +84,7 @@ match(validation, {
 
 **Step 1**: Identify validation code
 
-```typescript
+```typescript vanilla
 // Find code like this:
 if (!value) throw new Error('...')
 if (condition) throw new Error('...')
@@ -111,14 +112,16 @@ schema({
 
 **Step 4**: Replace try-catch with match
 
-```typescript
+```typescript vanilla
 // Replace:
 try {
   validateUser(input)
 } catch (e) {
   handleError(e)
 }
+```
 
+```typescript
 // With:
 match(validation, {
   onValid: handleSuccess,
@@ -130,7 +133,7 @@ match(validation, {
 
 ### Before: Zod Schema
 
-```typescript
+```typescript vanilla
 import { z } from 'zod'
 
 // ❌ Zod approach
@@ -159,7 +162,7 @@ try {
 ### After: Receta Validation
 
 ```typescript
-import { schema, validate, required, email, minLength, maxLength, matches, min, max, integer } from '@ontologyio/receta/validation'
+import { schema, validate, required, email, minLength, maxLength, matches, min, max, integer, match } from '@ontologyio/receta/validation'
 
 // ✅ Receta approach
 const userSchema = {
@@ -207,34 +210,40 @@ match(validation, {
 
 **Step 1**: Convert Zod validators to Receta
 
-```typescript
+```typescript vanilla
 // Zod
 z.string().min(3).max(20).email()
+```
 
+```typescript
 // Receta
 validate(value, [minLength(3), maxLength(20), email()])
 ```
 
 **Step 2**: Convert object schemas
 
-```typescript
+```typescript vanilla
 // Zod
 z.object({ field: z.string() })
+```
 
+```typescript
 // Receta
 schema({ field: (v: string) => validate(v, [required('Required')]) }, data)
 ```
 
 **Step 3**: Replace `.parse()` with `match()`
 
-```typescript
+```typescript vanilla
 // Zod
 try {
   const data = zodSchema.parse(input)
 } catch (error) {
   // handle
 }
+```
 
+```typescript
 // Receta
 match(schema(userSchema, input), {
   onValid: (data) => saveUser(data),
@@ -246,7 +255,7 @@ match(schema(userSchema, input), {
 
 ### Before: Yup Schema
 
-```typescript
+```typescript vanilla
 import * as yup from 'yup'
 
 // ❌ Yup approach
@@ -283,7 +292,7 @@ try {
 ### After: Receta Validation
 
 ```typescript
-import { schema, validate, required, email, minLength, maxLength, matches, min, integer } from '@ontologyio/receta/validation'
+import { schema, validate, required, email, minLength, maxLength, matches, min, integer, match } from '@ontologyio/receta/validation'
 
 // ✅ Receta approach
 const userSchema = {
@@ -349,6 +358,7 @@ match(validation, {
 ```typescript
 // ❌ Result shows only first error
 import { collect, map as mapResult, type Result } from '@ontologyio/receta/result'
+import { pipe } from 'remeda'
 
 const validateForm = (data: SignupForm): Result<SignupForm, string> =>
   pipe(
@@ -371,6 +381,7 @@ const validateForm = (data: SignupForm): Result<SignupForm, string> =>
 ```typescript
 // ✅ Validation shows ALL errors
 import { collectErrors, map, type Validation } from '@ontologyio/receta/validation'
+import { pipe } from 'remeda'
 
 const validateForm = (data: SignupForm): Validation<SignupForm, string> =>
   pipe(
@@ -391,6 +402,7 @@ const validateForm = (data: SignupForm): Validation<SignupForm, string> =>
 
 ```typescript
 import { collect, err } from '@ontologyio/receta/result'
+import { collectErrors, invalid } from '@ontologyio/receta/validation'
 // Result: Fail-fast
 collect([
   err('error1'),
@@ -418,6 +430,7 @@ You can migrate gradually without rewriting everything at once:
 
 ```typescript
 import { collect } from '@ontologyio/receta/result'
+import { schema } from '@ontologyio/receta/validation'
 // New forms: Use Validation
 const validateNewForm = (data: NewForm) => schema(newFormSchema, data)
 
@@ -437,6 +450,7 @@ const validateCheckout = (data: CheckoutForm) => schema(checkoutSchema, data)
 
 ```typescript
 import { flatMap as flatMapResult } from '@ontologyio/receta/result'
+import { pipe } from 'remeda'
 // Keep Result for sequential operations
 const processOrder = (order: Order) =>
   pipe(
@@ -453,6 +467,8 @@ Result and Validation work well together:
 
 ```typescript
 import { err, flatMap as flatMapResult, type Result } from '@ontologyio/receta/result'
+import { schema, match, type Validation, type FieldError } from '@ontologyio/receta/validation'
+import { pipe } from 'remeda'
 // Validation for input
 const validateInput = (data: UserData): Validation<UserData, FieldError<string>> => {
   return schema(userSchema, data)
@@ -500,13 +516,13 @@ const validation = fromResult(result)
 
 ### Pattern 1: Form Validation
 
-```typescript
+```typescript vanilla
 // Before
 function validateForm(data: any) {
   const errors: string[] = []
 
   if (!data.email) errors.push('Email required')
-  if (data.email && !isEmail(data.email)) errors.push('Invalid email')
+  if (data.email && !data.email.includes('@')) errors.push('Invalid email')
   if (!data.password) errors.push('Password required')
   if (data.password && data.password.length < 8) errors.push('Password too short')
 
@@ -516,7 +532,9 @@ function validateForm(data: any) {
 
   return data
 }
+```
 
+```typescript
 // After
 const validateForm = (data: SignupForm) =>
   schema({
@@ -529,7 +547,7 @@ const validateForm = (data: SignupForm) =>
 
 ### Pattern 2: API Validation
 
-```typescript
+```typescript vanilla
 // Before
 app.post('/api/users', (req, res) => {
   const errors: any[] = []
@@ -544,7 +562,9 @@ app.post('/api/users', (req, res) => {
   const user = createUser(req.body)
   res.json(user)
 })
+```
 
+```typescript
 // After
 app.post('/api/users', (req, res) => {
   const validation = validateUser(req.body)
@@ -583,6 +603,7 @@ Check you're using Validation, not Result:
 
 ```typescript
 import { collect } from '@ontologyio/receta/result'
+import { collectErrors } from '@ontologyio/receta/validation'
 // ❌ Result stops at first error
 collect(results)
 
@@ -599,7 +620,7 @@ const validation = validateForm(data)
 
 if (isInvalid(validation)) {
   // Show first 5 errors only
-  const limitedErrors = validation.errors.slice(0, 5)
+  const limitedErrors = R.take(validation.errors, 5)
   showErrors(limitedErrors)
 
   if (validation.errors.length > 5) {

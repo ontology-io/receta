@@ -120,10 +120,10 @@ const catalog = nest(products, ['category', 'subcategory', 'brand'])
 ### Data-Last in Pipe
 
 ```typescript
-import { pipe } from 'remeda'
+import { nest } from '@ontologyio/receta/collection'
 import * as R from 'remeda'
 
-const activeUserComments = pipe(
+const activeUserComments = R.pipe(
   comments,
   R.filter(c => c.active),
   nest(['userId', 'postId'])
@@ -181,9 +181,9 @@ const charges: Charge[] = [
 const chargesByCustomer = groupByPath(charges, 'customer.email')
 
 // Calculate total per customer
-Object.entries(chargesByCustomer).map(([email, charges]) => ({
+R.map(R.entries(chargesByCustomer), ([email, charges]) => ({
   email,
-  total: charges.reduce((sum, c) => sum + c.amount, 0)
+  total: R.sumBy(charges, c => c.amount)
 }))
 ```
 
@@ -283,6 +283,7 @@ const withRepos = R.mapValues(byRole, (group) => nest(group, ['repo', 'type']))
 ### Optimization Tips
 
 ```typescript
+import { nest } from '@ontologyio/receta/collection'
 import { getPath } from '@ontologyio/receta/object'
 import { unwrapOr } from '@ontologyio/receta/option'
 
@@ -324,16 +325,18 @@ const comments = getNestedValue(grouped, [1, 10])
 ### Pattern 3: Transform After Grouping
 
 ```typescript
+import { nest } from '@ontologyio/receta/collection'
 import { mapValues } from '@ontologyio/receta/object'
+import * as R from 'remeda'
 
 // Group, then aggregate
-const avgPriceByCategory = pipe(
+const avgPriceByCategory = R.pipe(
   products,
   nest(['category', 'subcategory']),
   mapValues(bySubcat =>
     mapValues(bySubcat, items => ({
       count: items.length,
-      avgPrice: items.reduce((sum, p) => sum + p.price, 0) / items.length
+      avgPrice: R.meanBy(items, p => p.price)
     }))
   )
 )
@@ -355,13 +358,13 @@ const electronics = grouped.electronics
 
 ```typescript
 function isItemArray<T>(value: T | NestedMap<T> | readonly T[]): value is readonly T[] {
-  return Array.isArray(value)
+  return R.isArray(value)
 }
 
 const value = grouped.electronics
 if (isItemArray(value)) {
   // value is readonly T[]
-  value.forEach(item => console.log(item))
+  R.forEach(value, item => console.log(item))
 }
 ```
 

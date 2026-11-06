@@ -7,7 +7,7 @@ description: "Result is a type that represents either success (Ok) or failure (E
 
 ### Real-World Example: Stripe Payment Processing
 
-```typescript
+```typescript vanilla
 // Traditional approach - errors are invisible
 function processPayment(cardToken: string, amount: number) {
   const charge = stripe.charges.create({ token: cardToken, amount })
@@ -51,7 +51,7 @@ When you call `processPayment()`, you have **no idea** it can throw 4 different 
 ```
 
 **AWS SDK** (actual API pattern):
-```typescript
+```typescript vanilla
 s3.getObject(params, (err, data) => {
   if (err) {
     // Handle NoSuchKey, AccessDenied, etc.
@@ -90,7 +90,7 @@ declare function processPayment(
 
 ### Problem 1: try-catch Doesn't Compose
 
-```typescript
+```typescript vanilla
 // Traditional try-catch pyramid of doom
 try {
   const user = JSON.parse(userJson)
@@ -117,7 +117,7 @@ try {
 **With Result:**
 ```typescript
 const result = pipe(
-  tryCatch(() => JSON.parse(userJson)),
+  parseJSON(userJson),
   flatMap(validateUser),
   flatMap(saveUser),
   flatMap(saved => sendWelcomeEmail(saved.email))
@@ -132,7 +132,7 @@ match(result, {
 
 ### Problem 2: try-catch Loses Type Information
 
-```typescript
+```typescript vanilla
 try {
   await fetch('/api/users')
 } catch (error) {
@@ -157,12 +157,14 @@ const result: Result<User, FetchError> = await fetchUser()
 
 ### Problem 3: try-catch Doesn't Work in Pipelines
 
-```typescript
+```typescript vanilla
 // Can't use try-catch in Array.map
 const results = userIds.map(id => fetchUser(id)) // 💥 If any throws, whole array fails
+```
 
+```typescript
 // With Result
-const results = userIds.map(id => fetchUser(id)) // Array<Result<User, Error>>
+const results = R.map(userIds, id => fetchUser(id)) // Array<Result<User, Error>>
 const [successes, failures] = partition(results)  // Separate good from bad
 ```
 

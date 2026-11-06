@@ -21,13 +21,12 @@ import { isSome } from '../guards'
  *
  * // Real-world: processing batch operations
  * const processUsers = async (ids: string[]) => {
- *   const results = await Promise.all(
- *     ids.map(id => fetchUser(id))
- *   )
+ *   const results = await mapAsync(ids, id => fetchUser(id), { concurrency: 5 })
+ *   if (isErr(results)) return results
  *
- *   const [users, failedCount] = partition(results)
+ *   const [users, failedCount] = partition(results.value)
  *   console.log(`Processed ${users.length}, failed ${failedCount}`)
- *   return users
+ *   return ok(users)
  * }
  * ```
  *

@@ -172,14 +172,10 @@ factorial(101) // Uses cached factorial(100)
 
 ```typescript
 const isPrime = memoize((n: number): boolean => {
-  if (n <= 1) return false
-  if (n <= 3) return true
-  if (n % 2 === 0 || n % 3 === 0) return false
-  
-  for (let i = 5; i * i <= n; i += 6) {
-    if (n % i === 0 || n % (i + 2) === 0) return false
-  }
-  return true
+  if (n < 2) return false
+
+  const limit = Math.floor(Math.sqrt(n))
+  return R.range(2, limit + 1).every((divisor) => n % divisor !== 0)
 })
 
 isPrime(97) // Computed
@@ -237,7 +233,9 @@ const generateThumbnail = memoizeAsync(
 ### Multiple Components Requesting Same Data
 
 ```typescript
+import { parallel } from '@ontologyio/receta/async'
 import { memoizeAsync } from '@ontologyio/receta/memo'
+import { tap } from '@ontologyio/receta/result'
 
 const fetchUser = memoizeAsync(async (id: string) => {
   console.log(`[API] Fetching user ${id}`)
@@ -246,19 +244,23 @@ const fetchUser = memoizeAsync(async (id: string) => {
 })
 
 // Scenario: 3 components mount simultaneously
-const [header, sidebar, profile] = await Promise.all([
-  fetchUser('123'), // Triggers API call
-  fetchUser('123'), // Waits for same promise
-  fetchUser('123')  // Waits for same promise
+const users = await parallel([
+  () => fetchUser('123'), // Triggers API call
+  () => fetchUser('123'), // Waits for same promise
+  () => fetchUser('123')  // Waits for same promise
 ])
 
-console.log(header === sidebar) // true (same object!)
+tap(users, ([header, sidebar]) => console.log(header === sidebar)) // true (same object!)
 // Only 1 API call made!
 ```
 
 ### Preventing Thundering Herd
 
 ```typescript
+import { mapAsync } from '@ontologyio/receta/async'
+import { memoizeAsync, ttlCache } from '@ontologyio/receta/memo'
+import * as R from 'remeda'
+
 const getPopularContent = memoizeAsync(
   async () => {
     console.log('[DB] Running expensive query')
@@ -268,8 +270,7 @@ const getPopularContent = memoizeAsync(
 )
 
 // 1000 concurrent requests
-const requests = Array(1000).fill(null).map(() => getPopularContent())
-await Promise.all(requests)
+await mapAsync(R.range(0, 1000), () => getPopularContent())
 // Only 1 DB query executed!
 ```
 

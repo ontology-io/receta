@@ -30,7 +30,7 @@ description: "From Manual Async to Async Utils"
 ### Problem: No Concurrency Control
 
 **Before:**
-```typescript
+```typescript vanilla
 // ❌ Fetches ALL users simultaneously
 // Can overwhelm the API, database, or network
 async function fetchAllUsers(userIds: string[]) {
@@ -69,7 +69,7 @@ const users = await fetchAllUsers(thousandIds)
 ### Real-World Example: Stripe Payment Intents
 
 **Before:**
-```typescript
+```typescript vanilla
 // Express route - processes refunds
 app.post('/api/bulk-refund', async (req, res) => {
   const { paymentIntentIds } = req.body
@@ -119,7 +119,7 @@ app.post('/api/bulk-refund', async (req, res) => {
 ### Problem: Manual Retry is Fragile
 
 **Before:**
-```typescript
+```typescript vanilla
 // ❌ Inconsistent retry logic, no backoff
 async function fetchWithRetry(url: string, maxRetries = 3) {
   let lastError
@@ -167,7 +167,7 @@ async function fetchWithRetry(url: string) {
 ### Real-World Example: GitHub API with Rate Limiting
 
 **Before:**
-```typescript
+```typescript vanilla
 // ❌ No retry logic - fails on rate limit
 async function fetchGitHubRepo(owner: string, repo: string) {
   const res = await fetch(
@@ -235,7 +235,7 @@ const repo = await fetchGitHubRepo('facebook', 'react')
 ### Problem: No Timeout Protection
 
 **Before:**
-```typescript
+```typescript vanilla
 // ❌ Can hang forever if API is slow
 async function fetchUserData(userId: string) {
   const user = await fetch(`/api/users/${userId}`).then(r => r.json())
@@ -282,7 +282,7 @@ async function fetchUserData(userId: string) {
 ### Real-World Example: Next.js API Route with External Service
 
 **Before:**
-```typescript
+```typescript vanilla
 // pages/api/weather.ts
 // ❌ Can block for minutes if weather API is down
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -341,7 +341,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 ### Problem: Manual Batching is Error-Prone
 
 **Before:**
-```typescript
+```typescript vanilla
 // ❌ Complex manual batching logic
 async function importUsers(users: User[]) {
   const batchSize = 100
@@ -388,7 +388,7 @@ async function importUsers(users: User[]) {
 ### Real-World Example: Bulk Email Sending
 
 **Before:**
-```typescript
+```typescript vanilla
 // ❌ Complex batching with rate limiting
 async function sendBulkEmails(recipients: string[], emailContent: Email) {
   const batchSize = 50
@@ -472,7 +472,7 @@ async function sendBulkEmailsWithRetry(recipients: string[], emailContent: Email
 ### Problem: Manual Rate Limiting is Buggy
 
 **Before:**
-```typescript
+```typescript vanilla
 // ❌ Buggy debounce implementation
 let searchTimeout: NodeJS.Timeout | undefined
 
@@ -520,7 +520,7 @@ function onSearchInput(query: string) {
 ### Real-World Example: React Auto-Save
 
 **Before:**
-```typescript
+```typescript vanilla
 // ❌ Manual throttle for auto-save
 let lastSave = 0
 let saveTimeout: NodeJS.Timeout | undefined
@@ -603,7 +603,7 @@ function useAutoSave(documentId: string) {
 Result-returning functions provide **type-safe error handling** without exceptions:
 
 **Before (exceptions)**:
-```typescript
+```typescript vanilla
 async function emailFor(id: string) {
   try {
     const data = await fetchUser(id)
@@ -640,7 +640,7 @@ async function emailFor(id: string) {
 ### Migration Path: Throwing Retry Helper → retry
 
 **Before**:
-```typescript
+```typescript vanilla
 const fetchUser = async (id: string): Promise<User> => {
   return retryManually(
     async () => {
@@ -691,7 +691,7 @@ const name = pipe(result, map(u => u.name), unwrapOr('Unknown'))
 ### Migration Path: Promise.all → mapAsync
 
 **Before**:
-```typescript
+```typescript vanilla
 const processUsers = async (userIds: string[]): Promise<User[]> => {
   try {
     return await Promise.all(userIds.map((id) => fetchUser(id)))
@@ -723,7 +723,9 @@ if (isOk(result)) {
 ### Migration Path: Hand-Written Timeout → timeout
 
 **Before**:
-```typescript
+```typescript vanilla
+class TimeoutError extends Error {}
+
 const fetchWithTimeout = async (url: string) => {
   try {
     return await withTimeout(fetch(url), 5000)
@@ -748,20 +750,16 @@ const fetchWithTimeoutResult = async (url: string) => {
 
 **Before**:
 ```typescript
+// poll rejects when this throws, so every caller needs a try-catch
 const waitForJob = async (jobId: string) => {
-  try {
-    return await poll(
-      async () => {
-        const status = await checkJobStatus(jobId)
-        if (status.state === 'failed') throw new Error('Job failed')
-        return status.state === 'completed' ? status : null
-      },
-      { interval: 2000, maxAttempts: 30 }
-    )
-  } catch (error) {
-    console.error('Job polling failed:', error)
-    throw error
-  }
+  return poll(
+    async () => {
+      const status = await checkJobStatus(jobId)
+      if (status.state === 'failed') throw new Error('Job failed')
+      return status.state === 'completed' ? status : null
+    },
+    { interval: 2000, maxAttempts: 30 }
+  )
 }
 ```
 
@@ -794,7 +792,7 @@ pipe(
 ### Real-World Example: Payment Processing with Result
 
 **Before (exception-based)**:
-```typescript
+```typescript vanilla
 async function processPayment(paymentId: string): Promise<Payment> {
   try {
     // Fetch payment details with retry
@@ -948,7 +946,7 @@ if (isOk(result)) {
   console.log(`Successfully processed ${paid.length} payments`)
 
   // Each failure says what went wrong
-  failed.forEach((error) => console.error('Payment failed:', error.type))
+  R.forEach(failed, (error) => console.error('Payment failed:', error.type))
 }
 ```
 
@@ -991,7 +989,7 @@ if (isOk(result)) {
 ### Pattern 1: Parallel Fetch → mapAsync
 
 **Before:**
-```typescript
+```typescript vanilla
 // Fetch all product details
 const products = await Promise.all(
   productIds.map(id => fetchProduct(id))
@@ -1014,7 +1012,7 @@ const products = await mapAsync(
 ### Pattern 2: Manual Retry Loop → retry()
 
 **Before:**
-```typescript
+```typescript vanilla
 let attempts = 0
 let success = false
 let result
@@ -1026,7 +1024,7 @@ while (!success && attempts < 3) {
   } catch (error) {
     attempts++
     if (attempts >= 3) throw error
-    await sleep(1000 * attempts) // Manual backoff
+    await new Promise(resolve => setTimeout(resolve, 1000 * attempts)) // Manual backoff
   }
 }
 ```
@@ -1046,7 +1044,7 @@ const result = await retry(
 ### Pattern 3: setTimeout → debounce
 
 **Before:**
-```typescript
+```typescript vanilla
 let timer: NodeJS.Timeout | undefined
 
 function handleInput(value: string) {
@@ -1072,7 +1070,7 @@ const handleInput = debounce(
 ### Pattern 4: Polling Loop → poll()
 
 **Before:**
-```typescript
+```typescript vanilla
 async function waitForJobComplete(jobId: string) {
   let attempts = 0
   const maxAttempts = 30
@@ -1089,7 +1087,7 @@ async function waitForJobComplete(jobId: string) {
     }
 
     attempts++
-    await sleep(2000)
+    await new Promise(resolve => setTimeout(resolve, 2000))
   }
 
   throw new Error('Job timeout')
@@ -1099,18 +1097,19 @@ async function waitForJobComplete(jobId: string) {
 **After:**
 ```typescript
 import { poll } from '@ontologyio/receta/async'
+import { err, flatten, ok } from '@ontologyio/receta/result'
 
 async function waitForJobComplete(jobId: string) {
-  return poll(
+  const finished = await poll(
     async () => {
       const status = await checkJobStatus(jobId)
 
-      // Throwing stops poll, and it rejects rather than returning an Err
+      // Throwing would make poll reject, so report the failure as a value
       if (status.state === 'failed') {
-        throw new Error('Job failed')
+        return err('Job failed')
       }
 
-      return status.state === 'completed' ? status : null
+      return status.state === 'completed' ? ok(status) : null
     },
     {
       interval: 2000,
@@ -1118,6 +1117,8 @@ async function waitForJobComplete(jobId: string) {
       onPoll: (attempt) => console.log(`Checking job... (${attempt})`)
     }
   )
+
+  return flatten(finished)
 }
 ```
 
@@ -1126,24 +1127,24 @@ async function waitForJobComplete(jobId: string) {
 ### Pattern 5: Sequential Batches → batch()
 
 **Before:**
-```typescript
+```typescript vanilla
 async function processInBatches<T>(items: T[], processor: (item: T) => Promise<void>) {
   for (let i = 0; i < items.length; i += 10) {
     const batch = items.slice(i, i + 10)
     await Promise.all(batch.map(processor))
-    await sleep(1000) // Delay between batches
+    await new Promise(resolve => setTimeout(resolve, 1000)) // Delay between batches
   }
 }
 ```
 
 **After:**
 ```typescript
-import { batch } from '@ontologyio/receta/async'
+import { batch, mapAsyncOrThrow } from '@ontologyio/receta/async'
 
 async function processInBatches<T>(items: T[], processor: (item: T) => Promise<void>) {
-  await batch(
+  return batch(
     items,
-    async (batch) => Promise.all(batch.map(processor)),
+    (group) => mapAsyncOrThrow(group, processor),
     { batchSize: 10, delayBetweenBatches: 1000 }
   )
 }
@@ -1226,13 +1227,9 @@ window.addEventListener('scroll', () => trackScroll())
 ### ❌ Pitfall 5: Ignoring Timeout Errors
 
 ```typescript
-// BAD - a timeout is an Err, so the catch never sees it
-try {
-  const data = await timeout(fetchData(), 5000)
-  render(data) // data is a Result, not the value
-} catch (error) {
-  console.error('Failed:', error)
-}
+// BAD - a timeout is an Err, not an exception, and nothing checks for it
+const unchecked = await timeout(fetchData(), 5000)
+render(unchecked) // unchecked is a Result, not the value
 
 // GOOD - check the Result
 const data = await timeout(fetchData(), 5000)
@@ -1371,7 +1368,7 @@ describe('retry migration', () => {
 
 ```typescript
 import { describe, it, expect, vi } from 'vitest'
-import { debounce } from '@ontologyio/receta/async'
+import { debounce, sleep } from '@ontologyio/receta/async'
 
 describe('debounce migration', () => {
   it('delays execution until calls stop', async () => {
@@ -1384,7 +1381,7 @@ describe('debounce migration', () => {
     debounced('c')
 
     // Wait for debounce
-    await new Promise(resolve => setTimeout(resolve, 150))
+    await sleep(150)
 
     // Only last call should execute
     expect(fn).toHaveBeenCalledTimes(1)

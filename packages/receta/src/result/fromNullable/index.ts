@@ -21,7 +21,7 @@ import { ok, err } from '../constructors'
  *
  * // Data-last (in pipe)
  * pipe(
- *   users.find(u => u.id === id),
+ *   R.find(users, where({ id: eq(id) })),
  *   fromNullable('User not found'),
  *   map(user => user.name)
  * )

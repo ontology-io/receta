@@ -23,7 +23,7 @@ import type { ParseError } from '../types'
  * const parseStripeAmount = (amountStr: string) =>
  *   pipe(
  *     fromCurrency(amountStr),
- *     map(amount => Math.round(amount * 100)) // Convert to cents
+ *     map(amount => round(amount * 100, 0)) // Convert to cents
  *   )
  * ```
  *

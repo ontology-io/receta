@@ -17,10 +17,10 @@ import { purryConfig2 } from '../../utils'
  * // Priority assignment with default
  * const getPriority = switchCase<string, number>(
  *   [
- *     [(s) => s === 'critical', () => 1],
- *     [(s) => s === 'high', () => 2],
- *     [(s) => s === 'medium', () => 3],
- *     [(s) => s === 'low', () => 4]
+ *     [eq('critical'), () => 1],
+ *     [eq('high'), () => 2],
+ *     [eq('medium'), () => 3],
+ *     [eq('low'), () => 4]
  *   ],
  *   5 // default priority for unknown levels
  * )
@@ -32,14 +32,17 @@ import { purryConfig2 } from '../../utils'
  *
  * @example
  * ```typescript
+ * import { switchCase } from '@ontologyio/receta/function'
+ * import { between, eq, gte } from '@ontologyio/receta/predicate'
+ *
  * // HTTP status handling with default error message
  * const getStatusMessage = switchCase<number, string>(
  *   [
- *     [(s) => s >= 200 && s < 300, () => 'Success'],
- *     [(s) => s >= 300 && s < 400, () => 'Redirect'],
- *     [(s) => s === 404, () => 'Not Found'],
- *     [(s) => s >= 400 && s < 500, () => 'Client Error'],
- *     [(s) => s >= 500, () => 'Server Error']
+ *     [between(200, 299), () => 'Success'],
+ *     [between(300, 399), () => 'Redirect'],
+ *     [eq(404), () => 'Not Found'],
+ *     [between(400, 499), () => 'Client Error'],
+ *     [gte(500), () => 'Server Error']
  *   ],
  *   'Unknown Status'
  * )
@@ -54,9 +57,9 @@ import { purryConfig2 } from '../../utils'
  * // Data-first
  * const result = switchCase<string, number>(
  *   [
- *     [(s) => s === 'small', () => 10],
- *     [(s) => s === 'medium', () => 20],
- *     [(s) => s === 'large', () => 30]
+ *     [eq('small'), () => 10],
+ *     [eq('medium'), () => 20],
+ *     [eq('large'), () => 30]
  *   ],
  *   15, // default value
  *   'medium'
@@ -71,9 +74,9 @@ import { purryConfig2 } from '../../utils'
  *   getUserRole(),
  *   switchCase<Role, Permissions>(
  *     [
- *       [(r) => r === 'admin', () => allPermissions],
- *       [(r) => r === 'editor', () => editorPermissions],
- *       [(r) => r === 'viewer', () => viewPermissions]
+ *       [eq('admin'), () => allPermissions],
+ *       [eq('editor'), () => editorPermissions],
+ *       [eq('viewer'), () => viewPermissions]
  *     ],
  *     noPermissions // default for unknown roles
  *   )
@@ -82,14 +85,17 @@ import { purryConfig2 } from '../../utils'
  *
  * @example
  * ```typescript
+ * import { switchCase } from '@ontologyio/receta/function'
+ * import { eq, oneOf } from '@ontologyio/receta/predicate'
+ *
  * // File extension to MIME type mapping
  * const getMimeType = switchCase<string, string>(
  *   [
- *     [(ext) => ext === 'jpg' || ext === 'jpeg', () => 'image/jpeg'],
- *     [(ext) => ext === 'png', () => 'image/png'],
- *     [(ext) => ext === 'gif', () => 'image/gif'],
- *     [(ext) => ext === 'pdf', () => 'application/pdf'],
- *     [(ext) => ext === 'json', () => 'application/json']
+ *     [oneOf(['jpg', 'jpeg']), () => 'image/jpeg'],
+ *     [eq('png'), () => 'image/png'],
+ *     [eq('gif'), () => 'image/gif'],
+ *     [eq('pdf'), () => 'application/pdf'],
+ *     [eq('json'), () => 'application/json']
  *   ],
  *   'application/octet-stream' // default MIME type
  * )

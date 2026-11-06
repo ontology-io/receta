@@ -48,6 +48,7 @@ compose(
 
 ```typescript
 import { compose, ascending, byDate } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 interface Issue {
   status: 'open' | 'closed'
@@ -58,7 +59,8 @@ interface Issue {
 const statusOrder = { open: 0, closed: 1 }
 const priorityOrder = { high: 0, medium: 1, low: 2 }
 
-issues.sort(
+const sorted = R.sort(
+  issues,
   compose(
     ascending(i => statusOrder[i.status]),     // 1. Open first
     ascending(i => priorityOrder[i.priority]), // 2. Then high priority
@@ -77,7 +79,8 @@ interface Employee {
   salary: number
 }
 
-employees.sort(
+const sorted = R.sort(
+  employees,
   compose(
     ascending(e => e.department),  // Group by department
     descending(e => e.salary),     // Within department, highest paid first
@@ -95,7 +98,8 @@ interface Product {
   rating: number
 }
 
-products.sort(
+const sorted = R.sort(
+  products,
   compose(
     ascending(p => p.category),    // Group by category
     ascending(p => p.price),       // Cheapest first within category
@@ -112,7 +116,8 @@ interface FileEntry {
   type: 'directory' | 'file'
 }
 
-files.sort(
+R.sort(
+  files,
   compose(
     ascending(f => f.type === 'directory' ? 0 : 1), // Directories first
     natural(f => f.name)                            // Then natural sort by name
@@ -132,7 +137,8 @@ interface Transaction {
 
 const statusPriority = { failed: 0, pending: 1, succeeded: 2 }
 
-transactions.sort(
+const sorted = R.sort(
+  transactions,
   compose(
     ascending(t => statusPriority[t.status]), // Failed first (need attention)
     descending(t => t.amount),                // Largest amounts first
@@ -165,6 +171,7 @@ function reverse<T>(comparator: Comparator<T>): Comparator<T>
 
 ```typescript
 import { reverse, ascending } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 function getSortComparator(direction: 'asc' | 'desc') {
   const base = ascending((p: Product) => p.price)
@@ -172,10 +179,10 @@ function getSortComparator(direction: 'asc' | 'desc') {
 }
 
 // User clicks "Price ↑"
-products.sort(getSortComparator('asc'))
+const cheapestFirst = R.sort(products, getSortComparator('asc'))
 
 // User clicks "Price ↓"
-products.sort(getSortComparator('desc'))
+const priciestFirst = R.sort(products, getSortComparator('desc'))
 ```
 
 #### Newest First
@@ -185,7 +192,7 @@ products.sort(getSortComparator('desc'))
 const oldestFirst = byDate((e: CalendarEvent) => e.date)
 const newestFirst = reverse(oldestFirst)
 
-events.sort(newestFirst)
+const sorted = R.sort(events, newestFirst)
 ```
 
 #### Reverse Alphabetical
@@ -194,7 +201,7 @@ events.sort(newestFirst)
 const aToZ = ascending((u: User) => u.name)
 const zToA = reverse(aToZ)
 
-users.sort(zToA)
+R.sort(users, zToA)
 // => [Zara, Yuki, Xavier, ...]
 ```
 
@@ -252,10 +259,11 @@ The wrapped comparator's type still includes null, so its extractor needs a fall
 
 ```typescript
 import { nullsFirst, ascending } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 const scores: (number | null)[] = [30, null, 10, null, 20]
 
-scores.sort(nullsFirst(ascending(score => score ?? 0)))
+R.sort(scores, nullsFirst(ascending(score => score ?? 0)))
 // => [null, null, 10, 20, 30]
 ```
 
@@ -268,7 +276,7 @@ interface Seat {
 
 const seats: (Seat | null)[] = [{ label: 'B2' }, null, { label: 'A1' }]
 
-seats.sort(nullsFirst(ascending(seat => seat?.label ?? '')))
+R.sort(seats, nullsFirst(ascending(seat => seat?.label ?? '')))
 // => [null, { label: 'A1' }, { label: 'B2' }]
 ```
 
@@ -280,6 +288,7 @@ When the items are objects and a field inside them can be null, `nullsFirst` has
 
 ```typescript
 import { ascending } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 interface Task {
   title: string
@@ -294,7 +303,7 @@ const tasks: Task[] = [
 ]
 
 // An empty string sorts before every name
-tasks.sort(ascending(t => t.assignee ?? ''))
+R.sort(tasks, ascending(t => t.assignee ?? ''))
 // => [Review PR (null), Deploy (null), Fix bug (alice), Write docs (bob)]
 ```
 
@@ -307,7 +316,7 @@ interface User {
 }
 
 // Show users who never logged in first
-users.sort(ascending(u => u.lastLogin ?? new Date(0)))
+const sorted = R.sort(users, ascending(u => u.lastLogin ?? new Date(0)))
 ```
 
 #### Optional Deadlines
@@ -319,7 +328,7 @@ interface Project {
 }
 
 // Projects without deadlines shown first (need attention)
-projects.sort(ascending(p => p.deadline ?? new Date(0)))
+const sorted = R.sort(projects, ascending(p => p.deadline ?? new Date(0)))
 ```
 
 ---
@@ -349,10 +358,11 @@ function nullsLast<T>(
 
 ```typescript
 import { nullsLast, ascending } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 const scores: (number | null)[] = [30, null, 10, null, 20]
 
-scores.sort(nullsLast(ascending(score => score ?? 0)))
+R.sort(scores, nullsLast(ascending(score => score ?? 0)))
 // => [10, 20, 30, null, null]
 ```
 
@@ -364,6 +374,7 @@ For a nullable field, use a fallback again. With `descending`, the lowest possib
 
 ```typescript
 import { descending } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 interface User {
   name: string
@@ -371,7 +382,7 @@ interface User {
 }
 
 // Active users first, inactive (null) at end
-users.sort(descending(u => u.lastActivity ?? new Date(0)))
+R.sort(users, descending(u => u.lastActivity ?? new Date(0)))
 // => [Most recent activity ... least recent ... null, null]
 ```
 
@@ -384,7 +395,7 @@ interface Product {
 }
 
 // Products with discounts first, no discount at end
-products.sort(descending(p => p.discount ?? 0))
+const sorted = R.sort(products, descending(p => p.discount ?? 0))
 ```
 
 #### Verified Accounts
@@ -396,7 +407,7 @@ interface Account {
 }
 
 // Verified accounts first, unverified at end
-accounts.sort(descending(a => a.verifiedAt ?? new Date(0)))
+const sorted = R.sort(accounts, descending(a => a.verifiedAt ?? new Date(0)))
 ```
 
 ### Real-World: Linear Issues
@@ -412,7 +423,8 @@ interface LinearIssue {
 }
 
 // Assigned issues first, then by priority
-issues.sort(
+const sorted = R.sort(
+  issues,
   compose(
     byBoolean(i => i.assignee === null),
     descending(i => i.priority)
@@ -447,6 +459,7 @@ function withTiebreaker<T>(
 
 ```typescript
 import { withTiebreaker, descending, ascending } from '@ontologyio/receta/compare'
+import * as R from 'remeda'
 
 interface Player {
   name: string
@@ -455,7 +468,8 @@ interface Player {
 }
 
 // Highest score wins, fastest time breaks ties
-players.sort(
+const sorted = R.sort(
+  players,
   withTiebreaker(
     descending(p => p.score),
     ascending(p => p.completionTime)
@@ -472,7 +486,8 @@ interface SalesRegion {
 }
 
 // Highest revenue first, alphabetical breaks ties
-regions.sort(
+const sorted = R.sort(
+  regions,
   withTiebreaker(
     descending(r => r.revenue),
     ascending(r => r.region)
@@ -490,7 +505,8 @@ interface Applicant {
 }
 
 // Most experience first, highest education breaks ties
-applicants.sort(
+const sorted = R.sort(
+  applicants,
   withTiebreaker(
     descending(a => a.yearsExperience),
     descending(a => a.educationLevel)
@@ -525,7 +541,8 @@ interface Task {
   createdAt: Date
 }
 
-tasks.sort(
+const sorted = R.sort(
+  tasks,
   compose(
     ascending(t => t.status === 'open' ? 0 : 1),      // Open first
     byBoolean(t => t.assignee !== null),              // Unassigned first within status
@@ -547,7 +564,7 @@ const normalOrder = compose(
 const reverseOrder = reverse(normalOrder)
 
 // Completely reverses the entire sort
-products.sort(reverseOrder)
+const sorted = R.sort(products, reverseOrder)
 ```
 
 ### Example: Nullable Values in Multi-Level Sort
@@ -559,7 +576,8 @@ interface Employee {
   salary: number
 }
 
-employees.sort(
+const sorted = R.sort(
+  employees,
   compose(
     ascending(e => e.department),
     byBoolean(e => e.manager === null), // No manager goes last
@@ -591,7 +609,7 @@ interface SortConfig {
 }
 
 function buildComparator(configs: SortConfig[]): Comparator<Item> {
-  const comparators = configs.map(cfg => {
+  const comparators = R.map(configs, cfg => {
     const base = byKey<Item, keyof Item>(cfg.column as keyof Item)
     return cfg.direction === 'desc' ? reverse(base) : base
   })
@@ -616,7 +634,8 @@ interface QueueItem {
 }
 
 // Higher priority first, FIFO breaks ties
-queue.sort(
+const sorted = R.sort(
+  queue,
   withTiebreaker(
     descending(item => item.priority),
     ascending(item => item.enqueuedAt)
@@ -634,7 +653,8 @@ interface Message {
 }
 
 // Starred first, then unread, then by date
-messages.sort(
+const sorted = R.sort(
+  messages,
   compose(
     reverse(byBoolean(m => m.isStarred)),
     byBoolean(m => m.isRead),

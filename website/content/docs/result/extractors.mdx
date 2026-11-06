@@ -106,7 +106,7 @@ const ProfileCard = async ({ username }: { username: string }) => {
 const loadConfig = () => {
   const port = pipe(
     fromNullable(process.env.PORT, 'No PORT specified'),
-    map(str => parseInt(str, 10)),
+    flatMap(parseNumber),
     unwrapOr(3000) // Default port
   )
 
@@ -141,13 +141,13 @@ const Checkout = () =>
 const getPaginationParams = (query: URLSearchParams) => {
   const page = pipe(
     fromNullable(query.get('page'), 'No page param'),
-    map(Number),
+    flatMap(parseNumber),
     unwrapOr(1)
   )
 
   const pageSize = pipe(
     fromNullable(query.get('pageSize'), 'No pageSize param'),
-    map(Number),
+    flatMap(parseNumber),
     unwrapOr(20)
   )
 

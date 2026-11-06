@@ -64,6 +64,7 @@ over(ageLens, (age) => age + 1, user)
 
 ```tsx
 import { useState } from 'react'
+import { type Lens, prop, set } from '@ontologyio/receta/lens'
 
 interface FormState {
   username: string
@@ -373,6 +374,9 @@ const updateSecondPriority = (state: TodoListState, priority: Todo['priority']) 
 ### Real-World: Shopping Cart
 
 ```typescript
+import { removeAtIndex } from '@ontologyio/receta/collection'
+import { compose, index, over, prop } from '@ontologyio/receta/lens'
+
 interface CartItem {
   productId: string
   name: string
@@ -403,13 +407,9 @@ const updateItemQuantity = (
   )
 }
 
-// Remove item (setting undefined changes nothing, so filter instead)
+// Remove item (setting undefined changes nothing, so use removeAtIndex instead)
 const removeItem = (cart: Cart, itemIndex: number): Cart => {
-  return over(
-    itemsLens,
-    (items) => items.filter((_, idx) => idx !== itemIndex),
-    cart
-  )
+  return over(itemsLens, removeAtIndex(itemIndex), cart)
 }
 ```
 
@@ -433,6 +433,7 @@ function lens<S, A>(
 
 ```typescript
 import { lens, view, set, over } from '@ontologyio/receta/lens'
+import * as R from 'remeda'
 
 interface User {
   firstName: string
@@ -447,7 +448,7 @@ const fullNameLens = lens<User, string>(
   // Setter: split and update both fields
   (fullName) => (user) => {
     const [firstName, ...rest] = fullName.split(' ')
-    const lastName = rest.join(' ')
+    const lastName = R.join(rest, ' ')
     return { ...user, firstName, lastName: lastName || user.lastName }
   }
 )

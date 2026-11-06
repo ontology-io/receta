@@ -257,16 +257,13 @@ export const hasProperty =
  * const numbers = [1, 2, 3, 4, 5]
  * R.filter(numbers, satisfies((n) => n % 2 === 0)) // => [2, 4]
  *
- * // Makes complex predicates more readable
- * const users = [
- *   { name: 'Alice', age: 25, premium: true },
- *   { name: 'Bob', age: 17, premium: false },
- *   { name: 'Charlie', age: 30, premium: true }
+ * // Names a check that where() can't express, such as comparing two fields
+ * const orders = [
+ *   { id: 1, paid: 100, total: 100 },
+ *   { id: 2, paid: 40, total: 100 }
  * ]
- * R.filter(
- *   users,
- *   satisfies((u) => u.age >= 18 && u.premium)
- * )
+ * R.filter(orders, satisfies((o) => o.paid >= o.total))
+ * // => [{ id: 1, paid: 100, total: 100 }]
  * ```
  *
  * @see where - for structured object testing

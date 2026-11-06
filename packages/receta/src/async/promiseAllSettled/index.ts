@@ -20,7 +20,7 @@ import { ok, err, type Result } from '../../result'
  *   fetch('/api/users/999'), // might fail
  * ])
  *
- * results.forEach((result) => {
+ * R.forEach(results, (result) => {
  *   if (result.status === 'fulfilled') {
  *     console.log('Success:', result.value)
  *   } else {
@@ -96,7 +96,7 @@ export async function promiseAllSettled<T>(
  * ```typescript
  * // Process partial API results
  * const results = await promiseAllSettled(
- *   userIds.map((id) => fetchUser(id))
+ *   R.map(userIds, (id) => fetchUser(id))
  * )
  *
  * const successfulUsers = extractFulfilled(results)
@@ -133,14 +133,14 @@ export function extractFulfilled<T>(
  * const errors = extractRejected<Error>(results)
  * // => [Error('Network error'), Error('Timeout')]
  *
- * errors.forEach((err) => console.error('Failed:', err.message))
+ * R.forEach(errors, (err) => console.error('Failed:', err.message))
  * ```
  *
  * @example
  * ```typescript
  * // Track failed operations
  * const results = await promiseAllSettled(
- *   userIds.map((id) => deleteUser(id))
+ *   R.map(userIds, (id) => deleteUser(id))
  * )
  *
  * const failures = extractRejected(results)
@@ -206,9 +206,10 @@ export function extractRejected<T = unknown>(
  * // Compose with validation
  * import { flatMap } from '@ontologyio/receta/result'
  * import { validate } from '@ontologyio/receta/validation'
+ * import * as R from 'remeda'
  *
  * const results = await promiseAllSettled(
- *   urls.map((url) => fetch(url).then(r => r.json()))
+ *   R.map(urls, (url) => fetch(url).then(r => r.json()))
  * )
  *
  * const validated = R.pipe(

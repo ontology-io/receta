@@ -15,8 +15,8 @@
  *   userId,
  *   (id) => fetchUser(id),
  *   (user) => fetchUserPosts(user.id),
- *   (posts) => posts.filter(p => p.published),
- *   (posts) => posts.map(p => p.title)
+ *   (posts) => R.filter(posts, p => p.published),
+ *   (posts) => R.map(posts, p => p.title)
  * )
  * // => ['Post 1', 'Post 2', ...]
  * ```
@@ -26,13 +26,10 @@
  * // Mix sync and async functions
  * const processOrder = await pipeAsync(
  *   orderId,
- *   (id) => fetchOrder(id),          // async
- *   (order) => order.items,          // sync
- *   async (items) => {               // async
- *     const prices = await Promise.all(items.map(getPriceAsync))
- *     return prices
- *   },
- *   (prices) => prices.reduce((a, b) => a + b, 0)  // sync
+ *   (id) => fetchOrder(id),                     // async
+ *   (order) => order.items,                     // sync
+ *   (items) => mapAsync(items, getPriceAsync),  // async, gives a Result
+ *   map((prices) => R.sum(prices))              // sync
  * )
  * ```
  *
@@ -55,11 +52,8 @@
  * const report = await pipeAsync(
  *   'raw-data.json',
  *   (file) => fs.readFile(file, 'utf-8'),
- *   (content) => JSON.parse(content),
- *   async (data) => {
- *     const enriched = await enrichData(data)
- *     return enriched
- *   },
+ *   (content) => unwrap(parseJSON(content)), // throws on invalid JSON
+ *   (data) => enrichData(data),
  *   (data) => generateReport(data)
  * )
  * ```

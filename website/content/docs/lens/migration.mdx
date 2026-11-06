@@ -6,7 +6,7 @@ description: "Step-by-step guide for refactoring existing code to use lenses."
 ## Why Migrate?
 
 **Before (Spread Hell)**:
-```typescript
+```typescript vanilla
 const updateCity = (state: State) => ({
   ...state,
   user: {
@@ -31,7 +31,7 @@ const updateCity = (state: State) => set(cityLens, 'NYC', state)
 
 Look for code that updates the same nested paths multiple times:
 
-```typescript
+```typescript vanilla
 // ❌ Before: Repeated pattern
 const updateUserCity = (state) => ({
   ...state,
@@ -42,7 +42,9 @@ const updateUserZip = (state) => ({
   ...state,
   user: { ...state.user, address: { ...state.user.address, zip: newZip } },
 })
+```
 
+```typescript
 // ✅ After: Define lens once, reuse everywhere
 const cityLens = path<State, string>('user.address.city')
 const zipLens = path<State, string>('user.address.zip')
@@ -53,13 +55,15 @@ const updateUserZip = (state, zip) => set(zipLens, zip, state)
 
 ### Step 2: Replace Simple Property Updates
 
-```typescript
+```typescript vanilla
 // ❌ Before
 const updateName = (user: User, name: string) => ({
   ...user,
   name,
 })
+```
 
+```typescript
 // ✅ After
 const nameLens = prop<User, 'name'>('name')
 const updateName = (user: User, name: string) => set(nameLens, name, user)
@@ -67,7 +71,7 @@ const updateName = (user: User, name: string) => set(nameLens, name, user)
 
 ### Step 3: Replace Nested Updates
 
-```typescript
+```typescript vanilla
 // ❌ Before
 const updateAddress = (state: State) => ({
   ...state,
@@ -80,7 +84,9 @@ const updateAddress = (state: State) => ({
     },
   },
 })
+```
 
+```typescript
 // ✅ After
 const cityLens = path<State, string>('user.address.city')
 const zipLens = path<State, string>('user.address.zip')
@@ -95,13 +101,15 @@ const updateAddress = (state: State) =>
 
 ### Step 4: Replace Transformations
 
-```typescript
+```typescript vanilla
 // ❌ Before
 const incrementCounter = (state: State) => ({
   ...state,
   counter: state.counter + 1,
 })
+```
 
+```typescript
 // ✅ After
 const counterLens = prop<State, 'counter'>('counter')
 const incrementCounter = (state: State) => over(counterLens, (n) => n + 1, state)
@@ -109,7 +117,7 @@ const incrementCounter = (state: State) => over(counterLens, (n) => n + 1, state
 
 ### Step 5: Replace Array Updates
 
-```typescript
+```typescript vanilla
 // ❌ Before
 const updateFirstTodo = (state: TodoState) => ({
   ...state,
@@ -117,13 +125,14 @@ const updateFirstTodo = (state: TodoState) => ({
     idx === 0 ? { ...todo, done: true } : todo
   ),
 })
+```
 
+```typescript
 // ✅ After
-const todosLens = prop<TodoState, 'todos'>('todos')
+const firstTodoLens = compose(prop<TodoState, 'todos'>('todos'), index<Todo>(0))
+
 const updateFirstTodo = (state: TodoState) =>
-  over(todosLens, (todos) =>
-    todos.map((todo, idx) => (idx === 0 ? { ...todo, done: true } : todo))
-  , state)
+  over(firstTodoLens, (todo) => (todo ? { ...todo, done: true } : todo), state)
 ```
 
 ## Migration Checklist

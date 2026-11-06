@@ -19,7 +19,7 @@ title: "Batching and Polling"
 
 ### The Problem: Processing Large Datasets
 
-```typescript
+```typescript vanilla
 // DON'T: Process 10,000 payments all at once
 async function processPayments(payments: Payment[]) {
   return Promise.all(payments.map(p => stripe.charges.create(p)))
@@ -136,18 +136,22 @@ A `delayBetweenBatches` above 0 runs batches one at a time and ignores `concurre
 ### Breaking Arrays into Batches
 
 ```typescript
-import { chunk } from '@ontologyio/receta/async'
+import { chunk, mapAsync, sleep } from '@ontologyio/receta/async'
 
 // Split array into chunks
 const items = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 const batches = chunk(items, 3)
 // => [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10]]
 
-// Process each chunk manually
-for (const batch of batches) {
-  await processBatch(batch)
-  await sleep(1000) // Delay between batches
-}
+// Process each chunk manually, one at a time
+await mapAsync(
+  batches,
+  async (group) => {
+    await processBatch(group)
+    await sleep(1000) // Delay between batches
+  },
+  { concurrency: 1 }
+)
 ```
 
 ### Combining with Remeda
@@ -176,6 +180,10 @@ const results = await R.pipe(
 ### Finding the Right Batch Size
 
 ```typescript
+import { mapAsync, type MapAsyncError } from '@ontologyio/receta/async'
+import { isErr, map, ok, type Result } from '@ontologyio/receta/result'
+import * as R from 'remeda'
+
 // Rule of thumb: Start with these defaults and adjust
 const defaultBatchSizes = {
   // API Calls
@@ -189,32 +197,34 @@ const defaultBatchSizes = {
   dataTransform: 5000,   // Pure computation can be large
 }
 
+// Adjust batch size based on duration
+const nextBatchSize = (batchSize: number, duration: number): number => {
+  if (duration < 1000) return Math.min(Math.floor(batchSize * 1.5), 500) // Increase
+  if (duration > 5000) return Math.max(Math.floor(batchSize * 0.5), 10)  // Decrease
+  return batchSize
+}
+
 // Adaptive batching based on processing time
+// Each call runs one batch, then calls itself with the rest
 async function adaptiveBatch<T, U>(
-  items: T[],
-  fn: (item: T) => Promise<U>
-): Promise<U[]> {
-  let batchSize = 100
-  const results: U[] = []
+  items: readonly T[],
+  fn: (item: T) => Promise<U>,
+  batchSize = 100
+): Promise<Result<U[], MapAsyncError>> {
+  if (items.length === 0) return ok([])
 
-  for (let i = 0; i < items.length; i += batchSize) {
-    const batchItems = items.slice(i, i + batchSize)
-    const startTime = Date.now()
+  const [batchItems, rest] = R.splitAt(items, batchSize)
+  const startTime = Date.now()
 
-    const batchResults = await Promise.all(batchItems.map(fn))
-    results.push(...batchResults)
+  const batchResults = await mapAsync(batchItems, fn)
+  if (isErr(batchResults)) return batchResults
 
-    const duration = Date.now() - startTime
+  const duration = Date.now() - startTime
 
-    // Adjust batch size based on duration
-    if (duration < 1000) {
-      batchSize = Math.min(batchSize * 1.5, 500) // Increase
-    } else if (duration > 5000) {
-      batchSize = Math.max(batchSize * 0.5, 10)  // Decrease
-    }
-  }
-
-  return results
+  return map(
+    await adaptiveBatch(rest, fn, nextBatchSize(batchSize, duration)),
+    (others) => [...batchResults.value, ...others]
+  )
 }
 ```
 
@@ -265,25 +275,29 @@ async function batchSendEmails(emails: Email[]) {
 ### Exponential Backoff Between Batches
 
 ```typescript
+import { chunk, mapAsync, mapAsyncOrThrow, sleep } from '@ontologyio/receta/async'
+import { map } from '@ontologyio/receta/result'
+import * as R from 'remeda'
+
 async function batchWithBackoff<T, U>(
   items: T[],
   fn: (item: T) => Promise<U>,
   batchSize: number
-): Promise<U[]> {
-  const batches = chunk(items, batchSize)
-  const results: U[] = []
+) {
+  const batches = await mapAsync(
+    chunk(items, batchSize),
+    async (group, index) => {
+      if (index > 0) {
+        await sleep(Math.min(1000 * Math.pow(2, index), 30000))
+      }
 
-  for (const [index, batch] of batches.entries()) {
-    const delay = Math.min(1000 * Math.pow(2, index), 30000)
-    if (index > 0) {
-      await sleep(delay)
-    }
+      // Throwing is what stops the batches that are left
+      return mapAsyncOrThrow(group, fn)
+    },
+    { concurrency: 1 } // One batch at a time
+  )
 
-    const batchResults = await Promise.all(batch.map(fn))
-    results.push(...batchResults)
-  }
-
-  return results
+  return map(batches, (groups) => R.flat(groups))
 }
 ```
 
@@ -555,6 +569,7 @@ async function waitForChargeConfirmation(
 
 ```typescript
 import { poll, type PollError } from '@ontologyio/receta/async'
+import type { Result } from '@ontologyio/receta/result'
 
 async function pollWithTimeout<T>(
   fn: () => Promise<T | null>,
@@ -600,12 +615,12 @@ async function exportUsersToCSV(
 
   const exported = await batch(users,
     async (group) => {
-      const rows = group.map((user) => [
+      const rows = R.map(group, (user) => R.join([
         user.id,
         user.email,
         user.name,
         user.createdAt.toISOString()
-      ].join(','))
+      ], ','))
 
       csvRows.push(...rows)
       console.log(`Exported ${csvRows.length - 1}/${users.length} users`)
@@ -617,7 +632,7 @@ async function exportUsersToCSV(
     return err({ type: 'export_failed' })
   }
 
-  const csv = csvRows.join('\n')
+  const csv = R.join(csvRows, '\n')
   const filename = `users_export_${Date.now()}.csv`
 
   await fs.writeFile(filename, csv)
@@ -821,11 +836,11 @@ async function processLargeDataset(items: Item[]) {
   let first = true
   await batch(items,
     async (group) => {
-      for (const result of await processGroup(group)) {
+      R.forEach(await processGroup(group), (result) => {
         const json = JSON.stringify(result)
         outputStream.write(first ? json : `,${json}`)
         first = false
-      }
+      })
     },
     { batchSize: 1000 }
   )
@@ -838,6 +853,7 @@ async function processLargeDataset(items: Item[]) {
 ### Optimal Concurrency
 
 ```typescript
+import { batch } from '@ontologyio/receta/async'
 import os from 'os'
 
 // Auto-detect optimal concurrency
@@ -911,30 +927,36 @@ async function batchWithRetry<T, U>(
   maxRetries = 3
 ): Promise<Result<U[], BatchFailure>> {
   let currentItems = items
-  let allResults: U[] = []
+  const allResults: U[] = []
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    const { results, errors } = await batchContinueOnError(currentItems, fn)
+  const outcome = await retry(
+    async () => {
+      const { results, errors } = await batchContinueOnError(currentItems, fn)
 
-    allResults.push(...results)
+      allResults.push(...results)
 
-    if (errors.length === 0) {
-      return ok(allResults)
+      // Retry only failed items
+      currentItems = R.map(errors, e => e.item)
+
+      // retry only runs again after a throw
+      if (errors.length > 0) {
+        throw {
+          message: `${errors.length} items failed after ${maxRetries} retries`,
+          failedItems: errors
+        }
+      }
+
+      return allResults
+    },
+    {
+      maxAttempts: maxRetries + 1,
+      onRetry: (_error, attempt) => {
+        console.log(`Retrying ${currentItems.length} failed items (attempt ${attempt})`)
+      }
     }
+  )
 
-    if (attempt === maxRetries) {
-      return err({
-        message: `${errors.length} items failed after ${maxRetries} retries`,
-        failedItems: errors
-      })
-    }
-
-    // Retry only failed items
-    currentItems = errors.map(e => e.item)
-    console.log(`Retrying ${currentItems.length} failed items (attempt ${attempt + 1})`)
-  }
-
-  return err({ message: 'No attempts ran', failedItems: [] })
+  return mapErr(outcome, ({ lastError }) => lastError as BatchFailure)
 }
 ```
 

@@ -29,7 +29,8 @@ import type { Comparator, Nullable } from '../types'
  * const priorityOrder = { high: 0, medium: 1, low: 2 }
  * const statusOrder = { open: 0, closed: 1 }
  *
- * issues.sort(
+ * const sorted = R.sort(
+ *   issues,
  *   compose(
  *     ascending(i => statusOrder[i.status]),
  *     ascending(i => priorityOrder[i.priority]),
@@ -68,13 +69,13 @@ export function compose<T>(...comparators: Comparator<T>[]): Comparator<T> {
  *
  * // Sort by score ascending
  * const scoreAsc = ascending((u: { score: number }) => u.score)
- * users.sort(scoreAsc) // Scores: 100, 150, 200
+ * const lowToHigh = R.sort(users, scoreAsc) // Scores: 100, 150, 200
  *
  * // Reverse it for descending
- * users.sort(reverse(scoreAsc)) // Scores: 200, 150, 100
+ * const highToLow = R.sort(users, reverse(scoreAsc)) // Scores: 200, 150, 100
  *
  * // Equivalent to:
- * users.sort(descending(u => u.score))
+ * const alsoHighToLow = R.sort(users, descending(u => u.score))
  * ```
  *
  * @see ascending - consider using descending instead
@@ -104,7 +105,7 @@ export function reverse<T>(comparator: Comparator<T>): Comparator<T> {
  * const scores: (number | null)[] = [30, null, 10, null, 20]
  *
  * // The extractor's fallback satisfies the types. A null item never reaches it.
- * scores.sort(nullsFirst(ascending(score => score ?? 0)))
+ * R.sort(scores, nullsFirst(ascending(score => score ?? 0)))
  * // => [null, null, 10, 20, 30]
  * ```
  *
@@ -141,7 +142,7 @@ export function nullsFirst<T>(comparator: Comparator<Nullable<T>>): Comparator<N
  * const scores: (number | null)[] = [30, null, 10, null, 20]
  *
  * // The extractor's fallback satisfies the types. A null item never reaches it.
- * scores.sort(nullsLast(ascending(score => score ?? 0)))
+ * R.sort(scores, nullsLast(ascending(score => score ?? 0)))
  * // => [10, 20, 30, null, null]
  * ```
  *
@@ -184,7 +185,8 @@ export function nullsLast<T>(comparator: Comparator<Nullable<T>>): Comparator<Nu
  * ]
  *
  * // Sort by score (descending), break ties by level (descending)
- * players.sort(
+ * R.sort(
+ *   players,
  *   withTiebreaker(
  *     descending(p => p.score),
  *     descending(p => p.level)

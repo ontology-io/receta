@@ -36,7 +36,7 @@ import { type Result, orThrow } from '../../result'
  *
  * // Generate tasks dynamically
  * const userIds = [1, 2, 3, 4, 5]
- * const fetchTasks = userIds.map(id => () => fetchUser(id))
+ * const fetchTasks = R.map(userIds, id => () => fetchUser(id))
  * const users = await parallel(fetchTasks, { concurrency: 2 })
  * ```
  *

@@ -250,6 +250,10 @@ const toDevelopment = (config: Config): Config =>
 ### Pattern: Update Specific Item
 
 ```typescript
+import * as R from 'remeda'
+import { over, prop } from '@ontologyio/receta/lens'
+import { neq, where } from '@ontologyio/receta/predicate'
+
 interface TodoList {
   todos: Array<{ id: string; text: string; done: boolean }>
 }
@@ -258,7 +262,7 @@ const todosLens = prop<TodoList, 'todos'>('todos')
 
 const toggleTodo = (state: TodoList, todoId: string): TodoList => {
   return over(todosLens, (todos) =>
-    todos.map((todo) =>
+    R.map(todos, (todo) =>
       todo.id === todoId ? { ...todo, done: !todo.done } : todo
     ),
     state
@@ -267,7 +271,7 @@ const toggleTodo = (state: TodoList, todoId: string): TodoList => {
 
 const removeTodo = (state: TodoList, todoId: string): TodoList => {
   return over(todosLens, (todos) =>
-    todos.filter((todo) => todo.id !== todoId),
+    R.filter(todos, where({ id: neq(todoId) })),
     state
   )
 }

@@ -12,7 +12,7 @@ The Function module provides higher-order utilities that let you compose, transf
 
 ### Problem: Imperative Code Gets Messy
 
-```typescript
+```typescript vanilla
 // ❌ Traditional imperative approach
 function processUser(user: User): ProcessedUser {
   let result = user
@@ -75,19 +75,20 @@ Execute code based on predicates without if-else statements.
 
 ```typescript
 import { ifElse, when, unless, cond } from '@ontologyio/receta/function'
+import { between, gte } from '@ontologyio/receta/predicate'
 
 // Branching
 const classify = ifElse(
-  (n: number) => n >= 0,
+  gte(0),
   (n) => 'positive',
   (n) => 'negative'
 )
 
 // Multi-way conditionals
 const httpStatus = cond<number, string>([
-  [(s) => s >= 200 && s < 300, () => 'success'],
-  [(s) => s >= 400 && s < 500, () => 'client error'],
-  [(s) => s >= 500, () => 'server error']
+  [between(200, 299), () => 'success'],
+  [between(400, 499), () => 'client error'],
+  [gte(500), () => 'server error']
 ])
 ```
 
@@ -141,12 +142,13 @@ Control how many arguments a function accepts.
 
 ```typescript
 import { unary, binary, nAry } from '@ontologyio/receta/function'
+import * as R from 'remeda'
 
 // Fix parseInt with map
 const digits = ['1', '2', '3']
 
-digits.map(parseInt)         // => [1, NaN, NaN]
-digits.map(unary(parseInt))  // => [1, 2, 3]
+R.map(digits, parseInt)         // => [1, NaN, NaN]
+R.map(digits, unary(parseInt))  // => [1, 2, 3]
 ```
 
 **When to use:** Array callbacks, adapting functions for different contexts
@@ -155,6 +157,7 @@ digits.map(unary(parseInt))  // => [1, 2, 3]
 Manage side effects, errors, and performance.
 
 ```typescript
+import { pipe } from 'remeda'
 import { tap, tryCatch, memoize } from '@ontologyio/receta/function'
 
 // Debug pipelines
@@ -227,11 +230,12 @@ Works naturally with error handling types:
 ```typescript
 import { cond } from '@ontologyio/receta/function'
 import { unwrapOr } from '@ontologyio/receta/option'
+import { eq } from '@ontologyio/receta/predicate'
 
 const getMessage = cond<State, string>([
-  [(s) => s === 'loading', () => 'Please wait...'],
-  [(s) => s === 'success', () => 'Done!'],
-  [(s) => s === 'error', () => 'Failed']
+  [eq('loading'), () => 'Please wait...'],
+  [eq('success'), () => 'Done!'],
+  [eq('error'), () => 'Failed']
 ])
 
 const message = unwrapOr(getMessage(state), 'Unknown state')
@@ -245,10 +249,10 @@ const message = unwrapOr(getMessage(state), 'Unknown state')
 type State = 'idle' | 'loading' | 'success' | 'error'
 
 const handleState = cond<State, Action>([
-  [(s) => s === 'idle', () => startLoading()],
-  [(s) => s === 'loading', () => showSpinner()],
-  [(s) => s === 'success', () => displayData()],
-  [(s) => s === 'error', () => showError()]
+  [eq<State>('idle'), () => startLoading()],
+  [eq<State>('loading'), () => showSpinner()],
+  [eq<State>('success'), () => displayData()],
+  [eq<State>('error'), () => showError()]
 ])
 ```
 
@@ -256,6 +260,7 @@ const handleState = cond<State, Action>([
 
 ```typescript
 import { piped } from 'remeda'
+import { when, unless } from '@ontologyio/receta/function'
 
 const validateUser = piped(
   when(emailInvalid, normalizeEmail),
@@ -290,6 +295,7 @@ const analyzeData = converge<number[], [number, number, number, number], Record<
 
 ```typescript
 import { piped } from 'remeda'
+import { tap } from '@ontologyio/receta/function'
 
 const processData = piped(
   fetchData,
@@ -311,10 +317,11 @@ import {
   partial, flip, unary,
   tap, tryCatch, memoize
 } from '@ontologyio/receta/function'
+import { gte } from '@ontologyio/receta/predicate'
 
 // 1. Conditional logic
 const classify = ifElse(
-  (age: number) => age >= 18,
+  gte(18),
   (age) => ({ status: 'adult', age }),
   (age) => ({ status: 'minor', age })
 )

@@ -23,11 +23,11 @@ import type { Comparator, ComparableExtractor } from '../types'
  * ]
  *
  * // Sort by age ascending
- * users.sort(ascending(u => u.age))
+ * R.sort(users, ascending(u => u.age))
  * // => [{ name: 'Bob', age: 25 }, { name: 'Alice', age: 30 }, { name: 'Charlie', age: 35 }]
  *
  * // Sort by name ascending
- * users.sort(ascending(u => u.name))
+ * R.sort(users, ascending(u => u.name))
  * // => [{ name: 'Alice', ... }, { name: 'Bob', ... }, { name: 'Charlie', ... }]
  * ```
  *
@@ -72,11 +72,11 @@ export function ascending<T, C extends number | string | Date>(
  * ]
  *
  * // Sort by amount descending (highest first)
- * transactions.sort(descending(t => t.amount))
+ * R.sort(transactions, descending(t => t.amount))
  * // => [{ amount: 500, ... }, { amount: 200, ... }, { amount: 100, ... }]
  *
  * // Sort by date descending (most recent first)
- * transactions.sort(descending(t => t.date))
+ * R.sort(transactions, descending(t => t.date))
  * // => [2024-01-03, 2024-01-02, 2024-01-01]
  * ```
  *
@@ -114,10 +114,11 @@ export function descending<T, C extends number | string | Date>(
  * const files = ['file10.txt', 'file2.txt', 'file1.txt', 'file20.txt']
  *
  * // Lexicographic sort (incorrect for numbers)
- * files.sort() // => ['file1.txt', 'file10.txt', 'file2.txt', 'file20.txt']
+ * R.sort(files, ascending(x => x))
+ * // => ['file1.txt', 'file10.txt', 'file2.txt', 'file20.txt']
  *
  * // Natural sort (correct for numbers)
- * files.sort(natural(x => x))
+ * R.sort(files, natural(x => x))
  * // => ['file1.txt', 'file2.txt', 'file10.txt', 'file20.txt']
  *
  * // With objects
@@ -132,7 +133,7 @@ export function descending<T, C extends number | string | Date>(
  *   { name: 'image1.png', size: 512 }
  * ]
  *
- * fileObjects.sort(natural(f => f.name))
+ * R.sort(fileObjects, natural(f => f.name))
  * // => [{ name: 'image1.png', ... }, { name: 'image2.png', ... }, { name: 'image10.png', ... }]
  * ```
  *
@@ -174,15 +175,15 @@ export function natural<T>(fn: ComparableExtractor<T, string>): Comparator<T> {
  * ]
  *
  * // Sort by price
- * products.sort(byKey('price'))
+ * R.sort(products, byKey('price'))
  * // => [{ name: 'Mouse', price: 25, ... }, { name: 'Keyboard', price: 80, ... }, ...]
  *
  * // Sort by name
- * products.sort(byKey('name'))
+ * R.sort(products, byKey('name'))
  * // => [{ name: 'Keyboard', ... }, { name: 'Monitor', ... }, { name: 'Mouse', ... }]
  *
  * // Sort by ID
- * products.sort(byKey('id'))
+ * R.sort(products, byKey('id'))
  * // => [{ id: 'a', ... }, { id: 'b', ... }, { id: 'c', ... }]
  * ```
  *

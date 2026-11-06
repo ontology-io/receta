@@ -173,16 +173,12 @@ async function mapAsyncImplementation<T, U>(
  *
  * @example
  * ```typescript
- * // Throws on error
- * try {
- *   const users = await mapAsyncOrThrow(
- *     userIds,
- *     async (id) => fetchUser(id),
- *     { concurrency: 5 }
- *   )
- * } catch (error) {
- *   console.error('Failed:', error)
- * }
+ * // throws a MapAsyncError if any mapper fails
+ * const users = await mapAsyncOrThrow(
+ *   userIds,
+ *   async (id) => fetchUser(id),
+ *   { concurrency: 5 }
+ * )
  * ```
  *
  * @see mapAsync - Result-returning variant (recommended)

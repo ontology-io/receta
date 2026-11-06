@@ -200,24 +200,24 @@ async function processUsers(ids: string[]) {
 }
 
 // AFTER: Receta + Remeda implementation
+// A failed fetch now comes back as an Err, where the loop logged it and carried on
 import * as R from 'remeda'
-import { collect, map, tryCatchAsync, type Result } from '@ontologyio/receta/result'
-import { collect as collectOption, fromNullable } from '@ontologyio/receta/option'
+import { collect, flatMap, map, tryCatchAsync, type Result } from '@ontologyio/receta/result'
 import { mapAsync } from '@ontologyio/receta/async'
 import { where, gte } from '@ontologyio/receta/predicate'
 
 async function processUsers(
   ids: string[]
-): Promise<Result<string[], Error>> {
+): Promise<Result<string[], unknown>> {
   return R.pipe(
     await mapAsync(ids, (id) => tryCatchAsync(() => fetchUser(id))),
-    collect,
-    map(
+    flatMap(collect()),
+    map((users) =>
       R.pipe(
-        R.map(fromNullable),
-        collectOption,
+        users,
+        R.filter(R.isNonNullish),
         R.filter(where({ age: gte(18) })),
-        R.map(u => u.name.toUpperCase())
+        R.map((user) => user.name.toUpperCase())
       )
     )
   )
@@ -314,7 +314,7 @@ Guides live in `website/content/docs`. The reference under `reference/` is gener
 ```bash
 cd website
 bun run dev             # site and docs on localhost
-bun run check:examples  # compile every docs example and run its // => claims
+bun run check:examples  # compile and lint every docs example, and run its // => claims
 bun run deploy          # build, upload to R2, deploy the Worker
 ```
 

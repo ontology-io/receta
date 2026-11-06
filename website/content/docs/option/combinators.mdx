@@ -76,13 +76,21 @@ const [values, noneCount] = partition([
 
 ### Real-World: Batch Operations
 
+`mapAsync` resolves to a `Result` of its own, and it only fails when a mapper throws. A `fetchUser` that returns `None` hasn't failed, so `partition` gets one `Option` per id.
+
 ```typescript
+import { mapAsync } from '@ontologyio/receta/async'
+import { partition } from '@ontologyio/receta/option'
+import { isErr, ok } from '@ontologyio/receta/result'
+
 const processUsers = async (ids: string[]) => {
-  const results = await Promise.all(ids.map(fetchUser))
-  const [users, failedCount] = partition(results)
+  const results = await mapAsync(ids, fetchUser, { concurrency: 5 })
+  if (isErr(results)) return results
+
+  const [users, failedCount] = partition(results.value)
 
   console.log(`Processed: ${users.length}, Failed: ${failedCount}`)
-  return users
+  return ok(users)
 }
 ```
 

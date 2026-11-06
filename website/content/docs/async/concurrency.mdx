@@ -89,7 +89,9 @@ const repos = await fetchRepos([
 
 ```typescript
 import { mapAsync, type MapAsyncError } from '@ontologyio/receta/async'
+import { eq, where } from '@ontologyio/receta/predicate'
 import { isOk, type Result } from '@ontologyio/receta/result'
+import * as R from 'remeda'
 
 type Payment = {
   customerId: string
@@ -97,9 +99,11 @@ type Payment = {
   currency: string
 }
 
+type PaymentStatus = 'succeeded' | 'failed'
+
 type PaymentResult = {
   id: string
-  status: 'succeeded' | 'failed'
+  status: PaymentStatus
   customerId: string
 }
 
@@ -116,7 +120,7 @@ const processPayments = async (
       })
       return {
         id: charge.id,
-        status: charge.status as 'succeeded' | 'failed',
+        status: charge.status as PaymentStatus,
         customerId: payment.customerId
       }
     },
@@ -134,7 +138,7 @@ const payments: Payment[] = [
 const results = await processPayments(payments)
 
 if (isOk(results)) {
-  const succeeded = results.value.filter(r => r.status === 'succeeded')
+  const succeeded = R.filter(results.value, where({ status: eq<PaymentStatus>('succeeded') }))
   console.log(`Processed ${succeeded.length} payments`)
 }
 ```
@@ -144,8 +148,10 @@ if (isOk(results)) {
 **Problem**: Resize 1000 product images, but each resize uses 100MB RAM.
 
 ```typescript
+import { mapAsync } from '@ontologyio/receta/async'
 import sharp from 'sharp'
 import fs from 'fs/promises'
+import * as R from 'remeda'
 
 const resizeImages = async (imagePaths: string[]) => {
   return mapAsync(
@@ -167,7 +173,7 @@ const resizeImages = async (imagePaths: string[]) => {
 // Usage
 const images = await fs.readdir('./products')
 const thumbnails = await resizeImages(
-  images.map(img => `./products/${img}`)
+  R.map(images, img => `./products/${img}`)
 )
 ```
 
@@ -200,7 +206,7 @@ const updateUsers = async (updates: Array<{ id: string; name: string }>) => {
 
 ```typescript
 // Benchmark: Fetching 100 URLs
-const urls = Array.from({ length: 100 }, (_, i) => `https://api.example.com/item/${i}`)
+const urls = R.times(100, (i) => `https://api.example.com/item/${i}`)
 const get = (url: string) => fetch(url)
 
 // No limit (concurrency: Infinity) - 2.3 seconds, might fail
@@ -305,33 +311,43 @@ type RepoData = { name: string; stars: number; language: string }
 type RepoError = { type: 'not_found' | 'rate_limit' | 'network'; repo: string }
 
 const fetchRepo = async (repoName: string): Promise<Result<RepoData, RepoError>> => {
-  try {
-    const [owner, repo] = repoName.split('/')
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+  const [owner, repo] = repoName.split('/')
+  const networkError: RepoError = { type: 'network', repo: repoName }
+
+  const response = await tryCatchAsync(
+    () => fetch(`https://api.github.com/repos/${owner}/${repo}`, {
       headers: { Authorization: `token ${GITHUB_TOKEN}` }
-    })
+    }),
+    () => networkError
+  )
 
-    if (res.status === 404) {
-      return err({ type: 'not_found', repo: repoName })
-    }
+  if (isErr(response)) return response
 
-    if (res.status === 429) {
-      return err({ type: 'rate_limit', repo: repoName })
-    }
+  const res = response.value
 
-    if (!res.ok) {
-      return err({ type: 'network', repo: repoName })
-    }
-
-    const data = await res.json()
-    return ok({
-      name: data.name,
-      stars: data.stargazers_count,
-      language: data.language
-    })
-  } catch {
-    return err({ type: 'network', repo: repoName })
+  if (res.status === 404) {
+    return err({ type: 'not_found', repo: repoName })
   }
+
+  if (res.status === 429) {
+    return err({ type: 'rate_limit', repo: repoName })
+  }
+
+  if (!res.ok) {
+    return err(networkError)
+  }
+
+  return tryCatchAsync(
+    async () => {
+      const data = await res.json()
+      return {
+        name: data.name,
+        stars: data.stargazers_count,
+        language: data.language
+      }
+    },
+    () => networkError
+  )
 }
 
 // Fetch multiple repos with Result handling
@@ -357,7 +373,10 @@ if (isOk(outcome)) {
 ### Real-World: File Processing Pipeline
 
 ```typescript
+import { mapAsync } from '@ontologyio/receta/async'
 import { isErr, isOk, ok, partition, tryCatchAsync, type Result } from '@ontologyio/receta/result'
+import * as R from 'remeda'
+
 type ProcessedFile = { path: string; size: number; hash: string }
 type FileError = { type: 'read' | 'parse' | 'write'; path: string; message: string }
 
@@ -398,10 +417,10 @@ if (isOk(outcome)) {
   const [processed, failed] = partition(outcome.value)
 
   // Log the failures and keep what worked
-  failed.forEach(({ path, message }) => console.error(`Failed to process ${path}:`, message))
+  R.forEach(failed, ({ path, message }) => console.error(`Failed to process ${path}:`, message))
 
   console.log(`Processed ${processed.length} files`)
-  console.log(`Total size: ${processed.reduce((sum, f) => sum + f.size, 0)} bytes`)
+  console.log(`Total size: ${R.reduce(processed, (sum, f) => sum + f.size, 0)} bytes`)
 }
 ```
 
@@ -422,12 +441,12 @@ const processOrders = async (orderIds: string[]) => {
 
     // Validate orders
     flatMap(orders =>
-      collect(orders.map(validateOrder))
+      collect(R.map(orders, validateOrder))
     ),
 
     // Transform to payment requests
     map(orders =>
-      orders.map(order => ({ customerId: order.customerId, amount: order.total }))
+      R.map(orders, order => ({ customerId: order.customerId, amount: order.total }))
     )
   )
 
@@ -478,7 +497,8 @@ A predicate that throws gives an `Err` whose `underlyingError` is the `MapAsyncE
 **Problem**: Filter products that are in stock by checking multiple warehouse APIs.
 
 ```typescript
-import { filterAsync } from '@ontologyio/receta/async'
+import { filterAsync, mapAsyncOrThrow } from '@ontologyio/receta/async'
+import { isOk } from '@ontologyio/receta/result'
 
 type Product = {
   id: string
@@ -490,15 +510,14 @@ const isInStock = async (product: Product): Promise<boolean> => {
   // Check all warehouses in parallel
   const warehouses = ['US-EAST', 'US-WEST', 'EU-CENTRAL']
 
-  const results = await Promise.all(
-    warehouses.map(async (warehouse) => {
-      const res = await fetch(
-        `https://warehouse.api.com/${warehouse}/stock/${product.sku}`
-      )
-      const data = await res.json()
-      return data.quantity > 0
-    })
-  )
+  // A warehouse that can't answer throws, and filterAsync turns that into an Err
+  const results = await mapAsyncOrThrow(warehouses, async (warehouse) => {
+    const res = await fetch(
+      `https://warehouse.api.com/${warehouse}/stock/${product.sku}`
+    )
+    const data = await res.json()
+    return data.quantity > 0
+  })
 
   return results.some(inStock => inStock) // In stock if ANY warehouse has it
 }
@@ -531,19 +550,20 @@ if (isOk(inStock)) {
 
 ```typescript
 import { S3Client, HeadObjectCommand } from '@aws-sdk/client-s3'
+import { filterAsync } from '@ontologyio/receta/async'
+import { isOk, tryCatchAsync } from '@ontologyio/receta/result'
 
 const s3 = new S3Client({ region: 'us-east-1' })
 
 const objectExists = async (key: string): Promise<boolean> => {
-  try {
-    await s3.send(new HeadObjectCommand({
+  const head = await tryCatchAsync(() =>
+    s3.send(new HeadObjectCommand({
       Bucket: 'my-bucket',
       Key: key
     }))
-    return true
-  } catch {
-    return false
-  }
+  )
+
+  return isOk(head)
 }
 
 const filterExistingFiles = async (keys: string[]) => {
@@ -571,7 +591,7 @@ const existingFiles = await filterExistingFiles(requestedFiles)
 
 ```typescript
 const isValidEmail = async (email: string): Promise<boolean> => {
-  try {
+  const checked = await tryCatchAsync(async () => {
     // Use email validation API
     const res = await fetch(
       `https://api.emailvalidation.com/verify?email=${email}`,
@@ -579,9 +599,9 @@ const isValidEmail = async (email: string): Promise<boolean> => {
     )
     const data = await res.json()
     return data.status === 'deliverable'
-  } catch {
-    return false
-  }
+  })
+
+  return unwrapOr(checked, false)
 }
 
 const filterValidEmails = async (emails: string[]) => {
@@ -669,7 +689,7 @@ const deployGlobally = async (artifact: string) => {
   const regions = ['us-east-1', 'eu-west-1', 'ap-southeast-1']
 
   const deployed = await parallel(
-    regions.map(region => () => deployToRegion(region, artifact))
+    R.map(regions, region => () => deployToRegion(region, artifact))
   )
 
   if (isOk(deployed)) {
@@ -695,19 +715,16 @@ type ServiceHealth = {
 const checkService = async (name: string, url: string): Promise<ServiceHealth> => {
   const start = Date.now()
 
-  try {
-    const res = await fetch(`${url}/health`, {
+  const res = await tryCatchAsync(() =>
+    fetch(`${url}/health`, {
       signal: AbortSignal.timeout(5000)
     })
-    const responseTime = Date.now() - start
+  )
 
-    return {
-      name,
-      status: res.ok ? 'healthy' : 'unhealthy',
-      responseTime
-    }
-  } catch {
-    return { name, status: 'unhealthy', responseTime: Date.now() - start }
+  return {
+    name,
+    status: isOk(res) && res.value.ok ? 'healthy' : 'unhealthy',
+    responseTime: Date.now() - start
   }
 }
 
@@ -721,7 +738,7 @@ const checkAllServices = async () => {
   }
 
   const results = await parallel(
-    Object.entries(services).map(([name, url]) =>
+    R.map(R.entries(services), ([name, url]) =>
       () => checkService(name, url)
     )
   )
@@ -733,7 +750,7 @@ const checkAllServices = async () => {
 const health = await checkAllServices()
 
 if (isOk(health)) {
-  health.value.forEach(({ name, status, responseTime }) => {
+  R.forEach(health.value, ({ name, status, responseTime }) => {
     console.log(`${name}: ${status} (${responseTime}ms)`)
   })
 }
@@ -859,7 +876,7 @@ const runMigration = async (migration: Migration) => {
 
 const migrate = async () => {
   const applied = await sequential(
-    migrations.map(m => () => runMigration(m))
+    R.map(migrations, m => () => runMigration(m))
   )
 
   if (isErr(applied)) {
@@ -920,7 +937,7 @@ const processVideo = async (videoId: string) => {
 **Problem**: GitHub allows 5000 requests/hour. Need to fetch 1000 repos.
 
 ```typescript
-import { mapAsync } from '@ontologyio/receta/async'
+import { mapAsync, sleep } from '@ontologyio/receta/async'
 
 const GITHUB_RATE_LIMIT = 5000 // requests per hour
 const SAFE_CONCURRENCY = 10    // requests at once
@@ -938,7 +955,7 @@ const fetchGitHubRepos = async (repos: string[]) => {
 
 // Alternative: Add delay between requests
 const fetchWithDelay = async (url: string) => {
-  await new Promise(resolve => setTimeout(resolve, 100)) // 100ms delay
+  await sleep(100) // 100ms delay
   return fetch(url).then(r => r.json())
 }
 ```
@@ -1038,8 +1055,7 @@ type Task = {
 }
 
 const processByPriority = async (tasks: Task[]) => {
-  const high = tasks.filter(t => t.priority === 'high')
-  const low = tasks.filter(t => t.priority === 'low')
+  const { high = [], low = [] } = R.groupBy(tasks, (task) => task.priority)
 
   // Process high priority first (parallel)
   await mapAsync(high, t => t.fn(), { concurrency: 10 })
@@ -1138,16 +1154,19 @@ await mapAsync(items, (item) => tryCatchAsync(() => processItem(item)))
 
 ### Pitfall 5: Memory Leak in Long-Running Tasks
 
-```typescript
+```typescript vanilla
 // ❌ Bad - Loads all files into memory at once
 const files = await Promise.all(filePaths.map(readFile))
+```
 
+```typescript
 // ✅ Good - Process in batches
 const processInBatches = async (items: string[], batchSize = 100) => {
-  for (let i = 0; i < items.length; i += batchSize) {
-    const batch = items.slice(i, i + batchSize)
-    await mapAsync(batch, processFile, { concurrency: 10 })
-  }
+  return batch(
+    items,
+    (group) => mapAsync(group, processFile, { concurrency: 10 }),
+    { batchSize }
+  )
 }
 ```
 
@@ -1186,25 +1205,29 @@ const safeConcurrency = Math.min(
 
 ```typescript
 const benchmark = async () => {
-  const items = Array.from({ length: 100 }, (_, i) => i)
+  const items = R.range(0, 100)
 
   const concurrencies = [1, 5, 10, 20, 50, 100]
 
-  for (const concurrency of concurrencies) {
-    const start = Date.now()
+  await mapAsync(
+    concurrencies,
+    async (concurrency) => {
+      const start = Date.now()
 
-    await mapAsync(
-      items,
-      async (item) => {
-        await new Promise(resolve => setTimeout(resolve, 100))
-        return item * 2
-      },
-      { concurrency }
-    )
+      await mapAsync(
+        items,
+        async (item) => {
+          await sleep(100)
+          return item * 2
+        },
+        { concurrency }
+      )
 
-    const duration = Date.now() - start
-    console.log(`Concurrency ${concurrency}: ${duration}ms`)
-  }
+      const duration = Date.now() - start
+      console.log(`Concurrency ${concurrency}: ${duration}ms`)
+    },
+    { concurrency: 1 } // One run at a time, so they don't skew each other
+  )
 }
 
 // Results:
@@ -1279,6 +1302,7 @@ Putting it all together - processing orders with multiple async steps:
 
 ```typescript
 import { mapAsync, sequential, parallel } from '@ontologyio/receta/async'
+import { isErr, isOk } from '@ontologyio/receta/result'
 
 type Order = {
   id: string

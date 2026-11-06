@@ -39,12 +39,8 @@ type OrThrowVersion<F extends (...args: any[]) => Promise<Result<any, any>>> =
  * )
  *
  * // Use it
- * try {
- *   const results = await fetchAllOrThrow(urls)
- *   console.log(results)
- * } catch (error) {
- *   console.error('Failed:', error)
- * }
+ * const results = await fetchAllOrThrow(urls) // throws if any fetch fails
+ * console.log(results)
  * ```
  *
  * @see unwrap - for throwing extraction from a single Result

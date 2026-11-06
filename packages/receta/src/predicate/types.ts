@@ -62,8 +62,8 @@ export type TypePredicate<T, U extends T> = (value: T) => value is U
  * }
  *
  * const schema: PredicateSchema<User> = {
- *   age: (n) => n >= 18,
- *   name: (s) => s.length > 0,
+ *   age: gte(18),
+ *   name: isNotEmpty,
  *   active: Boolean
  * }
  * ```

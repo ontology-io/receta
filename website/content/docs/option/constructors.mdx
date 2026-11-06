@@ -44,7 +44,7 @@ const obj = some({ name: 'John', age: 30 })
 ```typescript
 // When you successfully find a record
 const findUserById = (id: string): Option<User> => {
-  const user = users.find(u => u.id === id)
+  const user = R.find(users, where({ id: eq(id) }))
   return user ? some(user) : none()
 }
 
@@ -53,6 +53,8 @@ const user = findUserById('123')
 // If found: Some({ id: '123', name: 'Alice', ... })
 // If not found: None
 ```
+
+[`fromNullable`](#fromnullable) below does this check for you, so reach for it whenever the value comes from a lookup.
 
 ### Real-World: API Response with Data
 
@@ -106,7 +108,7 @@ const noUser: Option<User> = none()
 ```typescript
 // When record isn't found
 const findUserByEmail = (email: string): Option<User> => {
-  const user = users.find(u => u.email === email)
+  const user = R.find(users, where({ email: eq(email) }))
   return user ? some(user) : none()
 }
 
@@ -134,7 +136,7 @@ const isEnabled = getFeatureFlag('new-ui')
 ```typescript
 // GitHub API - searching with no matches
 const searchRepos = (query: string): Option<Repo[]> => {
-  const results = repos.filter(r => r.name.includes(query))
+  const results = R.filter(repos, where({ name: includes(query) }))
   return results.length > 0 ? some(results) : none()
 }
 
@@ -174,17 +176,17 @@ fromNullable('')        // => Some('')
 fromNullable(false)     // => Some(false)
 ```
 
-### Real-World: Array.find()
+### Real-World: R.find()
 
 ```typescript
-// Array.find returns T | undefined
+// R.find returns T | undefined, just like Array.find
 const users = [
   { id: '1', name: 'Alice' },
   { id: '2', name: 'Bob' }
 ]
 
 const findUser = (id: string): Option<User> =>
-  fromNullable(users.find(u => u.id === id))
+  fromNullable(R.find(users, where({ id: eq(id) })))
 
 findUser('1') // => Some({ id: '1', name: 'Alice' })
 findUser('99') // => None
@@ -250,7 +252,7 @@ pipe(
 Use `fromNullable()` when:
 - ✅ Working with APIs that return `null` or `undefined`
 - ✅ Converting TypeScript nullable types to Option
-- ✅ Array methods like `find()`, `at()`, `shift()`, `pop()`
+- ✅ Lookups like `R.find()` and `R.first()`, or array methods like `at()`, `shift()`, `pop()`
 - ✅ Map/Record access
 - ✅ DOM APIs
 
@@ -278,15 +280,9 @@ fromResult(err({ code: 'NOT_FOUND' })) // => None
 ### Real-World: Parsing When Error Doesn't Matter
 
 ```typescript
-import { tryCatch as resultTryCatch } from '@ontologyio/receta/result'
+import { parseJSON } from '@ontologyio/receta/result'
 
-// You have a Result from parsing
-const parseJSON = (str: string): Result<unknown, SyntaxError> =>
-  resultTryCatch(
-    () => JSON.parse(str),
-    e => e as SyntaxError
-  )
-
+// parseJSON gives you a Result holding the SyntaxError
 // But you only care if it succeeded, not why it failed
 const maybeData = (str: string): Option<unknown> =>
   fromResult(parseJSON(str))
@@ -333,15 +329,14 @@ declare function queryUser(id: string): Promise<Result<User, DbError>>
 
 // In analytics, you only care about success rate
 const trackUserLookup = async (id: string) => {
-  const result = await queryUser(id)
+  const found = R.pipe(
+    await queryUser(id),
+    // Log full error elsewhere
+    tapErr(error => logger.error('User query failed', error)),
+    // For metrics, just track success/failure
+    fromResult
+  )
 
-  // Log full error elsewhere
-  if (isErr(result)) {
-    logger.error('User query failed', result.error)
-  }
-
-  // For metrics, just track success/failure
-  const found = fromResult(result)
   metrics.increment('user_lookup', { found: isSome(found) })
 
   return found
@@ -405,17 +400,14 @@ const invalid = parseJSON<Config>('not json')
 
 ### Real-World: Number Parsing
 
+`Number()` doesn't throw. It returns `NaN`, so `tryCatch` has nothing to catch. Parse with `parseNumber` from the Result module instead, then use `filter` for the rules.
+
 ```typescript
 // Parse and validate in one go
 const parsePositiveInt = (str: string): Option<number> =>
   pipe(
-    tryCatch(() => {
-      const n = Number(str)
-      if (Number.isNaN(n)) throw new Error('Not a number')
-      if (n <= 0) throw new Error('Not positive')
-      if (!Number.isInteger(n)) throw new Error('Not an integer')
-      return n
-    })
+    fromResult(parseNumber(str)),
+    filter(and(isInteger, gt(0)))
   )
 
 parsePositiveInt('42')    // => Some(42)
@@ -448,14 +440,15 @@ getHostname('invalid')                       // => 'unknown'
 
 ### Real-World: Date Parsing
 
+`new Date()` doesn't throw either, so `filter` is the right tool here too.
+
 ```typescript
 // Date constructor can create Invalid Date
 const parseDate = (str: string): Option<Date> =>
-  tryCatch(() => {
-    const date = new Date(str)
-    if (isNaN(date.getTime())) throw new Error('Invalid date')
-    return date
-  })
+  pipe(
+    some(new Date(str)),
+    filter(date => !Number.isNaN(date.getTime()))
+  )
 
 parseDate('2024-01-15')  // => Some(new Date('2024-01-15'))
 parseDate('not a date')  // => None
@@ -465,7 +458,7 @@ parseDate('not a date')  // => None
 
 Use `tryCatch()` when:
 - ✅ Function might throw but you don't need error details
-- ✅ Parsing operations (JSON, numbers, URLs, dates)
+- ✅ Parsing that throws, such as `JSON.parse` and `new URL`
 - ✅ DOM operations that might fail
 - ✅ Converting exceptions to Option
 
@@ -493,7 +486,7 @@ const val = some(42)
 const missing = none()
 
 // From nullable (most common)
-const found = fromNullable(users.find(u => u.id === id))
+const found = fromNullable(R.find(users, where({ id: eq(id) })))
 
 // From Result (discard errors)
 const succeeded = fromResult(validateEmail(email))

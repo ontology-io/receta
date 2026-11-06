@@ -73,13 +73,16 @@ if let user = getUser("123") {
 ## The Solution: `Option<T>`
 
 ```typescript
-import { type Option, some, none, map, unwrapOr } from '@ontologyio/receta/option'
+import { type Option, fromNullable, map, unwrapOr } from '@ontologyio/receta/option'
+import { eq, where } from '@ontologyio/receta/predicate'
 import * as R from 'remeda'
 
 // Returns Option instead of nullable
 function getUserEmail(userId: string): Option<string> {
-  const user = users.find(u => u.id === userId)
-  return user ? some(user.email) : none()
+  return R.pipe(
+    fromNullable(R.find(users, where({ id: eq(userId) }))),
+    map(user => user.email)
+  )
 }
 
 // Compose safely without null checks
@@ -99,7 +102,7 @@ const emailOrDefault: string = unwrapOr(getUserEmail('123'), 'default@example.co
 
 ### Problem 1: Nullable Types Don't Compose
 
-```typescript
+```typescript vanilla
 // ❌ Traditional nullable - verbose and error-prone
 function getUppercaseEmail(userId: string): string {
   const user = users.find(u => u.id === userId)
@@ -110,7 +113,9 @@ function getUppercaseEmail(userId: string): string {
 
   return email.toUpperCase()
 }
+```
 
+```typescript
 // ✅ Option - clean composition
 const getUppercaseEmail = (userId: string): string =>
   R.pipe(
@@ -123,22 +128,26 @@ const getUppercaseEmail = (userId: string): string =>
 
 ### Problem 2: Nullable Types Lose Type Information
 
-```typescript
+```typescript vanilla
 // ❌ Why is it undefined? User not found? Email missing? Permission denied?
 function getUserEmail(userId: string): string | undefined {
   const user = users.find(u => u.id === userId)
   if (!user) return undefined // Could be any reason
   return user.email
 }
+```
 
+```typescript
 // ✅ Option for existence, Result for detailed errors
 function getUserEmail(userId: string): Option<string> {
-  const user = users.find(u => u.id === userId)
-  return user ? some(user.email) : none()
+  return R.pipe(
+    fromNullable(R.find(users, where({ id: eq(userId) }))),
+    map(user => user.email)
+  )
 }
 
 function getUserEmailOrError(userId: string): Result<string, UserError> {
-  const user = users.find(u => u.id === userId)
+  const user = R.find(users, where({ id: eq(userId) }))
   if (!user) return err({ code: 'USER_NOT_FOUND', userId })
   if (!user.email) return err({ code: 'EMAIL_MISSING', userId })
   return ok(user.email)
@@ -154,13 +163,15 @@ const result = R.pipe(
   findUser, // returns User | undefined
   // What now? Can't continue pipe if undefined
 )
+```
 
+```typescript
 // ✅ Option works seamlessly in pipes
 const result = R.pipe(
   getUserId(),
   findUser, // returns Option<User>
   map(u => u.email),
-  filter(e => e.includes('@')),
+  filter(includes('@')),
   unwrapOr('guest@example.com')
 )
 ```
@@ -172,7 +183,7 @@ const result = R.pipe(
 ```typescript
 // findById pattern
 const findUserById = (id: string): Option<User> =>
-  fromNullable(users.find(u => u.id === id))
+  fromNullable(R.find(users, where({ id: eq(id) })))
 
 const user = findUserById('123')
 match(user, {
@@ -193,7 +204,7 @@ const config = {
   timeout: pipe(
     getConfig('TIMEOUT'),
     map(s => Number(s)),
-    filter(n => n > 0),
+    filter(gt(0)),
     unwrapOr(5000)
   )
 }
@@ -202,6 +213,10 @@ const config = {
 ### 3. Form Validation (Optional Fields)
 
 ```typescript
+import { type Option, filter, fromNullable, toNullable } from '@ontologyio/receta/option'
+import { matches } from '@ontologyio/receta/predicate'
+import { pipe } from 'remeda'
+
 // Some fields are optional
 type ProfileForm = {
   name: string
@@ -213,7 +228,7 @@ type ProfileForm = {
 const validatePhone = (phone: string | undefined): Option<string> =>
   pipe(
     fromNullable(phone),
-    filter(p => /^\d{10}$/.test(p))
+    filter(matches(/^\d{10}$/))
   )
 
 const profile = {
@@ -249,8 +264,8 @@ const getUserInfo = (user: GitHubUser) => ({
 // Parse values that might fail
 const parsePositiveInt = (str: string): Option<number> =>
   pipe(
-    tryCatch(() => Number(str)),
-    filter(n => !Number.isNaN(n) && n > 0 && Number.isInteger(n))
+    fromResult(parseNumber(str)),
+    filter(and(isInteger, gt(0)))
   )
 
 const age = parsePositiveInt('25') // Some(25)
@@ -283,8 +298,8 @@ flatMap(some(5), x => some(x * 2)) // Some(10)
 flatMap(some(5), x => none())       // None
 
 // filter: Keep only if predicate passes
-filter(some(5), x => x > 0)  // Some(5)
-filter(some(-5), x => x > 0) // None
+filter(some(5), gt(0))  // Some(5)
+filter(some(-5), gt(0)) // None
 ```
 
 ## When to Use Option
@@ -366,13 +381,15 @@ function getRequiredConfig(key: string): Result<string, ConfigError>
 
 ## Quick Comparison
 
-```typescript
+```typescript vanilla
 // Nullable type
 const email: string | undefined = user?.email
 if (email !== undefined) {
   sendEmail(email)
 }
+```
 
+```typescript
 // Option type
 const maybeEmail: Option<string> = fromNullable(user?.email)
 match(maybeEmail, {
@@ -384,7 +401,7 @@ match(maybeEmail, {
 pipe(
   fromNullable(user?.email),
   map(e => e.toLowerCase()),
-  filter(e => e.includes('@')),
+  filter(includes('@')),
   unwrapOr('no-email@example.com')
 )
 ```

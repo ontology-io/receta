@@ -159,8 +159,7 @@ const validateAge = (age: number): Option<number> =>
 
 const parseAndValidateAge = (input: string): Option<number> =>
   R.pipe(
-    tryCatch(() => Number(input)),
-    filter(n => !Number.isNaN(n)),
+    fromResult(parseNumber(input)),
     flatMap(validateAge)
   )
 
@@ -191,11 +190,14 @@ filter<T>(predicate: (value: T) => boolean): (option: Option<T>) => Option<T>
 
 ```typescript
 import { filter, some, none } from '@ontologyio/receta/option'
+import { gt } from '@ontologyio/receta/predicate'
 
-filter(some(5), x => x > 0)   // => Some(5)
-filter(some(-5), x => x > 0)  // => None
-filter(none(), (x: number) => x > 0)    // => None
+filter(some(5), gt(0))   // => Some(5)
+filter(some(-5), gt(0))  // => None
+filter(none(), gt(0))    // => None
 ```
+
+Any function that returns a boolean works, so a [Predicate](../predicate/index.mdx) reads best when one fits.
 
 ### Real-World: Form Validation
 
@@ -205,8 +207,8 @@ const validateEmail = (email: string): Option<string> =>
   R.pipe(
     fromNullable(email),
     filter(e => e.length >= 3),
-    filter(e => e.includes('@')),
-    filter(e => e.includes('.'))
+    filter(includes('@')),
+    filter(includes('.'))
   )
 
 validateEmail('user@example.com')  // => Some('user@example.com')
@@ -222,9 +224,7 @@ const getTimeout = (): number =>
   R.pipe(
     fromNullable(process.env.TIMEOUT),
     map(s => Number(s)),
-    filter(n => !Number.isNaN(n)),
-    filter(n => n > 0),
-    filter(n => n <= 60000),
+    filter(and(gt(0), lte(60000))),
     unwrapOr(5000) // Default 5 seconds
   )
 ```
@@ -289,9 +289,9 @@ const lookup3 = (id: string): Option<User> =>
 const processUserId = (idStr: string): Option<User> =>
   R.pipe(
     // Parse ID
-    tryCatch(() => Number(idStr)),
+    fromResult(parseNumber(idStr)),
     // Validate it's positive
-    filter(id => id > 0),
+    filter(gt(0)),
     // Convert to string
     map(id => String(id)),
     // Look up user
@@ -315,7 +315,7 @@ map(option, x => x * 2)
 flatMap(option, x => lookup(x))
 
 // Keep if predicate passes
-filter(option, x => x > 0)
+filter(option, gt(0))
 
 // Flatten nested Options
 flatten(nestedOption)
@@ -324,7 +324,7 @@ flatten(nestedOption)
 R.pipe(
   some(5),
   map(x => x * 2),
-  filter(x => x > 5),
+  filter(gt(5)),
   flatMap(x => lookup(x))
 )
 ```

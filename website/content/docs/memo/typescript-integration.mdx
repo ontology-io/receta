@@ -22,10 +22,15 @@ const result = double(5)
 ### Generic Functions
 
 ```typescript
-function createGetter<T>(data: T[]) {
-  return memoize((id: string): T | undefined => {
-    return data.find((item: any) => item.id === id)
-  })
+import { memoize } from '@ontologyio/receta/memo'
+import { fromNullable, type Option } from '@ontologyio/receta/option'
+import { eq, where } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
+
+function createGetter<T extends { id: string }>(data: T[]) {
+  return memoize((id: string): Option<T> =>
+    fromNullable(R.find(data, where({ id: eq(id) })))
+  )
 }
 
 interface User {
@@ -35,10 +40,10 @@ interface User {
 
 const users: User[] = [{ id: '123', name: 'Alice' }]
 const getUser = createGetter(users)
-//    ^? MemoizedFunction<[string], User | undefined>
+//    ^? MemoizedFunction<[string], Option<User>>
 
 const user = getUser('123')
-//    ^? User | undefined
+//    ^? Option<User>
 ```
 
 ### Async Type Inference

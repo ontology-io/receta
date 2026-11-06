@@ -43,19 +43,21 @@ interface ObjectError {
 
 ### Why validateShape?
 
-```typescript
+```typescript vanilla
 // ❌ Without validation: runtime errors
-function processConfig(config: unknown) {
+function processConfig(config: any) {
   const host = config.database.host  // TypeError if config.database doesn't exist!
   const port = config.database.port  // TypeError!
   return { host, port }
 }
+```
 
+```typescript
 // ✅ With validateShape: safe, typed
 const configSchema = {
   database: {
-    host: (v: unknown): v is string => typeof v === 'string',
-    port: (v: unknown): v is number => typeof v === 'number'
+    host: isString,
+    port: isNumber
   }
 }
 
@@ -71,13 +73,16 @@ if (isOk(result)) {
 ### Real-World: API Response Validation
 
 ```typescript
+import { isNumber, isString } from '@ontologyio/receta/predicate'
 import { map } from '@ontologyio/receta/result'
+import { pipe } from 'remeda'
+import { validateShape } from '@ontologyio/receta/object'
 // GitHub API response validation
 const githubUserSchema = {
-  login: (v: unknown): v is string => typeof v === 'string',
-  id: (v: unknown): v is number => typeof v === 'number',
-  avatar_url: (v: unknown): v is string => typeof v === 'string' && v.startsWith('http'),
-  public_repos: (v: unknown): v is number => typeof v === 'number' && v >= 0
+  login: isString,
+  id: isNumber,
+  avatar_url: (v: unknown): v is string => isString(v) && v.startsWith('http'),
+  public_repos: (v: unknown): v is number => isNumber(v) && v >= 0
 }
 
 const validateGitHubUser = (response: unknown) =>
@@ -96,11 +101,15 @@ const validateGitHubUser = (response: unknown) =>
 ### Real-World: Environment Variable Validation
 
 ```typescript
+import { isString, oneOf } from '@ontologyio/receta/predicate'
+import { validateShape } from '@ontologyio/receta/object'
+import { match } from '@ontologyio/receta/result'
+
 const envSchema = {
-  NODE_ENV: (v: unknown): v is string => ['development', 'production', 'test'].includes(v as string),
-  PORT: (v: unknown): v is string => typeof v === 'string' && /^\d+$/.test(v),
-  DATABASE_URL: (v: unknown): v is string => typeof v === 'string' && v.length > 0,
-  API_KEY: (v: unknown): v is string => typeof v === 'string' && v.length === 32
+  NODE_ENV: (v: unknown): v is string => isString(v) && oneOf(['development', 'production', 'test'])(v),
+  PORT: (v: unknown): v is string => isString(v) && /^\d+$/.test(v),
+  DATABASE_URL: (v: unknown): v is string => isString(v) && v.length > 0,
+  API_KEY: (v: unknown): v is string => isString(v) && v.length === 32
 }
 
 const loadEnv = () => {
@@ -119,17 +128,20 @@ const loadEnv = () => {
 ### Nested Schema Validation
 
 ```typescript
+import { isBoolean, isNumber, isString, oneOf } from '@ontologyio/receta/predicate'
+import { validateShape } from '@ontologyio/receta/object'
+
 // Validate nested structures
 const userSchema = {
-  id: (v: unknown): v is number => typeof v === 'number',
+  id: isNumber,
   profile: {
-    name: (v: unknown): v is string => typeof v === 'string' && v.length > 0,
-    email: (v: unknown): v is string => typeof v === 'string' && v.includes('@'),
-    age: (v: unknown): v is number => typeof v === 'number' && v >= 0 && v <= 150
+    name: (v: unknown): v is string => isString(v) && v.length > 0,
+    email: (v: unknown): v is string => isString(v) && v.includes('@'),
+    age: (v: unknown): v is number => isNumber(v) && v >= 0 && v <= 150
   },
   settings: {
-    theme: (v: unknown): v is string => ['light', 'dark'].includes(v as string),
-    notifications: (v: unknown): v is boolean => typeof v === 'boolean'
+    theme: (v: unknown): v is string => isString(v) && oneOf(['light', 'dark'])(v),
+    notifications: isBoolean
   }
 }
 
@@ -142,6 +154,7 @@ const result = validateShape(unknownData, userSchema)
 
 ```typescript
 import { isString, isNumber } from '@ontologyio/receta/predicate'
+import { validateShape } from '@ontologyio/receta/object'
 
 const isEmail = (v: unknown): v is string => isString(v) && v.includes('@')
 
@@ -159,13 +172,13 @@ validateShape(data, userSchema)
 ```typescript
 // Build reusable validators
 const isPositiveInt = (v: unknown): v is number =>
-  typeof v === 'number' && Number.isInteger(v) && v > 0
+  isNumber(v) && Number.isInteger(v) && v > 0
 
 const isNonEmptyString = (v: unknown): v is string =>
-  typeof v === 'string' && v.trim().length > 0
+  isString(v) && v.trim().length > 0
 
 const isValidUrl = (v: unknown): v is string =>
-  typeof v === 'string' && /^https?:\/\/.+/.test(v)
+  isString(v) && /^https?:\/\/.+/.test(v)
 
 const apiSchema = {
   endpoint: isValidUrl,
@@ -178,7 +191,7 @@ const apiSchema = {
 
 ```typescript
 const handleValidationError = (error: ObjectError) =>
-  `Validation failed at ${error.path?.join('.')}: ${error.message}`
+  `Validation failed at ${R.join(error.path ?? [], '.')}: ${error.message}`
 
 const result = validateShape(data, userSchema)
 if (isErr(result)) {
@@ -200,7 +213,7 @@ function stripUndefined<T extends PlainObject>(obj: T): Partial<T>
 
 ### Why stripUndefined?
 
-```typescript
+```typescript vanilla
 // ❌ An undefined field is still a key: spreads and Object.keys see it
 const payload = {
   name: 'Alice',
@@ -210,8 +223,16 @@ const payload = {
 
 Object.keys(payload)
 // => ['name', 'email', 'phone']
+```
 
+```typescript
 // ✅ Clean payload before sending
+const payload = {
+  name: 'Alice',
+  email: undefined,
+  phone: undefined
+}
+
 const cleanPayload = stripUndefined(payload)
 // => { name: 'Alice' }
 ```
@@ -220,6 +241,8 @@ const cleanPayload = stripUndefined(payload)
 
 ```typescript
 import { flatMap } from '@ontologyio/receta/result'
+import { pipe } from 'remeda'
+import { stripUndefined, validateShape } from '@ontologyio/receta/object'
 // React form with optional fields
 const FormComponent = () => {
   const [formData, setFormData] = useState({
@@ -368,9 +391,11 @@ const buildWhereClause = (filters: {
 }) => {
   const activeFilters = compact(filters)
 
-  return Object.entries(activeFilters)
-    .map(([key, value]) => `${key} = '${value}'`)
-    .join(' AND ')
+  return R.pipe(
+    R.entries(activeFilters),
+    R.map(([key, value]) => `${key} = '${value}'`),
+    R.join(' AND ')
+  )
 }
 
 buildWhereClause({
@@ -481,6 +506,8 @@ Need to validate or clean object?
 
 ```typescript
 import { flatMap, map, unwrapOr } from '@ontologyio/receta/result'
+import { pipe } from 'remeda'
+import { stripUndefined, validateShape, compact } from '@ontologyio/receta/object'
 // Pattern 1: Form submission
 pipe(
   formData,
@@ -554,6 +581,8 @@ const result = schema(userFormSchema, { name: 'Al', email: 'nope', age: 17 })
 
 ```typescript
 import { flatMap, fromResult } from '@ontologyio/receta/validation'
+import { validateShape } from '@ontologyio/receta/object'
+import { pipe } from 'remeda'
 
 // Step 1: Structural validation (fail-fast)
 const structuralCheck = validateShape(unknownData, typeSchema)

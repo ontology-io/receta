@@ -73,9 +73,14 @@ fibonacci(40) // Fast with memoization!
 #### User Lookup
 
 ```typescript
-const getUserById = memoize((id: string): User => {
-  return database.users.find(u => u.id === id)!
-})
+import { memoize } from '@ontologyio/receta/memo'
+import { fromNullable, type Option } from '@ontologyio/receta/option'
+import { eq, where } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
+
+const getUserById = memoize((id: string): Option<User> =>
+  fromNullable(R.find(database.users, where({ id: eq(id) })))
+)
 
 getUserById('123') // DB query
 getUserById('123') // Cached
@@ -84,9 +89,10 @@ getUserById('123') // Cached
 #### Parse JSON
 
 ```typescript
-const parseConfig = memoize((json: string) => {
-  return JSON.parse(json)
-})
+import { memoize } from '@ontologyio/receta/memo'
+import { parseJSON } from '@ontologyio/receta/result'
+
+const parseConfig = memoize(parseJSON)
 
 parseConfig('{"a":1}') // Parsed
 parseConfig('{"a":1}') // Cached
@@ -115,7 +121,7 @@ const getUser = memoize(fetchUser, {
 #### With Custom Cache
 
 ```typescript
-import { ttlCache } from '@ontologyio/receta/memo'
+import { memoize, ttlCache } from '@ontologyio/receta/memo'
 
 const getWeather = memoize(fetchWeather, {
   cache: ttlCache(5 * 60 * 1000) // 5 min expiration
@@ -302,14 +308,17 @@ await fetchUser('123') // (cached, no console output)
 **Key Feature**: Concurrent requests to the same key share a single promise.
 
 ```typescript
+import { parallel } from '@ontologyio/receta/async'
+import { tap } from '@ontologyio/receta/result'
+
 // All 3 requests share the same promise!
-const [a, b, c] = await Promise.all([
-  fetchUser('123'), // Triggers API call
-  fetchUser('123'), // Waits for same promise
-  fetchUser('123')  // Waits for same promise
+const users = await parallel([
+  () => fetchUser('123'), // Triggers API call
+  () => fetchUser('123'), // Waits for same promise
+  () => fetchUser('123')  // Waits for same promise
 ])
 
-console.log(a === b && b === c) // true (same object)
+tap(users, ([a, b, c]) => console.log(a === b && b === c)) // true (same object)
 ```
 
 **Without memoization**: 3 separate API calls
@@ -393,6 +402,9 @@ const resizeImage = memoizeAsync(
 Failed promises are **NOT cached**:
 
 ```typescript
+import { memoizeAsync } from '@ontologyio/receta/memo'
+import { tryCatchAsync } from '@ontologyio/receta/result'
+
 let callCount = 0
 
 const flaky = memoizeAsync(async (id: string) => {
@@ -401,11 +413,12 @@ const flaky = memoizeAsync(async (id: string) => {
   return `Success: ${id}`
 })
 
-await flaky('123').catch(e => console.log(e.message))
-// Console: "First call fails"
+const first = await tryCatchAsync(() => flaky('123'), (e) => (e as Error).message)
+// => Err('First call fails')
 
-await flaky('123') // Retries! (not cached)
-// Returns: "Success: 123"
+// Retries! (not cached)
+const second = await flaky('123')
+// => 'Success: 123'
 ```
 
 ### Custom Key Function
@@ -445,7 +458,7 @@ const fn = memoize(expensive)
 ### TTL Cache (Time-to-Live)
 
 ```typescript
-import { ttlCache } from '@ontologyio/receta/memo'
+import { memoize, ttlCache } from '@ontologyio/receta/memo'
 
 const getWeather = memoize(fetchWeather, {
   cache: ttlCache(5 * 60 * 1000) // 5 minutes
@@ -484,7 +497,7 @@ fetchNews('tech') // API call (expired)
 ### LRU Cache (Least Recently Used)
 
 ```typescript
-import { lruCache } from '@ontologyio/receta/memo'
+import { lruCache, memoize } from '@ontologyio/receta/memo'
 
 const getUser = memoize(fetchUser, {
   cache: lruCache(100) // Max 100 entries
@@ -522,7 +535,7 @@ processImage('img-051') // Computes, evicts img-002 (now the least recently used
 ### WeakMap Cache
 
 ```typescript
-import { weakCache } from '@ontologyio/receta/memo'
+import { memoizeBy, weakCache } from '@ontologyio/receta/memo'
 
 const processNode = memoizeBy(
   (node: Node) => transform(node),
@@ -549,6 +562,7 @@ const processNode = memoizeBy(
 
 ```typescript
 import { memoizeBy, weakCache } from '@ontologyio/receta/memo'
+import * as R from 'remeda'
 
 interface TreeNode {
   id: string
@@ -558,7 +572,7 @@ interface TreeNode {
 const computeDepth = memoizeBy(
   (node: TreeNode): number => {
     if (node.children.length === 0) return 0
-    return 1 + Math.max(...node.children.map(computeDepth))
+    return 1 + Math.max(...R.map(node.children, computeDepth))
   },
   (node) => node, // Use node object as key
   { cache: weakCache() }
@@ -608,6 +622,7 @@ fn.cache.clear() // void
 ### Custom Cache Implementation
 
 ```typescript
+import { memoize, type Cache } from '@ontologyio/receta/memo'
 import { none, some, type Option } from '@ontologyio/receta/option'
 
 class CustomCache<K, V> implements Cache<K, V> {

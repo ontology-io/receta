@@ -126,29 +126,29 @@ if (isOk(usersResult)) {
 ### Pattern: Batch Processing with Result
 
 ```typescript
-import { batch } from '@ontologyio/receta/async'
-import { mapErr, partition } from '@ontologyio/receta/result'
+import { batch, mapAsyncOrThrow } from '@ontologyio/receta/async'
+import { mapErr, partition, unwrapOr } from '@ontologyio/receta/result'
 import type { Result } from '@ontologyio/receta/result'
+import * as R from 'remeda'
 
 async function batchProcessWithResult<T, U>(
   items: T[],
   processor: (item: T) => Promise<Result<U, string>>,
   options: { batchSize: number; delayBetweenBatches: number }
 ): Promise<{ successes: U[]; failures: Array<{ item: T; error: string }> }> {
-  const results: Array<Result<U, { item: T; error: string }>> = []
-
-  await batch(
+  const processed = await batch(
     items,
-    async (batchItems) => {
-      for (const item of batchItems) {
-        const result = await processor(item)
-        results.push(mapErr(result, error => ({ item, error })))
-      }
-    },
+    (batchItems) =>
+      mapAsyncOrThrow(
+        batchItems,
+        async (item) => mapErr(await processor(item), error => ({ item, error })),
+        { concurrency: 1 } // One item at a time
+      ),
     options
   )
 
-  const [successes, failures] = partition(results)
+  // processor reports failures as values, so only a throw can fail a batch
+  const [successes, failures] = partition(R.flat(unwrapOr(processed, [])))
 
   return { successes, failures }
 }
@@ -201,15 +201,16 @@ if (isOk(dashboardResult)) {
 
 ```typescript
 import { promiseAllSettled, toResults } from '@ontologyio/receta/async'
-import { isOk } from '@ontologyio/receta/result'
+import { fromResult, type Option } from '@ontologyio/receta/option'
+import { unwrapOr } from '@ontologyio/receta/result'
 
 // Fetch all data but continue even if some requests fail
 async function loadDashboardResilient(
   userId: string
 ): Promise<{
-  user: User | null
+  user: Option<User>
   posts: Post[]
-  stats: Stats | null
+  stats: Option<Stats>
   notifications: Notification[]
 }> {
   const settled = await promiseAllSettled([
@@ -221,16 +222,16 @@ async function loadDashboardResilient(
   const results = toResults(settled)
 
   return {
-    user: isOk(results[0]) ? results[0].value : null,
-    posts: isOk(results[1]) ? results[1].value : [],
-    stats: isOk(results[2]) ? results[2].value : null,
-    notifications: isOk(results[3]) ? results[3].value : [],
+    user: fromResult(results[0]),
+    posts: unwrapOr(results[1], []),
+    stats: fromResult(results[2]),
+    notifications: unwrapOr(results[3], []),
   }
 }
 
 // Usage - never fails!
 const dashboard = await loadDashboardResilient('user_123')
-renderDashboard(dashboard) // Show what we have, handle nulls gracefully
+renderDashboard(dashboard) // Show what we have, a missing user or stats is a None
 ```
 
 ### Pattern: Race with First Success
@@ -240,6 +241,7 @@ Receta has no race helper. `Promise.any` does the racing, and `tryCatchAsync` tu
 ```typescript
 import { tryCatchAsync } from '@ontologyio/receta/result'
 import type { Result } from '@ontologyio/receta/result'
+import * as R from 'remeda'
 
 // Try multiple endpoints, use the first one that succeeds
 async function fetchFromMirrors<T>(
@@ -247,7 +249,7 @@ async function fetchFromMirrors<T>(
 ): Promise<Result<T, string>> {
   return tryCatchAsync(
     () => Promise.any(
-      endpoints.map(url => fetch(url).then(r => r.json() as Promise<T>))
+      R.map(endpoints, url => fetch(url).then(r => r.json() as Promise<T>))
     ),
     () => 'All mirror endpoints failed'
   )
@@ -272,7 +274,7 @@ GitHub API has strict rate limits (5000 requests/hour authenticated). This patte
 ```typescript
 import * as R from 'remeda'
 import { isErr, isOk, ok, type Result } from '@ontologyio/receta/result'
-import { mapAsync, retry, type RetryError } from '@ontologyio/receta/async'
+import { mapAsync, retry, sleep, type RetryError } from '@ontologyio/receta/async'
 
 interface GitHubRateLimit {
   limit: number
@@ -305,7 +307,7 @@ class GitHubClient {
       const waitTime = Math.max(0, this.rateLimit.reset - now)
 
       if (waitTime > 0) {
-        await new Promise(resolve => setTimeout(resolve, waitTime * 1000))
+        await sleep(waitTime * 1000)
       }
     }
 
@@ -348,29 +350,24 @@ class GitHubClient {
   }
 
   /**
-   * Fetch all repositories for an organization
+   * Fetch all repositories for an organization, one page per call
    */
-  async getOrgRepos(org: string): Promise<Result<GitHubRepo[], RetryError>> {
-    const repos: GitHubRepo[] = []
-    let page = 1
+  async getOrgRepos(
+    org: string,
+    page = 1,
+    repos: GitHubRepo[] = []
+  ): Promise<Result<GitHubRepo[], RetryError>> {
+    const result = await this.fetchWithRateLimit<GitHubRepo[]>(
+      `/orgs/${org}/repos?page=${page}&per_page=100`
+    )
 
-    while (true) {
-      const result = await this.fetchWithRateLimit<GitHubRepo[]>(
-        `/orgs/${org}/repos?page=${page}&per_page=100`
-      )
-
-      if (isErr(result)) {
-        return result
-      }
-
-      const pageRepos = result.value
-      if (pageRepos.length === 0) break
-
-      repos.push(...pageRepos)
-      page++
+    if (isErr(result)) {
+      return result
     }
 
-    return ok(repos)
+    return result.value.length === 0
+      ? ok(repos)
+      : this.getOrgRepos(org, page + 1, [...repos, ...result.value])
   }
 
   /**
@@ -410,7 +407,7 @@ const repos = await client.getReposBatch([
 ])
 
 if (isOk(repos)) {
-  const successful = repos.value.filter(isOk)
+  const successful = R.filter(repos.value, isOk)
   console.log(`Successfully fetched ${successful.length}/${repos.value.length} repos`)
 }
 ```
@@ -646,6 +643,7 @@ Upload and download files from S3 with proper error handling.
 import * as R from 'remeda'
 import { isErr, isOk, ok, type Result } from '@ontologyio/receta/result'
 import { mapAsync, retry, type RetryError } from '@ontologyio/receta/async'
+import { endsWith, where } from '@ontologyio/receta/predicate'
 import { createHash } from 'crypto'
 
 interface S3Object {
@@ -759,60 +757,58 @@ class S3Client {
   }
 
   /**
-   * List objects with pagination
+   * List objects with pagination, one page per call
    */
-  async listObjects(prefix?: string): Promise<Result<S3Object[], RetryError>> {
-    const objects: S3Object[] = []
-    let continuationToken: string | undefined
-
-    while (true) {
-      const url = new URL(this.baseUrl)
-      url.searchParams.set('list-type', '2')
-      if (prefix) url.searchParams.set('prefix', prefix)
-      if (continuationToken) {
-        url.searchParams.set('continuation-token', continuationToken)
-      }
-
-      const result = await retry(async () => {
-        const response = await fetch(url.toString(), {
-          headers: this.getAuthHeaders('GET', '/'),
-        })
-
-        if (!response.ok) {
-          throw new Error(`S3 list failed: ${response.status}`)
-        }
-
-        return await response.text()
-      })
-
-      if (isErr(result)) {
-        return result
-      }
-
-      // Parse XML response (simplified - use xml2js in production)
-      const xmlText = result.value
-      const keyMatches = xmlText.matchAll(/<Key>(.*?)<\/Key>/g)
-      const sizeMatches = xmlText.matchAll(/<Size>(.*?)<\/Size>/g)
-
-      const pageObjects = Array.from(keyMatches).map((match, i) => ({
-        key: match[1],
-        size: parseInt(Array.from(sizeMatches)[i]?.[1] || '0'),
-        lastModified: new Date(),
-        etag: '',
-      }))
-
-      objects.push(...pageObjects)
-
-      // Check for more pages
-      const isTruncated = xmlText.includes('<IsTruncated>true</IsTruncated>')
-      if (!isTruncated) break
-
-      const tokenMatch = xmlText.match(/<NextContinuationToken>(.*?)<\/NextContinuationToken>/)
-      continuationToken = tokenMatch?.[1]
-      if (!continuationToken) break
+  async listObjects(
+    prefix?: string,
+    continuationToken?: string,
+    objects: S3Object[] = []
+  ): Promise<Result<S3Object[], RetryError>> {
+    const url = new URL(this.baseUrl)
+    url.searchParams.set('list-type', '2')
+    if (prefix) url.searchParams.set('prefix', prefix)
+    if (continuationToken) {
+      url.searchParams.set('continuation-token', continuationToken)
     }
 
-    return ok(objects)
+    const result = await retry(async () => {
+      const response = await fetch(url.toString(), {
+        headers: this.getAuthHeaders('GET', '/'),
+      })
+
+      if (!response.ok) {
+        throw new Error(`S3 list failed: ${response.status}`)
+      }
+
+      return await response.text()
+    })
+
+    if (isErr(result)) {
+      return result
+    }
+
+    // Parse XML response (simplified - use xml2js in production)
+    const xmlText = result.value
+    const keyMatches = [...xmlText.matchAll(/<Key>(.*?)<\/Key>/g)]
+    const sizeMatches = [...xmlText.matchAll(/<Size>(.*?)<\/Size>/g)]
+
+    const pageObjects = R.map(keyMatches, (match, i) => ({
+      key: match[1],
+      size: parseInt(sizeMatches[i]?.[1] || '0'),
+      lastModified: new Date(),
+      etag: '',
+    }))
+
+    const allObjects = [...objects, ...pageObjects]
+
+    // Check for more pages
+    const isTruncated = xmlText.includes('<IsTruncated>true</IsTruncated>')
+    const tokenMatch = xmlText.match(/<NextContinuationToken>(.*?)<\/NextContinuationToken>/)
+    const nextToken = tokenMatch?.[1]
+
+    return isTruncated && nextToken
+      ? this.listObjects(prefix, nextToken, allObjects)
+      : ok(allObjects)
   }
 
   /**
@@ -863,14 +859,14 @@ const files = [
 const results = await s3.uploadBatch(files, 3)
 
 if (isOk(results)) {
-  const successful = results.value.filter(isOk)
+  const successful = R.filter(results.value, isOk)
   console.log(`Uploaded ${successful.length}/${files.length} files`)
 }
 
 // List and download
 const listResult = await s3.listObjects('uploads/')
 if (isOk(listResult)) {
-  const images = listResult.value.filter(obj => obj.key.endsWith('.png'))
+  const images = R.filter(listResult.value, where({ key: endsWith('.png') }))
 
   const downloads = await mapAsync(
     images,
@@ -879,7 +875,7 @@ if (isOk(listResult)) {
   )
 
   if (isOk(downloads)) {
-    console.log(`Downloaded ${downloads.value.filter(isOk).length} images`)
+    console.log(`Downloaded ${R.filter(downloads.value, isOk).length} images`)
   }
 }
 ```
@@ -900,8 +896,9 @@ Handle large-scale user data imports with validation and error recovery.
 
 ```typescript
 import * as R from 'remeda'
-import { err, isErr, isOk, ok, type Result } from '@ontologyio/receta/result'
-import { mapAsync } from '@ontologyio/receta/async'
+import { err, isOk, map, mapErr, ok, partition, type Result } from '@ontologyio/receta/result'
+import { batch, mapAsyncOrThrow, sleep } from '@ontologyio/receta/async'
+import { not, oneOf } from '@ontologyio/receta/predicate'
 
 interface UserRecord {
   email: string
@@ -937,75 +934,60 @@ async function importUsers(
 
   // Validate headers
   const requiredHeaders = ['email', 'name', 'role']
-  const missingHeaders = requiredHeaders.filter(h => !headers.includes(h))
+  const missingHeaders = R.filter(requiredHeaders, not(oneOf(headers)))
   if (missingHeaders.length > 0) {
-    return err(`Missing required headers: ${missingHeaders.join(', ')}`)
+    return err(`Missing required headers: ${R.join(missingHeaders, ', ')}`)
   }
 
   // Parse rows
-  const users = rows.map((line, idx) => {
+  const users = R.map(rows, (line, idx) => {
     const values = line.split(',')
-    const user: Record<string, string> = {}
-    headers.forEach((header, i) => {
-      user[header] = values[i]?.trim() || ''
-    })
+    const user = R.mapToObj(headers, (header, i) => [header, values[i]?.trim() || ''])
     return { row: idx + 2, user } // +2 for header and 1-indexed
   })
 
-  const result: ImportResult = {
-    total: users.length,
-    successful: 0,
-    failed: 0,
-    errors: [],
-  }
+  let processed = 0
 
   // Process in batches
-  const batches = R.chunk(users, batchSize)
+  const imported = await batch(
+    users,
+    async (group) => {
+      const results = await mapAsyncOrThrow(
+        group,
+        async ({ row, user }) => {
+          // Validate user, then create it in the database
+          const validation = validateUser(user)
+          const created = isOk(validation) ? await createUser(validation.value) : validation
 
-  for (const batch of batches) {
-    const results = await mapAsync(
-      batch,
-      async ({ row, user }) => {
-        // Validate user
-        const validation = validateUser(user)
-        if (isErr(validation)) {
-          return { row, email: user.email, error: validation.error }
-        }
+          return mapErr(created, (error) => ({ row, email: user.email, error }))
+        },
+        { concurrency }
+      )
 
-        // Create user in database
-        const createResult = await createUser(validation.value)
-        if (isErr(createResult)) {
-          return { row, email: user.email, error: createResult.error }
-        }
+      // Report progress
+      processed += results.length
+      onProgress?.(processed, users.length)
 
-        return { row, email: user.email, success: true }
-      },
-      { concurrency }
-    )
+      return results
+    },
+    { batchSize }
+  )
 
+  return R.pipe(
+    imported,
     // The mapper reports failures as values, so this only catches a thrown error
-    if (isErr(results)) {
-      return err('Import stopped by an unexpected error')
-    }
+    mapErr(() => 'Import stopped by an unexpected error'),
+    map((batches): ImportResult => {
+      const [successful, errors] = partition(R.flat(batches))
 
-    // Collect results
-    for (const res of results.value) {
-      if ('success' in res) {
-        result.successful++
-      } else {
-        result.failed++
-        result.errors.push(res)
+      return {
+        total: users.length,
+        successful: successful.length,
+        failed: errors.length,
+        errors,
       }
-    }
-
-    // Report progress
-    if (onProgress) {
-      const processed = result.successful + result.failed
-      onProgress(processed, result.total)
-    }
-  }
-
-  return ok(result)
+    })
+  )
 }
 
 /**
@@ -1026,8 +1008,8 @@ function validateUser(
   }
 
   // Role validation
-  const validRoles = ['admin', 'user', 'guest']
-  if (!validRoles.includes(user.role)) {
+  const isValidRole = oneOf(['admin', 'user', 'guest'])
+  if (!isValidRole(user.role)) {
     return err(`Invalid role: ${user.role}`)
   }
 
@@ -1044,7 +1026,7 @@ function validateUser(
  */
 async function createUser(user: UserRecord): Promise<Result<void, string>> {
   // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await sleep(100)
 
   // Simulate occasional failures
   if (Math.random() < 0.05) {
@@ -1079,7 +1061,7 @@ if (isOk(importResult)) {
 
   if (stats.errors.length > 0) {
     console.log('\nErrors:')
-    stats.errors.forEach(err => {
+    R.forEach(stats.errors, err => {
       console.log(`  Row ${err.row} (${err.email}): ${err.error}`)
     })
   }
@@ -1090,7 +1072,7 @@ if (isOk(importResult)) {
 
 The User Import example shows comprehensive Result usage:
 - CSV validation returns `err` for malformed data
-- Each row import returns `Result<void, string>` for tracking failures
+- Each row import returns a `Result`, and `partition` splits them into successes and failures
 - Validation errors are collected without stopping the entire import
 - Progress reporting works seamlessly with Result-based error tracking
 - Final statistics aggregate successes and failures from Result values
@@ -1101,8 +1083,9 @@ Sync data between systems with conflict resolution and incremental updates.
 
 ```typescript
 import * as R from 'remeda'
-import { err, isErr, isOk, ok, type Result } from '@ontologyio/receta/result'
-import { mapAsync } from '@ontologyio/receta/async'
+import { err, isErr, isOk, mapErr, ok, partition, type Result } from '@ontologyio/receta/result'
+import { mapAsync, sleep } from '@ontologyio/receta/async'
+import { diff, type UpdatedItem } from '@ontologyio/receta/collection'
 
 interface SyncRecord {
   id: string
@@ -1132,135 +1115,83 @@ async function syncData(
 ): Promise<Result<SyncResult, string>> {
   const { conflictResolution = 'newest', concurrency = 10 } = options
 
-  const result: SyncResult = {
-    created: 0,
-    updated: 0,
-    deleted: 0,
-    conflicts: 0,
-    errors: [],
-  }
-
-  // Index destination records
-  const destById = R.indexBy(destinationRecords, r => r.id)
-  const sourceById = R.indexBy(sourceRecords, r => r.id)
-
   // Find records to create, update, and delete
-  const toCreate: SyncRecord[] = []
-  const toUpdate: Array<{ source: SyncRecord; dest: SyncRecord }> = []
-  const toDelete: SyncRecord[] = []
+  const changes = diff(
+    destinationRecords,
+    sourceRecords,
+    (record) => record.id,
+    (dest, source) => dest.version === source.version
+  )
 
-  // Check source records
-  for (const sourceRecord of sourceRecords) {
-    const destRecord = destById[sourceRecord.id]
+  // Detect conflicts (both modified since last sync)
+  const isConflict = (update: UpdatedItem<SyncRecord>): boolean =>
+    update.new.version > update.old.version + 1
 
-    if (!destRecord) {
-      toCreate.push(sourceRecord)
-    } else if (sourceRecord.version !== destRecord.version) {
-      toUpdate.push({ source: sourceRecord, dest: destRecord })
-    }
-  }
+  // Resolve conflict
+  const recordToUse = ({ old: dest, new: source }: UpdatedItem<SyncRecord>): SyncRecord => {
+    if (conflictResolution === 'source') return source
+    if (conflictResolution === 'destination') return dest
 
-  // Check for deletions
-  for (const destRecord of destinationRecords) {
-    if (!sourceById[destRecord.id]) {
-      toDelete.push(destRecord)
-    }
+    // Use newest
+    return source.updatedAt > dest.updatedAt ? source : dest
   }
 
   // Process creates
   const createResults = await mapAsync(
-    toCreate,
-    async (record) => {
-      const res = await createRecord(record)
-      return { id: record.id, result: res }
-    },
+    changes.added,
+    async (record) =>
+      mapErr(await createRecord(record), (error) => ({ id: record.id, error })),
     { concurrency }
   )
 
   if (isErr(createResults)) return err('Sync stopped while creating records')
 
-  for (const { id, result: res } of createResults.value) {
-    if (isOk(res)) {
-      result.created++
-    } else {
-      result.errors.push({ id, error: res.error })
-    }
-  }
-
   // Process updates with conflict resolution
   const updateResults = await mapAsync(
-    toUpdate,
-    async ({ source, dest }) => {
-      // Detect conflicts (both modified since last sync)
-      const isConflict = source.version > dest.version + 1
-
-      if (isConflict) {
-        result.conflicts++
-      }
-
-      // Resolve conflict
-      let recordToUse: SyncRecord
-      if (conflictResolution === 'source') {
-        recordToUse = source
-      } else if (conflictResolution === 'destination') {
-        recordToUse = dest
-      } else {
-        // Use newest
-        recordToUse = source.updatedAt > dest.updatedAt ? source : dest
-      }
-
-      const res = await updateRecord(recordToUse)
-      return { id: source.id, result: res }
-    },
+    changes.updated,
+    async (update) =>
+      mapErr(await updateRecord(recordToUse(update)), (error) => ({ id: update.new.id, error })),
     { concurrency }
   )
 
   if (isErr(updateResults)) return err('Sync stopped while updating records')
 
-  for (const { id, result: res } of updateResults.value) {
-    if (isOk(res)) {
-      result.updated++
-    } else {
-      result.errors.push({ id, error: res.error })
-    }
-  }
-
   // Process deletes
   const deleteResults = await mapAsync(
-    toDelete,
-    async (record) => {
-      const res = await deleteRecord(record.id)
-      return { id: record.id, result: res }
-    },
+    changes.removed,
+    async (record) =>
+      mapErr(await deleteRecord(record.id), (error) => ({ id: record.id, error })),
     { concurrency }
   )
 
   if (isErr(deleteResults)) return err('Sync stopped while deleting records')
 
-  for (const { id, result: res } of deleteResults.value) {
-    if (isOk(res)) {
-      result.deleted++
-    } else {
-      result.errors.push({ id, error: res.error })
-    }
-  }
+  const [created, createErrors] = partition(createResults.value)
+  const [updated, updateErrors] = partition(updateResults.value)
+  const [deleted, deleteErrors] = partition(deleteResults.value)
 
-  return ok(result)
+  return ok({
+    created: created.length,
+    updated: updated.length,
+    deleted: deleted.length,
+    conflicts: R.filter(changes.updated, isConflict).length,
+    errors: [...createErrors, ...updateErrors, ...deleteErrors],
+  })
 }
 
 // Mock operations
 async function createRecord(record: SyncRecord): Promise<Result<void, string>> {
-  await new Promise(resolve => setTimeout(resolve, 50))
+  await sleep(50)
   return ok(undefined)
 }
 
 async function updateRecord(record: SyncRecord): Promise<Result<void, string>> {
-  await new Promise(resolve => setTimeout(resolve, 50))
+  await sleep(50)
   return ok(undefined)
 }
 
 async function deleteRecord(id: string): Promise<Result<void, string>> {
-  await new Promise(resolve => setTimeout(resolve, 50))
+  await sleep(50)
   return ok(undefined)
 }
 
@@ -1290,6 +1221,7 @@ if (isOk(syncResult)) {
 #### Result Version
 
 The Data Sync example uses Result for safe synchronization:
+- `diff` finds which records to create, update and delete
 - Create/update/delete operations return `Result<void, string>`
 - Conflict detection and resolution happen without exceptions
 - Errors are accumulated in a structured format
@@ -1302,8 +1234,9 @@ Send emails in batches with rate limiting and failure tracking.
 
 ```typescript
 import * as R from 'remeda'
-import { err, isErr, isOk, ok, type Result } from '@ontologyio/receta/result'
-import { mapAsync } from '@ontologyio/receta/async'
+import { err, isOk, map, mapErr, match, ok, unwrap, type Result } from '@ontologyio/receta/result'
+import { batch, mapAsyncOrThrow, retry, sleep } from '@ontologyio/receta/async'
+import { isDefined, where } from '@ontologyio/receta/predicate'
 
 interface Email {
   to: string
@@ -1335,60 +1268,35 @@ async function sendEmailBatch(
     maxRetriesPerEmail = 3,
   } = options
 
-  const results: SendResult[] = []
-  const batches = R.chunk(emails, batchSize)
-
-  for (const [batchIndex, batch] of batches.entries()) {
-    console.log(`Processing batch ${batchIndex + 1}/${batches.length}`)
-
-    // Send batch in parallel
-    const batchResults = await mapAsync(
-      batch,
-      async (email) => {
-        let lastError: string | undefined
-
-        // Retry logic
-        for (let attempt = 1; attempt <= maxRetriesPerEmail; attempt++) {
-          const result = await sendEmail(email)
-
-          if (isOk(result)) {
-            return {
-              email: email.to,
-              messageId: result.value,
-            }
-          }
-
-          lastError = result.error
-
-          if (attempt < maxRetriesPerEmail) {
-            // Wait before retry
-            await new Promise(resolve =>
-              setTimeout(resolve, 1000 * attempt)
-            )
-          }
-        }
-
-        return {
-          email: email.to,
-          error: lastError,
-        }
-      },
-      { concurrency: 10 } // Limit concurrent sends
+  const sendWithRetry = async (email: Email): Promise<SendResult> => {
+    const sent = await retry(
+      // retry only runs again after a throw, and unwrap throws the Err's error
+      async () => unwrap(await sendEmail(email)),
+      { maxAttempts: maxRetriesPerEmail, delay: 1000 }
     )
 
-    if (isErr(batchResults)) {
-      return err(`Batch ${batchIndex + 1} stopped by an unexpected error`)
-    }
-
-    results.push(...batchResults.value)
-
-    // Delay between batches to respect rate limits
-    if (batchIndex < batches.length - 1) {
-      await new Promise(resolve => setTimeout(resolve, delayBetweenBatches))
-    }
+    return match(sent, {
+      onOk: (messageId): SendResult => ({ email: email.to, messageId }),
+      onErr: ({ lastError }) => ({ email: email.to, error: String(lastError) }),
+    })
   }
 
-  return ok(results)
+  const sent = await batch(
+    emails,
+    (group) => {
+      console.log(`Sending ${group.length} emails`)
+
+      // Send batch in parallel
+      return mapAsyncOrThrow(group, sendWithRetry, { concurrency: 10 }) // Limit concurrent sends
+    },
+    { batchSize, delayBetweenBatches } // Delay between batches to respect rate limits
+  )
+
+  return R.pipe(
+    sent,
+    map((batches) => R.flat(batches)),
+    mapErr(() => 'A batch stopped by an unexpected error')
+  )
 }
 
 /**
@@ -1396,7 +1304,7 @@ async function sendEmailBatch(
  */
 async function sendEmail(email: Email): Promise<Result<string, string>> {
   // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await sleep(100)
 
   // Simulate occasional failures
   if (Math.random() < 0.1) {
@@ -1407,7 +1315,7 @@ async function sendEmail(email: Email): Promise<Result<string, string>> {
 }
 
 // Usage
-const emails: Email[] = Array.from({ length: 200 }, (_, i) => ({
+const emails: Email[] = R.times(200, (i) => ({
   to: `user${i}@example.com`,
   subject: 'Welcome!',
   body: `Hello user ${i}!`,
@@ -1420,8 +1328,7 @@ const result = await sendEmailBatch(emails, {
 })
 
 if (isOk(result)) {
-  const successful = result.value.filter(r => r.messageId)
-  const failed = result.value.filter(r => r.error)
+  const [successful, failed] = R.partition(result.value, where({ messageId: isDefined }))
 
   console.log(`Email sending complete:
     Total: ${result.value.length}
@@ -1431,7 +1338,7 @@ if (isOk(result)) {
 
   if (failed.length > 0) {
     console.log('\nFailed emails:')
-    failed.forEach(r => {
+    R.forEach(failed, r => {
       console.log(`  ${r.email}: ${r.error}`)
     })
   }
@@ -1442,7 +1349,7 @@ if (isOk(result)) {
 
 The Batch Email example demonstrates Result for email campaigns:
 - Each email send returns `Result<string, string>` with message ID or error
-- Retry logic is built into the Result flow without try-catch
+- `retry` runs a failed send again, and `unwrap` turns its `Err` into the throw `retry` looks for
 - Success/failure tracking is type-safe and explicit
 - Final report aggregates Result values for statistics
 - No silent failures - every error is captured and reported
@@ -1456,6 +1363,7 @@ Deliver webhooks with retry and exponential backoff.
 ```typescript
 import { isOk, ok, type Result } from '@ontologyio/receta/result'
 import { retry, type RetryError } from '@ontologyio/receta/async'
+import * as R from 'remeda'
 
 interface WebhookEvent {
   id: string
@@ -1538,7 +1446,11 @@ async function generateSignature(
 
   const signature = await crypto.subtle.sign('HMAC', key, messageData)
   const hashArray = Array.from(new Uint8Array(signature))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  return R.pipe(
+    hashArray,
+    R.map(b => b.toString(16).padStart(2, '0')),
+    R.join(''),
+  )
 }
 
 // Usage
@@ -1581,7 +1493,7 @@ Poll for job completion with timeout and progress updates.
 
 ```typescript
 import { err, flatten, isErr, isOk, mapErr, ok, type Result } from '@ontologyio/receta/result'
-import { poll } from '@ontologyio/receta/async'
+import { poll, sleep } from '@ontologyio/receta/async'
 
 interface Job {
   id: string
@@ -1650,7 +1562,7 @@ async function waitForJobCompletion(
  * Fetch job status (mock)
  */
 async function fetchJobStatus(jobId: string): Promise<Result<Job, string>> {
-  await new Promise(resolve => setTimeout(resolve, 100))
+  await sleep(100)
 
   // Simulate job progress
   const progress = Math.min(100, (Date.now() % 10000) / 100)
@@ -1698,7 +1610,8 @@ The Job Polling example uses Result for async job tracking:
 Prevent cascading failures with circuit breaker.
 
 ```typescript
-import { err, isErr, ok, type Result } from '@ontologyio/receta/result'
+import { err, isErr, tap, tapErr, tryCatchAsync, type Result } from '@ontologyio/receta/result'
+import * as R from 'remeda'
 
 type CircuitState = 'closed' | 'open' | 'half-open'
 
@@ -1726,14 +1639,13 @@ class CircuitBreaker {
       this.state = 'half-open'
     }
 
-    try {
-      const result = await fn()
-      this.onSuccess()
-      return ok(result)
-    } catch (error) {
-      this.onFailure()
-      return err(error instanceof Error ? error.message : 'Unknown error')
-    }
+    return R.pipe(
+      await tryCatchAsync(fn, (error) =>
+        error instanceof Error ? error.message : 'Unknown error'
+      ),
+      tap(() => this.onSuccess()),
+      tapErr(() => this.onFailure())
+    )
   }
 
   private onSuccess(): void {
@@ -1803,6 +1715,8 @@ Find optimal concurrency for your workload.
 
 ```typescript
 import { mapAsync } from '@ontologyio/receta/async'
+import { isOk, map } from '@ontologyio/receta/result'
+import * as R from 'remeda'
 
 /**
  * Benchmark different concurrency levels
@@ -1811,28 +1725,26 @@ async function findOptimalConcurrency<T, U>(
   items: T[],
   fn: (item: T) => Promise<U>,
   concurrencyLevels: number[] = [1, 5, 10, 20, 50, 100]
-): Promise<{ concurrency: number; duration: number }> {
-  const results: Array<{ concurrency: number; duration: number }> = []
+) {
+  const measured = await mapAsync(
+    concurrencyLevels,
+    async (concurrency) => {
+      const start = Date.now()
+      await mapAsync(items, fn, { concurrency })
+      const duration = Date.now() - start
 
-  for (const concurrency of concurrencyLevels) {
-    const start = Date.now()
-    await mapAsync(items, fn, { concurrency })
-    const duration = Date.now() - start
-
-    results.push({ concurrency, duration })
-    console.log(`Concurrency ${concurrency}: ${duration}ms`)
-  }
+      console.log(`Concurrency ${concurrency}: ${duration}ms`)
+      return { concurrency, duration }
+    },
+    { concurrency: 1 } // One level at a time, so they don't skew each other
+  )
 
   // Find fastest
-  return results.reduce((best, current) =>
-    current.duration < best.duration ? current : best
-  )
+  return map(measured, (results) => R.firstBy(results, ({ duration }) => duration))
 }
 
 // Usage
-const urls = Array.from({ length: 100 }, (_, i) =>
-  `https://api.example.com/data/${i}`
-)
+const urls = R.times(100, (i) => `https://api.example.com/data/${i}`)
 
 const optimal = await findOptimalConcurrency(
   urls,
@@ -1842,7 +1754,9 @@ const optimal = await findOptimalConcurrency(
   }
 )
 
-console.log(`Optimal concurrency: ${optimal.concurrency}`)
+if (isOk(optimal)) {
+  console.log(`Optimal concurrency: ${optimal.value?.concurrency}`)
+}
 ```
 
 ---
@@ -1880,7 +1794,7 @@ The patterns in this document demonstrate the power of Result-based async operat
 
 To migrate existing try-catch code to Result:
 
-```typescript
+```typescript vanilla
 // Before: try-catch
 async function fetchUser(id: string): Promise<User> {
   try {
@@ -1892,7 +1806,9 @@ async function fetchUser(id: string): Promise<User> {
     throw error
   }
 }
+```
 
+```typescript
 // After: Result
 async function fetchUser(id: string): Promise<Result<User, RetryError>> {
   return retry(async () => {

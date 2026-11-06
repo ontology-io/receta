@@ -169,18 +169,19 @@ interface Issue {
   comments: number
 }
 
+const hasLabel = (label: string) => (labels: string[]) => labels.includes(label)
+
 // Open bugs assigned to someone
 const openAssignedBugs = where({
   state: eq('open'),
-  labels: (labels: string[]) => labels.includes('bug'),
+  labels: hasLabel('bug'),
   assignee: not(isNull)
 })
 
 // High-priority issues needing attention
 const criticalIssues = where({
   state: eq('open'),
-  labels: (labels: string[]) =>
-    labels.includes('critical') || labels.includes('security'),
+  labels: or(hasLabel('critical'), hasLabel('security')),
   comments: lt(2)  // Few comments = needs attention
 })
 ```
@@ -225,14 +226,8 @@ interface Order {
   }
 }
 
-// For nested properties, use custom predicates
+// For nested properties, nest another where()
 const usVerifiedOrders = where({
-  amount: gt(100),
-  customer: (customer: Order['customer']) => customer.country === 'US' && customer.verified
-})
-
-// Or nest another where()
-const usVerifiedOrders2 = where({
   amount: gt(100),
   customer: where({
     country: eq('US'),
@@ -256,14 +251,15 @@ Check if a value is in a list. Uses strict equality (`===`).
 ### Basic Usage
 
 ```typescript
-import { oneOf } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
+import { oneOf, where } from '@ontologyio/receta/predicate'
 
 const numbers = [1, 2, 3, 4, 5]
 R.filter(numbers, oneOf([1, 3, 5]))
 // => [1, 3, 5]
 
 const validRoles = oneOf(['admin', 'moderator', 'owner'])
-R.filter(users, (u) => validRoles(u.role))
+R.filter(users, where({ role: validRoles }))
 ```
 
 ### Real-World Examples
@@ -274,12 +270,7 @@ R.filter(users, (u) => validRoles(u.role))
 // Active order statuses
 const activeStatuses = oneOf(['pending', 'processing', 'shipped'])
 
-R.filter(orders, (o) => activeStatuses(o.status))
-
-// With where()
-const activeOrders = where({
-  status: oneOf(['pending', 'processing', 'shipped'])
-})
+const activeOrders = R.filter(orders, where({ status: activeStatuses }))
 ```
 
 #### Allowed File Extensions
@@ -287,10 +278,7 @@ const activeOrders = where({
 ```typescript
 const allowedExtensions = oneOf(['.jpg', '.png', '.gif', '.webp'])
 
-const imageFiles = R.filter(
-  files,
-  (f) => allowedExtensions(f.extension)
-)
+const imageFiles = R.filter(files, where({ extension: allowedExtensions }))
 ```
 
 #### Country Whitelist
@@ -303,14 +291,14 @@ interface User {
 
 const supportedCountries = oneOf(['US', 'CA', 'UK', 'AU', 'DE', 'FR'])
 
-const eligibleUsers = R.filter(users, (u) => supportedCountries(u.country))
+const eligibleUsers = R.filter(users, where({ country: supportedCountries }))
 ```
 
 #### Role-Based Access
 
 ```typescript
 const staffRoles = oneOf(['admin', 'moderator', 'manager'])
-const canAccessDashboard = (user: User) => staffRoles(user.role)
+const canAccessDashboard = where<User>({ role: staffRoles })
 
 if (canAccessDashboard(currentUser)) {
   // Show admin dashboard
@@ -335,6 +323,7 @@ Test a specific property of an object.
 ### Basic Usage
 
 ```typescript
+import * as R from 'remeda'
 import { prop, gt } from '@ontologyio/receta/predicate'
 
 const users = [
@@ -359,14 +348,14 @@ R.pipe(
   R.filter(prop('age', gte(18))),
   R.filter(prop('country', oneOf(['US', 'CA'])))
 )
+```
 
+```typescript vanilla
 // Vs inline (less readable)
-R.pipe(
-  users,
-  R.filter((u) => u.verified === true),
-  R.filter((u) => u.age >= 18),
-  R.filter((u) => ['US', 'CA'].includes(u.country))
-)
+users
+  .filter((u) => u.verified === true)
+  .filter((u) => u.age >= 18)
+  .filter((u) => ['US', 'CA'].includes(u.country))
 ```
 
 #### Nested Property Access
@@ -404,6 +393,7 @@ Check if an object has specific property values (strict equality). Properties no
 ### Basic Usage
 
 ```typescript
+import * as R from 'remeda'
 import { matchesShape } from '@ontologyio/receta/predicate'
 
 const events = [
@@ -471,6 +461,7 @@ Check if an object has a specific property (regardless of value).
 ### Basic Usage
 
 ```typescript
+import * as R from 'remeda'
 import { hasProperty } from '@ontologyio/receta/predicate'
 
 const objects = [
@@ -522,6 +513,7 @@ Extract a value and test it with a predicate. Perfect for derived/computed value
 ### Basic Usage
 
 ```typescript
+import * as R from 'remeda'
 import { by, gt } from '@ontologyio/receta/predicate'
 
 const users = [
@@ -623,24 +615,30 @@ Identity function for readability. Makes complex inline predicates clearer.
 
 ### Basic Usage
 
+```typescript vanilla
+// Without satisfies (unclear intent)
+numbers.filter((n) => n % 2 === 0 && n > 10)
+```
+
 ```typescript
+import * as R from 'remeda'
 import { satisfies } from '@ontologyio/receta/predicate'
 
-// Without satisfies (unclear intent)
-R.filter(numbers, (n) => n % 2 === 0 && n > 10)
+const numbers = [4, 12, 15, 20]
 
 // With satisfies (clear intent)
-R.filter(numbers, satisfies((n) => n % 2 === 0 && n > 10))
+const isLargeEven = satisfies((n: number) => n % 2 === 0 && n > 10)
+
+R.filter(numbers, isLargeEven)
+// => [12, 20]
 ```
 
 ### Real-World Examples
 
 ```typescript
-// Complex validation
-const validUser = satisfies((u: User) =>
-  u.email.includes('@') &&
-  u.age >= 18 &&
-  u.termsAccepted
+// Comparing two fields, which where() can't do
+const passwordsMatch = satisfies((form: SignupForm) =>
+  form.password === form.confirmPassword
 )
 
 // Custom business logic
@@ -658,16 +656,15 @@ const eligibleForDiscount = satisfies((order: Order) => {
 ### Complex Queries
 
 ```typescript
+const hasTag = (tag: string) => (tags: string[]) => tags.includes(tag)
+
 // E-commerce: Premium electronics on sale, highly rated
 const dealOfTheDay = where({
   category: eq('electronics'),
   price: and(gt(100), lt(500)),
   rating: gte(4.5),
   inStock: eq(true),
-  tags: by(
-    (tags: string[]) => tags,
-    (tags) => tags.includes('sale') && tags.includes('featured')
-  )
+  tags: and(hasTag('sale'), hasTag('featured'))
 })
 
 // User access: Verified staff or senior community members
@@ -710,6 +707,7 @@ export const canModerate = and<User>(isStaff, isVerified)
 Usage:
 
 ```typescript
+import * as R from 'remeda'
 import * as UserPreds from './predicates/user'
 
 const activeStaff = R.filter(users, UserPreds.isActive)

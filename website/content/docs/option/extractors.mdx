@@ -231,7 +231,7 @@ const result = R.pipe(
   tap(x => console.log('Parsed:', x)),
   map(x => x * 2),
   tap(x => console.log('Doubled:', x)),
-  filter(x => x > 10),
+  filter(gt(10)),
   tap(x => console.log('Filtered:', x))
 )
 ```

@@ -6,7 +6,7 @@ title: "Migration Guide"
 
 ## Before: Manual Caching
 
-```typescript
+```typescript vanilla
 // ❌ Manual cache management
 const cache = new Map<string, User>()
 
@@ -75,7 +75,7 @@ Look for:
 
 ### Step 3: Replace Implementation
 
-```typescript
+```typescript vanilla
 // Before
 const cache = new Map<string, Data>()
 const inFlight = new Map<string, Promise<Data>>()
@@ -95,7 +95,9 @@ async function getData(id: string): Promise<Data> {
     inFlight.delete(id)
   }
 }
+```
 
+```typescript
 // After
 import { memoizeAsync } from '@ontologyio/receta/memo'
 
@@ -107,7 +109,7 @@ const getData = memoizeAsync(async (id: string) => await fetchData(id))
 ### Scenario 1: API Response Caching
 
 **Before**:
-```typescript
+```typescript vanilla
 const cache = new Map()
 const CACHE_TTL = 5 * 60 * 1000
 
@@ -136,7 +138,7 @@ const fetchUser = memoizeAsync(
 ### Scenario 2: Expensive Computation
 
 **Before**:
-```typescript
+```typescript vanilla
 const fibCache = new Map<number, number>()
 
 function fibonacci(n: number): number {

@@ -17,7 +17,7 @@
  *
  * // Real-world: Shopping cart total
  * const cartTotal = (items: CartItem[]) =>
- *   sum(items.map(item => item.price * item.quantity))
+ *   sum(R.map(items, item => item.price * item.quantity))
  * ```
  *
  * @see average - for calculating the mean

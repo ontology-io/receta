@@ -27,7 +27,7 @@ import type { WindowSlidingConfig } from '../types'
  * pipe(
  *   prices,
  *   windowSliding({ size: 3 }),
- *   R.map(window => window.reduce((a, b) => a + b, 0) / window.length)
+ *   R.map(window => R.sum(window) / window.length)
  * )
  * // => [101, 102.66666666666667, 103, 105]
  *
@@ -37,11 +37,12 @@ import type { WindowSlidingConfig } from '../types'
  * // => [['the', 'quick'], ['quick', 'brown'], ['brown', 'fox'], ['fox', 'jumps']]
  *
  * // Pattern detection (3-item sequences)
+ * const isRising = ([a, b, c]: readonly number[]) => a! < b! && b! < c!
  * const sequence = [1, 2, 3, 2, 3, 4, 3, 4, 5]
  * pipe(
  *   sequence,
  *   windowSliding({ size: 3 }),
- *   R.filter(window => window[0]! < window[1]! && window[1]! < window[2]!)
+ *   R.filter(isRising)
  * )
  * // => [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
  *

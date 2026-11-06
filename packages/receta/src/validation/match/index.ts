@@ -32,13 +32,13 @@ export interface ValidationMatcher<T, E, R> {
  * // Data-first
  * match(valid(42), {
  *   onValid: (n) => `Success: ${n}`,
- *   onInvalid: (errors) => `Errors: ${errors.join(', ')}`
+ *   onInvalid: (errors) => `Errors: ${R.join(errors, ', ')}`
  * })
  * // => "Success: 42"
  *
  * match(invalid(['error1', 'error2']), {
  *   onValid: (n) => `Success: ${n}`,
- *   onInvalid: (errors) => `Errors: ${errors.join(', ')}`
+ *   onInvalid: (errors) => `Errors: ${R.join(errors, ', ')}`
  * })
  * // => "Errors: error1, error2"
  *

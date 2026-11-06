@@ -9,7 +9,11 @@ export type Example = {
   readonly line: number
   readonly code: string
   readonly isTsx: boolean
+  /** How the lint treats it: `vanilla` must avoid Receta, `nolint` is a counted exception. */
+  readonly style: ExampleStyle
 }
+
+export type ExampleStyle = 'receta' | 'vanilla' | 'nolint'
 
 /** Fence titles the reference generator gives to signatures, which have no bodies to run. */
 const SIGNATURE_TITLE = /title="(Signature|Data-first|Data-last|Overload \d+)"/
@@ -21,13 +25,21 @@ const FENCE = /^```(tsx|typescript|ts)([^\n]*)\n([\s\S]*?)^```[ \t]*$/gm
 
 const lineOf = (text: string, index: number): number => text.slice(0, index).split('\n').length
 
+/** A title is prose, so a title that says "vanilla" says nothing about the fence. */
+const styleOf = (meta: string): ExampleStyle => {
+  const flags = meta.replace(/title="[^"]*"/, '')
+  if (/\bvanilla\b/.test(flags)) return 'vanilla'
+  return /\bnolint\b/.test(flags) ? 'nolint' : 'receta'
+}
+
 const toExample = (page: string, text: string, match: RegExpExecArray): Example => {
-  const [whole, language = '', , code = ''] = match
+  const [whole, language = '', meta = '', code = ''] = match
   return {
     page,
     line: lineOf(text, match.index + whole.indexOf('\n') + 1),
     code,
     isTsx: language === 'tsx',
+    style: styleOf(meta),
   }
 }
 

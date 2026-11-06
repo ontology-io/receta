@@ -9,7 +9,7 @@ description: "Like Result, but collects *all* errors instead of stopping at the 
 
 You've experienced this as a user filling out a form:
 
-```typescript
+```typescript vanilla
 // Traditional validation with try/catch or Result
 function validateForm(data) {
   if (data.email.length === 0) throw new Error('Email required')
@@ -145,6 +145,7 @@ collect([
 **Example: User authentication**
 ```typescript
 import { flatMap } from '@ontologyio/receta/result'
+import { pipe } from 'remeda'
 pipe(
   validateToken(token),           // Stop if token invalid
   flatMap(getUser),        // Stop if user not found
@@ -392,7 +393,9 @@ const strongPassword = validate([
 ### Examples:
 
 ```typescript
-import { flatMap } from '@ontologyio/receta/result'
+import { flatMap, parseJSON } from '@ontologyio/receta/result'
+import { schema, validateAll } from '@ontologyio/receta/validation'
+import { pipe } from 'remeda'
 // ✅ Good: Form validation (independent fields)
 schema(formSchema, formData)
 
@@ -410,7 +413,7 @@ validateAll(requests, validateRequest)
 // ❌ Bad: File processing pipeline
 // Use Result instead:
 pipe(
-  readFile(path),
+  readFile(filePath),
   flatMap(parseJSON),
   flatMap(validateSchema),
   flatMap(transform)

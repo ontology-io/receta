@@ -8,6 +8,8 @@ title: "Conditionals Guide"
 
 Conditional combinators let you express branching logic as composable functions instead of imperative control structures. This makes your code more declarative, testable, and easier to compose in pipelines.
 
+The condition can be any function that returns a boolean, so everything in the [Predicate module](../predicate/index.mdx) fits straight in.
+
 ## ifElse - Binary Branching
 
 The `ifElse` combinator is the functional equivalent of the ternary operator (`? :`).
@@ -26,10 +28,11 @@ function ifElse<T, U>(
 
 ```typescript
 import { ifElse } from '@ontologyio/receta/function'
+import { gte } from '@ontologyio/receta/predicate'
 
 // Classification logic
 const classify = ifElse(
-  (n: number) => n >= 0,
+  gte(0),
   (n) => 'positive',
   (n) => 'negative'
 )
@@ -41,15 +44,17 @@ classify(0)   // => 'positive'
 
 ### Comparison with Traditional Code
 
-```typescript
+```typescript vanilla
 // ❌ Traditional ternary
 const result = age >= 18
   ? { status: 'adult', age }
   : { status: 'minor', age }
+```
 
+```typescript
 // ✅ ifElse combinator (more reusable)
 const classifyAge = ifElse(
-  (age: number) => age >= 18,
+  gte(18),
   (age) => ({ status: 'adult', age }),
   (age) => ({ status: 'minor', age })
 )
@@ -116,10 +121,11 @@ function when<T>(
 
 ```typescript
 import { when } from '@ontologyio/receta/function'
+import { lt } from '@ontologyio/receta/predicate'
 
 // Only transform negative numbers
 const ensurePositive = when(
-  (n: number) => n < 0,
+  lt(0),
   (n) => Math.abs(n)
 )
 
@@ -132,19 +138,22 @@ ensurePositive(0)   // => 0
 
 ```typescript
 import { piped } from 'remeda'
+import { when } from '@ontologyio/receta/function'
+import { endsWith, eq, or, startsWith } from '@ontologyio/receta/predicate'
+import { capitalize } from '@ontologyio/receta/string'
 
 const normalizeText = piped(
   when(
-    (s: string) => s.length === 0,
+    eq(''),
     () => 'default'
   ),
   when(
-    (s: string) => s.startsWith(' ') || s.endsWith(' '),
+    or(startsWith(' '), endsWith(' ')),
     (s) => s.trim()
   ),
   when(
     (s: string) => s.toLowerCase() === s,
-    (s) => s.charAt(0).toUpperCase() + s.slice(1)
+    (s) => capitalize(s)
   )
 )
 
@@ -253,6 +262,7 @@ when((user) => !isAuthenticated(user), redirectToLogin)
 ```typescript
 import { pipe } from 'remeda'
 import { unless } from '@ontologyio/receta/function'
+import { isDefined, where } from '@ontologyio/receta/predicate'
 
 interface Config {
   apiUrl?: string
@@ -265,19 +275,19 @@ const applyDefaults = (config: Config): Config =>
   pipe(
     config,
     unless(
-      (c) => 'apiUrl' in c && c.apiUrl !== undefined,
+      where<Config>({ apiUrl: isDefined }),
       (c) => ({ ...c, apiUrl: 'https://api.example.com' })
     ),
     unless(
-      (c) => 'timeout' in c && c.timeout !== undefined,
+      where<Config>({ timeout: isDefined }),
       (c) => ({ ...c, timeout: 5000 })
     ),
     unless(
-      (c) => 'retries' in c && c.retries !== undefined,
+      where<Config>({ retries: isDefined }),
       (c) => ({ ...c, retries: 3 })
     ),
     unless(
-      (c) => 'apiKey' in c && c.apiKey !== undefined,
+      where<Config>({ apiKey: isDefined }),
       (c) => ({ ...c, apiKey: process.env.API_KEY || 'default-key' })
     )
   )
@@ -315,12 +325,13 @@ function cond<T, U>(
 ```typescript
 import { cond } from '@ontologyio/receta/function'
 import { unwrapOr } from '@ontologyio/receta/option'
+import { and, eq, gt, gte, lt } from '@ontologyio/receta/predicate'
 
 const classifyNumber = cond<number, string>([
-  [(n) => n < 0, (n) => 'negative'],
-  [(n) => n === 0, () => 'zero'],
-  [(n) => n > 0 && n < 10, (n) => 'small positive'],
-  [(n) => n >= 10, (n) => 'large positive']
+  [lt(0), (n) => 'negative'],
+  [eq(0), () => 'zero'],
+  [and(gt(0), lt(10)), (n) => 'small positive'],
+  [gte(10), (n) => 'large positive']
 ])
 
 unwrapOr(classifyNumber(-5), 'unknown')   // => 'negative'
@@ -331,7 +342,7 @@ unwrapOr(classifyNumber(100), 'unknown')  // => 'large positive'
 
 ### Comparison with Switch Statement
 
-```typescript
+```typescript vanilla
 // ❌ Traditional switch
 function getStatusMessageSwitch(code: number): string {
   switch (true) {
@@ -347,13 +358,19 @@ function getStatusMessageSwitch(code: number): string {
       return 'Unknown'
   }
 }
+```
+
+```typescript
+import { cond } from '@ontologyio/receta/function'
+import { unwrapOr } from '@ontologyio/receta/option'
+import { between, gte } from '@ontologyio/receta/predicate'
 
 // ✅ cond combinator (more functional)
 const getStatusMessage = cond<number, string>([
-  [(code) => code >= 200 && code < 300, () => 'Success'],
-  [(code) => code >= 300 && code < 400, () => 'Redirect'],
-  [(code) => code >= 400 && code < 500, () => 'Client Error'],
-  [(code) => code >= 500, () => 'Server Error']
+  [between(200, 299), () => 'Success'],
+  [between(300, 399), () => 'Redirect'],
+  [between(400, 499), () => 'Client Error'],
+  [gte(500), () => 'Server Error']
 ])
 
 const message = unwrapOr(getStatusMessage(404), 'Unknown')
@@ -364,6 +381,7 @@ const message = unwrapOr(getStatusMessage(404), 'Unknown')
 ```typescript
 import { cond } from '@ontologyio/receta/function'
 import { unwrapOr } from '@ontologyio/receta/option'
+import { eq, where } from '@ontologyio/receta/predicate'
 
 type OrderState =
   | 'pending'
@@ -385,9 +403,11 @@ interface StateAction {
   nextStates: OrderState[]
 }
 
+const inState = (state: OrderState) => where<Order>({ state: eq(state) })
+
 const getOrderAction = cond<Order, StateAction>([
   [
-    (order) => order.state === 'pending',
+    inState('pending'),
     (order) => ({
       message: `Order ${order.id} is pending payment`,
       canCancel: true,
@@ -395,7 +415,7 @@ const getOrderAction = cond<Order, StateAction>([
     })
   ],
   [
-    (order) => order.state === 'processing',
+    inState('processing'),
     (order) => ({
       message: `Processing ${order.items} items (total: $${order.total})`,
       canCancel: true,
@@ -403,7 +423,7 @@ const getOrderAction = cond<Order, StateAction>([
     })
   ],
   [
-    (order) => order.state === 'shipped',
+    inState('shipped'),
     (order) => ({
       message: `Order ${order.id} is on the way`,
       canCancel: false,
@@ -411,7 +431,7 @@ const getOrderAction = cond<Order, StateAction>([
     })
   ],
   [
-    (order) => order.state === 'delivered',
+    inState('delivered'),
     (order) => ({
       message: `Order ${order.id} was delivered`,
       canCancel: false,
@@ -419,7 +439,7 @@ const getOrderAction = cond<Order, StateAction>([
     })
   ],
   [
-    (order) => order.state === 'cancelled',
+    inState('cancelled'),
     (order) => ({
       message: `Order ${order.id} was cancelled`,
       canCancel: false,
@@ -454,6 +474,7 @@ console.log(action)
 Since `cond` returns an `Option`, you always handle the "no match" case explicitly:
 
 ```typescript
+import { pipe } from 'remeda'
 import { cond } from '@ontologyio/receta/function'
 import { match } from '@ontologyio/receta/option'
 
@@ -474,6 +495,8 @@ You can combine different conditional combinators for complex logic:
 ```typescript
 import { pipe } from 'remeda'
 import { when, unless, ifElse } from '@ontologyio/receta/function'
+import { round } from '@ontologyio/receta/number'
+import { eq, where } from '@ontologyio/receta/predicate'
 
 interface Product {
   price: number
@@ -486,13 +509,13 @@ const applyPricing = (product: Product) =>
     product,
     // Add tax unless exempt category
     unless(
-      (p) => p.category === 'essential',
+      where<Product>({ category: eq('essential') }),
       (p) => ({ ...p, price: p.price * 1.2 })
     ),
     // Round to 2 decimals
     when(
       (p) => p.price % 1 !== 0,
-      (p) => ({ ...p, price: Math.round(p.price * 100) / 100 })
+      (p) => ({ ...p, price: round(p.price, 2) })
     ),
     // Apply discount based on stock
     (p) => ({
@@ -516,7 +539,7 @@ let counter = 0
 when((n) => { counter++; return n > 0 }, transform)
 
 // ✅ Pure predicates
-when((n) => n > 0, transform)
+when(gt(0), transform)
 ```
 
 ### 2. Use Descriptive Names
@@ -527,7 +550,7 @@ const fn = when((x: number) => x < 0, (x) => -x)
 
 // ✅ Clear intent
 const ensurePositive = when(
-  (n: number) => n < 0,
+  lt(0),
   (n) => Math.abs(n)
 )
 ```
@@ -537,16 +560,16 @@ const ensurePositive = when(
 ```typescript
 // ✅ Specific conditions first
 cond<number, string>([
-  [(n) => n === 0, () => 'zero'],          // Most specific
-  [(n) => n > 0 && n < 10, () => 'small'], // More specific
-  [(n) => n > 0, () => 'positive'],        // Less specific
-  [() => true, () => 'other']              // Catch-all last
+  [eq(0), () => 'zero'],               // Most specific
+  [and(gt(0), lt(10)), () => 'small'], // More specific
+  [gt(0), () => 'positive'],           // Less specific
+  [always(), () => 'other']            // Catch-all last
 ])
 
 // ❌ General conditions first will shadow specific ones
 cond<number, string>([
-  [(n) => n > 0, () => 'positive'],        // Too general
-  [(n) => n > 0 && n < 10, () => 'small'], // Never reached!
+  [gt(0), () => 'positive'],           // Too general
+  [and(gt(0), lt(10)), () => 'small'], // Never reached!
 ])
 ```
 

@@ -86,7 +86,7 @@ function toResultImplementation<T, E>(validation: Validation<T, E>): Result<T, r
  * // Combine errors into a message
  * toResultWith(
  *   invalid(['Error 1', 'Error 2', 'Error 3']),
- *   (errors) => errors.join('; ')
+ *   (errors) => R.join(errors, '; ')
  * )
  * // => Err('Error 1; Error 2; Error 3')
  *
@@ -110,7 +110,7 @@ function toResultImplementation<T, E>(validation: Validation<T, E>): Result<T, r
  * const toDisplayResult = (validation: Validation<Data, FieldError<string>>) =>
  *   toResultWith(validation, (errors) => ({
  *     title: 'Please fix the following errors:',
- *     items: errors.map(e => `${e.field}: ${e.errors.join(', ')}`)
+ *     items: R.map(errors, e => `${e.field}: ${R.join(e.errors, ', ')}`)
  *   }))
  * ```
  *

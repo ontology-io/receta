@@ -105,6 +105,7 @@ flatten(data, { flattenArrays: true })
 
 ```typescript
 import { pipe } from 'remeda'
+import { flatten, mapKeys } from '@ontologyio/receta/object'
 
 const config = { database: { host: 'localhost', port: '5432' } }
 
@@ -167,9 +168,10 @@ const redisHash = {
   'user:123:settings:notifications': 'true'
 }
 
-const user = unflatten(
-  removePrefix(redisHash, 'user:123:'),
-  { separator: ':' }
+const user = pipe(
+  redisHash,
+  mapKeys((key) => key.replace('user:123:', '')),
+  (flat) => unflatten(flat, { separator: ':' })
 )
 // {
 //   name: 'Alice',

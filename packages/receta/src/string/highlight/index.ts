@@ -84,7 +84,7 @@ export interface HighlightOptions {
  *
  * // Data-last (in pipe)
  * pipe(
- *   searchResults.map(r => r.title),
+ *   R.map(searchResults, r => r.title),
  *   R.map(highlight(searchQuery, { className: 'search-highlight' }))
  * )
  * ```

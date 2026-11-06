@@ -16,10 +16,10 @@ import { purryConfig } from '../../utils'
  * @example
  * ```typescript
  * const classifyNumber = cond<number, string>([
- *   [(n) => n < 0, (n) => 'negative'],
- *   [(n) => n === 0, () => 'zero'],
- *   [(n) => n > 0 && n < 10, (n) => 'small positive'],
- *   [(n) => n >= 10, (n) => 'large positive']
+ *   [lt(0), (n) => 'negative'],
+ *   [eq(0), () => 'zero'],
+ *   [and(gt(0), lt(10)), (n) => 'small positive'],
+ *   [gte(10), (n) => 'large positive']
  * ])
  *
  * classifyNumber(-5)   // => Some('negative')
@@ -30,12 +30,15 @@ import { purryConfig } from '../../utils'
  *
  * @example
  * ```typescript
+ * import { cond } from '@ontologyio/receta/function'
+ * import { between, gte } from '@ontologyio/receta/predicate'
+ *
  * // HTTP status code handling
  * const handleStatus = cond<number, string>([
- *   [(s) => s >= 200 && s < 300, () => 'success'],
- *   [(s) => s >= 300 && s < 400, () => 'redirect'],
- *   [(s) => s >= 400 && s < 500, () => 'client error'],
- *   [(s) => s >= 500, () => 'server error']
+ *   [between(200, 299), () => 'success'],
+ *   [between(300, 399), () => 'redirect'],
+ *   [between(400, 499), () => 'client error'],
+ *   [gte(500), () => 'server error']
  * ])
  *
  * handleStatus(200)  // => Some('success')
@@ -47,9 +50,9 @@ import { purryConfig } from '../../utils'
  * ```typescript
  * // Data-first
  * const result = cond<string, number>([
- *   [(s) => s === 'low', () => 1],
- *   [(s) => s === 'medium', () => 5],
- *   [(s) => s === 'high', () => 10]
+ *   [eq('low'), () => 1],
+ *   [eq('medium'), () => 5],
+ *   [eq('high'), () => 10]
  * ], 'medium')
  * // => Some(5)
  * ```

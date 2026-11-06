@@ -54,7 +54,7 @@ import { isInvalid } from '../guards'
  * const result = validateRegistration(formData)
  * if (isInvalid(result)) {
  *   // Display all field errors at once
- *   result.errors.forEach(({ field, errors }) => {
+ *   R.forEach(result.errors, ({ field, errors }) => {
  *     showFieldError(field, errors)
  *   })
  * }

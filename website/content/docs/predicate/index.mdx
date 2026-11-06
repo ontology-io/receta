@@ -7,7 +7,7 @@ description: "Predicates are reusable, type-safe functions for filtering, valida
 
 ### The Hidden Cost of Inline Filters
 
-```typescript
+```typescript vanilla
 // ❌ Traditional approach - logic scattered everywhere
 const activeAdults = users.filter(u => u.age >= 18 && u.active === true)
 const activeStaff = users.filter(u => u.age >= 18 && u.active === true && (u.role === 'admin' || u.role === 'moderator'))
@@ -29,7 +29,7 @@ const premiumUsers = users.filter(u => u.age >= 18 && u.active === true && u.pre
 
 #### Prisma ORM (Database Queries)
 
-```typescript
+```typescript vanilla
 // Prisma's where clause - composable predicates for databases
 const users = await prisma.user.findMany({
   where: {
@@ -42,7 +42,7 @@ const users = await prisma.user.findMany({
 
 #### MongoDB Queries
 
-```typescript
+```typescript vanilla
 // MongoDB - query operators are predicates
 db.users.find({
   age: { $gt: 18 },
@@ -53,7 +53,7 @@ db.users.find({
 
 #### TypeORM Repository
 
-```typescript
+```typescript vanilla
 // TypeORM - composable conditions
 const users = await userRepository.find({
   where: {
@@ -111,7 +111,7 @@ R.find(users, isActiveStaff)
 
 ### Problem 1: Inline Filters Don't Compose
 
-```typescript
+```typescript vanilla
 // ❌ Can't extract or reuse
 users.filter(u => u.age >= 18 && u.verified)
 products.filter(p => p.price >= 100 && p.inStock)
@@ -123,6 +123,7 @@ orders.filter(o => o.amount >= 1000 && o.status === 'pending')
 
 ```typescript
 // ✅ With predicates - composition is natural
+import * as R from 'remeda'
 import { gte, eq, where } from '@ontologyio/receta/predicate'
 
 const isAdult = gte(18)
@@ -136,7 +137,7 @@ R.filter(orders, where({ amount: isLargeOrder, status: eq('pending') }))
 
 ### Problem 2: Inline Filters Lose Type Information
 
-```typescript
+```typescript vanilla
 // ❌ TypeScript can't narrow this inline check
 const mixed: unknown[] = ['hello', 42, NaN, 'world']
 const numbers = mixed.filter(x => typeof x === 'number' && !isNaN(x))
@@ -145,6 +146,7 @@ const numbers = mixed.filter(x => typeof x === 'number' && !isNaN(x))
 
 ```typescript
 // ✅ Type guards narrow types automatically
+import * as R from 'remeda'
 import { isNumber } from '@ontologyio/receta/predicate'
 
 const numbers = R.filter(mixed, isNumber)
@@ -153,14 +155,12 @@ const numbers = R.filter(mixed, isNumber)
 
 ### Problem 3: Inline Filters Don't Work in Pipelines
 
-```typescript
-// ❌ Awkward in pipe - need arrow functions
-R.pipe(
-  users,
-  R.filter(u => u.age >= 18),
-  R.filter(u => u.active),
-  R.filter(u => u.role === 'admin')
-)
+```typescript vanilla
+// ❌ Awkward in a pipeline - every step needs an arrow function
+users
+  .filter(u => u.age >= 18)
+  .filter(u => u.active)
+  .filter(u => u.role === 'admin')
 ```
 
 ```typescript
@@ -239,6 +239,14 @@ if (canAccessAdmin(currentUser)) {
 ### 4. Data Validation
 
 ```typescript
+import { and, by, gte, matches } from '@ontologyio/receta/predicate'
+import { fromPredicate, schema } from '@ontologyio/receta/validation'
+
+interface SignupForm {
+  email: string
+  password: string
+}
+
 // Validate form data
 const isValidEmail = matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
 const isStrongPassword = and(
@@ -247,9 +255,17 @@ const isStrongPassword = and(
   matches(/[0-9]/)
 )
 
-const errors: string[] = []
-if (!isValidEmail(formData.email)) errors.push('Invalid email')
-if (!isStrongPassword(formData.password)) errors.push('Weak password')
+// Each predicate becomes a validator, and every failure is collected
+const validateForm = schema<SignupForm, string>({
+  email: fromPredicate(isValidEmail, 'Invalid email'),
+  password: fromPredicate(isStrongPassword, 'Weak password')
+})
+
+validateForm({ email: 'nope', password: 'short' })
+// => Invalid([
+//   { field: 'email', errors: ['Invalid email'] },
+//   { field: 'password', errors: ['Weak password'] }
+// ])
 ```
 
 ### 5. Database-Like Queries
@@ -475,15 +491,17 @@ const canEditPost = (user: User, post: Post) =>
 ### Pattern 3: Validation Schemas
 
 ```typescript
+import { between, by, matches, where } from '@ontologyio/receta/predicate'
+import { type Result, ok, err } from '@ontologyio/receta/result'
+
 const isValidUser = where({
   email: matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
   age: between(13, 120),
   username: by((s: string) => s.length, between(3, 20))
 })
 
-if (!isValidUser(userData)) {
-  throw new Error('Invalid user data')
-}
+const checkUser = (user: User): Result<User, string> =>
+  isValidUser(user) ? ok(user) : err('Invalid user data')
 ```
 
 ## What's Next?

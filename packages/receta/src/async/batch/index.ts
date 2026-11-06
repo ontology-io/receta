@@ -149,16 +149,12 @@ export async function batch<T, U>(
  *
  * @example
  * ```typescript
- * // Throws on error
- * try {
- *   const results = await batchOrThrow(
- *     users,
- *     async (userBatch) => db.users.insertMany(userBatch),
- *     { batchSize: 50 }
- *   )
- * } catch (error) {
- *   console.error('Batch failed:', error)
- * }
+ * // throws a BatchError if any batch fails
+ * const results = await batchOrThrow(
+ *   users,
+ *   async (userBatch) => db.users.insertMany(userBatch),
+ *   { batchSize: 50 }
+ * )
  * ```
  *
  * @see batch - Result-returning variant (recommended)

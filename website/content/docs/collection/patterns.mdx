@@ -26,12 +26,13 @@ const displayComments = (comments: Comment[], userId: number, postId: number) =>
 
 ```typescript
 import { diff } from '@ontologyio/receta/collection'
+import * as R from 'remeda'
 
 // Detect order status changes for notifications
 const trackOrderChanges = (oldOrders: Order[], newOrders: Order[]) => {
   const changes = diff(oldOrders, newOrders, o => o.id)
   
-  for (const { old, new: updated } of changes.updated) {
+  R.forEach(changes.updated, ({ old, new: updated }) => {
     if (old.status !== updated.status) {
       sendNotification({
         orderId: updated.id,
@@ -40,7 +41,7 @@ const trackOrderChanges = (oldOrders: Order[], newOrders: Order[]) => {
         customer: updated.customerId
       })
     }
-  }
+  })
   
   return changes
 }
@@ -77,6 +78,7 @@ app.get('/api/events', (req, res) => {
 ```typescript
 import { indexByUnique } from '@ontologyio/receta/collection'
 import { unwrapOr } from '@ontologyio/receta/result'
+import { pipe } from 'remeda'
 
 const normalizeEntities = <T extends { id: string }>(entities: T[]) =>
   pipe(
@@ -96,12 +98,13 @@ const store = {
 
 ```typescript
 import { union } from '@ontologyio/receta/collection'
+import * as R from 'remeda'
 
 type Permission = { resource: string; action: string }
 
 const getUserPermissions = (userId: string) => {
   const roles = getUserRoles(userId)
-  const permissions: Permission[] = roles.flatMap(role => getRolePermissions(role))
+  const permissions: Permission[] = R.flatMap(roles, role => getRolePermissions(role))
   
   // union checks the second list against what it has kept so far,
   // so the list to deduplicate goes second

@@ -221,18 +221,19 @@ Forces a function to accept only its first argument.
 
 ```typescript
 import { unary } from '@ontologyio/receta/function'
+import * as R from 'remeda'
 
 // The classic parseInt bug
 const digits = ['1', '2', '3']
 
-digits.map(parseInt)         // => [1, NaN, NaN]
-digits.map(unary(parseInt))  // => [1, 2, 3]
+R.map(digits, parseInt)         // => [1, NaN, NaN]
+R.map(digits, unary(parseInt))  // => [1, 2, 3]
 ```
 
 **Why does this happen?**
 
 ```typescript
-// Array.map passes (element, index, array)
+// R.map passes (element, index, array), like Array.map
 // parseInt reads the first two as (string, radix)
 
 // Without unary:
@@ -250,14 +251,15 @@ parseInt('3') // => 3
 
 ```typescript
 import { binary } from '@ontologyio/receta/function'
+import * as R from 'remeda'
 
-const sum = (...nums: number[]) => nums.reduce((a, b) => a + b, 0)
+const sum = (...nums: number[]) => R.sum(nums)
 
 sum(1, 2, 3, 4)  // => 10
 
 // reduce also passes the index and the array, which binary drops
 const numbers = [1, 2, 3, 4]
-numbers.reduce(binary(sum))  // => 10
+R.reduce(numbers, binary(sum), 0)  // => 10
 ```
 
 ### nAry - Limit to N Arguments
@@ -348,12 +350,12 @@ const withConfig = partial(flipped, config)
 
 ```typescript
 // ✅ Clean
-numbers.map(unary(parseInt))
-items.forEach(unary(processItem))
+R.map(numbers, unary(parseInt))
+R.forEach(items, unary(processItem))
 
 // ❌ Verbose
-numbers.map((x) => parseInt(x))
-items.forEach((item) => processItem(item))
+R.map(numbers, (x) => parseInt(x))
+R.forEach(items, (item) => processItem(item))
 ```
 
 ## Type Safety

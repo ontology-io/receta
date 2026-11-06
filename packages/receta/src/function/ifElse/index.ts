@@ -10,7 +10,7 @@ import { purryConfig3 } from '../../utils'
  * @example
  * ```typescript
  * const classify = ifElse(
- *   (n: number) => n >= 0,
+ *   gte(0),
  *   (n) => 'positive',
  *   (n) => 'negative'
  * )
@@ -24,7 +24,7 @@ import { purryConfig3 } from '../../utils'
  * ```typescript
  * // Data-first signature
  * const result = ifElse(
- *   (age: number) => age >= 18,
+ *   gte(18),
  *   (age) => ({ status: 'adult', age }),
  *   (age) => ({ status: 'minor', age }),
  *   25
@@ -38,7 +38,7 @@ import { purryConfig3 } from '../../utils'
  * pipe(
  *   fetchUser(),
  *   ifElse(
- *     (user) => user.role === 'admin',
+ *     where({ role: eq('admin') }),
  *     (user) => grantFullAccess(user),
  *     (user) => grantLimitedAccess(user)
  *   )

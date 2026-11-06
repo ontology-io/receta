@@ -9,7 +9,7 @@ description: "From Manual Collection Operations"
 
 ### Before: Manual Collection Operations
 
-```typescript
+```typescript vanilla
 // ❌ Problems:
 // Manual hierarchical grouping
 const commentsByUserAndPost: Record<number, Record<number, Comment[]>> = {}
@@ -106,7 +106,7 @@ Leverage Result types for safer code.
 
 #### Before
 
-```typescript
+```typescript vanilla
 // Manual grouping by category
 const productsByCategory: Record<string, Product[]> = {}
 for (const product of products) {
@@ -139,7 +139,7 @@ const productsByCategory = R.groupBy(products, p => p.category)
 
 #### Before
 
-```typescript
+```typescript vanilla
 // Group events by repository, then by type
 const eventsByRepoAndType: Record<string, Record<string, RepoEvent[]>> = {}
 for (const event of events) {
@@ -184,7 +184,7 @@ const eventsByRepoAndDate = nest<RepoEvent>(events, [
 
 #### Before
 
-```typescript
+```typescript vanilla
 // Detect added/removed/updated users
 const added = newUsers.filter(nu =>
   !oldUsers.some(ou => ou.id === nu.id)
@@ -236,19 +236,15 @@ const changes = diff(oldUsers, newUsers, u => u.id)
 
 ```typescript
 // Send notifications for changes
-for (const user of changes.added) {
-  sendEmail(user.email, 'Welcome!')
-}
+R.forEach(changes.added, user => sendEmail(user.email, 'Welcome!'))
 
-for (const { old, new: updated } of changes.updated) {
+R.forEach(changes.updated, ({ old, new: updated }) => {
   if (old.status !== updated.status) {
     sendEmail(updated.email, `Status changed to ${updated.status}`)
   }
-}
+})
 
-for (const user of changes.removed) {
-  archiveUser(user.id)
-}
+R.forEach(changes.removed, user => archiveUser(user.id))
 ```
 
 #### Advanced: Custom Equality
@@ -269,7 +265,7 @@ const changes = diff(
 
 #### Before
 
-```typescript
+```typescript vanilla
 // Manual pagination
 const page = Number(req.query.page) || 1
 const pageSize = 20
@@ -324,7 +320,7 @@ There's no `totalPages` field. Compute it with `Math.ceil(result.total / result.
 
 #### Before
 
-```typescript
+```typescript vanilla
 // Manual cursor-based pagination
 app.get('/api/events', (req, res) => {
   const cursorValue = req.query.cursor
@@ -386,7 +382,7 @@ res.json(result)
 
 #### Before
 
-```typescript
+```typescript vanilla
 // Manual indexing - silently overwrites duplicates
 const usersById: Record<string, User> = {}
 for (const user of users) {
@@ -449,7 +445,7 @@ const byId = indexByUnique(users, u => u.id, { onCollision: 'error' })
 
 #### Before
 
-```typescript
+```typescript vanilla
 // Manual union - creates duplicates!
 const allUsers = [...activeUsers, ...pendingUsers]
 
@@ -508,7 +504,7 @@ These compare every pair of items, so they stay O(n × m). The win is clarity, n
 
 #### Before
 
-```typescript
+```typescript vanilla
 // Group orders by customer country
 const ordersByCountry: Record<string, Order[]> = {}
 for (const order of orders) {
@@ -553,7 +549,7 @@ You don't need to refactor everything at once!
 
 Find the most duplicated manual logic and replace it first.
 
-```typescript
+```typescript vanilla
 // 1. Find repeated pattern
 // ❌ Manual grouping everywhere:
 const manualGroups: Record<string, Item[]> = {}
@@ -561,7 +557,9 @@ for (const item of items) {
   if (!manualGroups[item.category]) manualGroups[item.category] = []
   manualGroups[item.category].push(item)
 }
+```
 
+```typescript
 // 2. Replace with nest() or R.groupBy()
 const grouped = R.groupBy(items, i => i.category)
 
@@ -669,7 +667,7 @@ paginate(items, { page: safePage, pageSize: 10 })
 
 ### Before (Hard to Test)
 
-```typescript
+```typescript vanilla
 // Can't test grouping logic in isolation
 const getEventsByRepo = (events: RepoEvent[]) => {
   const grouped: Record<string, Record<string, RepoEvent[]>> = {}
@@ -732,7 +730,7 @@ Use this checklist when migrating code:
 
 ### Social Media Platform
 
-```typescript
+```typescript vanilla
 // Before: Manual comment grouping
 const byUserAndPost: Record<number, Record<number, Comment[]>> = {}
 for (const comment of comments) {
@@ -742,33 +740,37 @@ for (const comment of comments) {
   }
   byUserAndPost[comment.userId][comment.postId].push(comment)
 }
+```
 
+```typescript
 // After: nest()
 const byUserAndPost = nest(comments, ['userId', 'postId'])
 ```
 
 ### E-Commerce Order System
 
-```typescript
+```typescript vanilla
 // Before: Manual change detection
 const newOrders = fetchOrders()
 const statusChanges = newOrders.filter(no => {
   const old = oldOrders.find(oo => oo.id === no.id)
   return old && old.status !== no.status
 })
+```
 
+```typescript
 // After: diff()
 const changes = diff(oldOrders, newOrders, o => o.id)
-for (const { old, new: updated } of changes.updated) {
+R.forEach(changes.updated, ({ old, new: updated }) => {
   if (old.status !== updated.status) {
     notifyStatusChange(updated)
   }
-}
+})
 ```
 
 ### API Endpoint Pagination
 
-```typescript
+```typescript vanilla
 // Before: Manual offset pagination
 app.get('/api/products', (req, res) => {
   const page = Number(req.query.page) || 1
@@ -777,7 +779,9 @@ app.get('/api/products', (req, res) => {
   const items = products.slice(start, start + pageSize)
   res.json({ items, page, hasMore: start + pageSize < products.length })
 })
+```
 
+```typescript
 // After: paginate()
 app.get('/api/products', (req, res) => {
   const result = paginate(products, {
@@ -794,7 +798,7 @@ app.get('/api/products', (req, res) => {
 
 ### Before Migration: O(n²)
 
-```typescript
+```typescript vanilla
 // ❌ Nested loops for change detection
 const added = newUsers.filter(nu =>
   !oldUsers.some(ou => ou.id === nu.id) // O(n) for each item

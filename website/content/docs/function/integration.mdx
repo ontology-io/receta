@@ -15,8 +15,9 @@ The Function module is designed to work seamlessly with Receta's Result and Opti
 ```typescript
 import { pipe } from 'remeda'
 import { ifElse, when, cond } from '@ontologyio/receta/function'
-import { ok, err, isOk, map, flatMap } from '@ontologyio/receta/result'
+import { type Result, ok, err, isOk, map, flatMap } from '@ontologyio/receta/result'
 import { unwrapOr as unwrapOrOption } from '@ontologyio/receta/option'
+import { always, includes } from '@ontologyio/receta/predicate'
 
 // Transform Results based on conditions
 const processResult = <T>(result: Result<T, string>) =>
@@ -30,10 +31,10 @@ const processResult = <T>(result: Result<T, string>) =>
 
 // Multi-way error handling with cond
 const handleError = cond<string, string>([
-  [(err) => err.includes('network'), () => 'Network error - please retry'],
-  [(err) => err.includes('auth'), () => 'Authentication failed'],
-  [(err) => err.includes('not found'), () => 'Resource not found'],
-  [() => true, (err) => `Unknown error: ${err}`]
+  [includes('network'), () => 'Network error - please retry'],
+  [includes('auth'), () => 'Authentication failed'],
+  [includes('not found'), () => 'Resource not found'],
+  [always(), (err) => `Unknown error: ${err}`]
 ])
 
 const getErrorMessage = (result: Result<any, string>) =>
@@ -43,6 +44,7 @@ const getErrorMessage = (result: Result<any, string>) =>
 ### Safe Transformation Pipelines
 
 ```typescript
+import { pipe } from 'remeda'
 import { tryCatch } from '@ontologyio/receta/function'
 import { flatMap, map } from '@ontologyio/receta/result'
 
@@ -96,14 +98,16 @@ const processWithLogging = (data: string) =>
 ### Conditional Transformations
 
 ```typescript
+import { pipe } from 'remeda'
 import { cond, when } from '@ontologyio/receta/function'
 import { some, none, isSome, unwrapOr, map } from '@ontologyio/receta/option'
+import { eq, gt, lt } from '@ontologyio/receta/predicate'
 
 // cond returns Option naturally
 const classify = cond<number, string>([
-  [(n) => n < 0, () => 'negative'],
-  [(n) => n === 0, () => 'zero'],
-  [(n) => n > 0, () => 'positive']
+  [lt(0), () => 'negative'],
+  [eq(0), () => 'zero'],
+  [gt(0), () => 'positive']
 ])
 
 const result = pipe(
@@ -117,7 +121,9 @@ const result = pipe(
 ### Safe Lookups
 
 ```typescript
-import { fromNullable, isSome, map, unwrapOr } from '@ontologyio/receta/option'
+import { pipe } from 'remeda'
+import { when } from '@ontologyio/receta/function'
+import { type Option, fromNullable, isSome, map, unwrapOr } from '@ontologyio/receta/option'
 
 interface Config {
   [key: string]: any
@@ -144,16 +150,17 @@ const processConfig = (config: Config) =>
 ```typescript
 import * as R from 'remeda'
 import { when, tap, converge } from '@ontologyio/receta/function'
+import { gt, lt } from '@ontologyio/receta/predicate'
 
 // Use Remeda's pipe for left-to-right composition
 const processNumbers = R.pipe(
   [1, 2, 3, 4, 5, -1, -2],
   tap((nums) => console.log('Input:', nums)),
   // Remeda's map with when for conditional transformation
-  R.map(when((n: number) => n < 0, Math.abs)),
+  R.map(when(lt(0), Math.abs)),
   tap((nums) => console.log('Absolute values:', nums)),
   // Remeda's filter
-  R.filter((n) => n > 2),
+  R.filter(gt(2)),
   tap((nums) => console.log('Filtered (>2):', nums)),
   // Remeda's reduce
   R.reduce((sum, n) => sum + n, 0),
@@ -167,6 +174,7 @@ const processNumbers = R.pipe(
 ```typescript
 import * as R from 'remeda'
 import { when, tap, converge, juxt } from '@ontologyio/receta/function'
+import { eq, where } from '@ontologyio/receta/predicate'
 
 interface Product {
   id: string
@@ -181,7 +189,7 @@ const analyzeProducts = (products: Product[]) =>
     products,
     // Use Remeda's map with when for conditional pricing
     R.map(when(
-      (p: Product) => p.category === 'sale',
+      where<Product>({ category: eq('sale') }),
       (p) => ({ ...p, price: p.price * 0.9 })
     )),
     tap((prods) => logger.info('Prices adjusted', { count: prods.length })),
@@ -198,11 +206,8 @@ const analyzeProducts = (products: Product[]) =>
         // Use Remeda's sumBy for cleaner sum
         (prods: Product[]) => R.sumBy(prods, (p) => p.price),
         (prods: Product[]) => prods.length,
-        (prods: Product[]) => R.pipe(prods, R.map(p => p.category), R.unique).length,
-        (prods: Product[]) => {
-          const total = R.sumBy(prods, (p) => p.price)
-          return total / prods.length
-        }
+        (prods: Product[]) => R.uniqueBy(prods, (p) => p.category).length,
+        (prods: Product[]) => R.sumBy(prods, (p) => p.price) / prods.length
       ]
     ),
     tap((analytics) => logger.info('Analysis complete', analytics))
@@ -215,8 +220,8 @@ const analyzeProducts = (products: Product[]) =>
 
 ```typescript
 import * as R from 'remeda'
-import { cond, when, unless } from '@ontologyio/receta/function'
-import { where, gt, lt, between, and, oneOf } from '@ontologyio/receta/predicate'
+import { cond, tap, when, unless } from '@ontologyio/receta/function'
+import { where, eq, gt, lt, between, and, or, oneOf } from '@ontologyio/receta/predicate'
 import { unwrapOr } from '@ontologyio/receta/option'
 
 type Product = {
@@ -232,7 +237,7 @@ type Product = {
 const isExpensive = where<Product>({ price: gt(1000) })
 const isAffordable = where<Product>({ price: lt(100) })
 const isInStock = where<Product>({ stock: gt(0) })
-const isFeatured = where<Product>({ featured: (x) => x === true })
+const isFeatured = where<Product>({ featured: eq(true) })
 const isElectronics = where<Product>({ category: oneOf(['laptop', 'phone', 'tablet']) })
 
 // Use cond with predicates for classification
@@ -241,7 +246,7 @@ const classifyProduct = cond<Product, string>([
   [and(isAffordable, isInStock), (p) => `✓ Budget-Friendly: ${p.name}`],
   [and(isElectronics, isInStock), (p) => `⚡ Tech Deal: ${p.name}`],
   [isExpensive, (p) => `💰 Luxury: ${p.name}`],
-  [(p) => p.stock === 0, (p) => `✗ Out of Stock: ${p.name}`],
+  [where({ stock: eq(0) }), (p) => `✗ Out of Stock: ${p.name}`],
 ])
 
 // Process products with predicates
@@ -259,7 +264,9 @@ const processProducts = (products: Product[]) =>
 ### When/Unless with Predicates
 
 ```typescript
-import { where, gt, and } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
+import { tap, unless, when } from '@ontologyio/receta/function'
+import { where, eq, gt, and } from '@ontologyio/receta/predicate'
 
 type User = {
   age: number
@@ -269,8 +276,8 @@ type User = {
 
 // Define predicates
 const isAdult = where<User>({ age: gt(18) })
-const isVerified = where<User>({ verified: (x) => x === true })
-const isPremium = where<User>({ premium: (x) => x === true })
+const isVerified = where<User>({ verified: eq(true) })
+const isPremium = where<User>({ premium: eq(true) })
 const isFullAccess = and(isAdult, isVerified)
 
 // Use predicates in conditionals
@@ -343,7 +350,7 @@ const analyzeOrders = (orders: Order[]) =>
         total,
         revenue,
         uniqueUsers,
-        regionCount: Object.keys(regions).length
+        regionCount: R.keys(regions).length
       })
     })
   )
@@ -354,6 +361,8 @@ const analyzeOrders = (orders: Order[]) =>
 ```typescript
 import { diff } from '@ontologyio/receta/collection'
 import { when, tap, ifElse } from '@ontologyio/receta/function'
+import { gt, where } from '@ontologyio/receta/predicate'
+import * as R from 'remeda'
 
 interface Item {
   id: string
@@ -379,15 +388,15 @@ const syncInventory = (oldItems: Item[], newItems: Item[]) =>
       added: R.pipe(
         changes.added,
         R.map(when(
-          (item) => item.quantity > 100,
+          where<Item>({ quantity: gt(100) }),
           (item) => ({ ...item, bulkOrder: true })
         )),
-        tap((items) => items.forEach(item => notifyWarehouse('restock', item)))
+        tap((items) => R.forEach(items, item => notifyWarehouse('restock', item)))
       ),
 
       removed: R.pipe(
         changes.removed,
-        tap((items) => items.forEach(item => notifyWarehouse('removed', item)))
+        tap((items) => R.forEach(items, item => notifyWarehouse('removed', item)))
       ),
 
       updated: R.pipe(
@@ -410,7 +419,8 @@ const syncInventory = (oldItems: Item[], newItems: Item[]) =>
 ```typescript
 import { pipe } from 'remeda'
 import { tap, partial } from '@ontologyio/receta/function'
-import { flatMap, isOk, map, tryCatchAsync, unwrapOr } from '@ontologyio/receta/result'
+import { fromResult } from '@ontologyio/receta/option'
+import { flatMap, isOk, map, tryCatchAsync } from '@ontologyio/receta/result'
 
 interface ApiConfig {
   baseUrl: string
@@ -477,14 +487,14 @@ const api = createApiClient({
   headers: { 'Authorization': `Bearer ${token}` }
 })
 
-const user = await pipe(
+const user = pipe(
   await api.get('/users/123'),
   map((data: User) => ({
     ...data,
     fetchedAt: new Date()
   })),
   flatMap(validateUser),
-  unwrapOr(null)
+  fromResult
 )
 ```
 
@@ -493,7 +503,7 @@ const user = await pipe(
 ```typescript
 import { pipe } from 'remeda'
 import { when, unless, tap } from '@ontologyio/receta/function'
-import { ok, err, flatMap, isOk, map } from '@ontologyio/receta/result'
+import { type Result, ok, err, flatMap, isOk, map } from '@ontologyio/receta/result'
 
 interface FormData {
   email: string
@@ -571,6 +581,11 @@ if (isOk(result)) {
 ### 1. Prefer Result for Error Details
 
 ```typescript
+import * as R from 'remeda'
+import { tryCatch } from '@ontologyio/receta/function'
+import { type Option, fromNullable } from '@ontologyio/receta/option'
+import { eq, where } from '@ontologyio/receta/predicate'
+
 // ✅ Result when you need error context
 const parse = tryCatch(
   JSON.parse,
@@ -578,10 +593,8 @@ const parse = tryCatch(
 )
 
 // ✅ Option when error details don't matter
-import { fromNullable } from '@ontologyio/receta/option'
-
 const findUser = (id: string): Option<User> =>
-  fromNullable(users.find(u => u.id === id))
+  fromNullable(R.find(users, where({ id: eq(id) })))
 ```
 
 ### 2. Use tap for Side Effects in Pipelines
@@ -608,6 +621,8 @@ pipe(
 
 ```typescript
 import { piped } from 'remeda'
+import { tap, unless, when } from '@ontologyio/receta/function'
+import { flatMap } from '@ontologyio/receta/result'
 
 const processUser = piped(
   normalizeEmail,

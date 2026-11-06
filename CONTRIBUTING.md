@@ -174,7 +174,7 @@ describe('Result.map', () => {
 
 Each module's guides live in `website/content/docs/<module>/` (see `result/` for examples): an `index.mdx` overview, one page per topic, then `patterns.mdx` and `migration.mdx`. Their order comes from the folder's `meta.json`.
 
-The API reference is generated from your JSDoc, so don't write one by hand. Run `bun run check:examples` in `website/` before committing: it compiles every example and runs its `// =>` claims.
+The API reference is generated from your JSDoc, so don't write one by hand. Run `bun run check:examples` in `website/` before committing: it compiles and lints every example and runs its `// =>` claims. The lint rejects vanilla code a Receta or Remeda function replaces, so write `R.map(users, fn)` rather than `users.map(fn)`.
 
 ---
 
