@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { memoizeAsync } from '../memoizeAsync'
-import { isSome, unwrap } from '../../option'
+import { lookup } from '../caches/lookup'
+import { isSome, none, unwrap } from '../../option'
+import { err, ok, type Result } from '../../result'
 
 describe('memoizeAsync', () => {
   describe('basic caching', () => {
@@ -85,6 +87,74 @@ describe('memoizeAsync', () => {
 
       await expect(memoized(10)).resolves.toBe(20)
       expect(memoized.cache.has(10)).toBe(true) // Success stays cached
+    })
+  })
+
+  describe('Result values', () => {
+    it('does not cache a returned Err', async () => {
+      const fn = vi
+        .fn<(id: string) => Promise<Result<string, string>>>()
+        .mockResolvedValueOnce(err('network down'))
+        .mockResolvedValueOnce(ok('Ada'))
+      const memoized = memoizeAsync(fn)
+
+      await expect(memoized('1')).resolves.toEqual(err('network down'))
+      await expect(memoized('1')).resolves.toEqual(ok('Ada'))
+      expect(fn).toHaveBeenCalledTimes(2)
+    })
+
+    it('removes a returned Err from the cache', async () => {
+      const memoized = memoizeAsync(async (_: string) => err('network down'))
+
+      await memoized('1')
+
+      expect(isSome(lookup(memoized.cache, '1'))).toBe(false)
+    })
+
+    it('caches an Ok', async () => {
+      const fn = vi.fn(async (id: string) => ok(id))
+      const memoized = memoizeAsync(fn)
+
+      await memoized('1')
+      await memoized('1')
+
+      expect(fn).toHaveBeenCalledTimes(1)
+    })
+
+    it('shares a returned Err between calls already in flight', async () => {
+      const fn = vi.fn(async (_: string) => err('network down'))
+      const memoized = memoizeAsync(fn)
+
+      const [first, second] = await Promise.all([memoized('1'), memoized('1')])
+
+      expect(first).toEqual(err('network down'))
+      expect(second).toEqual(err('network down'))
+      expect(fn).toHaveBeenCalledTimes(1)
+    })
+
+    it('keeps caching None, which is an answer and not a failure', async () => {
+      const fn = vi.fn(async (_: string) => none())
+      const memoized = memoizeAsync(fn)
+
+      await memoized('1')
+      await memoized('1')
+
+      expect(fn).toHaveBeenCalledTimes(1)
+    })
+
+    it.each([
+      ['null', null],
+      ['undefined', undefined],
+      ['a number', 0],
+      ['a string', 'Err'],
+    ])('still caches %s', async (_, value) => {
+      const fn = vi.fn(async (_id: string) => value)
+      const memoized = memoizeAsync(fn)
+
+      await memoized('1')
+      await memoized('1')
+
+      expect(fn).toHaveBeenCalledTimes(1)
     })
   })
 

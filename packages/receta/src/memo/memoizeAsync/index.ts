@@ -1,4 +1,6 @@
+import { isObjectType } from 'remeda'
 import { isSome } from '../../option'
+import { isErr, type Result } from '../../result'
 import type { Cache, KeyFn, MemoizeOptions, MemoizedAsyncFunction } from '../types'
 import { boundedCache } from '../caches/boundedCache'
 import { lookup } from '../caches/lookup'
@@ -9,7 +11,7 @@ import { lookup } from '../caches/lookup'
  * Key features:
  * - Caches resolved promises
  * - Prevents duplicate in-flight requests (thundering herd protection)
- * - Failed promises are not cached
+ * - Failed promises and a returned `Err` are not cached, so the next call tries again
  * - Supports TTL and LRU cache strategies
  *
  * @example
@@ -61,7 +63,8 @@ export function memoizeAsync<Args extends readonly unknown[], R>(
     // Create new promise and cache it immediately (for deduplication)
     const promise = fn(...args)
       .then((result) => {
-        // Keep successful result in cache
+        // A returned Err is a failure too, so the next call gets to try again
+        if (isFailedResult(result)) cache.delete(key)
         return result
       })
       .catch((error) => {
@@ -81,3 +84,7 @@ export function memoizeAsync<Args extends readonly unknown[], R>(
 
   return memoized as MemoizedAsyncFunction<Args, R>
 }
+
+/** The function can return anything, and `isErr` assumes it was given a Result. */
+const isFailedResult = (value: unknown): boolean =>
+  isObjectType(value) && isErr(value as Result<unknown, unknown>)
