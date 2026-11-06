@@ -2,7 +2,7 @@
 // what the library does rather than what someone remembered. timing.test.ts replays every
 // timeline through the real functions. Start at runsOf.
 import * as R from 'remeda'
-import { isNone, isSome, none, some, type Option } from '@ontologyio/receta/option'
+import { isSome, none, some, type Option } from '@ontologyio/receta/option'
 
 /** One call: when it happened, and the argument it passed. */
 export type Call = { readonly at: number; readonly label: string }
@@ -22,12 +22,13 @@ export type Timing = {
 type Clock = {
   readonly runs: readonly Run[]
   readonly lastRun: number
+  readonly lastCall: number
   readonly latest: string
   /** When the waiting trailing run goes off. */
   readonly timer: Option<number>
 }
 
-const START: Clock = { runs: [], lastRun: -Infinity, latest: '', timer: none() }
+const START: Clock = { runs: [], lastRun: -Infinity, lastCall: -Infinity, latest: '', timer: none() }
 
 const run = (clock: Clock, at: number, edge: Edge): Clock => ({
   ...clock,
@@ -41,15 +42,17 @@ const settle = (clock: Clock, now: number): Clock =>
   isSome(clock.timer) && clock.timer.value <= now ? run(clock, clock.timer.value, 'trailing') : clock
 
 const debounceCall = (clock: Clock, now: number, { delay, leading = false, trailing = true }: Timing): Clock => {
-  if (leading && now - clock.lastRun >= delay) return run(clock, now, 'leading')
-  return { ...clock, timer: trailing ? some(now + delay) : none() }
+  const called = { ...clock, lastCall: now }
+  if (leading && now - clock.lastCall >= delay) return run(called, now, 'leading')
+  return { ...called, timer: trailing ? some(now + delay) : none() }
 }
 
 const throttleCall = (clock: Clock, now: number, { delay, leading = true, trailing = true }: Timing): Clock => {
   const sinceLastRun = now - clock.lastRun
   if (leading && sinceLastRun >= delay) return run(clock, now, 'leading')
-  if (trailing && isNone(clock.timer)) return { ...clock, timer: some(now + Math.max(0, delay - sinceLastRun)) }
-  return clock
+  if (!trailing || isSome(clock.timer)) return clock
+  // A call after a quiet spell opens a new delay, and any other waits out the current one
+  return { ...clock, timer: some(now + (sinceLastRun >= delay ? delay : delay - sinceLastRun)) }
 }
 
 /** Every run a stream of calls causes. */

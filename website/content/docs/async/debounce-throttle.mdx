@@ -316,11 +316,11 @@ const trackScrollTrailing = throttle(
 
 <Timeline name="throttle-edges">
 
-Every lane stays at one run per delay. Leading takes the call that opens each delay. Trailing takes the latest call when the delay ends, so it also runs once after the calls stop. With `leading: false` the first call still runs straight away, so trailing and both run at the same moments.
+Every lane stays at one run per delay. Leading takes the call that opens each delay. Trailing takes the latest call when the delay ends, so it also runs once after the calls stop. With `leading: false` the first call waits out a whole delay too, so trailing runs at the same moments as both, minus the first.
 
 </Timeline>
 
-Calls made during the delay don't queue up. They share one promise for the next trailing run, which uses the latest arguments, so earlier arguments are dropped.
+Calls made during the delay don't queue up. They share one promise for the next trailing run, which uses the latest arguments, so earlier arguments are dropped. If `leading` and `trailing` are both false, nothing can run, so calls reject.
 
 ### Real-World Examples
 

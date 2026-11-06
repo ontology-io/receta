@@ -5,7 +5,7 @@
     "": {
       "name": "@ontologyio/receta-website",
       "dependencies": {
-        "@ontologyio/receta": "^0.4.3",
+        "@ontologyio/receta": "^0.4.4",
         "fumadocs-core": "^16.17.10",
         "fumadocs-mdx": "^15.4.10",
         "fumadocs-ui": "^16.17.10",
@@ -243,7 +243,7 @@
 
     "@ontologyio/eslint-plugin-receta": ["@ontologyio/eslint-plugin-receta@0.1.6", "", { "dependencies": { "@typescript-eslint/utils": "^8.20.0" }, "peerDependencies": { "eslint": "^8.0.0 || ^9.0.0", "typescript": ">=5.0.0" } }, "sha512-xD+MPUwELObheM72YFC0H9h1r1k0UdYqjIExNAlLNcl+y3uoQna0rogXOou2wzr3afEaWD2Yg9FFD4ylkB+Nkg=="],
 
-    "@ontologyio/receta": ["@ontologyio/receta@0.4.3", "", { "dependencies": { "remeda": "^2.58.0" }, "peerDependencies": { "typescript": ">=5.0.0" }, "optionalPeers": ["typescript"] }, "sha512-w0YqKhceMdJ/GzxHGqvdhCnvWPQBns9NMrvBHXY1LWpr8o8LJCkSSjZEI9wNLmSqHMDLSYAsajjfknQB0cZH0w=="],
+    "@ontologyio/receta": ["@ontologyio/receta@0.4.4", "", { "dependencies": { "remeda": "^2.58.0" }, "peerDependencies": { "typescript": ">=5.0.0" }, "optionalPeers": ["typescript"] }, "sha512-FiIgUm++9FRwtFRh6vWse/gmNp/2aNFiYjI0Cs3f7VY9F+8vxAghKOuiMFDp34ewk7g96Mv9WxZgGAMO1//0mQ=="],
 
     "@poppinss/colors": ["@poppinss/colors@4.1.6", "", { "dependencies": { "kleur": "^4.1.5" } }, "sha512-H9xkIdFswbS8n1d6vmRd8+c10t2Qe+rZITbbDHHkQixH5+2x1FDGmi/0K+WgWiqQFKPSlIYB7jlH6Kpfn6Fleg=="],
 
