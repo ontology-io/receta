@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3](https://github.com/ontology-io/receta/compare/receta@v0.4.2...receta@v0.4.3) (2026-11-06)
+
+
+### Bug Fixes
+
+* correct round, predicate inference and memoizeAsync Err caching ([37a67f2](https://github.com/ontology-io/receta/commit/37a67f252211317293bd58e248ad47068327ec37))
+* **memo:** stop memoizeAsync caching a returned Err ([6bcb605](https://github.com/ontology-io/receta/commit/6bcb6052aebb80c9c49b88f3829522167073ef87))
+* **number:** type one-number round and toPercent as functions ([cc8ea7f](https://github.com/ontology-io/receta/commit/cc8ea7f718bf87da43c9aa6450a502835886af8a))
+* **predicate:** accept literals on union fields and optional fields ([a836961](https://github.com/ontology-io/receta/commit/a836961bc148ad130f96fa546c6e5dbf45638d18))
+
 ## [0.4.2](https://github.com/ontology-io/receta/compare/receta@v0.4.1...receta@v0.4.2) (2026-11-05)
 
 
