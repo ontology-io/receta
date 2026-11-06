@@ -138,7 +138,7 @@ const payments: Payment[] = [
 const results = await processPayments(payments)
 
 if (isOk(results)) {
-  const succeeded = R.filter(results.value, where({ status: eq<PaymentStatus>('succeeded') }))
+  const succeeded = R.filter(results.value, where({ status: eq('succeeded') }))
   console.log(`Processed ${succeeded.length} payments`)
 }
 ```

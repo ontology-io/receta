@@ -249,10 +249,10 @@ const message = unwrapOr(getMessage(state), 'Unknown state')
 type State = 'idle' | 'loading' | 'success' | 'error'
 
 const handleState = cond<State, Action>([
-  [eq<State>('idle'), () => startLoading()],
-  [eq<State>('loading'), () => showSpinner()],
-  [eq<State>('success'), () => displayData()],
-  [eq<State>('error'), () => showError()]
+  [eq('idle'), () => startLoading()],
+  [eq('loading'), () => showSpinner()],
+  [eq('success'), () => displayData()],
+  [eq('error'), () => showError()]
 ])
 ```
 

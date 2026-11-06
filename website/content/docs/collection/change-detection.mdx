@@ -218,7 +218,7 @@ function reconcileOptimisticState(
   const confirmed = changes.unchanged
 
   // Failed optimistic updates (removed from server response)
-  const failed = R.filter(changes.removed, where<Todo>({ optimistic: Boolean }))
+  const failed = R.filter(changes.removed, where({ optimistic: Boolean }))
 
   // Server made additional changes
   const serverUpdated = R.map(changes.updated, u => u.new)

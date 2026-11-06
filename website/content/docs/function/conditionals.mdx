@@ -81,7 +81,7 @@ interface AccessGrant {
 }
 
 const grantAccess = ifElse(
-  (user: User) => user.role === 'admin',
+  where<User>({ role: eq('admin') }),
   (user): AccessGrant => ({
     canAccess: true,
     level: 'full',
