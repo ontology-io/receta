@@ -160,14 +160,14 @@ items.sort((a, b) => {
 
 ```typescript
 // After
-import { compose, descending, ascending, byDate } from '@ontologyio/receta/compare'
+import { compose, descending, localeCompare, byDate } from '@ontologyio/receta/compare'
 import * as R from 'remeda'
 
 const sorted = R.sort(
   items,
   compose(
     descending(i => i.priority),
-    ascending(i => i.status),
+    localeCompare(i => i.status, 'en-US'),
     byDate(i => i.createdAt)
   )
 )
@@ -188,13 +188,13 @@ products.sort((a, b) =>
 
 ```typescript
 // After
-import { compose, ascending, descending } from '@ontologyio/receta/compare'
+import { compose, ascending, descending, localeCompare } from '@ontologyio/receta/compare'
 import * as R from 'remeda'
 
 const sorted = R.sort(
   products,
   compose(
-    ascending(p => p.category),
+    localeCompare(p => p.category, 'en-US'),
     descending(p => p.rating),
     ascending(p => p.price)
   )
@@ -316,11 +316,11 @@ function sortEmployeesByName(employees: Employee[]) {
 
 After:
 ```typescript
-import { ascending } from '@ontologyio/receta/compare'
+import { localeCompare } from '@ontologyio/receta/compare'
 import * as R from 'remeda'
 
 // Reusable comparator
-const byLastName = ascending((person: { lastName: string }) => person.lastName)
+const byLastName = localeCompare((person: { lastName: string }) => person.lastName, 'en-US')
 
 // Use everywhere
 function sortUsersByName(users: User[]) {

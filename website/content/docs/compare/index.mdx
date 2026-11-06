@@ -47,7 +47,6 @@ issues.sort((a, b) => {
 2. **Error-prone** - Easy to mess up the comparison logic
 3. **Hard to read** - Business logic buried in nested conditions
 4. **Not composable** - Can't build complex sorts from simple ones
-5. **No type safety** - Typos in property names caught only at runtime
 
 ### How Successful Products Handle This
 
@@ -123,22 +122,7 @@ const byPriceThenStock = compose(byPrice, byStock)
 const sorted = R.sort(products, byPriceThenStock)
 ```
 
-### Problem 2: Array.sort() Loses Type Information
-
-```typescript vanilla
-// ❌ No type safety
-items.sort((a, b) => a.createdAd - b.createdAt) // Typo! Runtime error
-```
-
-```typescript
-// ✅ TypeScript catches typos
-import { byDate } from '@ontologyio/receta/compare'
-import * as R from 'remeda'
-
-const sorted = R.sort(items, byDate(i => i.createdAd)) // ❌ Compile error: Property 'createdAd' doesn't exist
-```
-
-### Problem 3: Array.sort() Doesn't Work in Pipelines
+### Problem 2: Array.sort() Doesn't Work in Pipelines
 
 ```typescript vanilla
 // ❌ A method isn't a pipeline step, so it needs a wrapper, and a copy because it sorts in place
@@ -159,7 +143,7 @@ const result = R.pipe(
 )
 ```
 
-### Problem 4: Array.sort() Hides Null Handling
+### Problem 3: Array.sort() Hides Null Handling
 
 ```typescript vanilla
 // ❌ A null quietly counts as 0, so it lands among the real values
