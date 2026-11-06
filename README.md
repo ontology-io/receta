@@ -210,19 +210,19 @@ schema(registration, { email: 'invalid', password: '123' })
 
 | Module | Purpose | Key Functions |
 |--------|---------|---------------|
-| **[result](https://receta-website.khaled-mailhub.workers.dev/docs/result)** | Type-safe error handling | `ok`, `err`, `tryCatch`, `match`, `unwrapOr` |
-| **[option](https://receta-website.khaled-mailhub.workers.dev/docs/option)** | Nullable value handling | `some`, `none`, `fromNullable`, `unwrapOr` |
-| **[async](https://receta-website.khaled-mailhub.workers.dev/docs/async)** | Async utilities | `mapAsync`, `retry`, `timeout`, `debounce`, `throttle` |
-| **[predicate](https://receta-website.khaled-mailhub.workers.dev/docs/predicate)** | Composable predicates | `where`, `gt`, `lt`, `between`, `oneOf`, `and`, `or` |
-| **[validation](https://receta-website.khaled-mailhub.workers.dev/docs/validation)** | Form/data validation | `validate`, `combine`, `field`, error accumulation |
-| **[collection](https://receta-website.khaled-mailhub.workers.dev/docs/collection)** | Advanced collections | `nest`, `diff`, `paginate`, `setOps` |
-| **[object](https://receta-website.khaled-mailhub.workers.dev/docs/object)** | Object manipulation | `flatten`, `unflatten`, `getPath`, `mask`, `deepMerge` |
-| **[string](https://receta-website.khaled-mailhub.workers.dev/docs/reference/string)** | String utilities | `slugify`, `template`, `truncate`, `isEmail`, `sanitize` |
-| **[number](https://receta-website.khaled-mailhub.workers.dev/docs/reference/number)** | Number formatting | `toCurrency`, `toBytes`, `clamp`, `percentage` |
-| **[memo](https://receta-website.khaled-mailhub.workers.dev/docs/memo)** | Memoization | `memoize`, `memoizeAsync`, TTL/LRU caches |
-| **[lens](https://receta-website.khaled-mailhub.workers.dev/docs/lens)** | Immutable updates | `prop`, `path`, `over`, `set`, `view` |
-| **[compare](https://receta-website.khaled-mailhub.workers.dev/docs/compare)** | Comparator builders | `ascending`, `descending`, `natural`, `compose` |
-| **[function](https://receta-website.khaled-mailhub.workers.dev/docs/function)** | Function combinators | `ifElse`, `when`, `cond`, `compose`, `partial` |
+| **[result](https://receta.dev/docs/result)** | Type-safe error handling | `ok`, `err`, `tryCatch`, `match`, `unwrapOr` |
+| **[option](https://receta.dev/docs/option)** | Nullable value handling | `some`, `none`, `fromNullable`, `unwrapOr` |
+| **[async](https://receta.dev/docs/async)** | Async utilities | `mapAsync`, `retry`, `timeout`, `debounce`, `throttle` |
+| **[predicate](https://receta.dev/docs/predicate)** | Composable predicates | `where`, `gt`, `lt`, `between`, `oneOf`, `and`, `or` |
+| **[validation](https://receta.dev/docs/validation)** | Form/data validation | `validate`, `combine`, `field`, error accumulation |
+| **[collection](https://receta.dev/docs/collection)** | Advanced collections | `nest`, `diff`, `paginate`, `setOps` |
+| **[object](https://receta.dev/docs/object)** | Object manipulation | `flatten`, `unflatten`, `getPath`, `mask`, `deepMerge` |
+| **[string](https://receta.dev/docs/reference/string)** | String utilities | `slugify`, `template`, `truncate`, `isEmail`, `sanitize` |
+| **[number](https://receta.dev/docs/reference/number)** | Number formatting | `toCurrency`, `toBytes`, `clamp`, `percentage` |
+| **[memo](https://receta.dev/docs/memo)** | Memoization | `memoize`, `memoizeAsync`, TTL/LRU caches |
+| **[lens](https://receta.dev/docs/lens)** | Immutable updates | `prop`, `path`, `over`, `set`, `view` |
+| **[compare](https://receta.dev/docs/compare)** | Comparator builders | `ascending`, `descending`, `natural`, `compose` |
+| **[function](https://receta.dev/docs/function)** | Function combinators | `ifElse`, `when`, `cond`, `compose`, `partial` |
 
 ---
 
@@ -262,7 +262,7 @@ schema(registration, { email: 'invalid', password: '123' })
 
 ## Documentation
 
-**[Read the docs](https://receta-website.khaled-mailhub.workers.dev/docs)**: guides for each module, a reference generated from the source, and plain-text versions for agents at [`/llms.txt`](https://receta-website.khaled-mailhub.workers.dev/llms.txt). Every example on the site is compiled and run against the published package.
+**[Read the docs](https://receta.dev/docs)**: guides for each module, a reference generated from the source, and plain-text versions for agents at [`/llms.txt`](https://receta.dev/llms.txt). Every example on the site is compiled and run against the published package.
 
 - **[Why Receta?](https://github.com/ontology-io/receta/blob/main/WHY-RECETA.md)** — Real-world problems and solutions
 - **[Module Development Guide](https://github.com/ontology-io/receta/blob/main/docs/module-development-guide.md)** — Contributing new modules
