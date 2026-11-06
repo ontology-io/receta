@@ -278,25 +278,11 @@ R.sort(germanCities, localeCompare(x => x, 'de-DE'))
 
 Think of comparators as **Lego bricks** for sorting:
 
-```
-┌─────────────────────────────────────────────┐
-│              Final Comparator               │
-│  (What you pass to R.sort())                │
-└─────────────────────────────────────────────┘
-                    ▲
-                    │
-         ┌──────────┴──────────┐
-         │                     │
-    ┌────────┐           ┌───────────┐
-    │ Simple │           │ Combinator│
-    │ Block  │     +     │  (compose,│
-    │        │           │  reverse) │
-    └────────┘           └───────────┘
-         │                     │
-    ascending()           compose()
-    byDate()              reverse()
-    natural()             nullsFirst()
-```
+<ComparatorBlocks>
+
+Simple blocks and combinators snap together into the final comparator you pass to `R.sort()`.
+
+</ComparatorBlocks>
 
 **Simple blocks** do one thing:
 - `ascending(fn)` - Sort low to high
@@ -466,14 +452,11 @@ const sorted = R.sort(users, ascending(u => u.age))
 
 All basic comparators take an **extraction function**:
 
-```text
-ascending((user: User) => user.age)
-         └──────┬──────────────────┘
-                │
-        Extracts comparable value
-```
+<ExtractionCall>
 
-This separates **what to compare** (the value) from **how to compare** (ascending/descending/natural).
+`ascending((user: User) => user.age)` separates **what to compare** (the value) from **how to compare** (ascending/descending/natural).
+
+</ExtractionCall>
 
 ### Composition via Priority
 

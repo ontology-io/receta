@@ -34,36 +34,48 @@ function validateForm(data) {
 ### How Modern Products Handle This
 
 **Stripe Checkout** (actual behavior):
-```text
+
+<Checklist>
+
 When you submit invalid payment info, Stripe shows:
-❌ Email address is invalid
-❌ Card number is incomplete
-❌ Expiration date is invalid
-❌ CVC is incomplete
+
+- [ ] Email address is invalid
+- [ ] Card number is incomplete
+- [ ] Expiration date is invalid
+- [ ] CVC is incomplete
 
 All at once. You fix everything, then submit.
-```
+
+</Checklist>
 
 **GitHub Pull Request** (actual behavior):
-```text
+
+<Checklist>
+
 When PR validation fails:
-❌ Title cannot be empty
-❌ At least one reviewer is required
-❌ All CI checks must pass
-❌ Branch has merge conflicts
+
+- [ ] Title cannot be empty
+- [ ] At least one reviewer is required
+- [ ] All CI checks must pass
+- [ ] Branch has merge conflicts
 
 All errors shown immediately.
-```
+
+</Checklist>
 
 **Vercel Deployment** (actual behavior):
-```text
+
+<Checklist>
+
 Build validation errors:
-❌ Missing environment variable: DATABASE_URL
-❌ Missing environment variable: API_KEY
-❌ Invalid Node version: requires >=18.0.0
+
+- [ ] Missing environment variable: `DATABASE_URL`
+- [ ] Missing environment variable: `API_KEY`
+- [ ] Invalid Node version: requires `>=18.0.0`
 
 All configuration errors at once.
-```
+
+</Checklist>
 
 ## The Solution: Validation with Error Accumulation
 
@@ -308,28 +320,37 @@ validateWizard(wizardData)
 Think of Validation like a quality control inspector checking products on an assembly line:
 
 **Result (Fail-Fast Inspector)**:
-```text
+
+<Checklist>
+
 Inspector checks products one by one:
-✓ Product 1: OK
-❌ Product 2: Defect found! STOP LINE!
-  (Products 3, 4, 5 never checked)
+
+- [x] Product 1: OK
+- [ ] Product 2: Defect found! STOP LINE!
+
+Products 3, 4 and 5 are never checked.
 
 Good when: One defect means stop everything
-```
+
+</Checklist>
 
 **Validation (Thorough Inspector)**:
-```text
-Inspector checks ALL products first:
-✓ Product 1: OK
-❌ Product 2: Defect A
-✓ Product 3: OK
-❌ Product 4: Defects B, C
-❌ Product 5: Defect D
+
+<Checklist>
+
+Inspector checks **all** products first:
+
+- [x] Product 1: OK
+- [ ] Product 2: Defect A
+- [x] Product 3: OK
+- [ ] Product 4: Defects B, C
+- [ ] Product 5: Defect D
 
 Report: "Found 4 defects across 3 products: A, B, C, D"
 
 Good when: Need complete report before fixing
-```
+
+</Checklist>
 
 ## Core Concepts
 

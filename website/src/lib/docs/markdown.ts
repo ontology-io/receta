@@ -18,14 +18,31 @@ const frontmatterValue = (frontmatter: string, key: string): string => {
   return line.replace(/^"|"$/g, '').replaceAll('\\"', '"')
 }
 
-/** Reads a page's title and description, and keeps the text without MDX comments. */
+const FENCES = /(^```[\s\S]*?^```[ \t]*$)/gm
+const FIGURE_TAG = /^<\/?[A-Z]\w*(?:\s[^\n]*)?>$/gm
+
+const withoutFigureTags = (text: string): string =>
+  text.replace(FIGURE_TAG, '').replace(/\n{3,}/g, '\n\n')
+
+/**
+ * A figure is drawn on the site and is words everywhere else, so its tags go and its
+ * children stay. Code fences are left alone: their JSX is an example.
+ */
+const keepFigureWords = (text: string): string =>
+  R.pipe(
+    text.split(FENCES),
+    R.map((part, index) => (index % 2 === 1 ? part : withoutFigureTags(part))),
+    R.join(''),
+  )
+
+/** Reads a page's title and description, and keeps the text without MDX comments or figures. */
 export const parsePage = (path: string, text: string): MarkdownPage => {
   const frontmatter = FRONTMATTER.exec(text)?.[1] ?? ''
   return {
     path,
     title: frontmatterValue(frontmatter, 'title'),
     description: frontmatterValue(frontmatter, 'description'),
-    body: text.replace(FRONTMATTER, '').replace(/\{\/\*[\s\S]*?\*\/\}\n*/g, '').trim(),
+    body: keepFigureWords(text.replace(FRONTMATTER, '').replace(/\{\/\*[\s\S]*?\*\/\}\n*/g, '')).trim(),
   }
 }
 

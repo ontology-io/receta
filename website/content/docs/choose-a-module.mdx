@@ -4,91 +4,53 @@ title: "Choose a module"
 
 ## Root Decision Tree: Which Module Do I Need?
 
-```
-START: What are you trying to do?
-│
-├─ Handle operations that can FAIL?
-│  │
-│  ├─ Need detailed error information? ────────────────────► result/
-│  │
-│  └─ Just care if value exists or not? ───────────────────► option/
-│
-├─ Work with ASYNC/PROMISE operations?
-│  │
-│  ├─ Control concurrency or timing? ──────────────────────► async/
-│  │
-│  └─ Error handling? ─────────────────────────────────────► async/ + result/
-│
-├─ FILTER or TEST values?
-│  │
-│  ├─ Simple yes/no checks? ───────────────────────────────► predicate/
-│  │
-│  └─ Collect multiple errors? ────────────────────────────► validation/
-│
-├─ Work with COLLECTIONS (arrays, lists)?
-│  │
-│  ├─ Basic operations (map, filter)? ─────────────────────► remeda directly
-│  │
-│  ├─ Hierarchical grouping or nesting? ───────────────────► collection/
-│  │
-│  ├─ Change detection or diffing? ────────────────────────► collection/
-│  │
-│  └─ Pagination? ─────────────────────────────────────────► collection/
-│
-├─ Work with OBJECTS?
-│  │
-│  ├─ Simple pick/omit/mapValues? ────────────────────────► remeda directly
-│  │
-│  ├─ Flatten/unflatten nested objects? ───────────────────► object/
-│  │
-│  ├─ Safe nested access? ─────────────────────────────────► object/ (getPath)
-│  │
-│  └─ Deep merging or validation? ─────────────────────────► object/
-│
-├─ Work with STRINGS?
-│  │
-│  ├─ Format/transform (case, slugify)? ───────────────────► string/
-│  │
-│  ├─ Validate (email, URL)? ──────────────────────────────► string/isEmail, isUrl
-│  │
-│  └─ Sanitize (HTML escape, trim)? ───────────────────────► string/escapeHtml, trim
-│
-├─ Work with NUMBERS?
-│  │
-│  ├─ Format (currency, percentage, bytes)? ───────────────► number/
-│  │
-│  ├─ Validate or clamp ranges? ───────────────────────────► number/
-│  │
-│  └─ Parse safely from string? ───────────────────────────► number/fromString
-│
-├─ OPTIMIZE performance?
-│  │
-│  ├─ Cache function results? ──────────────────────────────► memo/
-│  │
-│  └─ Deduplicate async calls? ─────────────────────────────► memo/memoizeAsync
-│
-├─ UPDATE nested immutable data?
-│  │
-│  ├─ Simple property updates? ────────────────────────────► object/setPath
-│  │
-│  └─ Complex compositional updates? ──────────────────────► lens/
-│
-├─ SORT collections?
-│  │
-│  ├─ Simple ascending/descending? ────────────────────────► remeda sortBy
-│  │
-│  └─ Multi-level or custom sorting? ──────────────────────► compare/
-│
-└─ Transform or compose FUNCTIONS?
-   │
-   ├─ Conditional logic (if/switch)? ─────────────────────► function/ifElse, cond
-   │
-   ├─ Compose multiple functions? ────────────────────────► function/compose
-   │
-   ├─ Partial application? ───────────────────────────────► function/partial
-   │
-   └─ Memoize? ───────────────────────────────────────────► function/memoize
-```
+<DecisionTree layout="cards">
+
+What are you trying to do?
+
+- Handle operations that can **fail**?
+  - Need detailed error information? → [`result`](./result/index.mdx)
+  - Just care if value exists or not? → [`option`](./option/index.mdx)
+- Work with **async** or promise operations?
+  - Control concurrency or timing? → [`async`](./async/index.mdx)
+  - Error handling? → [`async`](./async/index.mdx) + [`result`](./result/index.mdx)
+- **Filter** or test values?
+  - Simple yes/no checks? → [`predicate`](./predicate/index.mdx)
+  - Collect multiple errors? → [`validation`](./validation/index.mdx)
+- Work with **collections** (arrays, lists)?
+  - Basic operations (map, filter)? → Remeda directly
+  - Hierarchical grouping or nesting? → [`collection`](./collection/index.mdx)
+  - Change detection or diffing? → [`collection`](./collection/index.mdx)
+  - Pagination? → [`collection`](./collection/index.mdx)
+- Work with **objects**?
+  - Simple pick/omit/mapValues? → Remeda directly
+  - Flatten/unflatten nested objects? → [`object`](./object/index.mdx)
+  - Safe nested access? → [`object/getPath`](./reference/object.mdx#getpath)
+  - Deep merging or validation? → [`object`](./object/index.mdx)
+- Work with **strings**?
+  - Format/transform (case, slugify)? → [`string`](./reference/string.mdx)
+  - Validate (email, URL)? → [`string/isEmail`](./reference/string.mdx#isemail), [`isUrl`](./reference/string.mdx#isurl)
+  - Sanitize (HTML escape, trim)? → [`string/escapeHtml`](./reference/string.mdx#escapehtml), [`trim`](./reference/string.mdx#trim)
+- Work with **numbers**?
+  - Format (currency, percentage, bytes)? → [`number`](./reference/number.mdx)
+  - Validate or clamp ranges? → [`number`](./reference/number.mdx)
+  - Parse safely from string? → [`number/fromString`](./reference/number.mdx#fromstring)
+- **Optimize** performance?
+  - Cache function results? → [`memo`](./memo/index.mdx)
+  - Deduplicate async calls? → [`memo/memoizeAsync`](./reference/memo.mdx#memoizeasync)
+- **Update** nested immutable data?
+  - Simple property updates? → [`object/setPath`](./reference/object.mdx#setpath)
+  - Complex compositional updates? → [`lens`](./lens/index.mdx)
+- **Sort** collections?
+  - Simple ascending/descending? → Remeda `sortBy`
+  - Multi-level or custom sorting? → [`compare`](./compare/index.mdx)
+- Transform or compose **functions**?
+  - Conditional logic (if/switch)? → [`function/ifElse`](./reference/function.mdx#ifelse), [`cond`](./reference/function.mdx#cond)
+  - Compose multiple functions? → [`function/compose`](./reference/function.mdx#compose)
+  - Partial application? → [`function/partial`](./reference/function.mdx#partial)
+  - Memoize? → [`function/memoize`](./reference/function.mdx#memoize)
+
+</DecisionTree>
 
 ## Quick Reference by Problem Type
 
@@ -124,37 +86,11 @@ Entries read as `module/function`: `result/tryCatch` is `tryCatch` from `@ontolo
 
 ## Module Relationships
 
-```
-Core Types (Always Available):
-┌──────────┐       ┌──────────┐
-│  Result  │       │  Option  │
-└────┬─────┘       └────┬─────┘
-     │                  │
-     └──────┬───────────┘
-            │
-    ┌───────▼────────┐
-    │  Validation    │  (Like Result, with error accumulation)
-    └────────────────┘
+<ModuleMap>
 
-Functional Utilities:
-┌──────────┐  ┌──────────┐  ┌──────────┐
-│Predicate │─▶│  Where   │─▶│ Filter   │
-└──────────┘  └──────────┘  └──────────┘
+`Result` and `Option` are always available, and `Validation` is like `Result` with error accumulation. Predicates feed `where`, which feeds a filter. `Lens` builds on `Object` for immutable updates, next to `Collection` and `String`. `Memo` and `Async` cover performance.
 
-Data Operations:
-┌──────────┐  ┌──────────┐  ┌──────────┐
-│Collection│  │  Object  │  │  String  │
-└──────────┘  └──────────┘  └──────────┘
-                    │
-            ┌───────▼───────┐
-            │     Lens      │  (Immutable updates)
-            └───────────────┘
-
-Performance:
-┌──────────┐  ┌──────────┐
-│   Memo   │  │  Async   │
-└──────────┘  └──────────┘
-```
+</ModuleMap>
 
 ## Decision Tree Usage Tips
 

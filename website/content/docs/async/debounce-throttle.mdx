@@ -23,13 +23,12 @@ Both patterns are critical for production applications dealing with user input, 
 Debouncing delays function execution until a specified time has passed since the last invocation. It's like waiting for someone to finish typing before acting on their input.
 
 **Mental Model:**
-```
-Events:     a---b-c-d-----e-f-g-h---------i------
-Debounce:                     ^           ^
-(500ms)                   Execute     Execute
-```
+
+<Timeline name="debounce">
 
 The function only executes when events stop arriving for the specified delay period.
+
+</Timeline>
 
 ### Leading vs Trailing Edge
 
@@ -62,13 +61,13 @@ const searchBoth = debounce(
 ```
 
 **Visual comparison:**
-```
-Input:       a-b-c-d------e-f-g----------h-i-j-k----
 
-Trailing:               ^          ^              ^
-Leading:     ^                     ^              ^
-Both:        ^          ^          ^          ^   ^
-```
+<Timeline name="debounce-edges">
+
+Each burst of calls gets a run at its end, at its start, or at both. A run's letter is the call whose argument it used.
+
+</Timeline>
+
 **Replaced calls share the run that replaced them.** Every call settles: calls waiting for the same run get one shared promise, so they all resolve with its result, or reject if it fails. With `trailing: false`, a call ignored during the delay gets the last leading result. If `leading` and `trailing` are both false, nothing can run, so calls reject.
 
 
@@ -276,13 +275,12 @@ updateFilter('inStock', true)             // Cancels previous, reschedules
 Throttling ensures a function executes at most once per specified time interval. It's like a rate limiter that guarantees regular execution during continuous events.
 
 **Mental Model:**
-```
-Events:     a-b-c-d-e-f-g-h-i-j-k-l-m-n-o-p
-Throttle:   ^       ^       ^       ^       ^
-(200ms)   Exec    Exec    Exec    Exec    Exec
-```
+
+<Timeline name="throttle">
 
 Unlike debounce, throttle executes periodically during ongoing events.
+
+</Timeline>
 
 ### Leading vs Trailing Edge
 
@@ -315,13 +313,12 @@ const trackScrollTrailing = throttle(
 ```
 
 **Visual comparison:**
-```
-Input:       a-b-c-d-e-f-g-h-i-j-k-l-m-n-o-p
 
-Leading:     ^       ^       ^       ^       ^
-Trailing:            ^       ^       ^       ^
-Both:        ^   ^   ^   ^   ^   ^   ^   ^   ^
-```
+<Timeline name="throttle-edges">
+
+Every lane stays at one run per delay. Leading takes the call that opens each delay. Trailing takes the latest call when the delay ends, so it also runs once after the calls stop. With `leading: false` the first call still runs straight away, so trailing and both run at the same moments.
+
+</Timeline>
 
 Calls made during the delay don't queue up. They share one promise for the next trailing run, which uses the latest arguments, so earlier arguments are dropped.
 
@@ -509,34 +506,19 @@ window.addEventListener('resize', handleResize)
 
 ### Side-by-Side Behavior
 
-```
-User Action: Typing "hello world"
-Timeline:    h-e-l-l-o- -w-o-r-l-d--------
+<Timeline name="typing">
 
-Debounce (300ms):
-             Cancel each time until pause
-                                  ^ Execute (after typing stops)
+Debounce cancels on every keystroke and runs once after typing stops. Throttle runs periodically while the typing goes on.
 
-Throttle (300ms):
-             ^       ^       ^     Execute periodically
-```
+</Timeline>
 
 ### Visual Comparison
 
-```
-Event Stream: ●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●--------
-              (continuous events)           (silence)
+<Timeline name="stream">
 
-DEBOUNCE (500ms):
-              wait  wait  wait  wait  wait  EXECUTE!
-              └─────────────────────────────┘
-              "Let me finish first"
+Debounce waits out the whole stream and runs once in the silence. Throttle keeps running at a steady rate.
 
-THROTTLE (500ms):
-              EXEC        EXEC        EXEC
-              └───┘       └───┘       └───┘
-              "Regular updates please"
-```
+</Timeline>
 
 ### Feature Comparison Table
 

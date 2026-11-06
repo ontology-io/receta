@@ -584,39 +584,23 @@ const config = deepMerge([base, development, local])
 
 ### Decision Tree
 
-```
+<DecisionTree>
+
 Need to transform object structure?
-│
-├─ Nested → Flat?
-│  → Use flatten()
-│
-├─ Flat → Nested?
-│  → Use unflatten()
-│
-├─ Rename keys?
-│  │
-│  ├─ Few keys, known mapping?
-│  │  → Use rename()
-│  │
-│  └─ All keys, pattern-based?
-│     → Use mapKeys() (see Transformation guide)
-│
-├─ Remove sensitive fields?
-│  │
-│  ├─ Security/privacy concern?
-│  │  → Use mask() (allowlist)
-│  │
-│  └─ Just want subset?
-│     → Use Remeda.pick()
-│
-└─ Merge multiple objects?
-   │
-   ├─ Shallow merge OK?
-   │  → Use spread: { ...a, ...b }
-   │
-   └─ Need deep merge?
-      → Use deepMerge()
-```
+
+- Nested to flat? → Use `flatten()`
+- Flat to nested? → Use `unflatten()`
+- Rename keys?
+  - Few keys, known mapping? → Use `rename()`
+  - All keys, pattern-based? → Use `mapKeys()` (see Transformation guide)
+- Remove sensitive fields?
+  - Security/privacy concern? → Use `mask()` (allowlist)
+  - Just want subset? → Use `R.pick()`
+- Merge multiple objects?
+  - Shallow merge OK? → Use spread: `{ ...a, ...b }`
+  - Need deep merge? → Use `deepMerge()`
+
+</DecisionTree>
 
 ### Common Patterns
 

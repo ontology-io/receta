@@ -476,23 +476,17 @@ const prepareAnalytics = (rawData: RawAnalytics) =>
 
 ### Decision Tree
 
-```
+<DecisionTree>
+
 Need to validate or clean object?
-│
-├─ Need runtime type checking?
-│  → Use validateShape() → Result<T, ObjectError>
-│
-├─ Have optional form fields?
-│  │
-│  ├─ Only remove undefined?
-│  │  → Use stripUndefined()
-│  │
-│  └─ Remove both null and undefined?
-│     → Use compact()
-│
-└─ Building API payload?
-   └─ Use stripUndefined() + validateShape()
-```
+
+- Need runtime type checking? → Use `validateShape()`, which returns `Result<T, ObjectError>`
+- Have optional form fields?
+  - Only remove undefined? → Use `stripUndefined()`
+  - Remove both null and undefined? → Use `compact()`
+- Building API payload? → Use `stripUndefined()` + `validateShape()`
+
+</DecisionTree>
 
 ### Comparison Table
 

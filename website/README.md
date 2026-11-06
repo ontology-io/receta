@@ -48,6 +48,14 @@ The docs are the same Next app at `/docs`, built with [Fumadocs](https://fumadoc
 - **Reference** pages are generated from the JSDoc in `packages/receta/src` by `scripts/generate-reference.ts`. They aren't in git, so edit the source.
 - **Agent files** (`/llms.txt`, `/llms-full.txt` and a `.md` beside every page) are written into `public/` by `scripts/export-markdown.ts`.
 
+### Figures
+
+Diagrams are HTML, not ASCII in a code fence, and the agent files have to stay readable, so a figure's tags are dropped from them and what's between the tags stays. A tag goes on one line of its own, with a blank line either side, or `parsePage` can't find it.
+
+- **Markdown figures** dress plain markdown: `<DecisionTree>` for a nested list, `<Checklist>` for a task list, `<Pipeline>` for a list alternating values and operations. Their look is in `app/docs/figures.css`.
+- **Drawn figures** are in `src/components/docs/figures`. What's between their tags is the drawing in words, shown as a caption if it adds something and hidden from sight if it only repeats the drawing. Leave it out when the text around the figure already says it.
+- **`<Timeline name="…">`** is worked out from `src/content/timelines.content.ts` by `src/lib/docs/timing.ts`, and `timing.test.ts` replays every lane through the published `debounce` and `throttle`. A timeline can't claim what the library doesn't do.
+
 ### Examples are checked
 
 `bun run check:examples` compiles every example in the docs and the READMEs against the published package, lints it, then runs the ones with no imaginary helpers and compares each `// => value` with what came back. CI fails on any problem.
