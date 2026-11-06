@@ -138,7 +138,7 @@ export function lte<T extends number | bigint>(threshold: T): Predicate<T> {
  *   { id: 2, status: 'inactive' },
  *   { id: 3, status: 'active' }
  * ]
- * R.filter(users, (u) => eq('active')(u.status)) // => active users
+ * R.filter(users, where({ status: eq('active') })) // => active users
  * ```
  *
  * @see neq - for inequality comparison

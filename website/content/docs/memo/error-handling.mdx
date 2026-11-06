@@ -31,7 +31,27 @@ const result = await flaky('123')
 
 **Key Behavior**: Failed promises are automatically removed from cache, allowing retries.
 
-Only a rejected promise is removed, so keep `tryCatchAsync` outside the memoized function, as above. Inside it, a failure becomes an `Err` that resolves normally, and that `Err` stays cached.
+A returned `Err` counts as a failure too, so a function that returns a `Result` gets the same retry:
+
+```typescript
+import { memoizeAsync } from '@ontologyio/receta/memo'
+import { err, ok } from '@ontologyio/receta/result'
+
+let calls = 0
+const flakyResult = memoizeAsync(async (id: string) => {
+  calls++
+  return calls === 1 ? err('First call fails') : ok(`Success: ${id}`)
+})
+
+const first = await flakyResult('123')
+// => Err('First call fails')
+
+// The Err was not cached, so this runs again
+const second = await flakyResult('123')
+// => Ok('Success: 123')
+```
+
+`None` stays cached, because it's an answer rather than a failure.
 
 ## Cache Invalidation on Error
 

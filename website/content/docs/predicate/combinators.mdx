@@ -100,9 +100,9 @@ interface User {
 const canAccessModPanel = and<User>(
   where({ verified: eq(true) }),
   or<User>(
-    where({ role: eq<User['role']>('admin') }),
+    where({ role: eq('admin') }),
     and<User>(
-      where({ role: eq<User['role']>('moderator') }),
+      where({ role: eq('moderator') }),
       where({ accountAgeDays: gt(90) })
     )
   )

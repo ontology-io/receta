@@ -7,7 +7,7 @@ const INSTALL_COMMAND = 'bun add @ontologyio/receta remeda'
 export const SITE_URL = 'https://receta.dev'
 
 /** The published version the site describes. A test keeps it equal to the installed package. */
-export const RECETA_VERSION = '0.4.2'
+export const RECETA_VERSION = '0.4.3'
 
 export const links = {
   docs: '/docs',
