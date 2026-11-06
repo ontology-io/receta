@@ -11,6 +11,11 @@
 // it is compared with what came back. A claim that isn't a value, like `// => 6 (doubled)`,
 // can't be checked and is counted.
 //
+// Lint: an example has to use Receta and Remeda rather than the vanilla code they replace.
+// See src/lib/docs/lint.ts for what counts. A fence marked `vanilla` shows code without
+// Receta on purpose, like a "before", so it skips the lint and fails if it uses Receta at
+// all. A fence marked `nolint` is an exception, for code that can't avoid the syntax.
+//
 // A fence marked `nocheck` is skipped and counted. Pass parts of page paths to see only
 // those pages' problems. Run `bun run check:examples`. Start at check.
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
@@ -29,6 +34,7 @@ import {
   pageExamples,
   pageModule,
 } from '../src/lib/docs/examples'
+import { lintExample, usesReceta } from '../src/lib/docs/lint'
 
 const WEBSITE = join(import.meta.dir, '..')
 const CONTENT = join(WEBSITE, 'content/docs')
@@ -126,7 +132,7 @@ const readExports = (): Exports => {
   const files = R.map(MODULES, (name) => ({
     path: entry(name),
     source: `export * from '@ontologyio/receta/${name}'`,
-    example: { page: '', line: 0, code: '', isTsx: false },
+    example: { page: '', line: 0, code: '', isTsx: false, style: 'receta' as const },
   }))
   const program = compile(files)
   const checker = program.getTypeChecker()
@@ -259,6 +265,17 @@ const problemsIn = (program: ts.Program, file: VirtualFile): readonly Problem[] 
   )
 }
 
+const lintProblems = ({ example, source }: VirtualFile): readonly Problem[] => {
+  const at = (line: number): string =>
+    `${relative(WEBSITE, join(CONTENT, example.page))}:${example.line + line - 1}`
+  if (example.style === 'nolint') return []
+  if (example.style === 'vanilla') {
+    const message = 'A vanilla example can\'t use Receta. Split it, or drop the marker.'
+    return usesReceta(source) ? [{ at: at(1), code: 'VANILLA', message }] : []
+  }
+  return R.map(lintExample(example), ({ line, message }) => ({ at: at(line), code: 'LINT', message }))
+}
+
 /** Runnable means no imaginary helpers, no compile problems and no name declared twice. */
 const isRunnable = (program: ts.Program, file: VirtualFile): boolean => {
   const sourceFile = program.getSourceFile(file.path)
@@ -376,15 +393,18 @@ const check = async (): Promise<void> => {
   )
   const secondPass = compile(completed, firstPass)
   const compileProblems = R.flatMap(completed, (file) => problemsIn(secondPass, file))
+  const styleProblems = R.flatMap(completed, lintProblems)
+  const styles = R.countBy(examples, ({ style }) => style)
   const runnable = R.filter(completed, (file) => isRunnable(secondPass, file))
   const { problems: failedClaims, totals } = process.argv.includes('--no-run')
     ? { problems: [], totals: { ran: 0, passed: 0, unverifiable: 0 } }
     : await runExamples(runnable)
   await rm(RUN_DIR, { recursive: true, force: true })
-  const problems = [...compileProblems, ...failedClaims]
+  const problems = [...compileProblems, ...styleProblems, ...failedClaims]
   report(
     problems,
     `${examples.length} examples compiled, ${optedOut} opted out, ${compileProblems.length} compile problems. ` +
+      `${styleProblems.length} lint problems, ${styles.vanilla ?? 0} vanilla, ${styles.nolint ?? 0} nolint. ` +
       `${totals.ran} ran: ${totals.passed} claims held, ${failedClaims.length} failed, ${totals.unverifiable} not checkable.`,
   )
   process.exitCode = problems.length > 0 ? 1 : 0

@@ -314,7 +314,7 @@ Guides live in `website/content/docs`. The reference under `reference/` is gener
 ```bash
 cd website
 bun run dev             # site and docs on localhost
-bun run check:examples  # compile every docs example and run its // => claims
+bun run check:examples  # compile and lint every docs example, and run its // => claims
 bun run deploy          # build, upload to R2, deploy the Worker
 ```
 

@@ -50,9 +50,16 @@ The docs are the same Next app at `/docs`, built with [Fumadocs](https://fumadoc
 
 ### Examples are checked
 
-`bun run check:examples` compiles every example in the docs and the READMEs against the published package, then runs the ones with no imaginary helpers and compares each `// => value` with what came back. CI fails on any problem.
+`bun run check:examples` compiles every example in the docs and the READMEs against the published package, lints it, then runs the ones with no imaginary helpers and compares each `// => value` with what came back. CI fails on any problem.
 
 Examples can be fragments. A name nobody declared resolves to an earlier import on the page, then the module the page teaches, then any Receta module, and anything else becomes `any`. Use `ts nocheck` only for code that is deliberately wrong, and `title="Signature"` for a signature with no body.
+
+The lint keeps the docs teaching Receta instead of the code it replaces. `src/lib/docs/lint.ts` runs ESLint with the published `eslint-plugin-receta`, plus selectors for what the plugin doesn't cover: native array methods, loops, `Promise.all`, inline comparisons and a few more. Two fence markers exempt an example, and the summary counts both:
+
+- `ts vanilla` shows code without Receta on purpose, like a "before". It still compiles and runs, and it fails if it uses Receta at all, so a block mixing both has to be split in two.
+- `ts nolint` is the rare Receta example that can't avoid the syntax, such as catching what `unwrap` throws.
+
+JSDoc examples can't carry markers, so they have to pass the lint.
 
 ## Deploying
 

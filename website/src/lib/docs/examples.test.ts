@@ -19,7 +19,7 @@ const page = [
 describe('pageExamples', () => {
   it('finds TypeScript fences and skips signatures and opt-outs', () => {
     expect(pageExamples('a.mdx', page)).toEqual([
-      { page: 'a.mdx', line: 2, code: 'const a = 1\n', isTsx: false },
+      { page: 'a.mdx', line: 2, code: 'const a = 1\n', isTsx: false, style: 'receta' },
     ])
   })
 })
@@ -27,8 +27,22 @@ describe('pageExamples', () => {
 describe('pageExamples with JSX', () => {
   it('compiles a tsx fence as TSX', () => {
     expect(pageExamples('a.mdx', '```tsx\nconst a = <b />\n```')).toEqual([
-      { page: 'a.mdx', line: 2, code: 'const a = <b />\n', isTsx: true },
+      { page: 'a.mdx', line: 2, code: 'const a = <b />\n', isTsx: true, style: 'receta' },
     ])
+  })
+})
+
+describe('pageExamples style', () => {
+  const styleOf = (meta: string) => pageExamples('a.mdx', `\`\`\`ts${meta}\nconst a = 1\n\`\`\``)[0]?.style
+
+  it('reads the marker from the fence', () => {
+    expect(styleOf(' vanilla')).toBe('vanilla')
+    expect(styleOf(' nolint')).toBe('nolint')
+    expect(styleOf(' title="Before" vanilla')).toBe('vanilla')
+  })
+
+  it('ignores the same word in a title', () => {
+    expect(styleOf(' title="vanilla or nolint"')).toBe('receta')
   })
 })
 

@@ -29,13 +29,16 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261104.1",
+    "@ontologyio/eslint-plugin-receta": "^0.1.6",
     "@tailwindcss/postcss": "^4.3.4",
     "@types/bun": "^1.4.4",
     "@types/mdx": "^2.0.14",
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@typescript-eslint/parser": "^8",
     "babel-plugin-react-compiler": "^1.0.0",
+    "eslint": "^9",
     "tailwindcss": "^4.3.4",
     "typescript": "5",
     "wrangler": "^4.157.0"
