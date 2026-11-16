@@ -203,6 +203,78 @@ describe('Validation Combinators', () => {
         expect(result.errors).toEqual([{ field: 'name', errors: ['Name required'] }])
       }
     })
+
+    describe('validator outputs', () => {
+      interface Signup {
+        name: string
+        email: string
+        role?: string
+      }
+
+      const normalize = {
+        name: (name: string) => (name.trim().length > 0 ? valid(name.trim()) : invalid('Name required')),
+        email: (email: string) => (email.includes('@') ? valid(email.toLowerCase()) : invalid('Invalid email')),
+        role: (role: string | undefined) => valid(role ?? 'member'),
+      }
+
+      it('returns what the validators return, not the input', () => {
+        const result = schema(normalize, { name: '  Ada ', email: 'ADA@Example.com', role: 'admin' } as Signup)
+
+        expect(result).toEqual(valid({ name: 'Ada', email: 'ada@example.com', role: 'admin' }))
+      })
+
+      it('lets a validator fill in a default for a missing field', () => {
+        const result = schema(normalize, { name: 'Ada', email: 'ada@example.com' } as Signup)
+
+        expect(result).toEqual(valid({ name: 'Ada', email: 'ada@example.com', role: 'member' }))
+      })
+
+      it('keeps the fields the schema does not mention', () => {
+        const input = { name: ' Ada ', email: 'ada@example.com', role: 'admin', id: 7 }
+        const result = schema(normalize, input as Signup)
+
+        expect(result).toEqual(valid({ name: 'Ada', email: 'ada@example.com', role: 'admin', id: 7 }))
+      })
+
+      it('does not change the object that was passed in', () => {
+        const input: Signup = { name: '  Ada ', email: 'ADA@Example.com' }
+        schema(normalize, input)
+
+        expect(input).toEqual({ name: '  Ada ', email: 'ADA@Example.com' })
+      })
+
+      it('returns the same object when no validator changes a value', () => {
+        const user: User = { name: 'John', email: 'john@example.com', age: 25 }
+        const result = schema(userSchema, user)
+
+        expect(isValid(result)).toBe(true)
+        if (isValid(result)) {
+          expect(result.value).toBe(user)
+        }
+      })
+
+      it('adds no key for a missing field that stays undefined', () => {
+        const optional = { nickname: (nickname: string | undefined) => valid(nickname) }
+        const result = schema(optional, {} as { nickname?: string })
+
+        expect(isValid(result)).toBe(true)
+        if (isValid(result)) {
+          expect(Object.keys(result.value)).toEqual([])
+        }
+      })
+
+      it('returns only the errors when a field is invalid', () => {
+        const result = schema(normalize, { name: '   ', email: 'ADA@Example.com' } as Signup)
+
+        expect(result).toEqual(invalid([{ field: 'name', errors: ['Name required'] }]))
+      })
+
+      it('works data-last', () => {
+        const result = schema(normalize)({ name: ' Ada ', email: 'A@B.C' } as Signup)
+
+        expect(result).toEqual(valid({ name: 'Ada', email: 'a@b.c', role: 'member' }))
+      })
+    })
   })
 
   describe('partial', () => {
@@ -248,6 +320,35 @@ describe('Validation Combinators', () => {
       if (isValid(result)) {
         expect(result.value).toEqual({})
       }
+    })
+
+    describe('validator outputs', () => {
+      const normalize = {
+        name: (name: string) => valid(name.trim()),
+        email: (email: string) => valid(email.toLowerCase()),
+      }
+
+      it('returns what the validators return for the fields that are present', () => {
+        const result = partial(normalize, { email: 'ADA@Example.com' })
+
+        expect(result).toEqual(valid({ email: 'ada@example.com' }))
+      })
+
+      it('keeps the fields the schema does not mention', () => {
+        const result = partial(normalize, { name: ' Ada ', id: 7 } as { name: string })
+
+        expect(result).toEqual(valid({ name: 'Ada', id: 7 }))
+      })
+
+      it('returns the same object when no validator changes a value', () => {
+        const patch = { name: 'John' }
+        const result = partial(userSchema, patch)
+
+        expect(isValid(result)).toBe(true)
+        if (isValid(result)) {
+          expect(result.value).toBe(patch)
+        }
+      })
     })
   })
 })
