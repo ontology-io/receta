@@ -46,6 +46,13 @@ const settings: readonly Settings[] = []
 export const onAllOptional = R.filter(settings, where({ compact: Boolean }))
 export const found = R.find(users, where({ id: eq(1) }))
 
+// In a generic function, leave the type argument out or name the constraint. TypeScript
+// can't check a schema against a type parameter, so where<T>({...}) is rejected there.
+export const activeAdults = <T extends { active: boolean; age: number }>(items: readonly T[]): T[] =>
+  R.filter(items, where({ active: eq(true), age: gt(18) }))
+export const adults = <T extends { age: number }>(items: readonly T[]): T[] =>
+  R.filter(items, where<{ age: number }>({ age: gt(18) }))
+
 // Being looser about literals must not let mistakes through.
 // @ts-expect-error a typo in a literal
 export const typo = where<User>({ role: eq('nope') })
