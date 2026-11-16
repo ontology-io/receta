@@ -8,7 +8,7 @@
 //          └─ output ─ embed ─ nearest "returns" vectors (weight .2) ┘  with .75 vectors
 //
 // The shares come from scripts/eval.ts: on 47 realistic queries this blend put the right
-// asset first 42 times and in the top three 45 times; words alone managed 37 and 42.
+// asset first 42 times and in the top three 46 times; words alone managed 37 and 42.
 // When the vectors fail, the words alone answer, so search degrades instead of erroring.
 import { mapAsyncOrThrow } from '@ontologyio/receta/async'
 import { isOk, tryCatchAsync } from '@ontologyio/receta/result'

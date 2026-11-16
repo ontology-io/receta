@@ -38,7 +38,7 @@ each with the assets that count as right:
 | --- | --- | --- |
 | words only | 37 | 42 |
 | vectors of the full "Use when" text, blended | 39 | 44 |
-| vectors of the gist (name, summary, tags), with bge's query instruction, blended | 42 | 45 |
+| vectors of the gist (name, summary, tags), with bge's query instruction, blended | 42 | 46 |
 
 The full "Use when" text spends most of its words on mechanics like error codes, which
 pulls a short query away from the asset it wants. Rerun the eval after changing the

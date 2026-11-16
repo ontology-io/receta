@@ -4,7 +4,7 @@
 // "What it does" is the gist: the name's words, the summary and the tags. The "Use when"
 // paragraph stays out. It spends most of its words on mechanics such as error codes, which
 // pulled short queries away: on 47 realistic queries (scripts/eval.ts), the gist put the
-// right asset in the top three 45 times where the full text did 42.
+// right asset in the top three 46 times where the full text did 44.
 import * as R from 'remeda'
 import { type BundledAsset, keyOf } from './bundle'
 
