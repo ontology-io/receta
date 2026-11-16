@@ -2,7 +2,7 @@ import * as R from 'remeda'
 import type { BatchOptions } from '../types'
 import { sleep } from '../retry'
 import { mapAsync, type MapAsyncError } from '../mapAsync'
-import { ok, err, type Result, orThrow, map as resultMap, mapErr } from '../../result'
+import { type Result, orThrow, mapErr } from '../../result'
 
 /**
  * Error type for batch processing failures.
@@ -18,7 +18,10 @@ export interface BatchError {
  * Processes items in batches with optional delay between batches.
  *
  * Returns a Result to handle errors explicitly. If any batch processing fails,
- * the entire operation returns an Err with details about which batch failed.
+ * the entire operation returns an Err with details about which batch failed:
+ * `batchIndex` is the position of that batch and `itemsInBatch` is its size.
+ * `underlyingError` is the error `fn` threw when `delayBetweenBatches` is set,
+ * and the `MapAsyncError` wrapping it otherwise.
  *
  * `fn` runs once per batch and receives the whole batch, so the result holds
  * one entry per batch rather than one per item.
@@ -89,39 +92,23 @@ export async function batch<T, U>(
   } = options
 
   const batches = R.chunk(items, batchSize)
+  const hasDelay = delayBetweenBatches > 0
+  const lastIndex = batches.length - 1
 
-  // Process batches with optional delay using functional composition
-  if (delayBetweenBatches > 0) {
-    // Sequential processing with delay between batches
-    try {
-      const results = await R.reduce(
-        batches,
-        async (acc, currentBatch, index) => {
-          const results = await acc
-          const result = await fn(currentBatch)
+  // With a delay, batches run one at a time and each one but the last waits before the next
+  const runThenWait = async (currentBatch: readonly T[], index: number): Promise<U> => {
+    const result = await fn(currentBatch)
 
-          // Don't delay after the last batch
-          if (index < batches.length - 1) {
-            await sleep(delayBetweenBatches)
-          }
-
-          return [...results, result]
-        },
-        Promise.resolve([] as U[])
-      )
-      return ok(results)
-    } catch (error) {
-      return err({
-        type: 'batch_error' as const,
-        batchIndex: -1, // Unknown in sequential reduce with delay
-        itemsInBatch: batchSize,
-        underlyingError: error,
-      })
+    if (index < lastIndex) {
+      await sleep(delayBetweenBatches)
     }
+
+    return result
   }
 
-  // Parallel processing with concurrency limit
-  const mapResult = await mapAsync(batches, fn, { concurrency })
+  const mapResult = hasDelay
+    ? await mapAsync(batches, runThenWait, { concurrency: 1 })
+    : await mapAsync(batches, fn, { concurrency })
 
   // Convert MapAsyncError to BatchError with more context
   return R.pipe(
@@ -130,7 +117,8 @@ export async function batch<T, U>(
       type: 'batch_error' as const,
       batchIndex: mapError.index,
       itemsInBatch: batches[mapError.index]?.length ?? 0,
-      underlyingError: mapError,
+      // The delayed path has always reported the error itself; keep both shapes as they were
+      underlyingError: hasDelay ? mapError.error : mapError,
     }))
   )
 }
