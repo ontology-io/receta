@@ -29,5 +29,7 @@
   // The self-hosted fonts the pages use, copied from @fontsource by scripts/bundle.ts. A
   // request for a file there never reaches the Worker; under BASE_PATH the Worker asks ASSETS.
   "assets": { "directory": "./public", "binding": "ASSETS" },
+  // People's search calls Workers AI; an address past 30 a minute is ranked by words only.
+  "ratelimits": [{ "name": "SEARCH_LIMIT", "namespace_id": "1001", "simple": { "limit": 30, "period": 60 } }],
   "observability": { "enabled": true }
 }

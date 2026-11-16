@@ -124,6 +124,17 @@ h2{margin:16px 0 0;font:400 62px/1.05 var(--human);letter-spacing:-1.4px}
 .index .count{display:flex;gap:10px;align-items:center;font:400 15px/1 var(--machine);color:var(--muted)}
 .index .about{display:block;margin:6px 0 0;font-size:20px;line-height:1.3;color:var(--soft)}
 
+/* People's search: the agents' ranking behind a ruled field. */
+.search{display:flex;flex-wrap:wrap;align-items:stretch;gap:12px 16px;margin:40px 0 0}
+.search .field{flex:1;min-width:260px;display:flex;align-items:center;gap:12px;padding:0 16px;box-shadow:inset 0 0 0 1.5px var(--on-paper);background:var(--paper);color:var(--muted)}
+.search input[type=search]{flex:1;min-width:0;padding:14px 0;border:0;background:none;color:var(--fg);font:400 17px/1.4 var(--machine);outline:none}
+.search input[type=search]::placeholder{color:var(--muted)}
+.search .field:focus-within{box-shadow:inset 0 0 0 2px var(--err)}
+.search .btn{width:auto;padding:12px 28px}
+.search .incl{flex-basis:100%;display:flex;align-items:center;gap:10px;font:400 14px/1.3 var(--machine);color:var(--muted);cursor:pointer}
+.search .incl input{accent-color:var(--err);width:16px;height:16px;margin:0}
+.note{margin:20px 0 0;font-style:italic;font-size:18px;color:var(--soft)}
+
 /* Lists of functions: offered, most wanted, a category, all of them. */
 .list{margin:40px 0 0;padding:0;list-style:none;border-bottom:1px solid var(--line)}
 .item{display:flex;gap:48px;padding:28px 0 30px;border-top:1px solid var(--line)}
@@ -279,6 +290,10 @@ h2{margin-top:10px;font-size:40px;letter-spacing:-.9px}
 .index a{padding:14px 0 16px}
 .index .name{font-size:16px}
 .index .about{font-size:17px}
+.search{margin-top:24px}
+.search .field{min-width:0;flex-basis:100%}
+.search input[type=search]{font-size:15px}
+.search .btn{flex:1}
 .list{margin-top:24px}
 .item,.ranked .item{padding:18px 0 20px;gap:8px}
 .ranked .item{gap:14px}

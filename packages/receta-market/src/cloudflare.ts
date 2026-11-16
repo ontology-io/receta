@@ -20,6 +20,8 @@ export type Env = {
   readonly SESSION_SECRET?: string
   /** public/: the self-hosted fonts. Served before the Worker runs, except under BASE_PATH. */
   readonly ASSETS?: Fetcher
+  /** Caps people's searches per address; past it, search ranks by words and calls no AI. */
+  readonly SEARCH_LIMIT?: RateLimit
 }
 
 /** 768 dimensions, cosine. The Vectorize index must be created with the same. */

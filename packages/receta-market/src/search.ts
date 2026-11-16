@@ -14,6 +14,7 @@ import { mapAsyncOrThrow } from '@ontologyio/receta/async'
 import { isOk, tryCatchAsync } from '@ontologyio/receta/result'
 import * as R from 'remeda'
 import { search as searchWords } from '../../../plugins/receta-skills/skills/assets/scripts/core.ts'
+import { NO_TALLY, type Tally } from './registry'
 import { type Field, keyFor, keyOfVector, type Listing, type Status, type Vectors } from './vectors'
 
 export type SearchQuery = {
@@ -147,3 +148,28 @@ export const rank = async (
     R.take(query.limit ?? 8),
   )
 }
+
+/** Votes and reports can lift a result by at most this share, so relevance still decides. */
+const POPULARITY = 0.1
+
+/** Lifts what people voted for and agents report as working, by at most POPULARITY. */
+const lift = (tally: Tally): number => 1 + POPULARITY * Math.min(1, Math.log10(1 + tally.votes + tally.worked / 4) / 2)
+
+/**
+ * Re-ranks results by their votes and agents' reports, then keeps the best `limit`. Agents'
+ * search_assets and people's search page both end here, so they rank alike.
+ */
+export const withTallies = (
+  ranked: readonly Ranked[],
+  tallies: ReadonlyMap<string, Tally>,
+  limit: number,
+): readonly (Ranked & { readonly tally: Tally })[] =>
+  R.pipe(
+    ranked,
+    R.map((hit) => {
+      const tally = tallies.get(keyFor(hit.asset)) ?? NO_TALLY
+      return { ...hit, tally, score: hit.score * lift(tally) }
+    }),
+    R.sortBy([R.prop('score'), 'desc']),
+    R.take(limit),
+  )

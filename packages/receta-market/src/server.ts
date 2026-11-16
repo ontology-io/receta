@@ -8,7 +8,7 @@ import { findAsset } from '../../../plugins/receta-skills/skills/assets/scripts/
 import { type Bundle, type BundledAsset, keyOf } from './bundle'
 import { listingOf, MAX_FILE_LENGTH, toSubmission } from './candidates'
 import { candidateKey, NO_TALLY, type Registry, type Tally } from './registry'
-import { type Ranked, rank } from './search'
+import { type Ranked, rank, withTallies } from './search'
 import { entriesFor, keyFor, type Listing, type Vectors } from './vectors'
 
 /** What the server knows about the request it answers. */
@@ -31,8 +31,6 @@ export type ServerDeps = {
 const SUBMISSIONS_PER_DAY = 10
 const REPORTS_PER_DAY = 200
 const CANDIDATES_SEARCHED = 300
-/** Votes and reports can lift a result by at most this share, so relevance still decides. */
-const POPULARITY = 0.1
 
 const INSTRUCTIONS = `receta-assets is a catalog of small TypeScript functions built from Receta and Remeda, each one
 file whose comment is its whole manual, with examples that are checked on every change.
@@ -87,8 +85,6 @@ const describeHit = (listing: Listing, index: number, scored?: Ranked, tally: Ta
     '\n',
   ) + tallyLine(tally)
 
-/** Lifts results people voted for and agents report as working, by at most POPULARITY. */
-const popularity = (tally: Tally): number => 1 + POPULARITY * Math.min(1, Math.log10(1 + tally.votes + tally.worked / 4) / 2)
 
 const notFound = (bundle: Bundle, name: string) =>
   text(`No asset named "${name}" among ${bundle.count}. Use search_assets, or browse a category.`)
@@ -134,15 +130,7 @@ export const createServer = ({ bundle, vectors, registry, caller }: ServerDeps):
         return text('Nothing matched. Try other words, or browse a category. If nothing fits, see authoring_guide.')
       }
       const counts = await tallies(R.map(ranked, (hit) => keyFor(hit.asset)))
-      const best = R.pipe(
-        ranked,
-        R.map((hit) => {
-          const tally = counts.get(keyFor(hit.asset)) ?? NO_TALLY
-          return { hit: { ...hit, score: hit.score * popularity(tally) }, tally }
-        }),
-        R.sortBy([({ hit }) => hit.score, 'desc']),
-        R.take(wanted),
-      )
+      const best = withTallies(ranked, counts, wanted)
       const note = ranked[0]?.semantic === false ? '\n(Ranked by words only: the vector index was unavailable.)' : ''
       // Say what the guard held back, so an agent knows candidates exist without seeing them.
       const heldBack =
@@ -150,7 +138,7 @@ export const createServer = ({ bundle, vectors, registry, caller }: ServerDeps):
           ? '\n\nunreviewed submissions left out; ask with include_candidates: true'
           : ''
       return text(
-        `${R.join(best.map(({ hit, tally }, index) => describeHit(hit.asset, index, hit, tally)), '\n\n')}${note}${heldBack}`,
+        `${R.join(best.map((hit, index) => describeHit(hit.asset, index, hit, hit.tally)), '\n\n')}${note}${heldBack}`,
       )
     },
   )

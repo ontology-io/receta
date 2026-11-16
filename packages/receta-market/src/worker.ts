@@ -16,11 +16,11 @@ import { type AuthConfig, callback, login, logout, type Person, personOf } from 
 import { type BundledAsset, bundle, keyOf } from './bundle'
 import { listingOf } from './candidates'
 import { cloudflareVectors, type Env, reindex } from './cloudflare'
-import { allPage, assetPage, candidatePage, categoryPage, homePage, notFoundPage, type PageContext } from './pages'
+import { allPage, assetPage, candidatePage, categoryPage, homePage, notFoundPage, type PageContext, searchPage } from './pages'
 import { candidateKey, d1Registry, NO_TALLY, type Registry, type SubmissionStatus, type Tally } from './registry'
-import { rawScores, type SearchQuery } from './search'
+import { rank, rawScores, type SearchQuery, withTallies } from './search'
 import { type Caller, createServer } from './server'
-import { entriesFor } from './vectors'
+import { entriesFor, keyFor } from './vectors'
 
 const OPT_OUT = ['0', 'false', 'no', 'off']
 
@@ -137,6 +137,44 @@ const assetOf = (key: string): BundledAsset | undefined => findAsset(bundle.asse
 
 /** The unreviewed functions the review list waits on, at most this many deep. */
 const QUEUE_DEPTH = 1000
+
+const SEARCH_RESULTS = 20
+const MAX_QUERY = 200
+
+/**
+ * People's search: the same ranking as the agents' search_assets, vectors and words, lifted
+ * by votes and reports. Unreviewed submissions only when asked for, as for agents. An address
+ * past its rate limit is ranked by words alone, which costs no Workers AI call.
+ */
+const handleSearch = async (url: URL, request: Request, env: Env, registry: Registry, context: PageContext): Promise<Response> => {
+  const query = (url.searchParams.get('q') ?? '').trim().slice(0, MAX_QUERY)
+  if (query.length < 2) return Response.redirect(`${url.origin}${basePathOf(env)}/#categories`, 303)
+  const unreviewed = url.searchParams.get('unreviewed') === '1'
+  const allowed =
+    env.SEARCH_LIMIT === undefined || (await env.SEARCH_LIMIT.limit({ key: await senderOf(request, env) })).success
+  const candidates = unreviewed ? R.map(await registry.candidates(300), listingOf) : []
+  const ranked = await rank(
+    [...bundle.assets, ...candidates],
+    {
+      job: query,
+      limit: SEARCH_RESULTS * 2,
+      statuses: candidates.length > 0 ? ['reviewed', 'candidate'] : ['reviewed'],
+    },
+    allowed ? cloudflareVectors(env) : undefined,
+  )
+  const tallies = await talliesOf(registry, R.map(ranked, (hit) => keyFor(hit.asset)))
+  const results = withTallies(ranked, tallies, SEARCH_RESULTS)
+  return searchPage(
+    // Signing in from here comes back to the same search.
+    { ...context, path: `${url.pathname}${url.search}` },
+    {
+      query,
+      unreviewed,
+      results: R.map(results, (hit) => ({ listing: hit.asset, tally: hit.tally })),
+      semantic: results[0]?.semantic ?? allowed,
+    },
+  )
+}
 
 const handlePage = async (path: string, context: PageContext, registry: Registry): Promise<Response> => {
   const voted = async (item: string): Promise<boolean> =>
@@ -265,6 +303,7 @@ export default {
       assetCount: bundle.count,
       now: new Date(),
     }
+    if (path === '/search') return handleSearch(url, request, env, registry, context)
     return handlePage(path, context, registry)
   },
 } satisfies ExportedHandler<Env>

@@ -4,7 +4,8 @@ import { describe, expect, it } from 'bun:test'
 import * as R from 'remeda'
 import { bundle } from '../src/bundle'
 import { age, ordinal, withCode } from '../src/html'
-import { assetPage, candidatePage, CONTENT_SECURITY_POLICY, homePage, type PageContext } from '../src/pages'
+import { listingOf } from '../src/candidates'
+import { assetPage, candidatePage, CONTENT_SECURITY_POLICY, homePage, type PageContext, searchPage } from '../src/pages'
 import { NO_TALLY, type Submission, type Tally } from '../src/registry'
 import { SCRIPT, SCRIPT_HASH } from '../src/style'
 
@@ -234,5 +235,47 @@ describe('words for numbers and dates', () => {
       '2 years ago',
     ])
     expect(age('not a date', NOW)).toBe('today')
+  })
+})
+
+describe('the search page', () => {
+  const parsePort = bundle.assets.find((asset) => asset.name === 'parsePort')
+
+  it('escapes the query everywhere it shows it', async () => {
+    const query = '"><script>alert(1)</script>'
+    const page = await body(searchPage(context({ path: '/search' }), { query, unreviewed: false, results: [], semantic: true }))
+    expect(page).not.toContain('<script>alert(1)')
+    expect(page).toContain('&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;')
+  })
+
+  it('links a reviewed function to its page and marks a submission unreviewed', async () => {
+    if (parsePort === undefined) throw new Error('parsePort is missing from the catalog')
+    const page = await body(
+      searchPage(context({ path: '/search' }), {
+        query: 'port',
+        unreviewed: true,
+        results: [
+          { listing: parsePort, tally: tally(2) },
+          { listing: listingOf(submission()), tally: NO_TALLY },
+        ],
+        semantic: true,
+      }),
+    )
+    expect(page).toContain('href="/a/parse/parsePort"')
+    expect(page).toContain('href="/c/abc123"')
+    expect(page.split('class="badge unreviewed"').length - 1).toBe(1)
+    expect(page).toContain('2 matches')
+    expect(page).toContain('name="unreviewed" value="1" checked')
+  })
+
+  it('says when words alone ranked it, and what to do when nothing matched', async () => {
+    const page = await body(searchPage(context({ path: '/search' }), { query: 'zzz', unreviewed: false, results: [], semantic: false }))
+    expect(page).toContain('Ranked by words only for now')
+    expect(page).toContain('Nothing matched.')
+  })
+
+  it('puts the search on the market home', async () => {
+    const page = await body(homePage(context({ path: '/' }), { categories: bundle.categories, candidates: [], popular: [] }))
+    expect(page).toContain('action="/search"')
   })
 })

@@ -8,6 +8,7 @@ import { type BundledAsset, type CategoryInfo, keyOf } from './bundle'
 import { age, escape, html, icon, ordinal, plural, withCode } from './html'
 import type { Submission, Tally } from './registry'
 import { SCRIPT, SCRIPT_HASH, stylesheet } from './style'
+import type { Listing } from './vectors'
 
 export type PageContext = {
   /** Like `/market`, or empty. */
@@ -264,6 +265,17 @@ const intro = (context: PageContext): string =>
     ]),
   )
 
+/** People search the way agents do: the same ranking as the MCP tool, meaning and words. */
+const searchForm = (context: PageContext, query = '', unreviewed = false): string =>
+  html([
+    `<form class="search" role="search" method="get" action="${context.basePath}/search">`,
+    '<label class="sr" for="search-q">What should the function do?</label>',
+    `<div class="field">${icon('search', 20)}<input id="search-q" name="q" type="search" required minlength="2" maxlength="200" value="${escape(query)}" placeholder="What should it do? Like “dedupe events by id, keep the newest”"></div>`,
+    '<button type="submit" class="btn primary">Search</button>',
+    `<label class="incl"><input type="checkbox" name="unreviewed" value="1"${unreviewed ? ' checked' : ''}>Include unreviewed submissions</label>`,
+    '</form>',
+  ])
+
 const categoriesSection = (context: PageContext, categories: readonly CategoryInfo[]): string =>
   section(
     'paper',
@@ -274,6 +286,7 @@ const categoriesSection = (context: PageContext, categories: readonly CategoryIn
         `${categories.length} categories, ${context.assetCount} functions`,
         'Each one is a single file. Its comment is the whole manual, and its examples run on every change.',
       ),
+      searchForm(context),
       '<ul class="index">',
       html(
         R.map(
@@ -595,6 +608,54 @@ export const allPage = (context: PageContext, assets: readonly BundledAsset[]): 
             R.map((asset) => assetItem(context, asset)),
           ),
         )}</ul>`,
+      ]),
+      { detail: true },
+    ),
+  })
+
+// ─── Search ─────────────────────────────────────────────────────────────────────────────
+
+export type SearchResult = { readonly listing: Listing; readonly tally: Tally }
+
+export type SearchData = {
+  readonly query: string
+  readonly unreviewed: boolean
+  readonly results: readonly SearchResult[]
+  /** False when only words ranked the results: the index was down or the address searched a lot. */
+  readonly semantic: boolean
+}
+
+const resultItem = (context: PageContext, { listing, tally }: SearchResult): string => {
+  const signature = signatureOf(listing.inputs, listing.output)
+  const href =
+    listing.candidateId === undefined
+      ? `${context.basePath}/a/${keyOf(listing)}`
+      : `${context.basePath}/c/${escape(listing.candidateId)}`
+  return html([
+    '<li class="item"><div class="main">',
+    `<div class="title-line">${fnName(listing.category, listing.name, href)}${listing.candidateId === undefined ? '' : badge('unreviewed')}</div>`,
+    `<p class="summary">${withCode(listing.summary)}</p>`,
+    signature === '' ? '' : `<p class="sig">${escape(signature)}</p>`,
+    `</div><div class="side">${counts(tally)}</div></li>`,
+  ])
+}
+
+export const searchPage = (context: PageContext, data: SearchData): Response =>
+  layout(context, {
+    title: `${data.query} · Search · Receta market`,
+    description: `Functions in the Receta market for: ${data.query}`,
+    trail: crumb('search'),
+    body: section(
+      'paper',
+      MARK.station,
+      html([
+        `<a class="back" href="${context.basePath}/#categories">${icon('arrowLeft', 14)}All categories</a>`,
+        `<div class="title-row"><h1 class="fn"><b>Search</b></h1><span class="count-of">${plural(data.results.length, 'match', 'matches')}</span></div>`,
+        searchForm(context, data.query, data.unreviewed),
+        data.semantic ? '' : '<p class="note">Ranked by words only for now. Try again in a minute for matches by meaning.</p>',
+        data.results.length === 0
+          ? emptyState('Nothing matched.', 'Try other words, or browse the categories.', more(`${context.basePath}/#categories`, 'Browse the categories'))
+          : `<ul class="list plain">${html(R.map(data.results, (result) => resultItem(context, result)))}</ul>`,
       ]),
       { detail: true },
     ),
