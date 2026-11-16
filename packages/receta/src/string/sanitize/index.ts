@@ -7,6 +7,10 @@ import type { EscapeHtmlOptions } from '../types'
  * Strips all HTML tags, leaving only the text content. Does not decode
  * HTML entities - use unescapeHtml for that.
  *
+ * A block-level tag (`<p>`, `<div>`, `<li>`, `<br>`, a heading, a table cell…) separates
+ * words, so the text on either side stays apart by one space. Inline tags such as
+ * `<strong>` leave no space behind.
+ *
  * @param str - The string containing HTML
  * @returns The string with all HTML tags removed
  *
@@ -14,6 +18,12 @@ import type { EscapeHtmlOptions } from '../types'
  * ```typescript
  * stripHtml('<p>Hello <strong>world</strong>!</p>')
  * // => 'Hello world!'
+ *
+ * stripHtml('<p>First paragraph</p><p>Second paragraph</p>')
+ * // => 'First paragraph Second paragraph'
+ *
+ * stripHtml('un<em>believ</em>able')
+ * // => 'unbelievable'
  *
  * stripHtml('<script>alert("xss")</script>Safe text')
  * // => 'Safe text'
@@ -33,11 +43,40 @@ import type { EscapeHtmlOptions } from '../types'
  */
 export function stripHtml(str: string): string {
   // Remove script and style tags with content
-  let result = str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-  result = result.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
-  // Remove remaining HTML tags
-  return result.replace(/<[^>]*>/g, '')
+  const withoutCode = str
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+
+  // The capture group makes split return the tags too, at the odd positions
+  const pieces = withoutCode.split(/(<[^>]*>)/)
+
+  return R.reduce(
+    pieces,
+    (state: StrippedText, piece, index) => {
+      if (index % 2 === 1) {
+        return BLOCK_TAG.test(piece) ? { ...state, afterBlock: true } : state
+      }
+      if (piece === '') {
+        return state
+      }
+
+      // A block tag was removed between two words: keep them apart
+      const needsSpace = state.afterBlock && /\S$/.test(state.text) && /^\S/.test(piece)
+
+      return { text: state.text + (needsSpace ? ' ' : '') + piece, afterBlock: false }
+    },
+    { text: '', afterBlock: false }
+  ).text
 }
+
+interface StrippedText {
+  readonly text: string
+  readonly afterBlock: boolean
+}
+
+// Tags a browser starts a new line for. Text on either side of one is not the same word.
+const BLOCK_TAG =
+  /^<\/?(?:address|article|aside|blockquote|br|dd|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hr|li|main|nav|ol|p|pre|section|table|tbody|td|tfoot|th|thead|tr|ul)\b/i
 
 /**
  * Escapes HTML special characters.
