@@ -46,9 +46,10 @@ export type DedupeByKeepBestResult<T> = {
  * // => ['bo 5', 'ana 9']
  * ```
  *
- * @tags dedupe, best, cheapest, highest, winner, per key, group, pick, unique
+ * @tags dedupe, best, cheapest, highest, latest, newest, most recent, winner, per key, pick, unique
  * @see dedupeByKeepFirst - the first copy wins
  * @see dedupeByKeepLast - the last copy wins
+ * @see latestBy - newest per key by a timestamp, newest first; on a tie the later copy wins
  * @see ascending - @ontologyio/receta/compare, a comparator that keeps the smallest
  */
 export function dedupeByKeepBest<T>(

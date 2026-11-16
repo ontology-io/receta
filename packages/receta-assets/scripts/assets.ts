@@ -27,6 +27,8 @@ export type AssetDoc = {
   readonly see: readonly string[]
 }
 
+export type AssetInput = { readonly name: string; readonly type: string }
+
 export type Asset = {
   readonly name: string
   readonly category: string
@@ -35,6 +37,10 @@ export type Asset = {
   readonly source: string
   readonly doc: AssetDoc
   readonly signatures: readonly string[]
+  /** The parameters of the first signature, the data-first one when there are overloads. */
+  readonly inputs: readonly AssetInput[]
+  /** The return type of that signature, as written. */
+  readonly output: string
   /** Like `result/ok` for Receta and `R.pipe` for Remeda. */
   readonly composes: readonly string[]
   /** What breaks the contract in AUTHORING.md, before anything runs. */
@@ -162,6 +168,29 @@ const signaturesOf = (file: ts.SourceFile, nodes: readonly ts.Statement[]): read
   return R.map(shown.length > 0 ? shown : nodes, text)
 }
 
+const typeText = (file: ts.SourceFile, node: ts.TypeNode | undefined): string =>
+  node ? node.getText(file).replace(/\s+/g, ' ') : 'unknown'
+
+/**
+ * What goes in and what comes out, from the first signature: with overloads that is the
+ * data-first one, which names the data. The marketplace indexes these beside the summary.
+ */
+const ioOf = (
+  file: ts.SourceFile,
+  nodes: readonly ts.Statement[],
+): { readonly inputs: readonly AssetInput[]; readonly output: string } => {
+  const first = R.first(R.filter(nodes, ts.isFunctionDeclaration))
+  return first === undefined
+    ? { inputs: [], output: 'unknown' }
+    : {
+        inputs: R.map([...first.parameters], (parameter) => ({
+          name: parameter.name.getText(file),
+          type: typeText(file, parameter.type),
+        })),
+        output: typeText(file, first.type),
+      }
+}
+
 type Import = { readonly module: string; readonly names: readonly string[]; readonly typeOnly: boolean }
 
 const importsOf = (file: ts.SourceFile): readonly Import[] =>
@@ -246,6 +275,7 @@ export const readAsset = async (absolutePath: string): Promise<Asset> => {
     source,
     doc,
     signatures: signaturesOf(file, R.map(own, R.prop('node'))),
+    ...ioOf(file, R.map(own, R.prop('node'))),
     composes: composesOf(file),
     problems: problemsOf(name, file, values, doc, raw),
   }

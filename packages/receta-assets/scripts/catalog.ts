@@ -6,7 +6,7 @@ import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { mapAsyncOrThrow } from '@ontologyio/receta/async'
 import * as R from 'remeda'
-import { type Asset, CATEGORIES, type Category, ROOT, SRC, readAssets } from './assets'
+import { type Asset, type AssetInput, CATEGORIES, type Category, ROOT, SRC, readAssets } from './assets'
 
 const PACKAGE = '@ontologyio/receta-assets'
 
@@ -36,6 +36,8 @@ type Entry = {
   readonly tags: readonly string[]
   readonly composes: readonly string[]
   readonly signatures: readonly string[]
+  readonly inputs: readonly AssetInput[]
+  readonly output: string
   readonly hasDiagram: boolean
 }
 
@@ -49,6 +51,8 @@ const toEntry = (asset: Asset): Entry => ({
   tags: asset.doc.tags,
   composes: asset.composes,
   signatures: asset.signatures,
+  inputs: asset.inputs,
+  output: asset.output,
   hasDiagram: asset.doc.flow !== '',
 })
 

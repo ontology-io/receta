@@ -29,6 +29,10 @@ export type CatalogAsset = {
   readonly tags: readonly string[]
   readonly composes: readonly string[]
   readonly signatures: readonly string[]
+  /** The parameters of the data-first signature. Catalogs built before 2026-11-16 lack it. */
+  readonly inputs?: readonly { readonly name: string; readonly type: string }[]
+  /** That signature's return type, as written. */
+  readonly output?: string
   readonly hasDiagram: boolean
 }
 
@@ -159,10 +163,13 @@ export const loadCatalog = async (
 // that start it ("cach" finds "cache"), which covers most of the gap to embeddings for a
 // vocabulary this size. The agent judges meaning from the top results.
 
+// Words that say nothing about the job. "read" and "such" once put an asset first by
+// matching filler in its "use when" line.
 const STOPWORDS = new Set([
   'a', 'an', 'and', 'any', 'are', 'as', 'at', 'be', 'by', 'code', 'do', 'each', 'for', 'from',
-  'function', 'helper', 'how', 'i', 'if', 'in', 'into', 'is', 'it', 'its', 'me', 'my', 'need',
-  'of', 'on', 'one', 'or', 'so', 'some', 'that', 'the', 'then', 'this', 'to', 'util',
+  'function', 'get', 'given', 'helper', 'how', 'i', 'if', 'in', 'into', 'is', 'it', 'its',
+  'like', 'make', 'me', 'my', 'need', 'of', 'on', 'one', 'or', 'read', 'so', 'some', 'something',
+  'such', 'take', 'that', 'the', 'then', 'thing', 'this', 'to', 'use', 'using', 'util',
   'utility', 'want', 'way', 'we', 'when', 'with', 'write',
 ])
 
@@ -305,6 +312,10 @@ const importsOf = (code: string): readonly string[] =>
     (match) => match[1] ?? match[2] ?? '',
   )
 
+/** Equal apart from line endings and the blank lines around the file. */
+const sameCode = (a: string, b: string): boolean =>
+  a.replace(/\r\n/g, '\n').trim() === b.replace(/\r\n/g, '\n').trim()
+
 /** The JSDoc right above the first `export function name`, without its stars. */
 const docAbove = (code: string, name: string): string => {
   const at = code.search(new RegExp(`^export function ${name}\\b`, 'm'))
@@ -353,7 +364,7 @@ export const candidateProblems = (name: string, code: string): readonly string[]
 const PRIVATE_PATTERNS: readonly (readonly [RegExp, string])[] = [
   [/[\w.+-]+@(?!example\.)[\w-]+\.[a-z]{2,}/gi, 'an email address'],
   [/https?:\/\/(?!(?:www\.)?example\.(?:com|org)|localhost|github\.com\/ontology-io)[^\s'"`)]+/g, 'a URL'],
-  [/(?:\/Users\/|\/home\/|[A-Z]:\\)[^\s'"`]+/g, 'an absolute path'],
+  [/(?:\/(?:Users|home|Volumes|private|var|opt|srv|mnt|tmp)\/|[A-Z]:\\)[^\s'"`]+/g, 'an absolute path'],
   [/\b(?:api[_-]?key|secret|password|token)\b\s*[:=]\s*['"][^'"]+['"]/gi, 'a credential'],
   [/\b[A-Za-z0-9_-]{32,}\b/g, 'a long key-like string'],
 ]
@@ -363,6 +374,20 @@ export const privacyWarnings = (code: string): readonly string[] =>
   PRIVATE_PATTERNS.flatMap(([pattern, what]) =>
     [...code.matchAll(pattern)].map((match) => `${what}: ${match[0].slice(0, 60)}`),
   )
+
+const nearestPackageJson = (start: string): string | undefined =>
+  parents(resolve(start))
+    .map((dir) => join(dir, 'package.json'))
+    .find((path) => existsSync(path))
+
+/** Of the two packages every asset imports, those the nearest package.json doesn't list. */
+export const missingDependencies = (start: string): readonly string[] => {
+  const path = nearestPackageJson(start)
+  if (path === undefined) return []
+  const json = JSON.parse(readFileSync(path, 'utf8')) as Record<string, Record<string, string> | undefined>
+  const listed = ['dependencies', 'devDependencies', 'peerDependencies'].flatMap((field) => Object.keys(json[field] ?? {}))
+  return ['remeda', '@ontologyio/receta'].filter((name) => !listed.includes(name))
+}
 
 /** Why sharing is off here, or undefined when it is on. */
 export const sharingOff = (start: string): string | undefined => {
@@ -478,9 +503,6 @@ const parseArgs = (argv: readonly string[]): Args =>
     { words: [], flags: new Map(), pending: undefined },
   )
 
-const clip = (text: string, length: number): string =>
-  text.length <= length ? text : `${text.slice(0, length - 1).trimEnd()}…`
-
 const fileOf = (catalog: Catalog, asset: CatalogAsset): string =>
   /^https?:\/\//.test(catalog.source) ? new URL(asset.path, catalog.source).href : join(catalog.source, asset.path)
 
@@ -489,7 +511,12 @@ const printHits = (catalog: Catalog, hits: readonly Hit[]): void => {
   hits.forEach((hit, index) => {
     console.log(`${String(index + 1).padStart(2)}. ${hit.asset.category}/${hit.asset.name}   score ${hit.score.toFixed(1)}, matched ${hit.matched.join(' ')}`)
     console.log(`    ${hit.asset.summary}`)
-    console.log(`    use when: ${clip(hit.asset.useWhen, 220)}`)
+    // In full: the edge cases a caller must know sit at the end of this line.
+    console.log(`    use when: ${hit.asset.useWhen}`)
+    if (hit.asset.inputs !== undefined && hit.asset.output !== undefined) {
+      const takes = hit.asset.inputs.map((input) => `${input.name}: ${input.type}`).join(', ')
+      console.log(`    takes (${takes}), returns ${hit.asset.output}`)
+    }
     console.log(`    built from: ${hit.asset.composes.filter((name) => !name.startsWith('R.')).join(', ')}`)
     console.log(`    file: ${fileOf(catalog, hit.asset)}\n`)
   })
@@ -519,13 +546,26 @@ const commands: Readonly<Record<string, (args: Args) => Promise<number>>> = {
       console.error(`No asset named "${words[0] ?? ''}". Search first: search <words>`)
       return 1
     }
+    const missing = missingDependencies(process.cwd())
     console.error(`// ${fileOf(catalog, asset)}`)
+    console.error(`// When the project installs @ontologyio/receta-assets: ${asset.import}`)
+    if (missing.length > 0) {
+      console.error(`// This project's package.json lacks ${missing.join(' and ')}, which the file imports.`)
+    }
     process.stdout.write(await catalog.read(asset.path))
     return 0
   },
 
   async guide({ flags }) {
     const catalog = await loadCatalog({ catalog: flags.get('catalog') })
+    console.log(
+      [
+        '<!-- In a project: the rules for the function and its comment apply as written. The',
+        "file goes in the project's helper folder, not src/<category>/, and the commands",
+        '(check.ts, catalog.ts, intake.ts) belong to the catalog\'s own repository. -->',
+        '',
+      ].join('\n'),
+    )
     process.stdout.write(await catalog.read('AUTHORING.md'))
     return 0
   },
@@ -559,6 +599,18 @@ const commands: Readonly<Record<string, (args: Args) => Promise<number>>> = {
       code,
     }
     const taken = findAsset(catalog.assets, name)
+    if (taken !== undefined && sameCode(await catalog.read(taken.path), code)) {
+      console.log(`This is an unchanged copy of ${taken.category}/${taken.name}. There is nothing to share.`)
+      return 0
+    }
+    const projectImports = importsOf(code).filter((source) => source.startsWith('.'))
+    if (projectImports.length > 0) {
+      console.log(
+        `This file imports ${projectImports.join(', ')} from the project. Code that wires assets into a ` +
+          'project is not a candidate: offer a function only when it does a job on its own.',
+      )
+      return 0
+    }
     const problems = [
       ...candidateProblems(name, code),
       ...(categories.includes(candidate.category)
@@ -567,7 +619,7 @@ const commands: Readonly<Record<string, (args: Args) => Promise<number>>> = {
       ...(candidate.why === '' ? ['--why is missing: one or two sentences on the job it does'] : []),
       ...(taken === undefined
         ? []
-        : [`${taken.category}/${taken.name} already exists: name the new one by what differs`]),
+        : [`${taken.category}/${taken.name} already exists and this file differs: if it is a variant, name it by what differs`]),
       ...(candidate.from === '' || findAsset(catalog.assets, candidate.from) !== undefined
         ? []
         : [`--from ${candidate.from} is not in the catalog`]),
@@ -577,19 +629,24 @@ const commands: Readonly<Record<string, (args: Args) => Promise<number>>> = {
     const closest = search(catalog.assets, [name, summary, ...tags].join(' '), { limit: 3 })
     const title = candidateTitle(candidate)
     const body = candidateBody(candidate, closest)
+    const report = [
+      closest.length === 0
+        ? 'No asset in the catalog is close to it.'
+        : `Closest assets: if one already does the job, use it instead of sharing.\n${closest
+            .map((hit) => `  - ${hit.asset.category}/${hit.asset.name}: ${hit.asset.summary}`)
+            .join('\n')}`,
+      warnings.length === 0
+        ? 'Nothing in the file matches the patterns for private text (emails, URLs, paths, keys). Domain words are yours to judge.'
+        : `These may belong to the project. Remove or generalize them first:\n${warnings.map((w) => `  - ${w}`).join('\n')}`,
+    ].join('\n\n')
 
     if (problems.length > 0) {
-      console.log(`Not ready to share:\n${problems.map((problem) => `  - ${problem}`).join('\n')}`)
+      console.log(`Not ready to share:\n${problems.map((problem) => `  - ${problem}`).join('\n')}\n\n${report}`)
       return 1
     }
     if (!flags.has('send')) {
-      console.log(`Title: ${title}\n\n${body}\n`)
-      console.log(
-        warnings.length === 0
-          ? 'Nothing in the file looks project-specific.'
-          : `Check these before sharing, they may belong to the project:\n${warnings.map((w) => `  - ${w}`).join('\n')}`,
-      )
-      console.log(`\nNothing was sent. Show this to the person, and only with their OK run again with --send.`)
+      console.log(`Title: ${title}\n\n${body}\n\n${report}`)
+      console.log('\nNothing was sent. Show this to the person, and only with their OK run again with --send.')
       return 0
     }
     console.log(createIssue(process.env['RECETA_ASSETS_REPO'] ?? REPO, title, body))

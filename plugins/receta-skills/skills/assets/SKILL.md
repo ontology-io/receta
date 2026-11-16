@@ -70,24 +70,31 @@ bun <skill>/scripts/assets.ts search retry a flaky call with a time limit per at
 ```
 
 The search matches words, stems, tags (which hold synonyms) and the Receta functions an
-asset is built from. Run two or three phrasings when the first one is thin. Then read the
-summaries and "use when" lines of the top five, and judge by meaning, not by the score.
-Read the file of each real contender with `show <name>`, since the comment is the contract.
+asset is built from, and prints what each asset takes and returns. Run two or three
+phrasings, since one wording can rank the right asset below others: a "keep the newest"
+asset may only say "best" in its summary. Read the summaries and "use when" lines of the
+top results, and judge by meaning, not by the score. Then read each real contender's file
+with `show <name>`, since the comment is the contract. An asset that takes a comparator or
+a predicate often covers a policy you were about to write by hand.
 
 ## 2. Decide
 
 | What you found | What to do |
 | --- | --- |
-| An asset does the job | Copy it as it is, comment included. If the project installs `@ontologyio/receta-assets`, import it instead, as its catalog `import` line shows. |
-| One is close: it differs in one policy, like which duplicate wins or Option against Result | Adapt it into a variant. Change only what differs, name it by what differs (`dedupeByKeepFirst` → `dedupeByKeepNewest`), keep its examples true, and add `@see <original> - receta-assets <category>/<original>, adapted from`. |
+| An asset does the job, maybe given the right comparator or options | Copy it as it is, comment included. If the project installs `@ontologyio/receta-assets`, import it instead: `show` prints the import line. |
+| One is close: it differs in one policy, like which characters it keeps or Option against Result | Adapt it into a variant. Change only what differs, name it by what differs (`maskCardNumber` → `maskIban`), keep its examples true, and add `@see <original> - receta-assets <category>/<original>, adapted from`. |
 | Nothing is close | Write a new function to the asset rules (see below). |
+
+A copied file imports `remeda` and `@ontologyio/receta`. `show` says when the project's
+`package.json` lacks them. Ask the person before adding a dependency.
 
 Don't change a copied asset quietly. If its behavior changes, it's a variant and gets a new
 name, so the comment and the name keep telling the truth.
 
 ## 3. Write a new one to the asset rules
 
-`guide` prints the full rules. In short:
+`guide` prints the full rules. They are written for the catalog's own repository, so in a
+project only the rules for the function and its comment apply. In short:
 
 - One exported function per file, the file named after the function, in the project's helper
   folder (`src/lib`, `src/utils`, or whatever the project already uses).
@@ -103,20 +110,25 @@ name, so the comment and the name keep telling the truth.
 
 ## 4. Offer it back
 
-When you wrote a new function or a variant (not a plain copy), offer it to the Receta team.
-The catalog grows from the functions agents had to write.
+When you wrote a new function or a variant, offer it to the Receta team. The catalog grows
+from the functions agents had to write. A plain copy is not a candidate, and neither is
+project code that calls assets to wire them into the project: `share` turns both away.
 
 ```bash
 bun <skill>/scripts/assets.ts share src/lib/maskIban.ts --category text \
   --why "Payout settings show a saved IBAN without exposing it." --from text/maskCardNumber
 ```
 
-Without `--send`, this sends nothing. It checks the file against the asset rules, finds the
-closest assets in the catalog, flags text that looks project-specific (emails, URLs, paths,
-keys), and prints the issue it would open on ontology-io/receta. Then:
+Without `--send`, this sends nothing. It checks the file's shape (one exported function, the
+comment's parts, imports, exports), lists the closest assets in the catalog, flags text that
+matches private patterns (emails, URLs, paths, keys), and prints the issue it would open on
+ontology-io/receta. The examples, the lint and the types are checked when the Receta team
+reviews it. If a closest asset already does the job, use it and share nothing. Then:
 
-1. Make the file generic first. Rename domain words that only make sense in this project,
-   and remove business data, internal names and anything flagged.
+1. Make the file generic first. The pattern check can't see domain words, so read the file
+   for them yourself: rename words that only make sense in this project (`payout`,
+   `webhook`, an internal prefix like `evt_`), and remove business data, internal names and
+   anything flagged.
 2. Show the person the exact title and body, say it goes to a public GitHub issue, and ask.
 3. Only with their yes in this conversation, run the same command with `--send`. It uses the
    person's `gh` login and prints the issue's URL.

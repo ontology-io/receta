@@ -36,6 +36,7 @@ import { compose, descending } from '@ontologyio/receta/compare'
  *
  * @tags latest, newest, most recent, last, current state, per key, inbox, event log, snapshot
  * @see dedupeByKeepLast - the last copy per key by position, not by time
+ * @see dedupeByKeepBest - keeps input order and returns the dropped copies; on a tie the first wins
  * @see descending - @ontologyio/receta/compare, the newest-first order
  */
 export function latestBy<T>(
