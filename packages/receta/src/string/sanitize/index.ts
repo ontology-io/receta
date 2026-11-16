@@ -147,6 +147,14 @@ function escapeHtmlImplementation(str: string, options?: EscapeHtmlOptions): str
 /**
  * Decodes HTML entities to their character equivalents.
  *
+ * Decodes every numeric character reference (`&#169;`, `&#xA9;`) and the common named
+ * entities: `amp`, `lt`, `gt`, `quot`, `apos`, `nbsp`, `copy`, `reg`, `trade`, `hellip`,
+ * `mdash`, `ndash`, the curly quotes (`lsquo`, `rsquo`, `ldquo`, `rdquo`), `laquo`,
+ * `raquo`, `bull`, `middot`, `euro`, `pound`, `yen`, `cent`, `deg`, `plusmn`, `times`,
+ * `divide`, `sect` and `para`. Any other named entity is left as it is.
+ *
+ * The string is decoded once: `&amp;lt;` becomes `&lt;`, not `<`.
+ *
  * @param str - The string containing HTML entities
  * @returns The decoded string
  *
@@ -160,21 +168,66 @@ function escapeHtmlImplementation(str: string, options?: EscapeHtmlOptions): str
  *
  * unescapeHtml('&amp; &lt; &gt;')
  * // => '& < >'
+ *
+ * unescapeHtml('&copy; 2026 Tom&apos;s &#8212; &#x1F600;')
+ * // => "© 2026 Tom's — 😀"
  * ```
  *
  * @see escapeHtml - to encode special characters
  */
 export function unescapeHtml(str: string): string {
-  const entityMap: Record<string, string> = {
-    '&amp;': '&',
-    '&lt;': '<',
-    '&gt;': '>',
-    '&quot;': '"',
-    '&#x27;': "'",
-    '&#39;': "'",
-  }
+  return str.replace(
+    /&(?:#(\d+)|#x([0-9a-f]+)|([a-z][a-z0-9]*));/gi,
+    (entity: string, decimal?: string, hex?: string, name?: string) => {
+      if (name !== undefined) {
+        return Object.hasOwn(NAMED_ENTITIES, name) ? NAMED_ENTITIES[name]! : entity
+      }
 
-  return str.replace(/&(?:amp|lt|gt|quot|#x27|#39);/g, (entity) => entityMap[entity] || entity)
+      const codePoint = decimal !== undefined ? Number(decimal) : Number.parseInt(hex ?? '', 16)
+
+      return isCharacter(codePoint) ? String.fromCodePoint(codePoint) : entity
+    }
+  )
+}
+
+const NAMED_ENTITIES: Readonly<Record<string, string>> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: '\u00A0',
+  copy: '©',
+  reg: '®',
+  trade: '™',
+  hellip: '…',
+  mdash: '—',
+  ndash: '–',
+  lsquo: '‘',
+  rsquo: '’',
+  ldquo: '“',
+  rdquo: '”',
+  laquo: '«',
+  raquo: '»',
+  bull: '•',
+  middot: '·',
+  euro: '€',
+  pound: '£',
+  yen: '¥',
+  cent: '¢',
+  deg: '°',
+  plusmn: '±',
+  times: '×',
+  divide: '÷',
+  sect: '§',
+  para: '¶',
+}
+
+// A code point a character reference may name: not NUL, not a surrogate, inside Unicode
+function isCharacter(codePoint: number): boolean {
+  const isSurrogate = codePoint >= 0xd800 && codePoint <= 0xdfff
+
+  return codePoint > 0 && codePoint <= 0x10ffff && !isSurrogate
 }
 
 /**

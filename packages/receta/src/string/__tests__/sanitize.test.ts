@@ -142,6 +142,30 @@ describe('String.unescapeHtml', () => {
     expect(unescapeHtml('It&#39;s a test')).toBe("It's a test")
   })
 
+  it('unescapes any decimal or hex character reference', () => {
+    expect(unescapeHtml('&#169; &#xA9; &#Xa9;')).toBe('© © ©')
+    expect(unescapeHtml('&#8364;5 &#x1F600;')).toBe('€5 😀')
+  })
+
+  it('unescapes the common named entities', () => {
+    expect(unescapeHtml('Tom&apos;s')).toBe("Tom's")
+    expect(unescapeHtml('a&nbsp;b')).toBe('a\u00A0b')
+    expect(unescapeHtml('&copy; &reg; &trade;')).toBe('© ® ™')
+    expect(unescapeHtml('&ldquo;hi&rdquo; &mdash; &hellip;')).toBe('“hi” — …')
+    expect(unescapeHtml('&euro;5 &pound;4')).toBe('€5 £4')
+  })
+
+  it('leaves what it does not know as it is', () => {
+    expect(unescapeHtml('&bogus; &constructor; &toString;')).toBe('&bogus; &constructor; &toString;')
+    expect(unescapeHtml('&#x110000; &#xD800; &#0;')).toBe('&#x110000; &#xD800; &#0;')
+    expect(unescapeHtml('AT&T; fish & chips; &amp')).toBe('AT&T; fish & chips; &amp')
+  })
+
+  it('decodes once, not repeatedly', () => {
+    expect(unescapeHtml('&amp;lt;')).toBe('&lt;')
+    expect(unescapeHtml('&amp;#169;')).toBe('&#169;')
+  })
+
   it('unescapes multiple entities', () => {
     expect(unescapeHtml('A &amp; B &lt; C &gt; D &quot;E&quot;')).toBe(
       'A & B < C > D "E"'
