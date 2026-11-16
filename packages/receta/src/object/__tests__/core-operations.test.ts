@@ -3,6 +3,7 @@ import * as R from 'remeda'
 import { rename } from '../rename'
 import { mask } from '../mask'
 import { deepMerge } from '../deepMerge'
+import { stripUndefined } from '../stripUndefined'
 
 describe('Object.rename', () => {
   describe('data-first', () => {
@@ -138,6 +139,19 @@ describe('Object.deepMerge', () => {
 
     it('handles empty arrays', () => {
       expect(deepMerge([])).toEqual({})
+    })
+
+    it('lets an explicit undefined overwrite, as object spread does', () => {
+      const merged = deepMerge([{ retries: 3, nested: { a: 1 } }, { retries: undefined, nested: { a: undefined } }])
+
+      expect(merged).toEqual({ retries: undefined, nested: { a: undefined } })
+      expect(Object.hasOwn(merged, 'retries')).toBe(true)
+    })
+
+    it('keeps the earlier value once undefined is stripped', () => {
+      const overrides = stripUndefined({ retries: undefined, timeout: 5 })
+
+      expect(deepMerge([{ retries: 3, timeout: 1 }, overrides])).toEqual({ retries: 3, timeout: 5 })
     })
 
     it('handles single object', () => {
