@@ -1,5 +1,5 @@
 import { HeroScene } from '@/components/scenes/hero-scene'
-import { heroContent } from '@/content/home.content'
+import { heroContent, installContent } from '@/content/home.content'
 import { tokenizeLines } from '@/lib/code/tokenize'
 import { CopyCommandContainer } from './copy-command.container'
 
@@ -10,6 +10,6 @@ export const HeroContainer = () => (
   <HeroScene
     copy={heroContent}
     pipe={tokenizeLines(heroContent.pipeLines, PIPE_EMPHASIS)}
-    install={<CopyCommandContainer tone="err" />}
+    install={<CopyCommandContainer copy={installContent} tone="err" />}
   />
 )
