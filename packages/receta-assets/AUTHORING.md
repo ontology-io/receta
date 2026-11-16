@@ -148,6 +148,7 @@ bun scripts/check.ts parse/parse     # with a slash, it's part of a path
 bun scripts/check.ts                 # everything
 bun scripts/catalog.ts               # rebuild catalog.json, CATALOG.md and each index.ts
 bun run typecheck                    # also catches two assets exporting the same name
+bun scripts/intake.ts 123            # place and check the candidate from issue #123
 ```
 
 `catalog.json`, `CATALOG.md` and `src/<category>/index.ts` are generated. Never edit them.

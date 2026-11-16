@@ -53,6 +53,9 @@ Recommend a wave-based approach, ordering by risk (lowest first) and impact (hig
 - Convert array method chains to `R.pipe` (lowest risk, often highest count)
 - Replace `Promise.all(items.map(...))` with `mapAsync`
 - These are mechanical replacements with no behavior change
+- List the project's hand-written helpers (`utils/`, `lib/`, `helpers/`) and search each one's
+  job with the `assets` skill. A checked receta-asset that does the same job replaces the
+  helper outright, which is cheaper than migrating it.
 
 #### Wave 2: Error Handling (Medium Risk)
 - Start at **API boundaries** (route handlers, controllers) and work inward
