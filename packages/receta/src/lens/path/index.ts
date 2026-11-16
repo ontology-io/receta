@@ -13,6 +13,10 @@ import { setOwnKey } from '../../utils/setOwnKey'
  * first item. The path string isn't checked against `S`, and the type `A` is taken
  * on trust.
  *
+ * Setting through a part that doesn't exist yet creates it: an array when the next part
+ * is an index (`items.0.name` on `{}` gives `{ items: [{ name }] }`), an object otherwise.
+ * That is the same value `setPath` and `unflatten` build.
+ *
  * @param pathStr - Dot-separated path to the nested property
  * @returns A Lens focusing on the value at the specified path
  *
@@ -102,5 +106,19 @@ function withKey(container: unknown, key: string, value: unknown): unknown {
     return copy
   }
 
-  return R.isObjectType(container) ? { ...container, [key]: value } : { [key]: value }
+  if (R.isObjectType(container)) {
+    return { ...container, [key]: value }
+  }
+
+  // Nothing is here yet. An index means the path is stepping into an array.
+  if (ARRAY_INDEX.test(key)) {
+    const created: unknown[] = []
+    setOwnKey(created, key, value)
+    return created
+  }
+
+  return { [key]: value }
 }
+
+// '0', '1', '42': a whole number written the way an array index is, with no leading zero
+const ARRAY_INDEX = /^(?:0|[1-9]\d*)$/
