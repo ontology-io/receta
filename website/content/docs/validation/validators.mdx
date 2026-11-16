@@ -299,8 +299,10 @@ integer()(42.5)
 Validates array is not empty.
 
 ```typescript title="Signature"
-nonEmpty<T>(errorMessage: string): Validator<T[], T[], string>
+nonEmpty<T>(errorMessage: string): ArrayValidator<T, string>
 ```
+
+An `ArrayValidator` takes a mutable or a readonly array and gives back the same kind.
 
 **Examples:**
 ```typescript
@@ -318,7 +320,7 @@ nonEmpty('List cannot be empty')([])
 Validates array has minimum number of items.
 
 ```typescript title="Signature"
-minItems<T>(minCount: number, errorMessage?: string): Validator<T[], T[], string>
+minItems<T>(minCount: number, errorMessage?: string): ArrayValidator<T, string>
 ```
 
 **Examples:**

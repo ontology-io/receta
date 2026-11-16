@@ -750,7 +750,7 @@ const handleUsernameBlur = async (username: string) => {
 
 ### Environment Variables
 
-`schema` hands back the object it was given, so it can't turn `PORT` into a number or fill in a default. Do that first, then validate the result.
+`schema` keeps each field's type, so it can't turn `PORT` from a string into a number. Do that first, then validate the result.
 
 ```typescript
 type AppConfig = {
