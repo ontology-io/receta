@@ -344,7 +344,9 @@ export const createServer = ({ bundle, vectors, registry, caller }: ServerDeps):
           [
             `Stored as ${keyFor(listing)}, listed as unreviewed at ${caller.registryUrl}/c/${stored.id}.`,
             'People can now vote on it; the Receta team reviews the most wanted first.',
-            ...(isErr(indexed) ? ['It will show in search once it is indexed.'] : []),
+            isErr(indexed)
+              ? 'Indexing it failed for now; it shows in search after the next reindex.'
+              : 'It shows in search_assets with include_candidates in a minute or two, once the index has taken it in.',
             '',
             'Closest assets already in the catalog:',
             ...R.map(closest, (hit) => `- ${keyOf(hit.asset)}: ${hit.asset.summary}`),
