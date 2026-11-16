@@ -119,12 +119,24 @@ describe('String.camelCase', () => {
     expect(camelCase('API_KEY_VALUE')).toBe('apiKeyValue')
   })
 
-  it('handles already camelCase', () => {
-    expect(camelCase('alreadyCamelCase')).toBe('alreadycamelcase')
+  it('keeps a string that is already camelCase', () => {
+    expect(camelCase('alreadyCamelCase')).toBe('alreadyCamelCase')
+    expect(camelCase('firstName')).toBe('firstName')
   })
 
-  it('handles PascalCase', () => {
-    expect(camelCase('PascalCase')).toBe('pascalcase')
+  it('converts PascalCase to camelCase', () => {
+    expect(camelCase('PascalCase')).toBe('pascalCase')
+  })
+
+  it('treats a run of capitals as one word', () => {
+    expect(camelCase('XMLHttpRequest')).toBe('xmlHttpRequest')
+    expect(camelCase('userID')).toBe('userId')
+    expect(camelCase('API KEY VALUE')).toBe('apiKeyValue')
+  })
+
+  it('drops separators at the ends', () => {
+    expect(camelCase('--hello-world--')).toBe('helloWorld')
+    expect(camelCase('user_2_name')).toBe('user2Name')
   })
 
   it('handles empty string', () => {
@@ -146,7 +158,13 @@ describe('String.pascalCase', () => {
   })
 
   it('converts camelCase to PascalCase', () => {
-    expect(pascalCase('helloWorld')).toBe('Helloworld')
+    expect(pascalCase('helloWorld')).toBe('HelloWorld')
+    expect(pascalCase('firstName')).toBe('FirstName')
+  })
+
+  it('treats a run of capitals as one word', () => {
+    expect(pascalCase('XMLHttpRequest')).toBe('XmlHttpRequest')
+    expect(pascalCase('api key value')).toBe('ApiKeyValue')
   })
 
   it('handles empty string', () => {
