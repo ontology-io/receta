@@ -125,9 +125,46 @@ describe('Number Calculations', () => {
       })
 
       it('handles negative numbers', () => {
-        expect(round(-1.5, 0)).toBe(-1)
+        expect(round(-1.4, 0)).toBe(-1)
         expect(round(-1.6, 0)).toBe(-2)
         expect(round(-1.234, 2)).toBe(-1.23)
+      })
+
+      it('rounds a half away from zero, as documented', () => {
+        expect(round(2.5, 0)).toBe(3)
+        expect(round(-2.5, 0)).toBe(-3)
+        expect(round(-1.5, 0)).toBe(-2)
+        expect(round(-56.25, 1)).toBe(-56.3)
+        expect(round(150, -2)).toBe(200)
+        expect(round(-150, -2)).toBe(-200)
+      })
+
+      it('rounds the decimal that was written, not its binary neighbour', () => {
+        // 1.005 is stored as 1.00499999999999989…, so multiplying by 100 gives 100.49999999999999
+        expect(round(1.005, 2)).toBe(1.01)
+        expect(round(-1.005, 2)).toBe(-1.01)
+        expect(round(1.255, 2)).toBe(1.26)
+        expect(round(8.345, 2)).toBe(8.35)
+        expect(round(1.45, 1)).toBe(1.5)
+        expect(round(1.0049999999, 2)).toBe(1)
+      })
+
+      it('handles numbers written with an exponent', () => {
+        expect(round(1e21, 2)).toBe(1e21)
+        expect(round(5e-7, 6)).toBe(0.000001)
+        expect(round(1.5e-7, 7)).toBe(2e-7)
+        expect(round(0.1 + 0.2, 10)).toBe(0.3)
+      })
+
+      it('returns NaN and the infinities as they are', () => {
+        expect(round(NaN, 2)).toBeNaN()
+        expect(round(Infinity, 2)).toBe(Infinity)
+        expect(round(-Infinity, 2)).toBe(-Infinity)
+      })
+
+      it('never returns negative zero', () => {
+        expect(Object.is(round(-0.4, 0), 0)).toBe(true)
+        expect(Object.is(round(-0.001, 2), 0)).toBe(true)
       })
 
       it('handles zero', () => {
