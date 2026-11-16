@@ -254,7 +254,8 @@ export default {
     if (path === '/auth/logout' && request.method === 'POST' && auth !== undefined) return logout(auth)
     const person = auth === undefined ? undefined : await personOf(request, auth)
     if (path === '/vote' && request.method === 'POST') return handleVote(request, url.origin, base, registry, person)
-    if (request.method !== 'GET') return new Response('Method not allowed', { status: 405 })
+    // HEAD answers like GET; the runtime drops the body. Link checkers and crawlers send it.
+    if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method not allowed', { status: 405 })
     const context: PageContext = {
       basePath: base,
       mcpUrl: `${url.origin}${base}/mcp`,
