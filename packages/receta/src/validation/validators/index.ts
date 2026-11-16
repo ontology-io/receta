@@ -4,7 +4,7 @@
  * @module validation/validators
  */
 
-import type { Validator } from '../types'
+import type { Validation, Validator } from '../types'
 import { valid, invalid, fromPredicate } from '../constructors'
 import { isOk, tryCatch } from '../../result'
 
@@ -314,6 +314,19 @@ export const finite = (errorMessage?: string): Validator<number, number, string>
 // ============================================================================
 
 /**
+ * A validator for arrays that takes a mutable or a readonly array and gives back the same
+ * kind, so it fits a schema field typed either way.
+ */
+export interface ArrayValidator<T, E> {
+  <A extends readonly T[]>(value: A): Validation<A, E>
+}
+
+const arrayValidator = <T, E>(
+  predicate: (arr: readonly T[]) => boolean,
+  error: E
+): ArrayValidator<T, E> => fromPredicate<readonly T[], E>(predicate, error) as ArrayValidator<T, E>
+
+/**
  * Validates array is not empty.
  *
  * @param errorMessage - Custom error message
@@ -324,9 +337,11 @@ export const finite = (errorMessage?: string): Validator<number, number, string>
  * nonEmpty('List cannot be empty')([1, 2, 3]) // => Valid([1, 2, 3])
  * nonEmpty('List cannot be empty')([]) // => Invalid(['List cannot be empty'])
  * ```
+ *
+ * Accepts a readonly array as well, and gives back the kind of array it was given.
  */
-export const nonEmpty = <T>(errorMessage: string): Validator<T[], T[], string> =>
-  fromPredicate((arr) => arr.length > 0, errorMessage)
+export const nonEmpty = <T>(errorMessage: string): ArrayValidator<T, string> =>
+  arrayValidator((arr) => arr.length > 0, errorMessage)
 
 /**
  * Validates array has minimum length.
@@ -340,12 +355,14 @@ export const nonEmpty = <T>(errorMessage: string): Validator<T[], T[], string> =
  * minItems(2)([1, 2, 3]) // => Valid([1, 2, 3])
  * minItems(2)([1]) // => Invalid(['Must have at least 2 items'])
  * ```
+ *
+ * Accepts a readonly array as well, and gives back the kind of array it was given.
  */
 export const minItems = <T>(
   minCount: number,
   errorMessage?: string
-): Validator<T[], T[], string> =>
-  fromPredicate((arr) => arr.length >= minCount, errorMessage ?? `Must have at least ${minCount} items`)
+): ArrayValidator<T, string> =>
+  arrayValidator((arr) => arr.length >= minCount, errorMessage ?? `Must have at least ${minCount} items`)
 
 /**
  * Validates array has maximum length.
@@ -359,12 +376,14 @@ export const minItems = <T>(
  * maxItems(5)([1, 2, 3]) // => Valid([1, 2, 3])
  * maxItems(2)([1, 2, 3]) // => Invalid(['Must have at most 2 items'])
  * ```
+ *
+ * Accepts a readonly array as well, and gives back the kind of array it was given.
  */
 export const maxItems = <T>(
   maxCount: number,
   errorMessage?: string
-): Validator<T[], T[], string> =>
-  fromPredicate((arr) => arr.length <= maxCount, errorMessage ?? `Must have at most ${maxCount} items`)
+): ArrayValidator<T, string> =>
+  arrayValidator((arr) => arr.length <= maxCount, errorMessage ?? `Must have at most ${maxCount} items`)
 
 // ============================================================================
 // Generic Validators

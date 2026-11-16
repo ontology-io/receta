@@ -39,6 +39,7 @@
 
 // Types
 export type { Validation, Valid, Invalid, Validator, ValidationSchema, FieldError } from './types'
+export type { ArrayValidator } from './validators'
 
 // Constructors
 export {
