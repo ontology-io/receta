@@ -164,7 +164,8 @@ export function capitalize(str: string, options?: CaseOptions): string {
 /**
  * Converts a string to Title Case.
  *
- * Capitalizes the first letter of each word. Words are separated by spaces.
+ * Capitalizes the first letter of each word and leaves the rest of the word as it is.
+ * Words are separated by whitespace, so a hyphen or an apostrophe doesn't start a new one.
  *
  * @param str - The string to convert
  * @param options - Case conversion options
@@ -180,11 +181,20 @@ export function capitalize(str: string, options?: CaseOptions): string {
  *
  * titleCase('user-profile-page')
  * // => 'User-profile-page' (only capitalizes after spaces)
+ *
+ * titleCase("maría doesn't mind")
+ * // => "María Doesn't Mind"
  * ```
  *
  * @see capitalize - to capitalize only the first character
  */
 export function titleCase(str: string, options?: CaseOptions): string {
   const locale = options?.locale
-  return str.replace(/\b[a-z]/g, (char) => char.toLocaleUpperCase(locale))
+
+  // \b sees a boundary after an apostrophe and after any non-ASCII letter, so match the
+  // letter that follows whitespace or starts the string instead.
+  return str.replace(
+    /(^|\s)(\p{L})/gu,
+    (_, before: string, letter: string) => before + letter.toLocaleUpperCase(locale)
+  )
 }

@@ -204,7 +204,28 @@ describe('String.titleCase', () => {
   })
 
   it('only capitalizes after spaces', () => {
-    expect(titleCase('hello-world')).toBe('Hello-World')
+    expect(titleCase('hello-world')).toBe('Hello-world')
+    expect(titleCase('user-profile-page')).toBe('User-profile-page')
+  })
+
+  it('leaves letters inside a word alone', () => {
+    expect(titleCase('maría josé')).toBe('María José')
+    expect(titleCase("don't stop")).toBe("Don't Stop")
+    expect(titleCase('HELLO wORLD')).toBe('HELLO WORLD')
+  })
+
+  it('capitalizes accented first letters', () => {
+    expect(titleCase('élan vital')).toBe('Élan Vital')
+    expect(titleCase('über uns')).toBe('Über Uns')
+  })
+
+  it('keeps the whitespace as it is', () => {
+    expect(titleCase('  two  spaces')).toBe('  Two  Spaces')
+    expect(titleCase('line\none\ttab')).toBe('Line\nOne\tTab')
+  })
+
+  it('skips a word that does not start with a letter', () => {
+    expect(titleCase('3d printing')).toBe('3d Printing')
   })
 
   it('handles single word', () => {
