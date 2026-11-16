@@ -572,6 +572,22 @@ describe('Number Conversions', () => {
 
     it('returns error for unknown unit', () => {
       expect(isErr(fromBytes('1ZB'))).toBe(true)
+      expect(isErr(fromBytes('1XiB'))).toBe(true)
+      expect(isErr(fromBytes('1iB'))).toBe(true)
+    })
+
+    it('parses the IEC units as powers of 1024', () => {
+      expect(fromBytes('1 KiB')).toEqual({ _tag: 'Ok', value: 1024 })
+      expect(fromBytes('1.5 MiB')).toEqual({ _tag: 'Ok', value: 1572864 })
+      expect(fromBytes('2GiB')).toEqual({ _tag: 'Ok', value: 2147483648 })
+      expect(fromBytes('1 TiB')).toEqual({ _tag: 'Ok', value: 1024 ** 4 })
+      expect(fromBytes('1 PiB')).toEqual({ _tag: 'Ok', value: 1024 ** 5 })
+      expect(fromBytes('1kib')).toEqual({ _tag: 'Ok', value: 1024 })
+    })
+
+    it('keeps the IEC units binary in decimal mode', () => {
+      expect(fromBytes('1 KiB', 'decimal')).toEqual({ _tag: 'Ok', value: 1024 })
+      expect(fromBytes('1 KB', 'decimal')).toEqual({ _tag: 'Ok', value: 1000 })
     })
 
     describe('roundtrip', () => {

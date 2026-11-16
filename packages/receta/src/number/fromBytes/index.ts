@@ -9,6 +9,9 @@ import type { ParseError, ByteUnit } from '../types'
  * Supports both binary (1024) and decimal (1000) bases.
  * Case-insensitive unit parsing.
  *
+ * The IEC units (KiB, MiB, GiB, TiB, PiB) are powers of 1024 by definition, so `base`
+ * only decides what KB, MB, GB, TB and PB mean.
+ *
  * @param input - The byte string to parse
  * @param base - Whether to use binary (1024) or decimal (1000) units
  * @returns Result containing the number of bytes or an error
@@ -20,6 +23,8 @@ import type { ParseError, ByteUnit } from '../types'
  * fromBytes("2GB") // => Ok(2147483648)
  * fromBytes("100 B") // => Ok(100)
  * fromBytes("1KB", 'decimal') // => Ok(1000)
+ * fromBytes("1 KiB") // => Ok(1024)
+ * fromBytes("1 KiB", 'decimal') // => Ok(1024)
  * fromBytes("invalid") // => Err({ code: 'PARSE_ERROR', ... })
  *
  * // Real-world: Parse file size limit
@@ -77,21 +82,13 @@ export function fromBytes(
     })
   }
 
-  const unit = unitStr.toUpperCase() as Uppercase<ByteUnit>
-  const divisor = base === 'binary' ? 1024 : 1000
+  // KiB, MiB… are always binary. KIB becomes KB so both spellings share one table.
+  const upper = unitStr.toUpperCase()
+  const isIec = /^[KMGTP]IB$/.test(upper)
+  const unit = isIec ? upper.replace('IB', 'B') : upper
+  const divisor = isIec || base === 'binary' ? 1024 : 1000
 
-  const multipliers: Record<string, number> = {
-    B: 1,
-    KB: divisor,
-    MB: divisor ** 2,
-    GB: divisor ** 3,
-    TB: divisor ** 4,
-    PB: divisor ** 5,
-  }
-
-  const multiplier = multipliers[unit]
-
-  if (multiplier === undefined) {
+  if (!Object.hasOwn(UNIT_EXPONENTS, unit)) {
     return err({
       code: 'PARSE_ERROR',
       message: `Unknown byte unit: "${unitStr}"`,
@@ -99,5 +96,14 @@ export function fromBytes(
     })
   }
 
-  return ok(num * multiplier)
+  return ok(num * divisor ** UNIT_EXPONENTS[unit as ByteUnit])
+}
+
+const UNIT_EXPONENTS: Readonly<Record<ByteUnit, number>> = {
+  B: 0,
+  KB: 1,
+  MB: 2,
+  GB: 3,
+  TB: 4,
+  PB: 5,
 }
