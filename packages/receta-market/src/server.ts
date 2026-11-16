@@ -144,8 +144,13 @@ export const createServer = ({ bundle, vectors, registry, caller }: ServerDeps):
         R.take(wanted),
       )
       const note = ranked[0]?.semantic === false ? '\n(Ranked by words only: the vector index was unavailable.)' : ''
+      // Say what the guard held back, so an agent knows candidates exist without seeing them.
+      const heldBack =
+        include_candidates !== true && registry !== undefined && (await registry.candidates(1)).length > 0
+          ? '\n\nunreviewed submissions left out; ask with include_candidates: true'
+          : ''
       return text(
-        `${R.join(best.map(({ hit, tally }, index) => describeHit(hit.asset, index, hit, tally)), '\n\n')}${note}`,
+        `${R.join(best.map(({ hit, tally }, index) => describeHit(hit.asset, index, hit, tally)), '\n\n')}${note}${heldBack}`,
       )
     },
   )

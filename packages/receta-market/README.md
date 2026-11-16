@@ -46,8 +46,12 @@ search or the embedded texts.
 
 ## Connect
 
-It lives at https://market.receta.dev: the registry page at `/`, MCP at `/mcp`. Installing
-the receta-skills plugin connects it, through the plugin's `.mcp.json`. By hand:
+It lives at https://market.receta.dev: MCP at `/mcp`, and pages for people at `/` (the
+market), `/c/<id>` (a submission), `/a/<category>/<name>` (an asset), `/category/<name>`
+and `/all`. The pages follow the "Market · …" frames in `design/receta-website.pen`; their
+fonts are copied from @fontsource into `public/fonts` by `scripts/bundle.ts` and served as
+static assets, so no visitor fetches anything from Google. Installing the receta-skills
+plugin connects the MCP server, through the plugin's `.mcp.json`. By hand:
 
 ```bash
 claude mcp add --transport http receta-assets https://market.receta.dev/mcp

@@ -18,6 +18,8 @@ export type Env = {
   readonly GITHUB_CLIENT_SECRET?: string
   /** Signs the session cookie of a person signed in with GitHub. */
   readonly SESSION_SECRET?: string
+  /** public/: the self-hosted fonts. Served before the Worker runs, except under BASE_PATH. */
+  readonly ASSETS?: Fetcher
 }
 
 /** 768 dimensions, cosine. The Vectorize index must be created with the same. */

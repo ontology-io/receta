@@ -327,7 +327,7 @@ export const marketContent = {
           "Reads the environment variables a program can't start without, and lists every one that is missing in a single error.",
       },
     ],
-    // The server doesn't print this line. It says what search leaves out unless asked.
+    // The server prints this when submissions are waiting: what search leaves out unless asked.
     guard: 'unreviewed submissions left out; ask with include_candidates: true',
   },
   connectLabel: 'Connect your agent',

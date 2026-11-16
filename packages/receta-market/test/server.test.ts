@@ -156,7 +156,10 @@ describe('offering a function', () => {
     const client = await connect(vectors, registry)
     await call(client, 'submit_asset', offer)
     const job = { job: 'mask an iban bank account number', limit: 20 }
-    expect(await call(client, 'search_assets', job)).not.toContain('candidate/')
+    expect(await call(client, 'search_assets', job)).not.toContain('UNREVIEWED')
+    expect(await call(client, 'search_assets', job)).toContain(
+      'unreviewed submissions left out; ask with include_candidates: true',
+    )
     const withCandidates = await call(client, 'search_assets', { ...job, include_candidates: true })
     expect(withCandidates).toMatch(/^1\. candidate\/\w+ {2}UNREVIEWED: text\/maskIban/m)
     const id = /candidate\/(\w+)/.exec(withCandidates)?.[1] ?? ''

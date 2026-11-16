@@ -2,19 +2,22 @@
 //
 //   /mcp                     agents, over MCP
 //   /  /c/<id>  /a/<key>     the registry pages: submissions, assets, votes
+//   /category/<name>  /all   browsing the catalog
+//   /fonts/*                 the pages' fonts, from public/ (static assets)
 //   /vote  /auth/*           voting, signed in with GitHub
 //   /api/candidates          the review list, most voted first, as JSON
 //   /api/submissions/<id>    one submission as JSON, read by receta-assets' intake
 //   /admin/*                 reindex, explain, decide; the ADMIN_TOKEN bearer only
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
+import { mapAsyncOrThrow } from '@ontologyio/receta/async'
 import * as R from 'remeda'
-import { findAsset } from '../../../plugins/receta-skills/skills/assets/scripts/core.ts'
+import { findAsset, search } from '../../../plugins/receta-skills/skills/assets/scripts/core.ts'
 import { type AuthConfig, callback, login, logout, type Person, personOf } from './auth'
 import { type BundledAsset, bundle, keyOf } from './bundle'
 import { listingOf } from './candidates'
 import { cloudflareVectors, type Env, reindex } from './cloudflare'
-import { assetPage, candidatePage, homePage, notFoundPage, type PageContext } from './pages'
-import { candidateKey, d1Registry, NO_TALLY, type Registry, type SubmissionStatus } from './registry'
+import { allPage, assetPage, candidatePage, categoryPage, homePage, notFoundPage, type PageContext } from './pages'
+import { candidateKey, d1Registry, NO_TALLY, type Registry, type SubmissionStatus, type Tally } from './registry'
 import { rawScores, type SearchQuery } from './search'
 import { type Caller, createServer } from './server'
 import { entriesFor } from './vectors'
@@ -124,25 +127,37 @@ const handleVote = async (request: Request, origin: string, base: string, regist
   return new Response(null, { status: 303, headers: { location: back } })
 }
 
+/** D1 binds at most 100 parameters to one statement, so tallies of a long list go in parts. */
+const talliesOf = async (registry: Registry, items: readonly string[]): Promise<ReadonlyMap<string, Tally>> => {
+  const parts = await mapAsyncOrThrow(R.chunk(items, 90), (part) => registry.tallies(part), { concurrency: 2 })
+  return new Map(R.flatMap(parts, (part) => [...part.entries()]))
+}
+
+const assetOf = (key: string): BundledAsset | undefined => findAsset(bundle.assets, key) as BundledAsset | undefined
+
+/** The unreviewed functions the review list waits on, at most this many deep. */
+const QUEUE_DEPTH = 1000
+
 const handlePage = async (path: string, context: PageContext, registry: Registry): Promise<Response> => {
   const voted = async (item: string): Promise<boolean> =>
     context.person !== undefined && (await registry.hasVoted(item, context.person.id))
   if (path === '/') {
     const candidates = await registry.candidates(50)
-    const popular = await registry.mostVoted(30)
-    const keys = [...R.map(candidates, (submission) => candidateKey(submission.id)), ...R.map(popular, ([item]) => item)]
-    const tallies = await registry.tallies(keys)
-    const assets = R.pipe(
-      popular,
-      R.map(([item]) => findAsset(bundle.assets, item) as BundledAsset | undefined),
-      R.filter((asset): asset is BundledAsset => asset !== undefined),
+    const popular = R.pipe(
+      await registry.mostVoted(30),
+      R.map(([item]) => assetOf(item)),
+      R.filter(R.isNonNullish),
+      R.take(10),
     )
-    return homePage(
-      context,
-      R.map(candidates, (submission) => [submission, tallies.get(candidateKey(submission.id)) ?? NO_TALLY] as const),
-      R.map(assets, (asset) => [asset, tallies.get(keyOf(asset)) ?? NO_TALLY] as const),
-      bundle.count,
-    )
+    const tallies = await talliesOf(registry, [
+      ...R.map(candidates, (submission) => candidateKey(submission.id)),
+      ...R.map(popular, keyOf),
+    ])
+    return homePage(context, {
+      categories: bundle.categories,
+      candidates: R.map(candidates, (submission) => [submission, tallies.get(candidateKey(submission.id)) ?? NO_TALLY] as const),
+      popular: R.map(popular, (asset) => [asset, tallies.get(keyOf(asset)) ?? NO_TALLY] as const),
+    })
   }
   const candidateId = /^\/c\/(\w+)$/.exec(path)?.[1]
   if (candidateId !== undefined) {
@@ -150,14 +165,47 @@ const handlePage = async (path: string, context: PageContext, registry: Registry
     if (submission === undefined) return notFoundPage(context)
     const item = candidateKey(submission.id)
     const tally = (await registry.tallies([item])).get(item) ?? NO_TALLY
-    return candidatePage(context, submission, tally, await voted(item))
+    // Its place in the review list: most voted first, then newest, as registry.candidates sorts.
+    const queue = submission.status === 'candidate' ? await registry.candidates(QUEUE_DEPTH) : []
+    const place = R.findIndex(queue, (waiting) => waiting.id === submission.id) + 1
+    const adaptedFrom = submission.adaptedFrom === '' ? undefined : assetOf(submission.adaptedFrom)
+    return candidatePage(context, {
+      submission,
+      tally,
+      voted: await voted(item),
+      ...(place > 0 ? { queue: { place, of: queue.length } } : {}),
+      ...(adaptedFrom === undefined ? {} : { adaptedFrom }),
+    })
   }
   const assetKey = /^\/a\/([a-z]+\/\w+)$/.exec(path)?.[1]
-  const asset = assetKey === undefined ? undefined : (findAsset(bundle.assets, assetKey) as BundledAsset | undefined)
+  const asset = assetKey === undefined ? undefined : assetOf(assetKey)
   if (asset !== undefined) {
-    const tally = (await registry.tallies([keyOf(asset)])).get(keyOf(asset)) ?? NO_TALLY
-    return assetPage(context, asset, tally, await voted(keyOf(asset)))
+    const key = keyOf(asset)
+    const tally = (await registry.tallies([key])).get(key) ?? NO_TALLY
+    const siblings = R.filter(bundle.assets, (other) => other.category === asset.category && keyOf(other) !== key)
+    const near = R.pipe(
+      search(siblings, `${asset.summary} ${R.join(asset.tags, ' ')}`, { limit: 3 }),
+      R.map((hit) => hit.asset as BundledAsset),
+    )
+    return assetPage(context, {
+      asset,
+      tally,
+      voted: await voted(key),
+      category: R.find(bundle.categories, (category) => category.name === asset.category),
+      near,
+    })
   }
+  const categoryName = /^\/category\/([a-z]+)$/.exec(path)?.[1]
+  const category = categoryName === undefined ? undefined : R.find(bundle.categories, (info) => info.name === categoryName)
+  if (category !== undefined) {
+    const assets = R.filter(bundle.assets, (other) => other.category === category.name)
+    const tallies = await talliesOf(registry, R.map(assets, keyOf))
+    return categoryPage(context, {
+      category,
+      assets: R.map(assets, (other) => [other, tallies.get(keyOf(other)) ?? NO_TALLY] as const),
+    })
+  }
+  if (path === '/all') return allPage(context, bundle.assets)
   return notFoundPage(context)
 }
 
@@ -193,6 +241,9 @@ export default {
     const auth = authConfig(env, url.origin)
 
     if (path === '/mcp') return handleMcp(request, env, registry, url.origin)
+    // On a domain of its own, static assets answer /fonts/* before the Worker runs; under a
+    // base path the request arrives here, and the Worker asks for the same file.
+    if (path.startsWith('/fonts/') && env.ASSETS !== undefined) return env.ASSETS.fetch(new URL(path, url.origin))
     if (path.startsWith('/admin/')) {
       if (request.method !== 'POST' || !isAdmin(request, env)) return new Response('Unauthorized', { status: 401 })
       return handleAdmin(path, request, env, registry)
@@ -204,6 +255,15 @@ export default {
     const person = auth === undefined ? undefined : await personOf(request, auth)
     if (path === '/vote' && request.method === 'POST') return handleVote(request, url.origin, base, registry, person)
     if (request.method !== 'GET') return new Response('Method not allowed', { status: 405 })
-    return handlePage(path, { basePath: base, mcpUrl: `${url.origin}${base}/mcp`, person, votingOpen: auth !== undefined, path: url.pathname }, registry)
+    const context: PageContext = {
+      basePath: base,
+      mcpUrl: `${url.origin}${base}/mcp`,
+      person,
+      votingOpen: auth !== undefined,
+      path: url.pathname,
+      assetCount: bundle.count,
+      now: new Date(),
+    }
+    return handlePage(path, context, registry)
   },
 } satisfies ExportedHandler<Env>

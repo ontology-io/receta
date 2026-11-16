@@ -27,7 +27,7 @@ const SESSION_SECONDS = 30 * 24 * 3600
 const base64url = (bytes: Uint8Array): string =>
   btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
-const fromBase64url = (text: string): Uint8Array =>
+const fromBase64url = (text: string): Uint8Array<ArrayBuffer> =>
   Uint8Array.from(atob(text.replace(/-/g, '+').replace(/_/g, '/')), (char) => char.charCodeAt(0))
 
 const hmacKey = (secret: string): Promise<CryptoKey> =>

@@ -26,5 +26,8 @@
       "migrations_dir": "migrations"
     }
   ],
+  // The self-hosted fonts the pages use, copied from @fontsource by scripts/bundle.ts. A
+  // request for a file there never reaches the Worker; under BASE_PATH the Worker asks ASSETS.
+  "assets": { "directory": "./public", "binding": "ASSETS" },
   "observability": { "enabled": true }
 }
