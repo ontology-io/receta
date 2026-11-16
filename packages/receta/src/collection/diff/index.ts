@@ -6,6 +6,10 @@ import type { DiffResult, Comparator } from '../types'
  *
  * Useful for syncing data, detecting changes, and implementing optimistic updates.
  *
+ * Each list keeps the order its items came in: `added`, `updated` and `unchanged` follow
+ * `newItems`, and `removed` follows `oldItems`. When a list repeats an id, its last item
+ * with that id is the one compared.
+ *
  * @param oldItems - The original collection
  * @param newItems - The updated collection
  * @param getId - Function to extract unique identifier
@@ -80,53 +84,32 @@ function diffImplementation<T, TId extends string | number>(
   const oldById = indexById(oldItems, getId)
   const newById = indexById(newItems, getId)
 
-  const oldIds = new Set(R.keys(oldById))
-  const newIds = new Set(R.keys(newById))
+  const [known, added] = R.partition([...newById], ([id]) => oldById.has(id))
+  const pairs = R.map(known, ([id, item]) => ({ old: oldById.get(id) as T, new: item }))
+  const [unchanged, updated] = R.partition(pairs, (pair) => isEqual(pair.old, pair.new))
 
-  const added: T[] = []
-  const updated: Array<{ old: T; new: T }> = []
-  const removed: T[] = []
-  const unchanged: T[] = []
-
-  // Find added and updated items
-  for (const id of newIds) {
-    const newItem = newById[id]
-    const oldItem = oldById[id]
-
-    if (!newItem) continue
-
-    if (!oldItem) {
-      added.push(newItem)
-    } else if (!isEqual(oldItem, newItem)) {
-      updated.push({ old: oldItem, new: newItem })
-    } else {
-      unchanged.push(newItem)
-    }
+  return {
+    added: R.map(added, ([, item]) => item),
+    updated,
+    removed: R.pipe(
+      [...oldById],
+      R.filter(([id]) => !newById.has(id)),
+      R.map(([, item]) => item)
+    ),
+    unchanged: R.map(unchanged, (pair) => pair.new),
   }
-
-  // Find removed items
-  for (const id of oldIds) {
-    if (!newIds.has(id)) {
-      const item = oldById[id]
-      if (item) removed.push(item)
-    }
-  }
-
-  return { added, updated, removed, unchanged }
 }
 
-/** Indexes on an object with no prototype, so an id such as __proto__ is ordinary data. */
+/**
+ * Indexes items by id. A Map keeps the order the items came in, which a plain object
+ * doesn't for ids that look like numbers, and it can hold any item, falsy ones included.
+ * Ids are compared as strings, so 1 and '1' are the same id.
+ */
 function indexById<T>(
   items: readonly T[],
   getId: (item: T) => string | number
-): Record<string | number, T | undefined> {
-  const index: Record<string | number, T | undefined> = Object.create(null)
-
-  for (const item of items) {
-    index[getId(item)] = item
-  }
-
-  return index
+): Map<string, T> {
+  return new Map(R.map(items, (item): [string, T] => [String(getId(item)), item]))
 }
 
 function defaultEqual<T>(a: T, b: T): boolean {

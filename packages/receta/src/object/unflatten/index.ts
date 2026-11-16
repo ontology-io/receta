@@ -48,8 +48,8 @@ const OPTION_TYPES = { separator: 'string' } as const
  *
  * @see flatten - for the reverse operation
  */
-export function unflatten(obj: FlatObject, options?: UnflattenOptions): PlainObject
-export function unflatten(options?: UnflattenOptions): (obj: FlatObject) => PlainObject
+export function unflatten(obj: object, options?: UnflattenOptions): PlainObject
+export function unflatten(options?: UnflattenOptions): (obj: object) => PlainObject
 export function unflatten(objOrOptions?: FlatObject | UnflattenOptions, maybeOptions?: UnflattenOptions): any {
   // Data-last: no arguments, or a lone argument made only of options
   if (maybeOptions === undefined && (objOrOptions === undefined || isOptionsObject(objOrOptions, OPTION_TYPES))) {

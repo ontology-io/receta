@@ -44,7 +44,7 @@ import { setOwnKey } from '../../utils/setOwnKey'
  *
  * @see compact - for removing both null and undefined
  */
-export function stripUndefined<T extends PlainObject>(obj: T): Partial<T> {
+export function stripUndefined<T extends object>(obj: T): Partial<T> {
   const result: Partial<T> = {}
 
   Object.entries(obj).forEach(([key, value]) => {

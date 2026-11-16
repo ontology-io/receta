@@ -1,4 +1,26 @@
+import * as R from 'remeda'
 import type { CaseOptions } from '../types'
+
+/**
+ * Splits a string into the words the case converters join back together.
+ *
+ * A word ends at a separator (space, hyphen, underscore), where a lower-case letter or a
+ * digit meets a capital (`firstName`, `utf8String`), and before the last capital of a run
+ * of capitals (`XMLHttp`).
+ */
+function caseWords(str: string): string[] {
+  return R.pipe(
+    str
+      .replace(/([\p{Ll}\p{N}])(\p{Lu})/gu, '$1 $2') // camelCase boundaries
+      .replace(/(\p{Lu}+)(\p{Lu}\p{Ll})/gu, '$1 $2') // UPPERCASE sequences
+      .split(/[\s_-]+/),
+    R.filter(R.isTruthy)
+  )
+}
+
+function capitalizeWord(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+}
 
 /**
  * Converts a string to kebab-case.
@@ -22,13 +44,7 @@ import type { CaseOptions } from '../types'
  * @see snakeCase - for snake_case conversion
  */
 export function kebabCase(str: string): string {
-  return str
-    .replace(/([a-z])([A-Z])/g, '$1-$2') // camelCase boundaries
-    .replace(/[\s_]+/g, '-') // spaces and underscores to hyphens
-    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2') // UPPERCASE sequences
-    .toLowerCase()
-    .replace(/-+/g, '-') // collapse consecutive hyphens
-    .replace(/^-+|-+$/g, '') // trim hyphens
+  return caseWords(str).join('-').toLowerCase()
 }
 
 /**
@@ -53,13 +69,7 @@ export function kebabCase(str: string): string {
  * @see camelCase - for camelCase conversion
  */
 export function snakeCase(str: string): string {
-  return str
-    .replace(/([a-z])([A-Z])/g, '$1_$2') // camelCase boundaries
-    .replace(/[\s-]+/g, '_') // spaces and hyphens to underscores
-    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2') // UPPERCASE sequences
-    .toLowerCase()
-    .replace(/_+/g, '_') // collapse consecutive underscores
-    .replace(/^_+|_+$/g, '') // trim underscores
+  return caseWords(str).join('_').toLowerCase()
 }
 
 /**
@@ -78,16 +88,22 @@ export function snakeCase(str: string): string {
  *
  * camelCase('API KEY VALUE')
  * // => 'apiKeyValue'
+ *
+ * // A string that already has capitals keeps its word boundaries
+ * camelCase('firstName')
+ * // => 'firstName'
+ *
+ * camelCase('XMLHttpRequest')
+ * // => 'xmlHttpRequest'
  * ```
  *
  * @see pascalCase - for PascalCase conversion
  * @see snakeCase - for snake_case conversion
  */
 export function camelCase(str: string): string {
-  return str
-    .toLowerCase()
-    .replace(/[-_\s]+(.)?/g, (_, char) => (char ? char.toUpperCase() : ''))
-    .replace(/^[A-Z]/, (char) => char.toLowerCase())
+  const [first = '', ...rest] = caseWords(str)
+
+  return first.toLowerCase() + R.map(rest, capitalizeWord).join('')
 }
 
 /**
@@ -106,16 +122,17 @@ export function camelCase(str: string): string {
  *
  * pascalCase('api key value')
  * // => 'ApiKeyValue'
+ *
+ * // A string that already has capitals keeps its word boundaries
+ * pascalCase('firstName')
+ * // => 'FirstName'
  * ```
  *
  * @see camelCase - for camelCase conversion
  * @see kebabCase - for kebab-case conversion
  */
 export function pascalCase(str: string): string {
-  return str
-    .toLowerCase()
-    .replace(/[-_\s]+(.)?/g, (_, char) => (char ? char.toUpperCase() : ''))
-    .replace(/^[a-z]/, (char) => char.toUpperCase())
+  return R.map(caseWords(str), capitalizeWord).join('')
 }
 
 /**
@@ -148,7 +165,8 @@ export function capitalize(str: string, options?: CaseOptions): string {
 /**
  * Converts a string to Title Case.
  *
- * Capitalizes the first letter of each word. Words are separated by spaces.
+ * Capitalizes the first letter of each word and leaves the rest of the word as it is.
+ * Words are separated by whitespace, so a hyphen or an apostrophe doesn't start a new one.
  *
  * @param str - The string to convert
  * @param options - Case conversion options
@@ -164,11 +182,20 @@ export function capitalize(str: string, options?: CaseOptions): string {
  *
  * titleCase('user-profile-page')
  * // => 'User-profile-page' (only capitalizes after spaces)
+ *
+ * titleCase("maría doesn't mind")
+ * // => "María Doesn't Mind"
  * ```
  *
  * @see capitalize - to capitalize only the first character
  */
 export function titleCase(str: string, options?: CaseOptions): string {
   const locale = options?.locale
-  return str.replace(/\b[a-z]/g, (char) => char.toLocaleUpperCase(locale))
+
+  // \b sees a boundary after an apostrophe and after any non-ASCII letter, so match the
+  // letter that follows whitespace or starts the string instead.
+  return str.replace(
+    /(^|\s)(\p{L})/gu,
+    (_, before: string, letter: string) => before + letter.toLocaleUpperCase(locale)
+  )
 }

@@ -35,7 +35,7 @@ import * as R from 'remeda'
  *   )
  * ```
  *
- * @see percentage - for calculating percentages
+ * @see percentage - for calculating one. Pass it `{ fraction: true }` to format the result here
  */
 export function toPercent(value: number, decimals: number): string
 export function toPercent(decimals?: number): (value: number) => string

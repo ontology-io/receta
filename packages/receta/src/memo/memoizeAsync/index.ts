@@ -45,9 +45,9 @@ import { lookup } from '../caches/lookup'
  * @see memoize - for synchronous functions
  * @see memoizeBy - for custom key extraction
  */
-export function memoizeAsync<Args extends readonly unknown[], R>(
+export function memoizeAsync<Args extends readonly unknown[], R, K = Args[0]>(
   fn: (...args: Args) => Promise<R>,
-  options: MemoizeOptions & { keyFn?: KeyFn<Args, unknown> } = {}
+  options: MemoizeOptions<K> & { keyFn?: KeyFn<Args, K> } = {}
 ): MemoizedAsyncFunction<Args, R> {
   const cache: Cache<unknown, Promise<R>> =
     (options.cache as Cache<unknown, Promise<R>>) ?? boundedCache(options)

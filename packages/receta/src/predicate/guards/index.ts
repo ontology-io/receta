@@ -209,6 +209,9 @@ export const isNullish: TypePredicate<unknown, null | undefined> = (
  *
  * Narrows out `null` and `undefined` from the type.
  *
+ * This is not Remeda's `isDefined`, which only rules out `undefined` and lets `null`
+ * through. It matches Remeda's `isNonNullish`.
+ *
  * @param value - The value to check
  * @returns True if value is not null or undefined
  *

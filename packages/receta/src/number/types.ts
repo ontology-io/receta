@@ -113,6 +113,18 @@ export interface CompactOptions {
 export type ByteUnit = 'B' | 'KB' | 'MB' | 'GB' | 'TB' | 'PB'
 
 /**
+ * Options for calculating a percentage.
+ */
+export interface PercentageOptions {
+  /**
+   * Return a fraction of 1 (`0.25`) instead of a number out of 100 (`25`).
+   * A fraction is what `toPercent` formats.
+   * @default false
+   */
+  readonly fraction?: boolean
+}
+
+/**
  * Options for byte formatting.
  */
 export interface ByteOptions {

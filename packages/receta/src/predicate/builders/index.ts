@@ -70,6 +70,10 @@ type SchemaFromContext<T> = [keyof T] extends [never]
  * // => [{ price: 10, category: 'electronics', inStock: true }]
  * ```
  *
+ * In a generic function, leave the type argument out or name the constraint:
+ * `where<{ active: boolean }>({ active: eq(true) })`. TypeScript can't check a schema
+ * against a type parameter, so `where<T>({ ... })` with an unresolved `T` is rejected.
+ *
  * @see oneOf - for checking if value is in a list
  * @see prop - for testing a single property
  */

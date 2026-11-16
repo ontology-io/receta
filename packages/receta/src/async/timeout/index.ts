@@ -20,6 +20,9 @@ export class TimeoutError extends Error {
  * is rethrown. The promise keeps running after a timeout, because timeout stops
  * waiting rather than cancelling the work.
  *
+ * The timer is cleared as soon as the promise settles, so a long limit on a fast
+ * operation doesn't keep the process alive.
+ *
  * @param promise - Promise to add timeout to
  * @param ms - Timeout in milliseconds
  * @returns Promise resolving to Result with value or TimeoutError
@@ -63,13 +66,14 @@ export async function timeout<T>(
   promise: Promise<T>,
   ms: number
 ): Promise<Result<T, TimeoutError>> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+
+  const expiry = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new TimeoutError(`Operation timed out after ${ms}ms`)), ms)
+  })
+
   try {
-    const value = await Promise.race([
-      promise,
-      new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new TimeoutError(`Operation timed out after ${ms}ms`)), ms)
-      }),
-    ])
+    const value = await Promise.race([promise, expiry])
     return ok(value)
   } catch (error) {
     if (error instanceof TimeoutError) {
@@ -77,5 +81,8 @@ export async function timeout<T>(
     }
     // Re-throw non-timeout errors (from the original promise)
     throw error
+  } finally {
+    // A timer left running keeps the process alive until `ms` has passed
+    clearTimeout(timer)
   }
 }

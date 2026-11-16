@@ -118,11 +118,32 @@ describe('Collection.paginate', () => {
         expect(result.hasMore).toBe(false)
       })
 
-      it('handles invalid cursor', () => {
+      it('returns an empty last page for a cursor that is not in the list', () => {
+        // It used to start again from the first page, which a caller sees as repeated items
         const result = paginateCursor(items, (item) => item.id, { cursor: 999, limit: 10 })
 
-        expect(result.items.length).toBe(10)
-        expect(result.items[0]?.id).toBe(1) // Falls back to beginning
+        expect(result).toEqual({ items: [], nextCursor: undefined, hasMore: false })
+      })
+
+      it('ends a paging loop whose cursor was deleted', () => {
+        const pageSize = 10
+        const first = paginateCursor(items, (item) => item.id, { limit: pageSize })
+        const withoutCursorItem = items.filter((item) => item.id !== first.nextCursor)
+
+        const next = paginateCursor(withoutCursorItem, (item) => item.id, {
+          cursor: first.nextCursor,
+          limit: pageSize,
+        })
+
+        expect(next.items).toEqual([])
+        expect(next.hasMore).toBe(false)
+      })
+
+      it('starts from the first page when there is no cursor', () => {
+        const result = paginateCursor(items, (item) => item.id, { cursor: undefined, limit: 10 })
+
+        expect(result.items[0]?.id).toBe(1)
+        expect(result.hasMore).toBe(true)
       })
 
       it('handles empty array', () => {

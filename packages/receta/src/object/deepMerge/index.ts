@@ -14,6 +14,10 @@ import { setOwnKey } from '../../utils/setOwnKey'
  * Recursively merges objects, with later objects taking precedence over earlier ones.
  * Arrays and nested objects can be merged according to specified strategies.
  *
+ * A key that is present with the value `undefined` counts as a value: it overwrites what
+ * came before, the way object spread does. To let the earlier value through instead, run
+ * the later objects through `stripUndefined` first.
+ *
  * @param objects - Array of objects to merge
  * @param options - Merge options (arrayStrategy, customMerge)
  * @returns A new deeply merged object
@@ -25,6 +29,13 @@ import { setOwnKey } from '../../utils/setOwnKey'
  * const config = { features: { export: true } }
  * deepMerge([defaults, config])
  * // => { theme: 'light', features: { search: true, export: true } }
+ *
+ * // An explicit undefined overwrites. Strip it first to keep the default
+ * deepMerge([{ retries: 3 }, { retries: undefined }])
+ * // => { retries: undefined }
+ *
+ * deepMerge([{ retries: 3 }, stripUndefined({ retries: undefined })])
+ * // => { retries: 3 }
  *
  * // Array replace strategy (default)
  * deepMerge([
@@ -55,12 +66,13 @@ import { setOwnKey } from '../../utils/setOwnKey'
  * )
  * ```
  *
+ * @see stripUndefined - to drop undefined values before merging
  * @see Remeda.merge - for shallow merge
  * @see Remeda.mergeDeep - for basic deep merge
  */
-export function deepMerge(objects: readonly PlainObject[], options?: DeepMergeOptions): PlainObject
-export function deepMerge(options?: DeepMergeOptions): (objects: readonly PlainObject[]) => PlainObject
-export function deepMerge(objectsOrOptions?: readonly PlainObject[] | DeepMergeOptions, maybeOptions?: DeepMergeOptions): any {
+export function deepMerge(objects: readonly object[], options?: DeepMergeOptions): PlainObject
+export function deepMerge(options?: DeepMergeOptions): (objects: readonly object[]) => PlainObject
+export function deepMerge(objectsOrOptions?: readonly object[] | DeepMergeOptions, maybeOptions?: DeepMergeOptions): any {
   // Data-last: only an array is data, so a lone anything else is the options
   if (maybeOptions === undefined && !Array.isArray(objectsOrOptions)) {
     return (objects: readonly PlainObject[]) =>

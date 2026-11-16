@@ -71,9 +71,11 @@ jobs:
         working-directory: website
         run: bun run test
 
+      # The reference is generated from this commit's JSDoc, so its examples are checked against
+      # this commit's build of the library. The copy on npm can't know about a fix made here.
       - name: Check docs examples
         working-directory: website
-        run: bun run check:examples
+        run: bun run check:examples:workspace
 
       - name: Check docs links
         working-directory: website

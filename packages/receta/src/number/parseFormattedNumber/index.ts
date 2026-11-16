@@ -7,13 +7,23 @@ import type { ParseError } from '../types'
  * into a number.
  *
  * Handles:
- * - Thousands separators (commas, spaces, periods)
- * - Currency symbols ($ , £, €, etc.)
+ * - Thousands separators (commas, periods, spaces, apostrophes)
+ * - Currency symbols ($ , £, €, etc.) and codes (USD, EUR), before or after the number
  * - Parentheses for negative numbers (accounting format)
- * - Decimal points
+ * - Decimal points and decimal commas
  * - Negative signs
  *
- * Returns Ok with the parsed number, or Err with ParseError if parsing fails.
+ * How the separators are read:
+ * - With both a comma and a period, the one written last is the decimal separator:
+ *   `"1,234.56"` and `"1.234,56"` are both 1234.56
+ * - A separator that appears more than once groups thousands: `"1,234,567"`, `"1.234.567"`
+ * - A lone comma followed by exactly three digits groups thousands (`"1,234"` is 1234).
+ *   Any other lone comma is a decimal comma: `"1,5"` is 1.5 and `"12,50"` is 12.5
+ * - A lone period is always the decimal point: `"1.234"` is 1.234
+ *
+ * Returns Ok with the parsed number, or Err with ParseError if parsing fails. What is left
+ * after the separators and the currency are removed has to be a plain, finite decimal
+ * number, so `"Infinity"`, `"0x10"` and a bare `"$"` are errors.
  *
  * @param input - The formatted string to parse
  * @returns Result containing the parsed number or an error
@@ -24,6 +34,11 @@ import type { ParseError } from '../types'
  * parseFormattedNumber("1,234.56") // => Ok(1234.56)
  * parseFormattedNumber("1 234.56") // => Ok(1234.56)
  * parseFormattedNumber("1.234,56") // => Ok(1234.56) - European format
+ *
+ * // A lone comma
+ * parseFormattedNumber("1,234") // => Ok(1234)
+ * parseFormattedNumber("1,5") // => Ok(1.5)
+ * parseFormattedNumber("12,50 €") // => Ok(12.5)
  *
  * // Currency symbols
  * parseFormattedNumber("$1,234.56") // => Ok(1234.56)
@@ -71,38 +86,32 @@ export function parseFormattedNumber(
 
   // Check for accounting format (parentheses for negative)
   const isNegative = trimmed.startsWith('(') && trimmed.endsWith(')')
-  let workingString = isNegative ? trimmed.slice(1, -1) : trimmed
+  const unwrapped = isNegative ? trimmed.slice(1, -1) : trimmed
 
-  // Remove currency symbols and text
-  // Common currency symbols: $ £ € ¥ ¢ ₹ ₽ etc.
-  workingString = workingString.replace(/[A-Z]{3,}/g, '') // Remove currency codes (USD, EUR, etc.)
-  workingString = workingString.replace(/[$£€¥¢₹₽₩₪₦₨₱฿₴₡₵₲₸₮₴]/g, '')
+  // Remove what only decorates the number: currency codes (USD, EUR), currency symbols,
+  // and the spaces and apostrophes some locales group thousands with
+  const digits = unwrapped
+    .replace(/[A-Z]{3,}/g, '')
+    .replace(/[$£€¥¢₹₽₩₪₦₨₱฿₴₡₵₲₸₮]/g, '')
+    .replace(/[\s'’]/g, '')
 
-  // Detect decimal separator
-  // If there's a comma followed by exactly 2 digits at the end, it's likely the decimal separator (European format)
-  const europeanDecimalMatch = workingString.match(/,\d{2}$/)
-  const usesCommaAsDecimal = europeanDecimalMatch !== null
+  const normalized = withDecimalPoint(digits)
 
-  if (usesCommaAsDecimal) {
-    // European format: 1.234,56
-    // Remove periods (thousands separators) and replace comma with period
-    workingString = workingString.replace(/\./g, '').replace(',', '.')
-  } else {
-    // US format: 1,234.56
-    // Remove commas and spaces (thousands separators)
-    workingString = workingString.replace(/[, ]/g, '')
-  }
-
-  // Remove any remaining whitespace
-  workingString = workingString.trim()
-
-  // Parse the cleaned string
-  const parsed = Number(workingString)
-
-  if (Number.isNaN(parsed)) {
+  // Number() also reads '', '0x10' and 'Infinity', none of which is a formatted number
+  if (!PLAIN_DECIMAL.test(normalized)) {
     return err({
       code: 'PARSE_ERROR',
       message: `Cannot parse "${input}" as a number`,
+      input,
+    })
+  }
+
+  const parsed = Number(normalized)
+
+  if (!Number.isFinite(parsed)) {
+    return err({
+      code: 'PARSE_ERROR',
+      message: `Cannot parse "${input}" as a finite number`,
       input,
     })
   }
@@ -111,4 +120,38 @@ export function parseFormattedNumber(
   const result = isNegative ? -Math.abs(parsed) : parsed
 
   return ok(result)
+}
+
+const PLAIN_DECIMAL = /^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i
+
+// One comma, a group of one to three digits before it and exactly three after: 1,234
+const LONE_THOUSANDS_COMMA = /^[+-]?[1-9]\d{0,2},\d{3}$/
+
+/**
+ * Rewrites the separators so that the only one left is a decimal point.
+ */
+function withDecimalPoint(digits: string): string {
+  const commas = digits.split(',').length - 1
+  const periods = digits.split('.').length - 1
+
+  if (commas > 0 && periods > 0) {
+    // The separator written last is the decimal one: 1,234.56 or 1.234,56
+    return digits.lastIndexOf(',') > digits.lastIndexOf('.')
+      ? digits.replaceAll('.', '').replaceAll(',', '.')
+      : digits.replaceAll(',', '')
+  }
+
+  if (commas > 1) {
+    return digits.replaceAll(',', '')
+  }
+
+  if (periods > 1) {
+    return digits.replaceAll('.', '')
+  }
+
+  if (commas === 1) {
+    return LONE_THOUSANDS_COMMA.test(digits) ? digits.replace(',', '') : digits.replace(',', '.')
+  }
+
+  return digits
 }

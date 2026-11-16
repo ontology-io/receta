@@ -168,8 +168,8 @@ function isEmpty(value: unknown, options: Required<StripEmptyOptions>): boolean 
  * @see compact - for removing only null/undefined (keeps empty strings/arrays)
  * @see stripUndefined - for removing only undefined values
  */
-export function stripEmpty(obj: PlainObject, options?: StripEmptyOptions): PlainObject
-export function stripEmpty(options?: StripEmptyOptions): (obj: PlainObject) => PlainObject
+export function stripEmpty(obj: object, options?: StripEmptyOptions): PlainObject
+export function stripEmpty(options?: StripEmptyOptions): (obj: object) => PlainObject
 export function stripEmpty(objOrOptions?: PlainObject | StripEmptyOptions, maybeOptions?: StripEmptyOptions): any {
   // Data-last: no arguments, or a lone argument made only of options
   if (maybeOptions === undefined && (objOrOptions === undefined || isOptionsObject(objOrOptions, OPTION_TYPES))) {

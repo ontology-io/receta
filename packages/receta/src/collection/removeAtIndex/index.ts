@@ -6,8 +6,12 @@ import * as R from 'remeda'
  * Creates a new array with the element at the specified index removed. More ergonomic
  * than `splice` for single-element removal. Built on top of Remeda's `splice` for consistency.
  *
+ * The index counts from the start only. A negative index is out of range, so the -1 that
+ * `findIndex` returns for "not found" removes nothing. For the last element, pass
+ * `items.length - 1`.
+ *
  * @param items - The array to modify
- * @param index - Position to remove
+ * @param index - Position to remove, from 0
  * @returns New array with element removed, or original array if index is out of bounds
  *
  * @example
@@ -24,13 +28,13 @@ import * as R from 'remeda'
  * removeAtIndex([1, 2, 3], 2)
  * // => [1, 2]
  *
- * // Negative index (from end)
- * removeAtIndex(['a', 'b', 'c', 'd'], -1)
- * // => ['a', 'b', 'c']
- *
  * // Out of bounds returns original array
  * removeAtIndex([1, 2, 3], 10)
  * // => [1, 2, 3]
+ *
+ * // So does a negative index, which is what findIndex gives when nothing matches
+ * removeAtIndex(['a', 'b', 'c', 'd'], -1)
+ * // => ['a', 'b', 'c', 'd']
  *
  * // Remove todo item
  * interface Todo {
@@ -61,7 +65,7 @@ import * as R from 'remeda'
  * pipe(
  *   [1, 2, 3, 4, 5],
  *   removeAtIndex(0),  // [2, 3, 4, 5]
- *   removeAtIndex(-1)  // [2, 3, 4]
+ *   removeAtIndex(3)   // [2, 3, 4]
  * )
  * // => [2, 3, 4]
  * ```
@@ -85,16 +89,12 @@ function removeAtIndexImplementation<T>(
   items: readonly T[],
   index: number
 ): readonly T[] {
-  const length = items.length
-
-  // Normalize negative index
-  const normalizedIndex = index < 0 ? length + index : index
-
-  // Return original array if index is out of bounds
-  if (normalizedIndex < 0 || normalizedIndex >= length) {
+  // Return original array if index is out of bounds. A negative index is out of bounds too:
+  // counting it from the end would make a failed findIndex (-1) remove the last element.
+  if (index < 0 || index >= items.length) {
     return items
   }
 
   // Use Remeda's splice: splice(array, start, deleteCount, items)
-  return R.splice(items, normalizedIndex, 1, [])
+  return R.splice(items, index, 1, [])
 }

@@ -263,6 +263,22 @@ describe('Number Formatting', () => {
         expect(toOrdinal(1.9)).toBe('1st')
         expect(toOrdinal(2.1)).toBe('2nd')
       })
+
+      it('picks the suffix of a negative number from its digits', () => {
+        expect(toOrdinal(-1)).toBe('-1st')
+        expect(toOrdinal(-2)).toBe('-2nd')
+        expect(toOrdinal(-3)).toBe('-3rd')
+        expect(toOrdinal(-4)).toBe('-4th')
+        expect(toOrdinal(-11)).toBe('-11th')
+        expect(toOrdinal(-12)).toBe('-12th')
+        expect(toOrdinal(-13)).toBe('-13th')
+        expect(toOrdinal(-21)).toBe('-21st')
+        expect(toOrdinal(-112)).toBe('-112th')
+      })
+
+      it('handles zero', () => {
+        expect(toOrdinal(0)).toBe('0th')
+      })
     })
 
     describe('data-last', () => {

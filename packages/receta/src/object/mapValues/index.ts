@@ -42,13 +42,13 @@ import type { PlainObject } from '../types'
  * @see mapKeys - for transforming keys instead of values
  * @see Remeda.mapValues - original implementation
  */
-export function mapValues<T extends PlainObject, U>(
+export function mapValues<T extends object, U>(
   obj: T,
   fn: (value: T[keyof T], key: keyof T) => U
 ): Record<keyof T, U>
 export function mapValues<U>(
   fn: (value: any, key: string) => U
-): <T extends PlainObject>(obj: T) => Record<keyof T, U>
+): <T extends object>(obj: T) => Record<keyof T, U>
 export function mapValues(...args: unknown[]): unknown {
   return R.purry(mapValuesImplementation, args)
 }

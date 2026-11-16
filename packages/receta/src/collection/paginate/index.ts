@@ -77,6 +77,9 @@ function paginateImplementation<T>(
  * More efficient than offset pagination for large datasets and real-time data.
  * Prevents issues with missing/duplicate items during pagination.
  *
+ * A cursor that isn't in the list, for example because its item was deleted, gives an
+ * empty page with `hasMore: false`. Leave the cursor out to start from the first page.
+ *
  * @param items - The array to paginate
  * @param getCursor - Function to extract cursor from item
  * @param config - Cursor pagination configuration
@@ -96,6 +99,10 @@ function paginateImplementation<T>(
  *
  * // Continue from cursor
  * paginateCursor(messages, (m) => m.id, { cursor: 'msg_10', limit: 10 })
+ *
+ * // A cursor that is no longer in the list ends the paging
+ * paginateCursor(messages, (m) => m.id, { cursor: 'msg_deleted', limit: 10 })
+ * // => { items: [], nextCursor: undefined, hasMore: false }
  *
  * // Data-last (in pipe)
  * pipe(
@@ -126,15 +133,17 @@ function paginateCursorImplementation<T, TCursor>(
 ): CursorPaginatedResult<T, TCursor> {
   const { cursor, limit } = config
 
-  let startIndex = 0
-  if (cursor !== undefined) {
-    startIndex = items.findIndex((item) => getCursor(item) === cursor)
-    if (startIndex === -1) {
-      startIndex = 0
-    } else {
-      startIndex += 1 // Start after the cursor
-    }
+  const cursorIndex =
+    cursor === undefined ? -1 : R.findIndex(items, (item) => getCursor(item) === cursor)
+
+  // The cursor names an item that isn't here any more. Starting over would hand the caller
+  // the first page again, so this is the end of the list for them.
+  if (cursor !== undefined && cursorIndex === -1) {
+    return { items: [], nextCursor: undefined, hasMore: false }
   }
+
+  // Start after the cursor, or at the beginning when there is none
+  const startIndex = cursorIndex + 1
 
   const pageItems = R.pipe(items, R.drop(startIndex), R.take(limit))
   const endIndex = startIndex + pageItems.length

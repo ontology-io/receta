@@ -48,13 +48,13 @@ import type { PlainObject } from '../types'
  * @see rename - for selective key renaming with a mapping object
  * @see Remeda.mapKeys - this wraps Remeda's mapKeys for consistency
  */
-export function mapKeys<T extends PlainObject>(
+export function mapKeys<T extends object>(
   obj: T,
   fn: (key: string, value: T[keyof T]) => string
 ): PlainObject
 export function mapKeys(
   fn: (key: string, value: any) => string
-): <T extends PlainObject>(obj: T) => PlainObject
+): <T extends object>(obj: T) => PlainObject
 export function mapKeys(...args: unknown[]): unknown {
   return R.purry(mapKeysImplementation, args)
 }

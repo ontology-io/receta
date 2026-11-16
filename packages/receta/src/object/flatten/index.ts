@@ -49,8 +49,8 @@ const OPTION_TYPES = { separator: 'string', maxDepth: 'number', flattenArrays: '
  *
  * @see unflatten - for reversing the flattening
  */
-export function flatten(obj: PlainObject, options?: FlattenOptions): FlatObject
-export function flatten(options?: FlattenOptions): (obj: PlainObject) => FlatObject
+export function flatten(obj: object, options?: FlattenOptions): FlatObject
+export function flatten(options?: FlattenOptions): (obj: object) => FlatObject
 export function flatten(objOrOptions?: PlainObject | FlattenOptions, maybeOptions?: FlattenOptions): any {
   // Data-last: no arguments, or a lone argument made only of options
   if (maybeOptions === undefined && (objOrOptions === undefined || isOptionsObject(objOrOptions, OPTION_TYPES))) {

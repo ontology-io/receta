@@ -7,7 +7,7 @@
 import * as R from 'remeda'
 import type { Result } from '../../result/types'
 import { ok, err } from '../../result/constructors'
-import type { PlainObject, ObjectError } from '../types'
+import type { ObjectPath, PlainObject, ObjectError } from '../types'
 
 /**
  * Predicate function for validation.
@@ -17,7 +17,7 @@ type Validator<T> = (value: unknown) => value is T
 /**
  * Schema for object validation.
  */
-export type ObjectSchema<T extends PlainObject> = {
+export type ObjectSchema<T extends object> = {
   readonly [K in keyof T]: Validator<T[K]> | ObjectSchema<any>
 }
 
@@ -53,6 +53,14 @@ export type ObjectSchema<T extends PlainObject> = {
  * validateShape(invalid, userSchema)
  * // => Err({ code: 'VALIDATION_ERROR', message: 'Validation failed for key "id"', path: ['id'] })
  *
+ * // A nested schema: the message and the path both name the whole way down
+ * validateShape({ user: { address: { zip: 12345 } } }, { user: { address: { zip: isString } } })
+ * // => Err({
+ * //   code: 'VALIDATION_ERROR',
+ * //   message: 'Validation failed for key "user.address.zip"',
+ * //   path: ['user', 'address', 'zip']
+ * // })
+ *
  * // Data-last (in pipe)
  * pipe(
  *   apiResponse,
@@ -73,11 +81,11 @@ export type ObjectSchema<T extends PlainObject> = {
  *
  * @see Validation module - for more complex validation with error accumulation
  */
-export function validateShape<T extends PlainObject>(
+export function validateShape<T extends object>(
   obj: unknown,
   schema: ObjectSchema<T>
 ): Result<T, ObjectError>
-export function validateShape<T extends PlainObject>(
+export function validateShape<T extends object>(
   schema: ObjectSchema<T>
 ): (obj: unknown) => Result<T, ObjectError>
 export function validateShape(...args: unknown[]): unknown {
@@ -88,12 +96,24 @@ function validateShapeImplementation<T extends PlainObject>(
   obj: unknown,
   schema: ObjectSchema<T>
 ): Result<T, ObjectError> {
+  return validateAt(obj, schema, [])
+}
+
+/**
+ * Validates `obj` against `schema`. `path` is where `obj` sits in the value the caller
+ * passed, so an error deep in a nested schema can name the whole way down.
+ */
+function validateAt<T extends PlainObject>(
+  obj: unknown,
+  schema: ObjectSchema<T>,
+  path: ObjectPath
+): Result<T, ObjectError> {
   // Check if obj is a plain object
   if (!R.isPlainObject(obj)) {
     return err({
       code: 'VALIDATION_ERROR',
-      message: 'Expected a plain object',
-      path: [],
+      message: path.length === 0 ? 'Expected a plain object' : `Expected a plain object at "${path.join('.')}"`,
+      path,
     })
   }
 
@@ -102,24 +122,22 @@ function validateShapeImplementation<T extends PlainObject>(
   // Validate each field in schema
   for (const [key, validator] of Object.entries(schema)) {
     const value = typedObj[key]
+    const keyPath = [...path, key]
 
     // Check if validator is a function (predicate) or nested schema
     if (typeof validator === 'function') {
       if (!validator(value)) {
         return err({
           code: 'VALIDATION_ERROR',
-          message: `Validation failed for key "${key}"`,
-          path: [key],
+          message: `Validation failed for key "${keyPath.join('.')}"`,
+          path: keyPath,
         })
       }
     } else if (typeof validator === 'object' && validator !== null) {
       // Nested schema validation
-      const nestedResult = validateShapeImplementation(value, validator)
+      const nestedResult = validateAt(value, validator, keyPath)
       if (nestedResult._tag === 'Err') {
-        return err({
-          ...nestedResult.error,
-          path: [key, ...(nestedResult.error.path ?? [])],
-        })
+        return nestedResult
       }
     }
   }

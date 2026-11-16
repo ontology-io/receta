@@ -33,7 +33,7 @@ import { lookup } from '../caches/lookup'
  */
 export function memoize<Args extends readonly [unknown, ...unknown[]], R>(
   fn: (...args: Args) => R,
-  options: MemoizeOptions = {}
+  options: MemoizeOptions<Args[0]> = {}
 ): MemoizedFunction<Args, R> {
   const cache: Cache<unknown, R> = (options.cache as Cache<unknown, R>) ?? boundedCache(options)
 

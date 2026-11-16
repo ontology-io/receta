@@ -227,6 +227,8 @@ export interface FlattenedItem<T> {
  * ```
  */
 export interface WindowSlidingConfig {
+  /** How many items each window holds. Zero or less gives no windows. */
   readonly size: number
+  /** How far the window moves each time (default: 1). Zero or less gives no windows. */
   readonly step?: number
 }

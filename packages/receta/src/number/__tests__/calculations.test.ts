@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test'
-import { sum, average, round, roundTo, percentage, ratio } from '../index'
+import { sum, average, round, roundTo, percentage, ratio, toPercent } from '../index'
 import * as R from 'remeda'
 import { isSome, isNone, unwrapOr } from '../../option'
 
@@ -125,9 +125,46 @@ describe('Number Calculations', () => {
       })
 
       it('handles negative numbers', () => {
-        expect(round(-1.5, 0)).toBe(-1)
+        expect(round(-1.4, 0)).toBe(-1)
         expect(round(-1.6, 0)).toBe(-2)
         expect(round(-1.234, 2)).toBe(-1.23)
+      })
+
+      it('rounds a half away from zero, as documented', () => {
+        expect(round(2.5, 0)).toBe(3)
+        expect(round(-2.5, 0)).toBe(-3)
+        expect(round(-1.5, 0)).toBe(-2)
+        expect(round(-56.25, 1)).toBe(-56.3)
+        expect(round(150, -2)).toBe(200)
+        expect(round(-150, -2)).toBe(-200)
+      })
+
+      it('rounds the decimal that was written, not its binary neighbour', () => {
+        // 1.005 is stored as 1.00499999999999989…, so multiplying by 100 gives 100.49999999999999
+        expect(round(1.005, 2)).toBe(1.01)
+        expect(round(-1.005, 2)).toBe(-1.01)
+        expect(round(1.255, 2)).toBe(1.26)
+        expect(round(8.345, 2)).toBe(8.35)
+        expect(round(1.45, 1)).toBe(1.5)
+        expect(round(1.0049999999, 2)).toBe(1)
+      })
+
+      it('handles numbers written with an exponent', () => {
+        expect(round(1e21, 2)).toBe(1e21)
+        expect(round(5e-7, 6)).toBe(0.000001)
+        expect(round(1.5e-7, 7)).toBe(2e-7)
+        expect(round(0.1 + 0.2, 10)).toBe(0.3)
+      })
+
+      it('returns NaN and the infinities as they are', () => {
+        expect(round(NaN, 2)).toBeNaN()
+        expect(round(Infinity, 2)).toBe(Infinity)
+        expect(round(-Infinity, 2)).toBe(-Infinity)
+      })
+
+      it('never returns negative zero', () => {
+        expect(Object.is(round(-0.4, 0), 0)).toBe(true)
+        expect(Object.is(round(-0.001, 2), 0)).toBe(true)
       })
 
       it('handles zero', () => {
@@ -176,9 +213,38 @@ describe('Number Calculations', () => {
       })
 
       it('rounds to decimal step', () => {
-        expect(roundTo(1.234, 0.1)).toBeCloseTo(1.2)
-        expect(roundTo(1.266, 0.1)).toBeCloseTo(1.3)
-        expect(roundTo(1.25, 0.1)).toBeCloseTo(1.3)
+        expect(roundTo(1.234, 0.1)).toBe(1.2)
+        expect(roundTo(1.266, 0.1)).toBe(1.3)
+        expect(roundTo(1.25, 0.1)).toBe(1.3)
+      })
+
+      it('returns an exact multiple of the step, with no float noise', () => {
+        // Math.round(1.15 / 0.05) * 0.05 is 1.1500000000000001
+        expect(roundTo(1.15, 0.05)).toBe(1.15)
+        expect(roundTo(-1.15, 0.05)).toBe(-1.15)
+        expect(roundTo(0.3, 0.1)).toBe(0.3)
+        expect(roundTo(10000000000.3, 0.1)).toBe(10000000000.3)
+        expect(roundTo(123.456, 0.01)).toBe(123.46)
+        expect(roundTo(0.1 + 0.2, 0.1)).toBe(0.3)
+      })
+
+      it('rounds a half away from zero, like round', () => {
+        expect(roundTo(2.5, 1)).toBe(3)
+        expect(roundTo(-2.5, 1)).toBe(-3)
+        expect(roundTo(1.005, 0.01)).toBe(1.01)
+        expect(roundTo(0.125, 0.25)).toBe(0.25)
+        expect(roundTo(-0.125, 0.25)).toBe(-0.25)
+      })
+
+      it('handles tiny and huge steps', () => {
+        expect(roundTo(0.00000012, 0.0000001)).toBe(0.0000001)
+        expect(roundTo(1234567, 1000)).toBe(1235000)
+        expect(roundTo(3, 1e21)).toBe(0)
+      })
+
+      it('returns NaN and the infinities as they are', () => {
+        expect(roundTo(NaN, 0.5)).toBeNaN()
+        expect(roundTo(Infinity, 0.5)).toBe(Infinity)
       })
 
       it('handles step of 1', () => {
@@ -243,10 +309,11 @@ describe('Number Calculations', () => {
 
   describe('percentage', () => {
     describe('data-first', () => {
-      it('calculates percentage as decimal', () => {
-        expect(percentage(25, 100)).toBe(0.25)
-        expect(percentage(1, 4)).toBe(0.25)
-        expect(percentage(50, 100)).toBe(0.5)
+      it('returns a number out of 100', () => {
+        expect(percentage(25, 100)).toBe(25)
+        expect(percentage(1, 4)).toBe(25)
+        expect(percentage(50, 100)).toBe(50)
+        expect(percentage(29, 100)).toBe(29)
       })
 
       it('returns 0 for division by zero', () => {
@@ -254,34 +321,81 @@ describe('Number Calculations', () => {
       })
 
       it('handles values greater than total', () => {
-        expect(percentage(150, 100)).toBe(1.5)
+        expect(percentage(150, 100)).toBe(150)
+      })
+
+      it('adds no float noise when it scales to 100', () => {
+        // (29 / 100) * 100 is 28.999999999999996, and 0.57 * 100 is 56.99999999999999
+        expect(percentage(29, 100)).toBe(29)
+        expect(percentage(0.57, 1)).toBe(57)
+        expect(percentage(0.07, 1)).toBe(7)
+        expect(percentage(1.5, 10)).toBe(15)
+      })
+
+      it('keeps the decimals a percentage really has', () => {
+        expect(percentage(1, 8)).toBe(12.5)
+        expect(percentage(1, 3)).toBeCloseTo(33.3333, 4)
       })
 
       it('handles negative values', () => {
-        expect(percentage(-25, 100)).toBe(-0.25)
-        expect(percentage(25, -100)).toBe(-0.25)
+        expect(percentage(-25, 100)).toBe(-25)
+        expect(percentage(25, -100)).toBe(-25)
       })
 
-      it('handles decimals', () => {
-        expect(percentage(1.5, 10)).toBeCloseTo(0.15)
+      it('passes NaN and the infinities through', () => {
+        expect(percentage(Number.NaN, 100)).toBeNaN()
+        expect(percentage(Infinity, 100)).toBe(Infinity)
+      })
+
+      it('does not overflow for a value at the top of the number range', () => {
+        expect(percentage(Number.MAX_VALUE, Number.MAX_VALUE)).toBe(100)
+      })
+    })
+
+    describe('as a fraction', () => {
+      it('returns a number out of 1 with fraction: true', () => {
+        expect(percentage(25, 100, { fraction: true })).toBe(0.25)
+        expect(percentage(29, 100, { fraction: true })).toBe(0.29)
+        expect(percentage(150, 100, { fraction: true })).toBe(1.5)
+        expect(percentage(-25, 100, { fraction: true })).toBe(-0.25)
+      })
+
+      it('returns 0 for division by zero', () => {
+        expect(percentage(10, 0, { fraction: true })).toBe(0)
+      })
+
+      it('is the number toPercent formats', () => {
+        expect(toPercent(percentage(1, 4, { fraction: true }), 1)).toBe('25.0%')
+      })
+
+      it('returns a number out of 100 with fraction: false or no options', () => {
+        expect(percentage(25, 100, { fraction: false })).toBe(25)
+        expect(percentage(25, 100, {})).toBe(25)
       })
     })
 
     describe('data-last', () => {
       it('works in pipe', () => {
         const result = R.pipe(25, percentage(100))
-        expect(result).toBe(0.25)
+        expect(result).toBe(25)
+      })
+
+      it('takes the options in a pipe', () => {
+        expect(R.pipe(25, percentage(100, { fraction: true }))).toBe(0.25)
+        expect(R.pipe(25, percentage(100, { fraction: true }), toPercent(1))).toBe('25.0%')
+        expect(R.map([5, 10], percentage(20))).toEqual([25, 50])
       })
     })
 
     describe('real-world: progress indicator', () => {
       it('calculates completion percentage', () => {
         const progress = (current: number, total: number) =>
-          R.pipe(percentage(current, total), (p) => p * 100, Math.round)
+          R.pipe(percentage(current, total), Math.round)
 
         expect(progress(5, 20)).toBe(25)
         expect(progress(15, 20)).toBe(75)
         expect(progress(20, 20)).toBe(100)
+        expect(progress(1, 3)).toBe(33)
       })
     })
   })

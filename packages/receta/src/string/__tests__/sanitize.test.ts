@@ -31,7 +31,33 @@ describe('String.stripHtml', () => {
   })
 
   it('handles multiple tags', () => {
-    expect(stripHtml('<div><p>Para 1</p><p>Para 2</p></div>')).toBe('Para 1Para 2')
+    expect(stripHtml('<div><p>Para 1</p><p>Para 2</p></div>')).toBe('Para 1 Para 2')
+  })
+
+  it('keeps words apart across block tags', () => {
+    expect(stripHtml('<p>Hello</p><p>World</p>')).toBe('Hello World')
+    expect(stripHtml('Hello<br>World')).toBe('Hello World')
+    expect(stripHtml('<ul><li>one</li><li>two</li></ul>')).toBe('one two')
+    expect(stripHtml('<h1>Title</h1>Body')).toBe('Title Body')
+    expect(stripHtml('<tr><td>a</td><td>b</td></tr>')).toBe('a b')
+  })
+
+  it('joins text across inline tags', () => {
+    expect(stripHtml('<b>bo</b>ld')).toBe('bold')
+    expect(stripHtml('un<em>believ</em>able')).toBe('unbelievable')
+    expect(stripHtml('a<script>x</script>b')).toBe('ab')
+  })
+
+  it('adds no space where there already is one', () => {
+    expect(stripHtml('<div>one</div> <div>two</div>')).toBe('one two')
+    expect(stripHtml('<p>one</p>\n<p>two</p>')).toBe('one\ntwo')
+    expect(stripHtml('one <br> two')).toBe('one  two')
+  })
+
+  it('adds no space at the start or the end', () => {
+    expect(stripHtml('<p>Hello</p>')).toBe('Hello')
+    expect(stripHtml('<div><p></p></div>')).toBe('')
+    expect(stripHtml('  <p>padded</p>  ')).toBe('  padded  ')
   })
 
   it('returns unchanged if no tags', () => {
@@ -114,6 +140,30 @@ describe('String.unescapeHtml', () => {
 
   it('unescapes single quotes (&#39;)', () => {
     expect(unescapeHtml('It&#39;s a test')).toBe("It's a test")
+  })
+
+  it('unescapes any decimal or hex character reference', () => {
+    expect(unescapeHtml('&#169; &#xA9; &#Xa9;')).toBe('© © ©')
+    expect(unescapeHtml('&#8364;5 &#x1F600;')).toBe('€5 😀')
+  })
+
+  it('unescapes the common named entities', () => {
+    expect(unescapeHtml('Tom&apos;s')).toBe("Tom's")
+    expect(unescapeHtml('a&nbsp;b')).toBe('a\u00A0b')
+    expect(unescapeHtml('&copy; &reg; &trade;')).toBe('© ® ™')
+    expect(unescapeHtml('&ldquo;hi&rdquo; &mdash; &hellip;')).toBe('“hi” — …')
+    expect(unescapeHtml('&euro;5 &pound;4')).toBe('€5 £4')
+  })
+
+  it('leaves what it does not know as it is', () => {
+    expect(unescapeHtml('&bogus; &constructor; &toString;')).toBe('&bogus; &constructor; &toString;')
+    expect(unescapeHtml('&#x110000; &#xD800; &#0;')).toBe('&#x110000; &#xD800; &#0;')
+    expect(unescapeHtml('AT&T; fish & chips; &amp')).toBe('AT&T; fish & chips; &amp')
+  })
+
+  it('decodes once, not repeatedly', () => {
+    expect(unescapeHtml('&amp;lt;')).toBe('&lt;')
+    expect(unescapeHtml('&amp;#169;')).toBe('&#169;')
   })
 
   it('unescapes multiple entities', () => {

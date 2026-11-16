@@ -1,9 +1,12 @@
-import * as R from 'remeda'
+import { roundHalfAwayFromZero, shiftDecimal } from '../decimal'
 
 /**
  * Rounds a number to a specified number of decimal places.
  *
- * Uses proper rounding (half away from zero).
+ * Uses proper rounding (half away from zero): 2.5 rounds to 3 and -2.5 to -3.
+ *
+ * It rounds the decimal as written, so `round(1.005, 2)` is 1.01 even though 1.005 is
+ * stored as 1.00499999999999989. NaN and the infinities come back unchanged.
  *
  * One number is always the data-last form, because the value can't be told apart from the
  * decimals. `round(3.7)` returns a function, so write `round(3.7, 0)` to round a value.
@@ -19,6 +22,8 @@ import * as R from 'remeda'
  * round(1.2345, 2) // => 1.23
  * round(1.2367, 2) // => 1.24
  * round(1234.56, -2) // => 1200
+ * round(1.005, 2) // => 1.01
+ * round(-56.25, 1) // => -56.3
  *
  * // Data-last (in pipe)
  * pipe(
@@ -54,6 +59,13 @@ export function round(...args: any[]): any {
 }
 
 function roundImpl(value: number, decimals: number = 0): number {
-  const multiplier = Math.pow(10, decimals)
-  return Math.round(value * multiplier) / multiplier
+  const shifted = shiftDecimal(value, decimals)
+
+  // NaN and the infinities have no digits to round. Neither does a value so large, or a
+  // precision so fine, that shifting the decimal point leaves the number range.
+  if (!Number.isFinite(shifted)) {
+    return value
+  }
+
+  return shiftDecimal(roundHalfAwayFromZero(shifted), -decimals)
 }

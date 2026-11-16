@@ -50,6 +50,22 @@ describe('Number Conversions', () => {
       expect(isErr(fromString('   '))).toBe(true)
     })
 
+    it('returns error for a number that is not finite', () => {
+      for (const input of ['Infinity', '-Infinity', '+Infinity', '1e999', '-1e999']) {
+        const result = fromString(input)
+        expect(isErr(result)).toBe(true)
+        if (isErr(result)) {
+          expect(result.error.code).toBe('PARSE_ERROR')
+          expect(result.error.input).toBe(input)
+        }
+      }
+    })
+
+    it('still parses the largest and smallest finite numbers', () => {
+      expect(fromString('1.7976931348623157e308')).toEqual({ _tag: 'Ok', value: Number.MAX_VALUE })
+      expect(fromString('5e-324')).toEqual({ _tag: 'Ok', value: Number.MIN_VALUE })
+    })
+
     it('includes input in error', () => {
       const result = fromString('invalid')
       expect(isErr(result)).toBe(true)
@@ -197,9 +213,86 @@ describe('Number Conversions', () => {
       })
     })
 
+    describe('a lone separator', () => {
+      const parsed = (input: string) => {
+        const result = parseFormattedNumber(input)
+        return isOk(result) ? result.value : 'Err'
+      }
+
+      it('reads a comma followed by three digits as a thousands separator', () => {
+        expect(parsed('1,234')).toBe(1234)
+        expect(parsed('12,345')).toBe(12345)
+        expect(parsed('-100,000')).toBe(-100000)
+        expect(parsed('$1,500')).toBe(1500)
+      })
+
+      it('reads any other lone comma as the decimal separator', () => {
+        expect(parsed('1,5')).toBe(1.5)
+        expect(parsed('12,5')).toBe(12.5)
+        expect(parsed('12,50')).toBe(12.5)
+        expect(parsed('-1,5')).toBe(-1.5)
+        expect(parsed('0,5')).toBe(0.5)
+        expect(parsed('0,500')).toBe(0.5)
+        expect(parsed('1,2345')).toBe(1.2345)
+        expect(parsed('1234,567')).toBe(1234.567)
+      })
+
+      it('reads a lone period as the decimal separator', () => {
+        expect(parsed('1.5')).toBe(1.5)
+        expect(parsed('1.234')).toBe(1.234)
+        expect(parsed('.5')).toBe(0.5)
+      })
+
+      it('reads a repeated separator as thousands', () => {
+        expect(parsed('1,234,567')).toBe(1234567)
+        expect(parsed('1.234.567')).toBe(1234567)
+        expect(parsed('1 234 567')).toBe(1234567)
+      })
+    })
+
+    describe('European and other layouts', () => {
+      const parsed = (input: string) => {
+        const result = parseFormattedNumber(input)
+        return isOk(result) ? result.value : 'Err'
+      }
+
+      it('parses a comma decimal with a currency after it', () => {
+        expect(parsed('12,50 €')).toBe(12.5)
+        expect(parsed('12,50 EUR')).toBe(12.5)
+        expect(parsed('1.234,56 €')).toBe(1234.56)
+        expect(parsed('€ 12,50')).toBe(12.5)
+      })
+
+      it('parses space and apostrophe thousands separators', () => {
+        expect(parsed('1 234,56')).toBe(1234.56)
+        expect(parsed('1 234 567,89')).toBe(1234567.89)
+        expect(parsed('1\u00A0234,56')).toBe(1234.56)
+        expect(parsed('1\u202F234,56 €')).toBe(1234.56)
+        expect(parsed("1'234.50")).toBe(1234.5)
+      })
+
+      it('takes the separator written last as the decimal one', () => {
+        expect(parsed('1,234.5')).toBe(1234.5)
+        expect(parsed('1.234,5')).toBe(1234.5)
+        expect(parsed('2.345.678,90')).toBe(2345678.9)
+      })
+    })
+
     describe('error cases', () => {
       it('returns error for empty string', () => {
         expect(isErr(parseFormattedNumber(''))).toBe(true)
+      })
+
+      it('returns error when there is no digit', () => {
+        for (const input of ['$', 'USD', '()', '-', '€ ', ',', '.']) {
+          expect(isErr(parseFormattedNumber(input))).toBe(true)
+        }
+      })
+
+      it('returns error for a number that is not a plain decimal', () => {
+        for (const input of ['Infinity', '-Infinity', '0x10', '1,234.56.78', '1.234,56,78', '5-', '50%']) {
+          expect(isErr(parseFormattedNumber(input))).toBe(true)
+        }
       })
 
       it('returns error for invalid characters', () => {
@@ -313,6 +406,19 @@ describe('Number Conversions', () => {
       expect(isOk(result)).toBe(true)
       if (isOk(result)) {
         expect(result.value).toBe(1234.56)
+      }
+    })
+
+    it('returns error when no amount is left after the symbol', () => {
+      // Number('') is 0, so a lone symbol used to parse as zero
+      for (const input of ['$', '€ ', ' £ ']) {
+        expect(isErr(fromCurrency(input))).toBe(true)
+      }
+    })
+
+    it('returns error for an amount that is not finite', () => {
+      for (const input of ['Infinity', '$Infinity', '-€Infinity', '$1e999']) {
+        expect(isErr(fromCurrency(input))).toBe(true)
       }
     })
 
@@ -466,6 +572,22 @@ describe('Number Conversions', () => {
 
     it('returns error for unknown unit', () => {
       expect(isErr(fromBytes('1ZB'))).toBe(true)
+      expect(isErr(fromBytes('1XiB'))).toBe(true)
+      expect(isErr(fromBytes('1iB'))).toBe(true)
+    })
+
+    it('parses the IEC units as powers of 1024', () => {
+      expect(fromBytes('1 KiB')).toEqual({ _tag: 'Ok', value: 1024 })
+      expect(fromBytes('1.5 MiB')).toEqual({ _tag: 'Ok', value: 1572864 })
+      expect(fromBytes('2GiB')).toEqual({ _tag: 'Ok', value: 2147483648 })
+      expect(fromBytes('1 TiB')).toEqual({ _tag: 'Ok', value: 1024 ** 4 })
+      expect(fromBytes('1 PiB')).toEqual({ _tag: 'Ok', value: 1024 ** 5 })
+      expect(fromBytes('1kib')).toEqual({ _tag: 'Ok', value: 1024 })
+    })
+
+    it('keeps the IEC units binary in decimal mode', () => {
+      expect(fromBytes('1 KiB', 'decimal')).toEqual({ _tag: 'Ok', value: 1024 })
+      expect(fromBytes('1 KB', 'decimal')).toEqual({ _tag: 'Ok', value: 1000 })
     })
 
     describe('roundtrip', () => {

@@ -131,6 +131,32 @@ describe('Compare.basic', () => {
       expect(sorted).toEqual(['v1.2.0', 'v1.9.0', 'v1.10.0', 'v1.20.0'])
     })
 
+    it('gives the same order whatever order the input was in', () => {
+      const byName = natural((x: string) => x)
+      const expected = ['a', 'A', 'b', 'B', 'file2', 'File2', 'file10']
+
+      expect(['b', 'B', 'a', 'A', 'file10', 'File2', 'file2'].sort(byName)).toEqual(expected)
+      expect(['B', 'b', 'A', 'a', 'file2', 'File2', 'file10'].sort(byName)).toEqual(expected)
+      expect(['File2', 'file10', 'A', 'B', 'a', 'b', 'file2'].sort(byName)).toEqual(expected)
+    })
+
+    it('never calls two different strings equal', () => {
+      const byName = natural((x: string) => x)
+
+      expect(byName('a', 'A')).not.toBe(0)
+      expect(byName('resume', 'résumé')).not.toBe(0)
+      expect(Math.sign(byName('a', 'A'))).toBe(-Math.sign(byName('A', 'a')))
+      expect(byName('same', 'same')).toBe(0)
+    })
+
+    it('still orders by letters before case', () => {
+      const byName = natural((x: string) => x)
+
+      expect(byName('apple', 'Banana')).toBeLessThan(0)
+      expect(byName('Apple', 'banana')).toBeLessThan(0)
+      expect(byName('File2', 'file10')).toBeLessThan(0)
+    })
+
     it('sorts objects by natural string order', () => {
       interface File {
         name: string

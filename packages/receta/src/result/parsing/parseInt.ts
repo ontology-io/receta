@@ -7,9 +7,13 @@ import { createParseNumberError, type ParseNumberError } from './types'
  *
  * Unlike the global parseInt() which can return NaN or parse partial strings,
  * this function returns a Result with strict validation:
- * - Must be a valid integer
- * - No trailing non-numeric characters allowed
+ * - The whole string must be an integer: an optional sign, then digits of the radix
+ * - Nothing may follow the digits, so `'12abc'`, `'1e3'` and `'12.0'` are errors
+ * - A `0x` prefix is accepted only in radix 16
+ * - The value must fit in a safe integer, so it is exactly the number that was written
  * - Radix must be between 2 and 36
+ *
+ * Surrounding whitespace is trimmed, and leading zeros are allowed.
  *
  * @param str - The string to parse
  * @param radix - Optional radix (base) for parsing, between 2 and 36. Defaults to 10
@@ -53,6 +57,21 @@ import { createParseNumberError, type ParseNumberError } from './types'
  *
  * // Failed parsing - has decimal point
  * parseInt('123.45')
+ * // Err with reason 'invalid_integer'
+ *
+ * // Failed parsing - something follows the digits (the global parseInt returns 12 and 1)
+ * parseInt('12abc')
+ * // Err with reason 'invalid_integer'
+ *
+ * parseInt('1e3')
+ * // Err with reason 'invalid_integer'
+ *
+ * // Failed parsing - a digit the radix doesn't have
+ * parseInt('102', 2)
+ * // Err with reason 'invalid_integer'
+ *
+ * // Failed parsing - too large to hold exactly
+ * parseInt('9007199254740993')
  * // Err with reason 'invalid_integer'
  *
  * // Failed parsing - invalid radix
@@ -105,36 +124,44 @@ export function parseInt(str: string, radix: number = 10): Result<number, ParseN
     )
   }
 
-  if (!Number.isFinite(num)) {
-    return err(createParseNumberError(str, 'infinite', `Number "${str}" is infinite`))
-  }
-
-  if (!Number.isInteger(num)) {
+  // The global parseInt stops at the first character it can't read, so '12abc' is 12 and
+  // '1e3' is 1. The whole string has to be an integer.
+  if (!integerPattern(radix).test(trimmed)) {
     return err(
       createParseNumberError(
         str,
         'invalid_integer',
-        `Parsed value ${num} from "${str}" is not an integer`
+        `Cannot parse "${str}" as an integer (not a whole number in base ${radix})`
       )
     )
   }
 
-  // Verify the entire string was consumed (strict parsing)
-  // Convert back to string in the same radix and compare
-  const reconstructed = num.toString(radix)
-  const normalizedInput = trimmed.toLowerCase().replace(/^0x/, '')
-  const normalizedReconstructed = reconstructed.toLowerCase()
+  if (!Number.isFinite(num)) {
+    return err(createParseNumberError(str, 'infinite', `Number "${str}" is infinite`))
+  }
 
-  // Check if input has decimal point (not allowed for integers)
-  if (trimmed.includes('.')) {
+  // Past this range a number can't hold every integer, so the digits would change silently.
+  if (!Number.isSafeInteger(num)) {
     return err(
       createParseNumberError(
         str,
-        'not_a_number',
-        `Cannot parse "${str}" as an integer (contains decimal point)`
+        'invalid_integer',
+        `Cannot parse "${str}" as an integer (outside the safe integer range)`
       )
     )
   }
 
   return ok(num)
+}
+
+const RADIX_DIGITS = '0123456789abcdefghijklmnopqrstuvwxyz'
+
+/**
+ * Matches a whole integer in the given radix: a sign, a `0x` prefix in radix 16, then digits.
+ */
+function integerPattern(radix: number): RegExp {
+  const digits = RADIX_DIGITS.slice(0, radix)
+  const prefix = radix === 16 ? '(?:0x)?' : ''
+
+  return new RegExp(`^[+-]?${prefix}[${digits}]+$`, 'i')
 }

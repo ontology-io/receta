@@ -248,12 +248,12 @@ describe('Result Parsing Utilities', () => {
         expect(parseInt('0', 2)).toEqual({ _tag: 'Ok', value: 0 })
       })
 
-      it('parses partial valid binary (native parseInt behavior)', () => {
-        // Note: parseInt stops at first invalid digit, so '102' in base 2 -> 2 ('10')
+      it('rejects a digit the radix does not have', () => {
+        // The global parseInt stops at the first invalid digit and returns 2 for '102' in base 2
         const result = parseInt('102', 2)
-        expect(isOk(result)).toBe(true)
-        if (isOk(result)) {
-          expect(result.value).toBe(2) // Parses '10', stops at '2'
+        expect(isErr(result)).toBe(true)
+        if (isErr(result)) {
+          expect(result.error.reason).toBe('invalid_integer')
         }
       })
     })
@@ -267,6 +267,16 @@ describe('Result Parsing Utilities', () => {
 
       it('handles 0x prefix', () => {
         expect(parseInt('0xFF', 16)).toEqual({ _tag: 'Ok', value: 255 })
+        expect(parseInt('-0xFF', 16)).toEqual({ _tag: 'Ok', value: -255 })
+      })
+
+      it('accepts the 0x prefix only in radix 16', () => {
+        // The global parseInt reads '0x1A' in base 10 as 0
+        const result = parseInt('0x1A')
+        expect(isErr(result)).toBe(true)
+        if (isErr(result)) {
+          expect(result.error.reason).toBe('invalid_integer')
+        }
       })
 
       it('is case insensitive', () => {
@@ -300,7 +310,47 @@ describe('Result Parsing Utilities', () => {
         const result = parseInt('123.45')
         expect(isErr(result)).toBe(true)
         if (isErr(result)) {
-          expect(result.error.reason).toBe('not_a_number')
+          expect(result.error.reason).toBe('invalid_integer')
+        }
+      })
+
+      it('returns Err when anything follows the digits', () => {
+        // The global parseInt reads these as 12, 1, 1 and 12
+        const inputs = ['12abc', '1e3', '1_000', '12 34', '12.0', '5-']
+
+        for (const input of inputs) {
+          const result = parseInt(input)
+          expect(isErr(result)).toBe(true)
+          if (isErr(result)) {
+            expect(result.error.reason).toBe('invalid_integer')
+            expect(result.error.input).toBe(input)
+          }
+        }
+      })
+
+      it('returns Err for an integer too large to hold exactly', () => {
+        // The global parseInt returns 9007199254740992 here, which is a different number
+        const result = parseInt('9007199254740993')
+        expect(isErr(result)).toBe(true)
+        if (isErr(result)) {
+          expect(result.error.reason).toBe('invalid_integer')
+        }
+        expect(parseInt('9007199254740991')).toEqual({ _tag: 'Ok', value: Number.MAX_SAFE_INTEGER })
+      })
+
+      it('still accepts a sign and leading zeros', () => {
+        expect(parseInt('+5')).toEqual({ _tag: 'Ok', value: 5 })
+        expect(parseInt('007')).toEqual({ _tag: 'Ok', value: 7 })
+        expect(parseInt('zz', 36)).toEqual({ _tag: 'Ok', value: 1295 })
+      })
+
+      it('returns not_a_number when no digit can be read', () => {
+        for (const input of ['-', '--5', '0x', 'x12']) {
+          const result = parseInt(input, input === '0x' ? 16 : 10)
+          expect(isErr(result)).toBe(true)
+          if (isErr(result)) {
+            expect(result.error.reason).toBe('not_a_number')
+          }
         }
       })
 

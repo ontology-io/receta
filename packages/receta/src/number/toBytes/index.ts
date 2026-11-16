@@ -7,6 +7,9 @@ import type { ByteOptions } from '../types'
  * Automatically selects the appropriate unit based on the value.
  * Supports both binary (1024) and decimal (1000) bases.
  *
+ * Both bases use the labels KB, MB, GB, TB and PB. In the default binary base, 1 KB is
+ * 1024 bytes (the convention operating systems show), not the IEC label KiB.
+ *
  * @param value - The number of bytes
  * @param options - Byte formatting options
  * @returns The formatted byte string

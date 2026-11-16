@@ -42,16 +42,58 @@ describe('String Module Enhancements', () => {
         expect(pluralize('day', 7)).toBe('7 days')
       })
 
-      it('handles words ending in f/fe (replace with -ves)', () => {
+      it('handles the f/fe words that take -ves', () => {
         expect(pluralize('knife', 4)).toBe('4 knives')
         expect(pluralize('leaf', 10)).toBe('10 leaves')
         expect(pluralize('life', 2)).toBe('2 lives')
         expect(pluralize('wolf', 3)).toBe('3 wolves')
+        expect(pluralize('half', 2)).toBe('2 halves')
+        expect(pluralize('shelf', 2)).toBe('2 shelves')
+        expect(pluralize('wife', 2)).toBe('2 wives')
+        expect(pluralize('thief', 2)).toBe('2 thieves')
+        expect(pluralize('bookshelf', 2)).toBe('2 bookshelves')
       })
 
-      it('handles words ending in consonant + o (add -es)', () => {
+      it('adds -s to the other words ending in f/fe', () => {
+        const regular = ['chief', 'roof', 'belief', 'cliff', 'staff', 'safe', 'giraffe', 'chef', 'proof', 'cafe', 'golf']
+
+        for (const word of regular) {
+          expect(pluralize(word, 2, { wordOnly: true })).toBe(`${word}s`)
+        }
+      })
+
+      it('handles the consonant + o words that take -es', () => {
         expect(pluralize('hero', 3)).toBe('3 heroes')
         expect(pluralize('potato', 5)).toBe('5 potatoes')
+        expect(pluralize('tomato', 2)).toBe('2 tomatoes')
+        expect(pluralize('echo', 2)).toBe('2 echoes')
+        expect(pluralize('superhero', 2)).toBe('2 superheroes')
+      })
+
+      it('adds -s to the other words ending in consonant + o', () => {
+        const regular = ['photo', 'piano', 'memo', 'logo', 'kilo', 'taco', 'zero', 'avocado', 'auto']
+
+        for (const word of regular) {
+          expect(pluralize(word, 2, { wordOnly: true })).toBe(`${word}s`)
+        }
+      })
+
+      it('doubles the z in quiz', () => {
+        expect(pluralize('quiz', 3)).toBe('3 quizzes')
+        expect(pluralize('buzz', 3)).toBe('3 buzzes')
+        expect(pluralize('waltz', 2)).toBe('2 waltzes')
+      })
+
+      it('adds -s when ch sounds like k', () => {
+        expect(pluralize('stomach', 2)).toBe('2 stomachs')
+        expect(pluralize('monarch', 2)).toBe('2 monarchs')
+        expect(pluralize('epoch', 2)).toBe('2 epochs')
+      })
+
+      it('keeps the capital of a capitalized word', () => {
+        expect(pluralize('Photo', 2)).toBe('2 Photos')
+        expect(pluralize('Hero', 2)).toBe('2 Heroes')
+        expect(pluralize('Knife', 2)).toBe('2 Knives')
       })
 
       it('handles words ending in vowel + o (add -s)', () => {
@@ -334,6 +376,19 @@ describe('String Module Enhancements', () => {
         expect(highlight('<script>alert("xss")</script>', 'script')).toBe(
           '&lt;<mark>script</mark>&gt;alert(&quot;xss&quot;)&lt;/<mark>script</mark>&gt;'
         )
+      })
+
+      it('matches the text, not the entities it is escaped to', () => {
+        expect(highlight('a & b', 'amp')).toBe('a &amp; b')
+        expect(highlight('<b>', 'lt')).toBe('&lt;b&gt;')
+        expect(highlight('say "hi"', 'quot')).toBe('say &quot;hi&quot;')
+      })
+
+      it('highlights a query made of characters that get escaped', () => {
+        expect(highlight('a & b', '&')).toBe('a <mark>&amp;</mark> b')
+        expect(highlight('a < b', '<')).toBe('a <mark>&lt;</mark> b')
+        expect(highlight('R&D and r&d', 'r&d')).toBe('<mark>R&amp;D</mark> and <mark>r&amp;d</mark>')
+        expect(highlight('<b>bold</b>', '<b>')).toBe('<mark>&lt;b&gt;</mark>bold&lt;/b&gt;')
       })
 
       it('can disable HTML escaping', () => {

@@ -89,7 +89,7 @@ const page2 = paginateCursor(messages, m => m.id, {
 // { items: [messages 21-40], nextCursor: 'msg_40', hasMore: true }
 ```
 
-On the last page `nextCursor` is `undefined` and `hasMore` is `false`. A cursor that isn't in the list starts again from the beginning.
+On the last page `nextCursor` is `undefined` and `hasMore` is `false`. A cursor that isn't in the list, for example because its item was deleted, gives an empty page with `hasMore: false`.
 
 ### Real-World: GitHub-Style API
 

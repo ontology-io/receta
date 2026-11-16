@@ -48,13 +48,13 @@ import { setOwnKey } from '../../utils/setOwnKey'
  * @see filterKeys - for filtering by keys instead of values
  * @see compact - for removing nullish values specifically
  */
-export function filterValues<T extends PlainObject>(
+export function filterValues<T extends object>(
   obj: T,
   predicate: (value: T[keyof T], key: keyof T) => boolean
 ): Partial<T>
 export function filterValues(
   predicate: (value: any, key: string) => boolean
-): <T extends PlainObject>(obj: T) => Partial<T>
+): <T extends object>(obj: T) => Partial<T>
 export function filterValues(...args: unknown[]): unknown {
   return R.purry(filterValuesImplementation, args)
 }

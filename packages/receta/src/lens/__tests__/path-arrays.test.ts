@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'bun:test'
 import { over, path, set, view } from '../index'
+import { setPath, unflatten } from '../../object'
 
 type Cart = { items: { n: number; tag?: string }[]; owner: string }
 
@@ -50,6 +51,41 @@ describe('path through arrays', () => {
   it('still creates objects for missing parents', () => {
     const deep = path<Record<string, unknown>, number>('a.b.c')
     expect(set(deep, 1, {})).toEqual({ a: { b: { c: 1 } } })
+  })
+
+  it('creates an array for a missing parent that is reached by index', () => {
+    const firstName = path<Record<string, unknown>, string>('items.0.name')
+    const updated = set(firstName, 'x', {})
+
+    expect(Array.isArray(updated.items)).toBe(true)
+    expect(updated).toEqual({ items: [{ name: 'x' }] })
+    expect(view(firstName, updated)).toBe('x')
+  })
+
+  it('builds the same value as setPath and unflatten', () => {
+    const viaLens = set(path<Record<string, unknown>, string>('items.0.name'), 'x', {})
+
+    expect(viaLens).toEqual(setPath(['items', 0, 'name'], 'x', {}))
+    expect(viaLens).toEqual(unflatten({ 'items.0.name': 'x' }))
+    expect(set(path<Record<string, unknown>, number>('rows.1.0'), 9, {})).toEqual(
+      setPath(['rows', 1, 0], 9, {})
+    )
+  })
+
+  it('keeps an existing object whose keys look like indexes', () => {
+    const byId = { users: { '7': { name: 'Ada' } } }
+    const updated = set(path<typeof byId, string>('users.7.name'), 'Bob', byId)
+
+    expect(updated).toEqual({ users: { '7': { name: 'Bob' } } })
+    expect(Array.isArray(updated.users)).toBe(false)
+  })
+
+  it('creates an object for a part that is not a whole index', () => {
+    const codes = path<Record<string, unknown>, string>('codes.007')
+    expect(set(codes, 'bond', {})).toEqual({ codes: { '007': 'bond' } })
+
+    const negative = path<Record<string, unknown>, string>('list.-1')
+    expect(set(negative, 'x', {})).toEqual({ list: { '-1': 'x' } })
   })
 
   it('keeps the own fields of a class instance', () => {

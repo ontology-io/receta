@@ -1,3 +1,4 @@
+import * as R from 'remeda'
 import type { Option } from '../../option/types'
 import { some, none } from '../../option/constructors'
 import type { CondPair } from '../types'
@@ -44,6 +45,23 @@ import { purryConfig } from '../../utils'
  * handleStatus(200)  // => Some('success')
  * handleStatus(404)  // => Some('client error')
  * handleStatus(500)  // => Some('server error')
+ * handleStatus(100)  // => None
+ * ```
+ *
+ * @example
+ * ```typescript
+ * import { cond } from '@ontologyio/receta/function'
+ * import { unwrapOr } from '@ontologyio/receta/option'
+ * import { gte } from '@ontologyio/receta/predicate'
+ *
+ * // No rule matches: the result is a None value, so the Option helpers work on it
+ * const shippingTier = cond<number, string>([
+ *   [gte(100), () => 'free'],
+ *   [gte(50), () => 'reduced']
+ * ])
+ *
+ * shippingTier(20)                        // => None
+ * unwrapOr(shippingTier(20), 'standard')  // => 'standard'
  * ```
  *
  * @example
@@ -58,6 +76,8 @@ import { purryConfig } from '../../utils'
  * ```
  *
  * @returns Option<U> - Some with result if a predicate matched, None otherwise
+ *
+ * @see switchCase - when there is always a default to fall back to
  */
 export function cond<T, U>(pairs: readonly CondPair<T, U>[]): (value: T) => Option<U>
 export function cond<T, U>(pairs: readonly CondPair<T, U>[], value: T): Option<U>
@@ -66,10 +86,7 @@ export function cond(...args: unknown[]): unknown {
 }
 
 function condImplementation<T, U>(pairs: readonly CondPair<T, U>[], value: T): Option<U> {
-  for (const [predicate, fn] of pairs) {
-    if (predicate(value)) {
-      return some(fn(value))
-    }
-  }
-  return none as unknown as Option<U>
+  const matched = R.find(pairs, ([predicate]) => predicate(value))
+
+  return matched === undefined ? none() : some(matched[1](value))
 }

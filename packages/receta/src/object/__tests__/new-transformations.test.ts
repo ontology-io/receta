@@ -132,6 +132,78 @@ describe('Object.transformKeys', () => {
     })
   })
 
+  describe('acronyms and digits', () => {
+    it('keeps a run of capitals together in snake_case', () => {
+      const input = { userID: 1, HTMLParser: 2, APIKey: 3, ID: 4, parseURLFast: 5 }
+      expect(transformKeys(input, 'snakeCase')).toEqual({
+        user_id: 1,
+        html_parser: 2,
+        api_key: 3,
+        id: 4,
+        parse_url_fast: 5,
+      })
+    })
+
+    it('keeps a run of capitals together in kebab-case', () => {
+      expect(transformKeys({ userID: 1, HTMLParser: 2 }, 'kebabCase')).toEqual({
+        'user-id': 1,
+        'html-parser': 2,
+      })
+    })
+
+    it('splits after a digit', () => {
+      expect(transformKeys({ address1Line: 1, utf8String: 2 }, 'snakeCase')).toEqual({
+        address1_line: 1,
+        utf8_string: 2,
+      })
+    })
+
+    it('turns separators into one', () => {
+      expect(transformKeys({ 'User Name': 1, 'user-name': 2 }, 'snakeCase')).toEqual({
+        user_name: 2,
+      })
+    })
+  })
+
+  describe('leading and trailing underscores', () => {
+    const input = { _id: 1, __typename: 'User', _private_field: 2, class_: 3 }
+
+    it('keeps them in camelCase', () => {
+      expect(transformKeys(input, 'camelCase')).toEqual({
+        _id: 1,
+        __typename: 'User',
+        _privateField: 2,
+        class_: 3,
+      })
+    })
+
+    it('keeps them in snake_case', () => {
+      expect(transformKeys({ _id: 1, __typename: 'User', _privateField: 2 }, 'snakeCase')).toEqual({
+        _id: 1,
+        __typename: 'User',
+        _private_field: 2,
+      })
+    })
+
+    it('keeps them in kebab-case and PascalCase', () => {
+      expect(transformKeys({ _id: 1, __typeName: 2 }, 'kebabCase')).toEqual({ _id: 1, '__type-name': 2 })
+      expect(transformKeys({ _id: 1, __type_name: 2 }, 'pascalCase')).toEqual({ _Id: 1, __TypeName: 2 })
+    })
+
+    it('does not merge _id into id', () => {
+      const result = transformKeys({ id: 'public', _id: 'internal' }, 'camelCase')
+      expect(result).toEqual({ id: 'public', _id: 'internal' })
+    })
+
+    it('leaves a key made only of underscores alone', () => {
+      expect(transformKeys({ _: 1, __: 2 }, 'camelCase')).toEqual({ _: 1, __: 2 })
+    })
+
+    it('still passes the whole key to a custom function', () => {
+      expect(transformKeys({ _id: 1 }, (key) => key.toUpperCase())).toEqual({ _ID: 1 })
+    })
+  })
+
   describe('kebabCase transformation', () => {
     it('converts camelCase to kebab-case', () => {
       const input = {

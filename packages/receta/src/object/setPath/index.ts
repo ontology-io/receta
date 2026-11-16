@@ -46,8 +46,8 @@ import { setOwnKey } from '../../utils/setOwnKey'
  * @see getPath - for safely reading a value at a path
  * @see updatePath - for updating with a function
  */
-export function setPath<T extends PlainObject>(path: ObjectPath, value: unknown, obj: T): T
-export function setPath(path: ObjectPath, value: unknown): <T extends PlainObject>(obj: T) => T
+export function setPath<T extends object>(path: ObjectPath, value: unknown, obj: T): T
+export function setPath(path: ObjectPath, value: unknown): <T extends object>(obj: T) => T
 export function setPath(...args: unknown[]): unknown {
   return purryConfig2(setPathImplementation, args)
 }

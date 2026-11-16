@@ -14,6 +14,9 @@ import { none } from '../constructors'
  * @param predicate - Function to test the value
  * @returns The filtered Option
  *
+ * A type guard narrows the Option: filtering an `Option<string | number>` with `isString`
+ * gives an `Option<string>`.
+ *
  * @example
  * ```typescript
  * // Data-first
@@ -27,12 +30,23 @@ import { none } from '../constructors'
  *   filter(gte(18)),
  *   map(age => `Adult: ${age}`)
  * )
+ *
+ * // A type guard narrows the type
+ * const id: Option<string | number> = some('u_1')
+ * filter(id, isString) // => Some('u_1'), typed Option<string>
  * ```
  *
  * @see map - for transforming values
  * @see flatMap - for chaining operations
  */
+export function filter<T, U extends T>(
+  option: Option<T>,
+  predicate: (value: T) => value is U
+): Option<U>
 export function filter<T>(option: Option<T>, predicate: (value: T) => boolean): Option<T>
+export function filter<T, U extends T>(
+  predicate: (value: T) => value is U
+): (option: Option<T>) => Option<U>
 export function filter<T>(predicate: (value: T) => boolean): (option: Option<T>) => Option<T>
 export function filter(...args: unknown[]): unknown {
   return R.purry(filterImplementation, args)

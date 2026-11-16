@@ -21,10 +21,13 @@ export type KeyFn<Args extends readonly unknown[], K> = (...args: Args) => K
 
 /**
  * Options for memoization functions.
+ *
+ * `K` is the type of the cache key: the first argument for `memoize` and `memoizeAsync`,
+ * or what the key function returns.
  */
 export interface MemoizeOptions<K = string> {
   /**
-   * Custom cache implementation.
+   * Custom cache implementation, keyed by `K`.
    * Defaults to a simple Map.
    */
   cache?: Cache<K, unknown>

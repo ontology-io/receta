@@ -291,7 +291,7 @@ schema(userSchema, {
 - **Cover every required key.** Once the value has a declared type, each required key needs a validator. Optional keys can be left out.
 - **Name the error type when you need it.** `schema` can't infer it from the validators. Without a return type annotation, errors come back as `FieldError<unknown>`. Annotate the return type or write `schema<User, string>(...)`.
 - **A validator sees only its own field.** To compare fields, build the schema inside a function that closes over the form, or use `flatMap` after `schema`.
-- **The result is the object you passed in.** A validator can't convert a field or fill in a default, so shape the data first.
+- **The result holds what the validators returned.** A validator can trim a field or fill in a default by returning the new value, and fields the schema doesn't mention are kept. It can't change a field's type: convert the data first for that.
 - **Check the type of untrusted input first.** `required` and the other string validators throw on `undefined`. See [Create User Endpoint](./patterns.mdx#create-user-endpoint) for `unknown` input.
 
 ### Real-World: Registration Form

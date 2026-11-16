@@ -4,9 +4,11 @@
  * @module validation/schema
  */
 
+import * as R from 'remeda'
 import type { Validation, ValidationSchema, FieldError } from '../types'
 import { valid, invalid } from '../constructors'
 import { isInvalid } from '../guards'
+import { setOwnKey } from '../../utils/setOwnKey'
 
 /**
  * Validates an object against a schema, accumulating field-level errors.
@@ -15,7 +17,10 @@ import { isInvalid } from '../guards'
  * If all fields are valid, returns Valid with the object.
  * If any field is invalid, returns Invalid with FieldError objects for each failed field.
  *
- * Valid holds the object you passed in, so a validator can't convert a field or fill in a default.
+ * Valid holds what the validators returned, so a validator can clean a field up (trim it,
+ * lower-case it) or fill in a default for a missing one. Fields the schema doesn't mention
+ * are kept. The object you passed in is never changed, and when no validator changes a
+ * value you get that same object back.
  *
  * @param schemaObj - Schema mapping keys to validators
  * @param value - Object to validate
@@ -46,6 +51,15 @@ import { isInvalid } from '../guards'
  * //   { field: 'email', errors: ['Invalid email'] },
  * //   { field: 'age', errors: ['Must be 18+'] }
  * // ])
+ *
+ * // A validator can return a cleaned-up value, and Valid holds it
+ * const signupSchema: ValidationSchema<{ email: string; role?: string }, string> = {
+ *   email: (e) => e.includes('@') ? valid(e.trim().toLowerCase()) : invalid('Invalid email'),
+ *   role: (r) => valid(r ?? 'member')
+ * }
+ *
+ * schema(signupSchema, { email: ' Ada@Example.com ' })
+ * // => Valid({ email: 'ada@example.com', role: 'member' })
  *
  * // Real-world: Form validation
  * const validateRegistration = (form: User) =>
@@ -100,6 +114,7 @@ function schemaImplementation<T extends object, E>(
   value: T
 ): Validation<T, FieldError<E>> {
   const fieldErrors: FieldError<E>[] = []
+  const changes: Partial<T> = {}
 
   for (const key in schemaObj) {
     const validator = schemaObj[key]
@@ -113,17 +128,28 @@ function schemaImplementation<T extends object, E>(
         field: key,
         errors: validation.errors,
       })
+    } else if (!Object.is(validation.value, fieldValue)) {
+      setOwnKey(changes, key, validation.value)
     }
   }
 
-  return fieldErrors.length > 0 ? invalid(fieldErrors) : valid(value)
+  return fieldErrors.length > 0 ? invalid(fieldErrors) : valid(withChanges(value, changes))
+}
+
+/**
+ * Returns `value` with the validated fields that differ from it. With nothing to change it
+ * returns `value` itself, so an unchanged object keeps its identity.
+ */
+function withChanges<T extends object>(value: T, changes: Partial<T>): T {
+  return R.isEmpty(changes) ? value : { ...value, ...changes }
 }
 
 /**
  * Creates a schema validator for partial objects.
  *
  * Like schema, but only validates fields that are present in the value.
- * Missing fields are not validated.
+ * Missing fields are not validated. As with schema, Valid holds what the validators
+ * returned for the fields that are present.
  *
  * @param schemaObj - Schema mapping keys to validators
  * @param value - Partial object to validate
@@ -181,6 +207,7 @@ function partialImplementation<T extends object, E>(
   value: Partial<T>
 ): Validation<Partial<T>, FieldError<E>> {
   const fieldErrors: FieldError<E>[] = []
+  const changes: Partial<T> = {}
 
   for (const key in value) {
     const validator = schemaObj[key]
@@ -196,8 +223,10 @@ function partialImplementation<T extends object, E>(
         field: key,
         errors: validation.errors,
       })
+    } else if (!Object.is(validation.value, fieldValue)) {
+      setOwnKey(changes, key, validation.value)
     }
   }
 
-  return fieldErrors.length > 0 ? invalid(fieldErrors) : valid(value)
+  return fieldErrors.length > 0 ? invalid(fieldErrors) : valid(withChanges(value, changes))
 }

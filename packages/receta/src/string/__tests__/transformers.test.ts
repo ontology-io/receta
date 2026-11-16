@@ -119,12 +119,33 @@ describe('String.camelCase', () => {
     expect(camelCase('API_KEY_VALUE')).toBe('apiKeyValue')
   })
 
-  it('handles already camelCase', () => {
-    expect(camelCase('alreadyCamelCase')).toBe('alreadycamelcase')
+  it('keeps a string that is already camelCase', () => {
+    expect(camelCase('alreadyCamelCase')).toBe('alreadyCamelCase')
+    expect(camelCase('firstName')).toBe('firstName')
   })
 
-  it('handles PascalCase', () => {
-    expect(camelCase('PascalCase')).toBe('pascalcase')
+  it('converts PascalCase to camelCase', () => {
+    expect(camelCase('PascalCase')).toBe('pascalCase')
+  })
+
+  it('treats a run of capitals as one word', () => {
+    expect(camelCase('XMLHttpRequest')).toBe('xmlHttpRequest')
+    expect(camelCase('userID')).toBe('userId')
+    expect(camelCase('API KEY VALUE')).toBe('apiKeyValue')
+  })
+
+  it('drops separators at the ends', () => {
+    expect(camelCase('--hello-world--')).toBe('helloWorld')
+    expect(camelCase('user_2_name')).toBe('user2Name')
+  })
+
+  it('starts a new word at a capital that follows a digit', () => {
+    expect(camelCase('utf8String')).toBe('utf8String')
+    expect(pascalCase('utf8String')).toBe('Utf8String')
+    expect(snakeCase('address1Line')).toBe('address1_line')
+    expect(kebabCase('md5Hash')).toBe('md5-hash')
+    expect(snakeCase('SHA256Hash')).toBe('sha256_hash')
+    expect(snakeCase('version2')).toBe('version2')
   })
 
   it('handles empty string', () => {
@@ -146,7 +167,13 @@ describe('String.pascalCase', () => {
   })
 
   it('converts camelCase to PascalCase', () => {
-    expect(pascalCase('helloWorld')).toBe('Helloworld')
+    expect(pascalCase('helloWorld')).toBe('HelloWorld')
+    expect(pascalCase('firstName')).toBe('FirstName')
+  })
+
+  it('treats a run of capitals as one word', () => {
+    expect(pascalCase('XMLHttpRequest')).toBe('XmlHttpRequest')
+    expect(pascalCase('api key value')).toBe('ApiKeyValue')
   })
 
   it('handles empty string', () => {
@@ -186,7 +213,28 @@ describe('String.titleCase', () => {
   })
 
   it('only capitalizes after spaces', () => {
-    expect(titleCase('hello-world')).toBe('Hello-World')
+    expect(titleCase('hello-world')).toBe('Hello-world')
+    expect(titleCase('user-profile-page')).toBe('User-profile-page')
+  })
+
+  it('leaves letters inside a word alone', () => {
+    expect(titleCase('maría josé')).toBe('María José')
+    expect(titleCase("don't stop")).toBe("Don't Stop")
+    expect(titleCase('HELLO wORLD')).toBe('HELLO WORLD')
+  })
+
+  it('capitalizes accented first letters', () => {
+    expect(titleCase('élan vital')).toBe('Élan Vital')
+    expect(titleCase('über uns')).toBe('Über Uns')
+  })
+
+  it('keeps the whitespace as it is', () => {
+    expect(titleCase('  two  spaces')).toBe('  Two  Spaces')
+    expect(titleCase('line\none\ttab')).toBe('Line\nOne\tTab')
+  })
+
+  it('skips a word that does not start with a letter', () => {
+    expect(titleCase('3d printing')).toBe('3d Printing')
   })
 
   it('handles single word', () => {
@@ -214,6 +262,29 @@ describe('String.truncate', () => {
 
     it('truncates at word boundary', () => {
       expect(truncate('The quick brown fox', { length: 15, words: true })).toBe('The quick...')
+    })
+
+    it('keeps the last word when the cut lands exactly on its end', () => {
+      expect(truncate('hello world foo', { length: 12, words: true, ellipsis: '…' })).toBe('hello world…')
+      expect(truncate('hello world foo', { length: 14, words: true })).toBe('hello world...')
+    })
+
+    it('drops the last word when it would not fit with the ellipsis', () => {
+      expect(truncate('hello world foo', { length: 12, words: true })).toBe('hello...')
+      expect(truncate('hello world foo', { length: 13, words: true })).toBe('hello...')
+    })
+
+    it('leaves no space before the ellipsis', () => {
+      expect(truncate('hello  world foo', { length: 9, words: true })).toBe('hello...')
+      expect(truncate('hello world foo', { length: 9, words: true })).toBe('hello...')
+    })
+
+    it('never returns more than length characters at a word boundary', () => {
+      const text = 'The quick brown fox jumps over the lazy dog'
+
+      for (let length = 4; length <= text.length; length++) {
+        expect(truncate(text, { length, words: true }).length).toBeLessThanOrEqual(length)
+      }
     })
 
     it('handles word boundary without spaces', () => {

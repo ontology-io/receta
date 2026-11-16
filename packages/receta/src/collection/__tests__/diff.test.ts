@@ -186,5 +186,71 @@ describe('Collection.diff', () => {
 
       expect(result.unchanged.map((u) => u.id)).toEqual([1, 2, 3])
     })
+
+    it('keeps the order of the lists, not the numeric order of the ids', () => {
+      type Row = { id: number | string; v?: number }
+      const old: Row[] = [{ id: 30 }, { id: 4 }, { id: 'z' }, { id: 7, v: 1 }, { id: 5 }]
+      const updated: Row[] = [{ id: 10 }, { id: 5 }, { id: 2 }, { id: 'b' }, { id: 7, v: 2 }, { id: 1 }, { id: 'z' }]
+
+      const result = diff(old, updated, (row) => row.id)
+
+      expect(result.added.map((row) => row.id)).toEqual([10, 2, 'b', 1])
+      expect(result.removed.map((row) => row.id)).toEqual([30, 4])
+      expect(result.unchanged.map((row) => row.id)).toEqual([5, 'z'])
+      expect(result.updated.map((pair) => pair.new.id)).toEqual([7])
+    })
+
+    it('keeps falsy items', () => {
+      expect(diff([0, 1, 2], [0, 2, 3], (n) => n)).toEqual({
+        added: [3],
+        updated: [],
+        removed: [1],
+        unchanged: [0, 2],
+      })
+      expect(diff([''], ['', 'a'], (text) => text)).toEqual({
+        added: ['a'],
+        updated: [],
+        removed: [],
+        unchanged: [''],
+      })
+      expect(diff([0, false], [null], (item) => String(item))).toEqual({
+        added: [null],
+        updated: [],
+        removed: [0, false],
+        unchanged: [],
+      })
+    })
+
+    it('reports a falsy item as updated when it is not equal', () => {
+      const never = () => false
+
+      expect(diff([0], [0], (n) => n, never)).toEqual({
+        added: [],
+        updated: [{ old: 0, new: 0 }],
+        removed: [],
+        unchanged: [],
+      })
+    })
+
+    it('treats the id 1 and the id "1" as the same item', () => {
+      const result = diff([{ id: 1 as number | string }], [{ id: '1' as number | string }], (row) => row.id)
+
+      expect(result.added).toEqual([])
+      expect(result.removed).toEqual([])
+      expect(result.updated).toEqual([{ old: { id: 1 }, new: { id: '1' } }])
+    })
+
+    it('keeps the last item when a list repeats an id', () => {
+      const result = diff([], [{ id: 1, v: 'first' }, { id: 2, v: 'only' }, { id: 1, v: 'last' }], (row) => row.id)
+
+      expect(result.added).toEqual([{ id: 1, v: 'last' }, { id: 2, v: 'only' }])
+    })
+
+    it('reads ids named like object members', () => {
+      const result = diff([{ id: 'constructor' }], [{ id: 'toString' }, { id: '__proto__' }], (row) => row.id)
+
+      expect(result.added.map((row) => row.id)).toEqual(['toString', '__proto__'])
+      expect(result.removed.map((row) => row.id)).toEqual(['constructor'])
+    })
   })
 })
