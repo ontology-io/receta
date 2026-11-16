@@ -134,7 +134,12 @@ const writeCatalog = async (): Promise<void> => {
     process.exit(1)
   }
   const entries = R.map(assets, toEntry)
-  await writeFile(join(ROOT, 'catalog.json'), `${JSON.stringify({ package: PACKAGE, count: entries.length, assets: entries }, null, 2)}\n`)
+  const counts = R.countBy(entries, R.prop('category'))
+  const categories = R.map(CATEGORIES, (name) => ({ name, about: ABOUT[name], count: counts[name] ?? 0 }))
+  await writeFile(
+    join(ROOT, 'catalog.json'),
+    `${JSON.stringify({ package: PACKAGE, count: entries.length, categories, assets: entries }, null, 2)}\n`,
+  )
   await writeFile(join(ROOT, 'CATALOG.md'), markdown(entries))
   await writeBarrels(assets)
   console.log(`Catalog: ${entries.length} assets in ${R.unique(R.map(entries, R.prop('category'))).length} categories`)

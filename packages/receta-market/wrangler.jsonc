@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "receta-market",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  // The MCP SDK reaches for a few Node built-ins.
+  "compatibility_flags": ["nodejs_compat"],
+  // The first address is on workers.dev. A receta.dev subdomain needs a DNS record added in
+  // the dashboard first, since wrangler's login can't edit DNS (see the website's wrangler.jsonc).
+  "workers_dev": true,
+  "preview_urls": false,
+  "ai": { "binding": "AI" },
+  // Created with --dimensions=768 --metric=cosine to match the model in src/cloudflare.ts,
+  // with metadata indexes on field, category and status for filtered queries.
+  "vectorize": [{ "binding": "VECTORS", "index_name": "receta-assets" }],
+  "observability": { "enabled": true }
+}

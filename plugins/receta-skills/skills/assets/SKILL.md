@@ -42,11 +42,19 @@ may already have, tested. Every new one is one the next project could reuse.
                                     └───────────────────────┘
 ```
 
-## The script
+## The marketplace, or the script
 
-Everything goes through one script in this skill's folder. Use the base directory shown when
-this skill loaded in place of `<skill>`. It runs with `bun`, or with
-`node --experimental-strip-types` on Node 22.6 and later.
+When the `receta-assets` MCP server is connected, use its tools: `search_assets`,
+`get_asset`, `browse`, `related_assets` and `authoring_guide`. Its search understands
+meaning as well as words, so "keep the newest" also finds an asset whose summary says "the
+one that sorts first". Give it the job in words, and the input and output types when you
+know them. `related_assets` lists an asset's variants, which is how you find the closest
+one to adapt. The steps below hold either way; only the commands differ.
+
+Without the server, everything goes through one script in this skill's folder. Use the base
+directory shown when this skill loaded in place of `<skill>`. It runs with `bun`, or with
+`node --experimental-strip-types` on Node 22.6 and later. Offering a function back still
+goes through the script's `share`.
 
 ```bash
 bun <skill>/scripts/assets.ts search <words that describe the job>

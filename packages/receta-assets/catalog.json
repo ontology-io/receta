@@ -1,6 +1,73 @@
 {
   "package": "@ontologyio/receta-assets",
   "count": 390,
+  "categories": [
+    {
+      "name": "async",
+      "about": "Retries, time limits, batching, polling and fallbacks around async work",
+      "count": 29
+    },
+    {
+      "name": "cache",
+      "about": "Memoized loaders and caches with expiry, size limits and invalidation",
+      "count": 23
+    },
+    {
+      "name": "collection",
+      "about": "List work: dedupe, top-N, group totals, diffs, upserts, trees and pages",
+      "count": 37
+    },
+    {
+      "name": "control",
+      "about": "Branching and dispatch: classify a value, route it, guard it",
+      "count": 35
+    },
+    {
+      "name": "filter",
+      "about": "Ready predicates and predicate builders for search, ranges and facets",
+      "count": 28
+    },
+    {
+      "name": "number",
+      "about": "Money, percentages, sizes, rounding and small statistics",
+      "count": 33
+    },
+    {
+      "name": "object",
+      "about": "Payload shaping: redact, rename, defaults, flatten, strip and pick",
+      "count": 29
+    },
+    {
+      "name": "parse",
+      "about": "Untrusted text and unknown values into typed values or a reason they are not",
+      "count": 38
+    },
+    {
+      "name": "result",
+      "about": "Result and Option plumbing: combine, recover, convert, collect",
+      "count": 24
+    },
+    {
+      "name": "sort",
+      "about": "Comparators for multi-key, priority, natural and nullable orders",
+      "count": 23
+    },
+    {
+      "name": "state",
+      "about": "Immutable updates deep inside state through lenses",
+      "count": 30
+    },
+    {
+      "name": "text",
+      "about": "Slugs, excerpts, masks, names, case and search highlighting",
+      "count": 30
+    },
+    {
+      "name": "validate",
+      "about": "Field, form and payload validation that reports every error at once",
+      "count": 31
+    }
+  ],
   "assets": [
     {
       "name": "autosave",
