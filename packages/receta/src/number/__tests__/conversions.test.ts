@@ -197,9 +197,86 @@ describe('Number Conversions', () => {
       })
     })
 
+    describe('a lone separator', () => {
+      const parsed = (input: string) => {
+        const result = parseFormattedNumber(input)
+        return isOk(result) ? result.value : 'Err'
+      }
+
+      it('reads a comma followed by three digits as a thousands separator', () => {
+        expect(parsed('1,234')).toBe(1234)
+        expect(parsed('12,345')).toBe(12345)
+        expect(parsed('-100,000')).toBe(-100000)
+        expect(parsed('$1,500')).toBe(1500)
+      })
+
+      it('reads any other lone comma as the decimal separator', () => {
+        expect(parsed('1,5')).toBe(1.5)
+        expect(parsed('12,5')).toBe(12.5)
+        expect(parsed('12,50')).toBe(12.5)
+        expect(parsed('-1,5')).toBe(-1.5)
+        expect(parsed('0,5')).toBe(0.5)
+        expect(parsed('0,500')).toBe(0.5)
+        expect(parsed('1,2345')).toBe(1.2345)
+        expect(parsed('1234,567')).toBe(1234.567)
+      })
+
+      it('reads a lone period as the decimal separator', () => {
+        expect(parsed('1.5')).toBe(1.5)
+        expect(parsed('1.234')).toBe(1.234)
+        expect(parsed('.5')).toBe(0.5)
+      })
+
+      it('reads a repeated separator as thousands', () => {
+        expect(parsed('1,234,567')).toBe(1234567)
+        expect(parsed('1.234.567')).toBe(1234567)
+        expect(parsed('1 234 567')).toBe(1234567)
+      })
+    })
+
+    describe('European and other layouts', () => {
+      const parsed = (input: string) => {
+        const result = parseFormattedNumber(input)
+        return isOk(result) ? result.value : 'Err'
+      }
+
+      it('parses a comma decimal with a currency after it', () => {
+        expect(parsed('12,50 €')).toBe(12.5)
+        expect(parsed('12,50 EUR')).toBe(12.5)
+        expect(parsed('1.234,56 €')).toBe(1234.56)
+        expect(parsed('€ 12,50')).toBe(12.5)
+      })
+
+      it('parses space and apostrophe thousands separators', () => {
+        expect(parsed('1 234,56')).toBe(1234.56)
+        expect(parsed('1 234 567,89')).toBe(1234567.89)
+        expect(parsed('1\u00A0234,56')).toBe(1234.56)
+        expect(parsed('1\u202F234,56 €')).toBe(1234.56)
+        expect(parsed("1'234.50")).toBe(1234.5)
+      })
+
+      it('takes the separator written last as the decimal one', () => {
+        expect(parsed('1,234.5')).toBe(1234.5)
+        expect(parsed('1.234,5')).toBe(1234.5)
+        expect(parsed('2.345.678,90')).toBe(2345678.9)
+      })
+    })
+
     describe('error cases', () => {
       it('returns error for empty string', () => {
         expect(isErr(parseFormattedNumber(''))).toBe(true)
+      })
+
+      it('returns error when there is no digit', () => {
+        for (const input of ['$', 'USD', '()', '-', '€ ', ',', '.']) {
+          expect(isErr(parseFormattedNumber(input))).toBe(true)
+        }
+      })
+
+      it('returns error for a number that is not a plain decimal', () => {
+        for (const input of ['Infinity', '-Infinity', '0x10', '1,234.56.78', '1.234,56,78', '5-', '50%']) {
+          expect(isErr(parseFormattedNumber(input))).toBe(true)
+        }
       })
 
       it('returns error for invalid characters', () => {
