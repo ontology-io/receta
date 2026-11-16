@@ -255,6 +255,29 @@ describe('String.truncate', () => {
       expect(truncate('The quick brown fox', { length: 15, words: true })).toBe('The quick...')
     })
 
+    it('keeps the last word when the cut lands exactly on its end', () => {
+      expect(truncate('hello world foo', { length: 12, words: true, ellipsis: '…' })).toBe('hello world…')
+      expect(truncate('hello world foo', { length: 14, words: true })).toBe('hello world...')
+    })
+
+    it('drops the last word when it would not fit with the ellipsis', () => {
+      expect(truncate('hello world foo', { length: 12, words: true })).toBe('hello...')
+      expect(truncate('hello world foo', { length: 13, words: true })).toBe('hello...')
+    })
+
+    it('leaves no space before the ellipsis', () => {
+      expect(truncate('hello  world foo', { length: 9, words: true })).toBe('hello...')
+      expect(truncate('hello world foo', { length: 9, words: true })).toBe('hello...')
+    })
+
+    it('never returns more than length characters at a word boundary', () => {
+      const text = 'The quick brown fox jumps over the lazy dog'
+
+      for (let length = 4; length <= text.length; length++) {
+        expect(truncate(text, { length, words: true }).length).toBeLessThanOrEqual(length)
+      }
+    })
+
     it('handles word boundary without spaces', () => {
       expect(truncate('Verylongwordhere', { length: 10, words: true })).toBe('Verylon...')
     })

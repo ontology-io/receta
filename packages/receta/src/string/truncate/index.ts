@@ -7,6 +7,9 @@ import type { TruncateOptions } from '../types'
  * If the string exceeds the maximum length, it's truncated and an ellipsis
  * is appended. Can optionally truncate at word boundaries to avoid cutting words.
  *
+ * The result, ellipsis included, is never longer than `length`. With `words: true` it keeps
+ * as many whole words as fit, and a single word longer than the limit is cut mid-word.
+ *
  * @param str - The string to truncate
  * @param options - Truncation options
  * @returns The truncated string
@@ -22,6 +25,9 @@ import type { TruncateOptions } from '../types'
  *
  * truncate('The quick brown fox', { length: 15, words: true })
  * // => 'The quick...'
+ *
+ * truncate('hello world foo', { length: 12, words: true, ellipsis: '…' })
+ * // => 'hello world…'
  *
  * truncate('Short', { length: 10 })
  * // => 'Short' (unchanged if under limit)
@@ -59,14 +65,17 @@ function truncateImplementation(str: string, options: TruncateOptions): string {
     return str.slice(0, maxLength) + ellipsis
   }
 
-  // Truncate at word boundary
-  const truncated = str.slice(0, maxLength + 1) // Look one character ahead
-  const lastSpace = truncated.trimEnd().lastIndexOf(' ')
+  const head = str.slice(0, maxLength)
+  const cutsAWord = /\S$/.test(head) && /^\S/.test(str.slice(maxLength))
 
-  if (lastSpace === -1) {
-    // No space found, truncate at character boundary
-    return str.slice(0, maxLength) + ellipsis
+  if (!cutsAWord) {
+    // The cut lands between words, so everything before it is whole words
+    return head.trimEnd() + ellipsis
   }
 
-  return truncated.slice(0, lastSpace) + ellipsis
+  // Back up to the last whole word. One word longer than the limit is cut where it is.
+  const wholeWords = head.replace(/\s+\S*$/, '')
+  const kept = wholeWords.length < head.length && wholeWords.length > 0 ? wholeWords : head
+
+  return kept + ellipsis
 }
