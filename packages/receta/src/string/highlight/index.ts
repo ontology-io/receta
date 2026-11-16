@@ -45,6 +45,10 @@ export interface HighlightOptions {
  * By default, escapes HTML to prevent XSS attacks. Set `escapeHtml: false` if the
  * input is already trusted/sanitized.
  *
+ * The query is matched against the text as written, before escaping. So `amp` doesn't match
+ * inside the `&amp;` an ampersand becomes, and a query like `&` or `<` highlights the
+ * character itself.
+ *
  * @param text - The text to search within
  * @param query - The substring to highlight
  * @param options - Highlighting options
@@ -81,6 +85,13 @@ export interface HighlightOptions {
  * // HTML escaping (default, prevents XSS)
  * highlight('<script>alert("xss")</script>', 'script')
  * // => '&lt;<mark>script</mark>&gt;alert(&quot;xss&quot;)&lt;/<mark>script</mark>&gt;'
+ *
+ * // The query matches the text, not the entities
+ * highlight('R&D budget', 'r&d')
+ * // => '<mark>R&amp;D</mark> budget'
+ *
+ * highlight('a & b', 'amp')
+ * // => 'a &amp; b'
  *
  * // Data-last (in pipe)
  * pipe(
@@ -121,25 +132,27 @@ function highlightImplementation(
     escapeHtml: shouldEscape = true,
   } = options
 
+  const escapeText = (part: string): string => (shouldEscape ? escapeHtml(part) : part)
+
   // Empty query returns original text
   if (query.trim().length === 0) {
-    return shouldEscape ? escapeHtml(text) : text
+    return escapeText(text)
   }
 
-  // Escape HTML first if requested
-  const processedText = shouldEscape ? escapeHtml(text) : text
-
-  // Escape regex special characters in query
-  const escapedQuery = escapeRegex(query)
-
-  // Create regex with appropriate flags
+  // The capture group makes split return the matches too, at the odd positions
   const flags = caseInsensitive ? 'gi' : 'g'
-  const regex = new RegExp(escapedQuery, flags)
+  const matcher = new RegExp(`(${escapeRegex(query)})`, flags)
 
   // Build opening tag with optional class
   const openTag = className ? `<${tag} class="${className}">` : `<${tag}>`
   const closeTag = `</${tag}>`
 
-  // Replace all matches with highlighted version
-  return processedText.replace(regex, (match) => `${openTag}${match}${closeTag}`)
+  // Escape each piece after matching, so the query never matches inside an entity
+  return R.pipe(
+    text.split(matcher),
+    R.map((part, index) =>
+      index % 2 === 1 ? `${openTag}${escapeText(part)}${closeTag}` : escapeText(part)
+    ),
+    R.join('')
+  )
 }

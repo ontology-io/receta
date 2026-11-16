@@ -378,6 +378,19 @@ describe('String Module Enhancements', () => {
         )
       })
 
+      it('matches the text, not the entities it is escaped to', () => {
+        expect(highlight('a & b', 'amp')).toBe('a &amp; b')
+        expect(highlight('<b>', 'lt')).toBe('&lt;b&gt;')
+        expect(highlight('say "hi"', 'quot')).toBe('say &quot;hi&quot;')
+      })
+
+      it('highlights a query made of characters that get escaped', () => {
+        expect(highlight('a & b', '&')).toBe('a <mark>&amp;</mark> b')
+        expect(highlight('a < b', '<')).toBe('a <mark>&lt;</mark> b')
+        expect(highlight('R&D and r&d', 'r&d')).toBe('<mark>R&amp;D</mark> and <mark>r&amp;d</mark>')
+        expect(highlight('<b>bold</b>', '<b>')).toBe('<mark>&lt;b&gt;</mark>bold&lt;/b&gt;')
+      })
+
       it('can disable HTML escaping', () => {
         expect(highlight('<b>bold</b>', 'bold', { escapeHtml: false })).toBe(
           '<b><mark>bold</mark></b>'
