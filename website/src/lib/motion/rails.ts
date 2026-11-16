@@ -17,6 +17,7 @@ export const SCENE_HEIGHT = {
   menu: 1200,
   zoom: 900,
   agents: 1040,
+  market: 982,
   limits: 800,
   ok: 900,
 } as const
@@ -36,6 +37,7 @@ export const RAIL = {
   menu: 'M 720 0 V 40 Q 720 80 680 80 H 144 Q 104 80 104 120 V 1200',
   zoom: 'M 104 0 V 900',
   agents: 'M 104 0 V 1040',
+  market: 'M 104 0 V 982',
   limits: 'M 104 0 V 800',
   ok: 'M 104 0 V 40 Q 104 80 144 80 H 1275 Q 1315 80 1315 120 V 327',
 } as const

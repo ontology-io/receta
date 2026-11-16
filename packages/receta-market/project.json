@@ -1,0 +1,24 @@
+{
+  "name": "receta-market",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/receta-market/src",
+  "projectType": "application",
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["receta:build"],
+      "options": {
+        "command": "bun run test",
+        "cwd": "{projectRoot}"
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["receta:build"],
+      "options": {
+        "command": "bun run typecheck",
+        "cwd": "{projectRoot}"
+      }
+    }
+  }
+}

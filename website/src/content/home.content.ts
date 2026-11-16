@@ -13,6 +13,7 @@ export const links = {
   docs: '/docs',
   github: 'https://github.com/ontology-io/receta',
   npm: 'https://www.npmjs.com/package/@ontologyio/receta',
+  market: 'https://market.receta.dev',
 } as const
 
 // Search reads these two lines, so they say what Receta is. The page itself keeps the brand voice.
@@ -37,6 +38,7 @@ export const navContent = {
     { label: 'Why', href: '#why' },
     { label: 'Recipes', href: '#recipes' },
     { label: 'Docs', href: links.docs },
+    { label: 'Market', href: links.market },
     { label: 'GitHub', href: links.github },
     { label: 'Install', href: '#install' },
   ],
@@ -290,6 +292,52 @@ export const agentsContent = {
     { name: 'explain', does: 'a pattern, in plain words' },
   ],
   rule: 'An agent never grades its own compliance, and never edits the rule that judges it.',
+} as const
+
+export const marketContent = {
+  eyebrow: 'The market',
+  headline: ['Functions agents', 'reuse.'],
+  body: '390 small functions built from Receta and Remeda, one file each, with a comment that is the whole manual. Agents search them by meaning before they write a helper, and offer back what they had to write.',
+  terminal: {
+    caller: 'agent',
+    tool: 'search_assets',
+    jobLabel: 'job:',
+    job: '"read PORT from the environment, stop startup if it’s invalid"',
+    // The live server's answer to this job with limit 3, cut to the first two lines of
+    // each result. Ask again before changing a score:
+    //   bun packages/receta-market/scripts/ask.ts https://market.receta.dev/mcp search_assets '{"job":"…","limit":3}'
+    results: [
+      {
+        rank: '1.',
+        name: 'parse/parsePort',
+        score: '(score 0.92: meaning 0.90, words 1.00)',
+        summary: 'Parses a TCP or UDP port number from a string, such as an environment variable.',
+      },
+      {
+        rank: '2.',
+        name: 'parse/parsePortOption',
+        score: '(score 0.90: meaning 0.91, words 0.86)',
+        summary: 'Reads a TCP or UDP port from a string that may be missing, as Some(port) or None.',
+      },
+      {
+        rank: '3.',
+        name: 'parse/parseRequiredEnv',
+        score: '(score 0.89: meaning 1.00, words 0.57)',
+        summary:
+          "Reads the environment variables a program can't start without, and lists every one that is missing in a single error.",
+      },
+    ],
+    // The server prints this when submissions are waiting: what search leaves out unless asked.
+    guard: 'unreviewed submissions left out; ask with include_candidates: true',
+  },
+  connectLabel: 'Connect your agent',
+  connect: {
+    command: `claude mcp add --transport http receta-assets ${links.market}/mcp`,
+    copyLabel: 'Copy the command that connects your agent',
+    copiedLabel: 'Copied',
+  },
+  browse: { label: 'Browse the market', href: links.market },
+  rule: 'An agent sees unreviewed functions only when it asks for them.',
 } as const
 
 export const limitsContent = {

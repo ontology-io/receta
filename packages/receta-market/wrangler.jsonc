@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "receta-market",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  // The MCP SDK reaches for a few Node built-ins.
+  "compatibility_flags": ["nodejs_compat"],
+  // A custom domain: Cloudflare creates and owns the DNS record for a name that has none, so
+  // nothing is edited by hand. (receta.dev itself can't be one; see the website's config.)
+  "routes": [{ "pattern": "market.receta.dev", "custom_domain": true }],
+  // workers.dev stays on for the admin calls; its address carries the account's subdomain,
+  // so it is never published.
+  "workers_dev": true,
+  "preview_urls": false,
+  "ai": { "binding": "AI" },
+  // Created with --dimensions=768 --metric=cosine to match the model in src/cloudflare.ts,
+  // with metadata indexes on field, category and status for filtered queries.
+  // remote: wrangler dev and getPlatformProxy query the real index; there is no local Vectorize.
+  "vectorize": [{ "binding": "VECTORS", "index_name": "receta-assets", "remote": true }],
+  // The public registry: submissions, votes and agents' reports. Schema in migrations/.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "receta-market",
+      "database_id": "809ea7c9-85bd-4bf1-9998-0e7a114f8d84",
+      "migrations_dir": "migrations"
+    }
+  ],
+  // The self-hosted fonts the pages use, copied from @fontsource by scripts/bundle.ts. A
+  // request for a file there never reaches the Worker; under BASE_PATH the Worker asks ASSETS.
+  "assets": { "directory": "./public", "binding": "ASSETS" },
+  // People's search calls Workers AI; an address past 30 a minute is ranked by words only.
+  "ratelimits": [{ "name": "SEARCH_LIMIT", "namespace_id": "1001", "simple": { "limit": 30, "period": 60 } }],
+  "observability": { "enabled": true }
+}

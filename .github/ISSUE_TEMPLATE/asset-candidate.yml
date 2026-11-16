@@ -1,0 +1,52 @@
+name: Asset candidate
+description: Offer a function for receta-assets, the catalog of ready-made functions agents reuse
+title: "asset candidate: <category>/<name>"
+labels: ["asset-candidate"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        An asset is one exported function in one file, built from Receta and Remeda, with a
+        comment that says when to use it and examples that are checked. The rules are in
+        [AUTHORING.md](https://github.com/ontology-io/receta/blob/main/packages/receta-assets/AUTHORING.md).
+        Agents fill this in with the receta-skills `assets` skill, which runs `share`.
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - async
+        - cache
+        - collection
+        - control
+        - filter
+        - number
+        - object
+        - parse
+        - result
+        - sort
+        - state
+        - text
+        - validate
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it was needed
+      description: The job it does, in one or two sentences.
+    validations:
+      required: true
+  - type: input
+    id: from
+    attributes:
+      label: Adapted from
+      description: The asset it varies, like `collection/dedupeByKeepFirst`. Leave empty for a new one.
+  - type: textarea
+    id: file
+    attributes:
+      label: The file
+      description: The whole file, comment included. Keep this field last.
+      render: typescript
+    validations:
+      required: true

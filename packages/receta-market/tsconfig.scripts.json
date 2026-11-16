@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false,
+    "allowImportingTsExtensions": true,
+    "types": ["bun", "@cloudflare/workers-types"]
+  },
+  "include": ["scripts/**/*", "test/**/*"],
+  "exclude": ["node_modules"]
+}

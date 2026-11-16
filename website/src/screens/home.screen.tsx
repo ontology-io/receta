@@ -2,6 +2,7 @@ import { AgentsContainer } from '@/containers/agents.container'
 import { HeroContainer } from '@/containers/hero.container'
 import { HomeStageContainer } from '@/containers/home-stage.container'
 import { LimitsContainer } from '@/containers/limits.container'
+import { MarketContainer } from '@/containers/market.container'
 import { MenuContainer } from '@/containers/menu.container'
 import { NavContainer } from '@/containers/nav.container'
 import { OkContainer } from '@/containers/ok.container'
@@ -31,6 +32,7 @@ export const HomeScreen = () => (
       <MenuContainer />
       <ZoomContainer />
       <AgentsContainer />
+      <MarketContainer />
       <LimitsContainer />
       <OkContainer />
     </HomeStageContainer>

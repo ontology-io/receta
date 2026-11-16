@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "receta-assets": {
+      "type": "http",
+      "url": "https://market.receta.dev/mcp",
+      "headers": {
+        "X-Receta-Share": "${RECETA_ASSETS_SHARE:-on}"
+      }
+    }
+  }
+}

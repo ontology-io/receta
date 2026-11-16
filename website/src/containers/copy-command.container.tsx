@@ -4,14 +4,23 @@ import { useState } from 'react'
 import * as R from 'remeda'
 import { match, tryCatchAsync } from '@ontologyio/receta/result'
 import { CommandChip } from '@/components/primitives/command-chip'
-import { installContent } from '@/content/home.content'
 
 const COPIED_FEEDBACK_MS = 1600
 
-type CopyCommandContainerProps = { readonly tone: 'err' | 'paper' }
+type CommandCopy = {
+  readonly command: string
+  readonly copyLabel: string
+  readonly copiedLabel: string
+}
 
-/** Connects the install command to the clipboard. */
-export const CopyCommandContainer = ({ tone }: CopyCommandContainerProps) => {
+type CopyCommandContainerProps = {
+  readonly copy: CommandCopy
+  readonly tone: 'err' | 'paper'
+  readonly shouldWrap?: boolean
+}
+
+/** Connects a command to the clipboard. */
+export const CopyCommandContainer = ({ copy, tone, shouldWrap = false }: CopyCommandContainerProps) => {
   const [isCopied, setIsCopied] = useState(false)
 
   const showCopied = (): void => {
@@ -21,18 +30,19 @@ export const CopyCommandContainer = ({ tone }: CopyCommandContainerProps) => {
 
   const copyCommand = async (): Promise<void> =>
     R.pipe(
-      await tryCatchAsync(() => navigator.clipboard.writeText(installContent.command)),
+      await tryCatchAsync(() => navigator.clipboard.writeText(copy.command)),
       // A blocked clipboard changes nothing: the command is still on screen to select.
       match({ onOk: showCopied, onErr: R.doNothing() }),
     )
 
   return (
     <CommandChip
-      command={installContent.command}
+      command={copy.command}
       tone={tone}
+      shouldWrap={shouldWrap}
       isCopied={isCopied}
-      copyLabel={installContent.copyLabel}
-      copiedLabel={installContent.copiedLabel}
+      copyLabel={copy.copyLabel}
+      copiedLabel={copy.copiedLabel}
       onCopy={copyCommand}
     />
   )

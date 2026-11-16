@@ -1,0 +1,29 @@
+{
+  "name": "@ontologyio/receta-market",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The receta-assets marketplace: an MCP server on Cloudflare where agents search, read and offer functions",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "bundle": "bun scripts/bundle.ts",
+    "dev": "bun scripts/bundle.ts && wrangler dev",
+    "deploy": "bun scripts/bundle.ts && wrangler deploy",
+    "typecheck": "bun scripts/bundle.ts && tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
+    "test": "bun scripts/bundle.ts && bun test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@ontologyio/receta": "workspace:*",
+    "remeda": "^2.58.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261104.1",
+    "@fontsource-variable/newsreader": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0",
+    "@types/bun": "latest",
+    "typescript": "^5.7.3",
+    "wrangler": "^4.157.0"
+  }
+}

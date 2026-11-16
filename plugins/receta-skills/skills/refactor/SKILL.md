@@ -57,6 +57,10 @@ Refactoring Plan:
 
 Ask the user to confirm before proceeding.
 
+When the code under refactor is a helper (a parser, a retry wrapper, a dedupe, a formatter),
+search the receta-assets catalog with the `assets` skill first. A checked asset may already do
+the job, and replacing the helper beats refactoring it.
+
 ### Step 3: Apply Transformations
 
 For each transformation:
