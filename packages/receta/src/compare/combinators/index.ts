@@ -104,21 +104,18 @@ export function reverse<T>(comparator: Comparator<T>): Comparator<T> {
  * ```typescript
  * const scores: (number | null)[] = [30, null, 10, null, 20]
  *
- * // The extractor's fallback satisfies the types. A null item never reaches it.
- * R.sort(scores, nullsFirst(ascending(score => score ?? 0)))
+ * // The inner comparator only sees the numbers, so it needs no fallback for null
+ * R.sort(scores, nullsFirst(ascending(score => score)))
  * // => [null, null, 10, 20, 30]
  * ```
  *
  * @see nullsLast - to place nulls at the end
  */
-export function nullsFirst<T>(comparator: Comparator<Nullable<T>>): Comparator<Nullable<T>> {
+export function nullsFirst<T>(comparator: Comparator<T>): Comparator<Nullable<T>> {
   return (a, b) => {
-    const aIsNull = a == null
-    const bIsNull = b == null
-
-    if (aIsNull && bIsNull) return 0
-    if (aIsNull) return -1
-    if (bIsNull) return 1
+    if (a == null && b == null) return 0
+    if (a == null) return -1
+    if (b == null) return 1
 
     return comparator(a, b)
   }
@@ -141,21 +138,18 @@ export function nullsFirst<T>(comparator: Comparator<Nullable<T>>): Comparator<N
  * ```typescript
  * const scores: (number | null)[] = [30, null, 10, null, 20]
  *
- * // The extractor's fallback satisfies the types. A null item never reaches it.
- * R.sort(scores, nullsLast(ascending(score => score ?? 0)))
+ * // The inner comparator only sees the numbers, so it needs no fallback for null
+ * R.sort(scores, nullsLast(ascending(score => score)))
  * // => [10, 20, 30, null, null]
  * ```
  *
  * @see nullsFirst - to place nulls at the beginning
  */
-export function nullsLast<T>(comparator: Comparator<Nullable<T>>): Comparator<Nullable<T>> {
+export function nullsLast<T>(comparator: Comparator<T>): Comparator<Nullable<T>> {
   return (a, b) => {
-    const aIsNull = a == null
-    const bIsNull = b == null
-
-    if (aIsNull && bIsNull) return 0
-    if (aIsNull) return 1
-    if (bIsNull) return -1
+    if (a == null && b == null) return 0
+    if (a == null) return 1
+    if (b == null) return -1
 
     return comparator(a, b)
   }
