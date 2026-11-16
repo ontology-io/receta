@@ -58,6 +58,34 @@ describe('Compare.typed', () => {
       const sorted = [...transactions].sort(reverse(byDate(t => t.date)))
       expect(sorted.map(t => t.amount)).toEqual([200, 150, 100])
     })
+
+    it('sorts invalid dates last instead of returning NaN', () => {
+      const invalid = new Date('not a date')
+      const early = new Date('2024-01-05')
+      const late = new Date('2024-01-20')
+      const byDay = byDate((d: Date) => d)
+
+      expect(byDay(invalid, early)).toBeGreaterThan(0)
+      expect(byDay(early, invalid)).toBeLessThan(0)
+      expect(byDay(invalid, new Date(NaN))).toBe(0)
+
+      const sorted = [late, invalid, early].sort(byDay)
+      expect(sorted[0]).toBe(early)
+      expect(sorted[1]).toBe(late)
+      expect(sorted[2]).toBe(invalid)
+    })
+
+    it('gives the same order for invalid dates whatever order the input was in', () => {
+      const invalid = new Date('not a date')
+      const dates = [new Date('2024-03-01'), new Date('2024-01-01'), new Date('2024-02-01')]
+      const byDay = byDate((d: Date) => d)
+      const times = (list: Date[]) => list.map((d) => d.getTime())
+
+      const expected = times([dates[1]!, dates[2]!, dates[0]!, invalid])
+      expect(times([invalid, ...dates].sort(byDay))).toEqual(expected)
+      expect(times([dates[0]!, invalid, dates[1]!, dates[2]!].sort(byDay))).toEqual(expected)
+      expect(times([...dates, invalid].sort(byDay))).toEqual(expected)
+    })
   })
 
   describe('byNumber', () => {

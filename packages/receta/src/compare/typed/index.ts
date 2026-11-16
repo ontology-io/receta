@@ -5,6 +5,7 @@ import type { Comparator, ComparableExtractor, StringCompareOptions } from '../t
  *
  * Sorts dates chronologically (earliest to latest by default).
  * Handles Date objects correctly for temporal sorting.
+ * An invalid date (`new Date('nope')`) sorts after every valid one.
  *
  * @param fn - Function to extract the date value
  * @returns A comparator for dates
@@ -36,15 +37,9 @@ import type { Comparator, ComparableExtractor, StringCompareOptions } from '../t
  * @see descending - for generic descending sort
  */
 export function byDate<T>(fn: ComparableExtractor<T, Date>): Comparator<T> {
-  return (a, b) => {
-    const aDate = fn(a)
-    const bDate = fn(b)
-
-    const aTime = aDate.getTime()
-    const bTime = bDate.getTime()
-
-    return aTime - bTime
-  }
+  // An invalid Date has a time of NaN. Subtracting would return NaN, which leaves the sort
+  // order undefined, so compare the times with byNumber, which puts NaN last.
+  return byNumber((value) => fn(value).getTime())
 }
 
 /**
