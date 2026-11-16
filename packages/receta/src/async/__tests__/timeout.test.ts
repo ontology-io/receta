@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'bun:test'
+import { describe, it, expect, spyOn } from 'bun:test'
 import { timeout, TimeoutError } from '../timeout'
 import { sleep } from '../retry'
 import { isOk, isErr } from '../../result'
@@ -43,6 +43,37 @@ describe('Async.timeout', () => {
   })
 
   describe('edge cases', () => {
+    it('clears its timer once the promise has settled', async () => {
+      const set = spyOn(globalThis, 'setTimeout')
+      const clear = spyOn(globalThis, 'clearTimeout')
+
+      try {
+        // Without the clear, this timer keeps the process alive for a minute
+        await timeout(Promise.resolve('done'), 60_000)
+
+        const timer = set.mock.results.at(-1)?.value
+        expect(set).toHaveBeenCalledTimes(1)
+        expect(clear).toHaveBeenCalledWith(timer)
+      } finally {
+        set.mockRestore()
+        clear.mockRestore()
+      }
+    })
+
+    it('clears its timer when the promise rejects', async () => {
+      const set = spyOn(globalThis, 'setTimeout')
+      const clear = spyOn(globalThis, 'clearTimeout')
+
+      try {
+        await timeout(Promise.reject(new Error('boom')), 60_000).catch(() => undefined)
+
+        expect(clear).toHaveBeenCalledWith(set.mock.results.at(-1)?.value)
+      } finally {
+        set.mockRestore()
+        clear.mockRestore()
+      }
+    })
+
     it('handles zero timeout', async () => {
       const promise = Promise.resolve(42)
 
