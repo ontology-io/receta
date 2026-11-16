@@ -67,6 +67,9 @@ export function invalid<E>(errors: E | readonly E[]): Invalid<E> {
  * If the predicate returns true, returns Valid with the value.
  * If the predicate returns false, returns Invalid with the error.
  *
+ * A type guard narrows the result: `fromPredicate(isString, error)` takes an `unknown` and
+ * gives a `Validation<string, E>`.
+ *
  * @param predicate - Function that tests the value
  * @param error - Error to return when predicate fails
  * @returns A validator function
@@ -94,10 +97,22 @@ export function invalid<E>(errors: E | readonly E[]): Invalid<E> {
  *   (s: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s),
  *   'Invalid email format'
  * )
+ *
+ * // A type guard narrows an unknown value
+ * const asString = fromPredicate(
+ *   (value: unknown): value is string => typeof value === 'string',
+ *   'Expected a string'
+ * )
+ * asString(payload.name) // => Validation<string, string>
  * ```
  *
  * @see fromPredicateWithError - for dynamic error messages
  */
+export function fromPredicate<T, U extends T, E>(
+  predicate: (value: T) => value is U,
+  error: E
+): Validator<T, U, E>
+export function fromPredicate<T, E>(predicate: Predicate<T>, error: E): Validator<T, T, E>
 export function fromPredicate<T, E>(
   predicate: Predicate<T>,
   error: E
@@ -136,6 +151,14 @@ export function fromPredicate<T, E>(
  *
  * @see fromPredicate - for static error messages
  */
+export function fromPredicateWithError<T, U extends T, E>(
+  predicate: (value: T) => value is U,
+  getError: (value: T) => E
+): Validator<T, U, E>
+export function fromPredicateWithError<T, E>(
+  predicate: Predicate<T>,
+  getError: (value: T) => E
+): Validator<T, T, E>
 export function fromPredicateWithError<T, E>(
   predicate: Predicate<T>,
   getError: (value: T) => E
