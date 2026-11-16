@@ -139,6 +139,15 @@ describe('String.camelCase', () => {
     expect(camelCase('user_2_name')).toBe('user2Name')
   })
 
+  it('starts a new word at a capital that follows a digit', () => {
+    expect(camelCase('utf8String')).toBe('utf8String')
+    expect(pascalCase('utf8String')).toBe('Utf8String')
+    expect(snakeCase('address1Line')).toBe('address1_line')
+    expect(kebabCase('md5Hash')).toBe('md5-hash')
+    expect(snakeCase('SHA256Hash')).toBe('sha256_hash')
+    expect(snakeCase('version2')).toBe('version2')
+  })
+
   it('handles empty string', () => {
     expect(camelCase('')).toBe('')
   })

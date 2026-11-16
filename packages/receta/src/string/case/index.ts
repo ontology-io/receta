@@ -4,13 +4,14 @@ import type { CaseOptions } from '../types'
 /**
  * Splits a string into the words the case converters join back together.
  *
- * A word ends at a separator (space, hyphen, underscore), where a lower-case letter meets a
- * capital (`firstName`), and before the last capital of a run of capitals (`XMLHttp`).
+ * A word ends at a separator (space, hyphen, underscore), where a lower-case letter or a
+ * digit meets a capital (`firstName`, `utf8String`), and before the last capital of a run
+ * of capitals (`XMLHttp`).
  */
 function caseWords(str: string): string[] {
   return R.pipe(
     str
-      .replace(/(\p{Ll})(\p{Lu})/gu, '$1 $2') // camelCase boundaries
+      .replace(/([\p{Ll}\p{N}])(\p{Lu})/gu, '$1 $2') // camelCase boundaries
       .replace(/(\p{Lu}+)(\p{Lu}\p{Ll})/gu, '$1 $2') // UPPERCASE sequences
       .split(/[\s_-]+/),
     R.filter(R.isTruthy)
