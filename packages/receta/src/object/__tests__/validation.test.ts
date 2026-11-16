@@ -84,6 +84,45 @@ describe('Object.validateShape', () => {
         expect(result.error.path).toEqual(['user', 'id'])
       }
     })
+
+    it('names the whole path in the message, not only the last key', () => {
+      const isString = (v: unknown): v is string => typeof v === 'string'
+      const schema = { user: { address: { zip: isString } } }
+
+      const result = validateShape({ user: { address: { zip: 12345 } } }, schema)
+      expect(isErr(result)).toBe(true)
+      if (isErr(result)) {
+        expect(result.error.message).toBe('Validation failed for key "user.address.zip"')
+        expect(result.error.path).toEqual(['user', 'address', 'zip'])
+      }
+    })
+
+    it('keeps the message of a top-level key as it was', () => {
+      const result = validateShape({ id: 'x' }, { id: (v: unknown): v is number => typeof v === 'number' })
+      expect(isErr(result)).toBe(true)
+      if (isErr(result)) {
+        expect(result.error.message).toBe('Validation failed for key "id"')
+      }
+    })
+
+    it('says where a nested object was expected', () => {
+      const isString = (v: unknown): v is string => typeof v === 'string'
+      const schema = { user: { address: { zip: isString } } }
+
+      const result = validateShape({ user: { address: 'none' } }, schema)
+      expect(isErr(result)).toBe(true)
+      if (isErr(result)) {
+        expect(result.error.message).toBe('Expected a plain object at "user.address"')
+        expect(result.error.path).toEqual(['user', 'address'])
+      }
+
+      const atRoot = validateShape('nope', schema)
+      expect(isErr(atRoot)).toBe(true)
+      if (isErr(atRoot)) {
+        expect(atRoot.error.message).toBe('Expected a plain object')
+        expect(atRoot.error.path).toEqual([])
+      }
+    })
   })
 
   describe('data-last', () => {
