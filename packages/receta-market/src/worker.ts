@@ -1,14 +1,55 @@
-// The marketplace Worker. /mcp answers agents; /admin/reindex rebuilds the vectors after a
-// catalog release; / says what this is to a person who opens it in a browser.
+// The marketplace Worker, mounted at BASE_PATH (empty on a domain of its own):
+//
+//   /mcp                     agents, over MCP
+//   /  /c/<id>  /a/<key>     the registry pages: submissions, assets, votes
+//   /vote  /auth/*           voting, signed in with GitHub
+//   /api/candidates          the review list, most voted first, as JSON
+//   /api/submissions/<id>    one submission as JSON, read by receta-assets' intake
+//   /admin/*                 reindex, explain, decide; the ADMIN_TOKEN bearer only
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js'
-import { bundle } from './bundle'
+import * as R from 'remeda'
+import { findAsset } from '../../../plugins/receta-skills/skills/assets/scripts/core.ts'
+import { type AuthConfig, callback, login, logout, type Person, personOf } from './auth'
+import { type BundledAsset, bundle, keyOf } from './bundle'
+import { listingOf } from './candidates'
 import { cloudflareVectors, type Env, reindex } from './cloudflare'
-import { createServer } from './server'
+import { assetPage, candidatePage, homePage, notFoundPage, type PageContext } from './pages'
+import { candidateKey, d1Registry, NO_TALLY, type Registry, type SubmissionStatus } from './registry'
+import { rawScores, type SearchQuery } from './search'
+import { type Caller, createServer } from './server'
+import { entriesFor } from './vectors'
 
-const handleMcp = async (request: Request, env: Env): Promise<Response> => {
+const OPT_OUT = ['0', 'false', 'no', 'off']
+
+const basePathOf = (env: Env): string => (env.BASE_PATH ?? '').replace(/\/+$/, '')
+
+/** A salted hash of the caller's address: enough to rate-limit, not enough to identify. */
+const senderOf = async (request: Request, env: Env): Promise<string> => {
+  const address = request.headers.get('cf-connecting-ip') ?? 'unknown'
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${env.SENDER_SALT ?? ''}:${address}`))
+  return R.join(R.map([...new Uint8Array(digest)].slice(0, 16), (byte) => byte.toString(16).padStart(2, '0')), '')
+}
+
+const authConfig = (env: Env, origin: string): AuthConfig | undefined =>
+  env.GITHUB_CLIENT_ID === undefined || env.GITHUB_CLIENT_SECRET === undefined || env.SESSION_SECRET === undefined
+    ? undefined
+    : {
+        clientId: env.GITHUB_CLIENT_ID,
+        clientSecret: env.GITHUB_CLIENT_SECRET,
+        sessionSecret: env.SESSION_SECRET,
+        baseUrl: `${origin}${basePathOf(env)}`,
+        basePath: basePathOf(env),
+      }
+
+const handleMcp = async (request: Request, env: Env, registry: Registry, origin: string): Promise<Response> => {
+  const caller: Caller = {
+    sender: await senderOf(request, env),
+    shareOff: OPT_OUT.includes((request.headers.get('x-receta-share') ?? '').toLowerCase()),
+    registryUrl: `${origin}${basePathOf(env)}`,
+  }
   // Stateless: a fresh server per request and no sessionIdGenerator, so no session state
   // lives in the Worker.
-  const server = createServer({ bundle, vectors: cloudflareVectors(env) })
+  const server = createServer({ bundle, vectors: cloudflareVectors(env), registry, caller })
   const transport = new WebStandardStreamableHTTPServerTransport({ enableJsonResponse: true })
   await server.connect(transport)
   return transport.handleRequest(request)
@@ -21,28 +62,148 @@ const sameSecret = (given: string, expected: string): boolean => {
   return a.byteLength === b.byteLength && crypto.subtle.timingSafeEqual(a, b)
 }
 
-const handleReindex = async (request: Request, env: Env): Promise<Response> => {
+const isAdmin = (request: Request, env: Env): boolean => {
   const given = (request.headers.get('authorization') ?? '').replace(/^Bearer /, '')
-  if (env.ADMIN_TOKEN === undefined || env.ADMIN_TOKEN === '' || !sameSecret(given, env.ADMIN_TOKEN)) {
-    return new Response('Unauthorized', { status: 401 })
-  }
-  return Response.json({ indexed: await reindex(env, bundle), assets: bundle.count, builtAt: bundle.builtAt })
+  return env.ADMIN_TOKEN !== undefined && env.ADMIN_TOKEN !== '' && sameSecret(given, env.ADMIN_TOKEN)
 }
 
-const about = (url: URL): Response =>
-  new Response(
-    `receta-assets marketplace: ${bundle.count} checked functions built from Receta and Remeda.\n\n` +
-      `Agents connect over MCP at ${url.origin}/mcp. In Claude Code:\n` +
-      `  claude mcp add --transport http receta-assets ${url.origin}/mcp\n`,
-    { headers: { 'content-type': 'text/plain; charset=utf-8' } },
-  )
+const handleAdmin = async (path: string, request: Request, env: Env, registry: Registry): Promise<Response> => {
+  const vectors = cloudflareVectors(env)
+  if (path === '/admin/reindex') {
+    const candidates = R.map(await registry.candidates(10_000), listingOf)
+    return Response.json({
+      indexed: await reindex(vectors, bundle, candidates),
+      assets: bundle.count,
+      candidates: candidates.length,
+      builtAt: bundle.builtAt,
+    })
+  }
+  if (path === '/admin/explain') {
+    // Every signal's raw scores for a query, to tune the blend offline (scripts/eval.ts).
+    const query = (await request.json()) as SearchQuery & { readonly instruct?: boolean }
+    const raw = await rawScores(bundle.assets, query, cloudflareVectors(env, { instruct: query.instruct !== false }))
+    return Response.json({
+      asked: raw.asked,
+      words: Object.fromEntries(raw.words),
+      fields:
+        raw.fields === undefined
+          ? null
+          : Object.fromEntries([...raw.fields.entries()].map(([field, scores]) => [field, Object.fromEntries(scores)])),
+    })
+  }
+  if (path === '/admin/decide') {
+    // Accepting is a commit to receta-assets; this records the decision and takes the
+    // submission out of the candidate index, since an accepted one comes back as reviewed.
+    const { id, status, note } = (await request.json()) as { id: string; status: SubmissionStatus; note?: string }
+    if (status !== 'accepted' && status !== 'declined') {
+      return Response.json({ error: 'status is accepted or declined' }, { status: 400 })
+    }
+    const submission = await registry.find(id)
+    if (submission === undefined || !(await registry.decide(id, status, note ?? ''))) {
+      return Response.json({ error: `no submission ${id}` }, { status: 404 })
+    }
+    await vectors.remove(R.map(entriesFor(listingOf(submission), 'candidate'), R.prop('id')))
+    return Response.json({ id, status })
+  }
+  return new Response('Not found', { status: 404 })
+}
+
+const handleVote = async (request: Request, origin: string, base: string, registry: Registry, person: Person | undefined): Promise<Response> => {
+  // The session cookie is SameSite=Lax, and the Origin must be ours: no voting from other sites.
+  if (person === undefined || request.headers.get('origin') !== origin) return new Response('Forbidden', { status: 403 })
+  const form = await request.formData()
+  const item = String(form.get('item') ?? '')
+  const candidateId = /^candidate\/(\w+)$/.exec(item)?.[1]
+  const exists =
+    candidateId === undefined
+      ? findAsset(bundle.assets, item) !== undefined
+      : (await registry.find(candidateId))?.status === 'candidate'
+  if (!exists) return new Response('Nothing to vote for', { status: 404 })
+  await registry.vote(item, person.id, form.get('on') === '1')
+  const back = candidateId === undefined ? `${base}/a/${item}` : `${base}/c/${candidateId}`
+  return new Response(null, { status: 303, headers: { location: back } })
+}
+
+const handlePage = async (path: string, context: PageContext, registry: Registry): Promise<Response> => {
+  const voted = async (item: string): Promise<boolean> =>
+    context.person !== undefined && (await registry.hasVoted(item, context.person.id))
+  if (path === '/') {
+    const candidates = await registry.candidates(50)
+    const popular = await registry.mostVoted(30)
+    const keys = [...R.map(candidates, (submission) => candidateKey(submission.id)), ...R.map(popular, ([item]) => item)]
+    const tallies = await registry.tallies(keys)
+    const assets = R.pipe(
+      popular,
+      R.map(([item]) => findAsset(bundle.assets, item) as BundledAsset | undefined),
+      R.filter((asset): asset is BundledAsset => asset !== undefined),
+    )
+    return homePage(
+      context,
+      R.map(candidates, (submission) => [submission, tallies.get(candidateKey(submission.id)) ?? NO_TALLY] as const),
+      R.map(assets, (asset) => [asset, tallies.get(keyOf(asset)) ?? NO_TALLY] as const),
+      bundle.count,
+    )
+  }
+  const candidateId = /^\/c\/(\w+)$/.exec(path)?.[1]
+  if (candidateId !== undefined) {
+    const submission = await registry.find(candidateId)
+    if (submission === undefined) return notFoundPage(context)
+    const item = candidateKey(submission.id)
+    const tally = (await registry.tallies([item])).get(item) ?? NO_TALLY
+    return candidatePage(context, submission, tally, await voted(item))
+  }
+  const assetKey = /^\/a\/([a-z]+\/\w+)$/.exec(path)?.[1]
+  const asset = assetKey === undefined ? undefined : (findAsset(bundle.assets, assetKey) as BundledAsset | undefined)
+  if (asset !== undefined) {
+    const tally = (await registry.tallies([keyOf(asset)])).get(keyOf(asset)) ?? NO_TALLY
+    return assetPage(context, asset, tally, await voted(keyOf(asset)))
+  }
+  return notFoundPage(context)
+}
+
+const handleApi = async (path: string, registry: Registry): Promise<Response> => {
+  if (path === '/api/candidates') {
+    const candidates = await registry.candidates(200)
+    const tallies = await registry.tallies(R.map(candidates, (submission) => candidateKey(submission.id)))
+    return Response.json(
+      R.map(candidates, (submission) => ({
+        id: submission.id,
+        name: submission.name,
+        category: submission.category,
+        summary: submission.summary,
+        createdAt: submission.createdAt,
+        ...(tallies.get(candidateKey(submission.id)) ?? NO_TALLY),
+      })),
+    )
+  }
+  const id = /^\/api\/submissions\/(\w+)$/.exec(path)?.[1]
+  const submission = id === undefined ? undefined : await registry.find(id)
+  return submission === undefined ? Response.json({ error: 'not found' }, { status: 404 }) : Response.json(submission)
+}
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
-    if (url.pathname === '/mcp') return handleMcp(request, env)
-    if (url.pathname === '/admin/reindex' && request.method === 'POST') return handleReindex(request, env)
-    if (url.pathname === '/') return about(url)
-    return new Response('Not found', { status: 404 })
+    const base = basePathOf(env)
+    if (base !== '' && url.pathname !== base && !url.pathname.startsWith(`${base}/`)) {
+      return new Response('Not found', { status: 404 })
+    }
+    const path = url.pathname.slice(base.length) || '/'
+    const registry = d1Registry(env.DB)
+    const auth = authConfig(env, url.origin)
+
+    if (path === '/mcp') return handleMcp(request, env, registry, url.origin)
+    if (path.startsWith('/admin/')) {
+      if (request.method !== 'POST' || !isAdmin(request, env)) return new Response('Unauthorized', { status: 401 })
+      return handleAdmin(path, request, env, registry)
+    }
+    if (path.startsWith('/api/')) return handleApi(path, registry)
+    if (path === '/auth/login') return auth === undefined ? new Response('Voting opens soon', { status: 503 }) : login(request, auth)
+    if (path === '/auth/callback' && auth !== undefined) return callback(request, auth)
+    if (path === '/auth/logout' && request.method === 'POST' && auth !== undefined) return logout(auth)
+    const person = auth === undefined ? undefined : await personOf(request, auth)
+    if (path === '/vote' && request.method === 'POST') return handleVote(request, url.origin, base, registry, person)
+    if (request.method !== 'GET') return new Response('Method not allowed', { status: 405 })
+    return handlePage(path, { basePath: base, mcpUrl: `${url.origin}${base}/mcp`, person, votingOpen: auth !== undefined, path: url.pathname }, registry)
   },
 } satisfies ExportedHandler<Env>

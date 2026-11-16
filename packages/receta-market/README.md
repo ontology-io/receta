@@ -10,7 +10,7 @@ same 390 checked functions as [`packages/receta-assets`](../receta-assets).
                                           │
                                           ▼
                                   Vectorize: each asset three times,
-                                  what it does · what it takes · what it returns
+                                  what it does (its gist) · takes · returns
 ```
 
 ## Tools
@@ -23,9 +23,26 @@ same 390 checked functions as [`packages/receta-assets`](../receta-assets).
 | `related_assets` | an asset's nearest neighbours, its variants and siblings |
 | `authoring_guide` | the rules a new function follows |
 
-Search blends vector similarity (60%) with word ranking (40%), so meaning finds an asset
+Search blends vector similarity (75%) with word ranking (25%), so meaning finds an asset
 whose summary uses other words, and an exact name or type still wins. If the vector index
 can't be reached, the words answer alone and the result says so.
+
+Each result shows its two parts, like `score 0.94: meaning 0.90, words 1.00`, so an agent
+can tell a match by meaning from one by shared words.
+
+The blend and what gets embedded were chosen by measurement. `scripts/eval.ts` holds 47
+jobs phrased the way an agent would, mostly in words the assets' own summaries don't use,
+each with the assets that count as right:
+
+| Ranking | Right asset first | In the top 3 |
+| --- | --- | --- |
+| words only | 37 | 42 |
+| vectors of the full "Use when" text, blended | 39 | 44 |
+| vectors of the gist (name, summary, tags), with bge's query instruction, blended | 42 | 45 |
+
+The full "Use when" text spends most of its words on mechanics like error codes, which
+pulls a short query away from the asset it wants. Rerun the eval after changing the
+search or the embedded texts.
 
 ## Connect
 
@@ -41,7 +58,13 @@ bun run typecheck
 bun run dev         # wrangler dev; AI and Vectorize are remote bindings
 bun run deploy      # bundle and deploy
 bun scripts/smoke.ts <deployment>/mcp   # call the live server as an agent would
+bun scripts/ask.ts <deployment>/mcp search_assets '{"job":"…"}'   # one tool, whole answer
+RECETA_MARKET_URL=<deployment> bun scripts/eval.ts   # measure search on 47 jobs
 ```
+
+`/admin/reindex` and `/admin/explain` (the raw scores the eval blends) take the admin
+token as a bearer token. It lives in `~/.config/receta-market/admin-token` and in the
+Worker's `ADMIN_TOKEN` secret.
 
 After a catalog change, deploy, then rebuild the vectors:
 

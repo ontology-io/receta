@@ -24,7 +24,13 @@ const { tools } = await client.listTools()
 console.log(`tools: ${R.join(R.map(tools, R.prop('name')), ', ')}\n`)
 
 const top = (text: string): string =>
-  R.join(R.map([...text.matchAll(/^\d+\. (\S+)\s+\(score ([\d.]+)\)/gm)].slice(0, 3), (m) => `${m[1]} ${m[2]}`), ' | ')
+  R.join(
+    R.map(
+      [...text.matchAll(/^\d+\. (\S+)\s+\(score ([\d.]+): meaning ([\d.]+), words ([\d.]+)\)/gm)].slice(0, 4),
+      (m) => `${m[1]} ${m[2]} (m ${m[3]} w ${m[4]})`,
+    ),
+    '\n    ',
+  )
 
 for (const query of QUERIES) {
   const result = await client.callTool({ name: 'search_assets', arguments: query })

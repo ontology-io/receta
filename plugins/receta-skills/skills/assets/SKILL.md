@@ -45,7 +45,8 @@ may already have, tested. Every new one is one the next project could reuse.
 ## The marketplace, or the script
 
 When the `receta-assets` MCP server is connected, use its tools: `search_assets`,
-`get_asset`, `browse`, `related_assets` and `authoring_guide`. Its search understands
+`get_asset`, `browse`, `related_assets` and `authoring_guide` to find, and `report_use` and
+`submit_asset` to give back. Its search understands
 meaning as well as words, so "keep the newest" also finds an asset whose summary says "the
 one that sorts first". Give it the job in words, and the input and output types when you
 know them. `related_assets` lists an asset's variants, which is how you find the closest
@@ -53,8 +54,7 @@ one to adapt. The steps below hold either way; only the commands differ.
 
 Without the server, everything goes through one script in this skill's folder. Use the base
 directory shown when this skill loaded in place of `<skill>`. It runs with `bun`, or with
-`node --experimental-strip-types` on Node 22.6 and later. Offering a function back still
-goes through the script's `share`.
+`node --experimental-strip-types` on Node 22.6 and later.
 
 ```bash
 bun <skill>/scripts/assets.ts search <words that describe the job>
@@ -116,38 +116,51 @@ project only the rules for the function and its comment apply. In short:
   and `@tags` with the words someone would search for.
 - When the project has a test runner, turn the example's claims into a test.
 
-## 4. Offer it back
+## 4. Report how it worked
+
+After you used an asset in the project and saw whether it did the job, call the marketplace's
+`report_use` with its name and `worked: true` or `false`. Reports are counted apart from
+people's votes and lift what works in everyone's search. Skip this without the server.
+
+## 5. Offer it back
 
 When you wrote a new function or a variant, offer it to the Receta team. The catalog grows
 from the functions agents had to write. A plain copy is not a candidate, and neither is
-project code that calls assets to wire them into the project: `share` turns both away.
+project code that calls assets to wire them into the project: both ways of offering turn
+them away. If a closest asset already does the job, use it and offer nothing.
+
+1. Make the file generic first. The pattern checks can't see domain words, so read the file
+   for them yourself: rename words that only make sense in this project (`payout`,
+   `webhook`, an internal prefix like `evt_`), and remove business data, internal names,
+   URLs, paths and keys.
+2. Show the person the exact file, say it becomes public at once, and ask.
+3. Only with their yes in this conversation, send it.
+
+With the marketplace, sending is `submit_asset` with the file, its category, why it was
+needed, `adapted_from` for a variant, and `person_agreed: true`. It is listed at once as
+unreviewed in the public registry, where people vote and the Receta team reviews the most
+wanted first. The server checks the file's shape and refuses copies, project code, taken
+names and text that looks private.
+
+Without the server, the script opens a GitHub issue instead:
 
 ```bash
 bun <skill>/scripts/assets.ts share src/lib/maskIban.ts --category text \
   --why "Payout settings show a saved IBAN without exposing it." --from text/maskCardNumber
 ```
 
-Without `--send`, this sends nothing. It checks the file's shape (one exported function, the
-comment's parts, imports, exports), lists the closest assets in the catalog, flags text that
-matches private patterns (emails, URLs, paths, keys), and prints the issue it would open on
-ontology-io/receta. The examples, the lint and the types are checked when the Receta team
-reviews it. If a closest asset already does the job, use it and share nothing. Then:
+Without `--send` it sends nothing: it checks the shape, lists the closest assets, flags
+private-looking text and prints the issue. Show that to the person, and only with their yes
+run it again with `--send`, which uses their `gh` login.
 
-1. Make the file generic first. The pattern check can't see domain words, so read the file
-   for them yourself: rename words that only make sense in this project (`payout`,
-   `webhook`, an internal prefix like `evt_`), and remove business data, internal names and
-   anything flagged.
-2. Show the person the exact title and body, say it goes to a public GitHub issue, and ask.
-3. Only with their yes in this conversation, run the same command with `--send`. It uses the
-   person's `gh` login and prints the issue's URL.
-
-If they say no, don't ask again for that function. If `share` says sharing is off, say
-nothing about sharing at all.
+If they say no, don't ask again for that function. If sharing is off, say nothing about
+sharing at all.
 
 ## Opting out
 
-Sharing is on unless someone turns it off. Either one stops `share` before it prepares
-anything:
+Sharing is on unless someone turns it off. Either one stops the script's `share` before it
+prepares anything, and the plugin passes the first to the marketplace, which then refuses
+`submit_asset`:
 
 - one person, everywhere: `RECETA_ASSETS_SHARE=off` in their shell profile
 - a whole project: `"receta": { "shareAssets": false }` in its `package.json` (any
@@ -158,7 +171,8 @@ the rest of the session.
 
 ## What happens next
 
-The Receta team reads each `asset-candidate` issue with `bun scripts/intake.ts <issue>` in
-`packages/receta-assets`. That places the file in its category, runs the full asset check
-(shape, lint, types and every example claim), and lists the nearest assets. An accepted
-candidate ships in the next receta-assets release and turns up in everyone's search.
+The Receta team reviews submissions with `bun scripts/intake.ts --market <id>` (or
+`<issue>` for one sent as an issue) in `packages/receta-assets`. That places the file in its
+category, runs the full asset check (shape, lint, types and every example claim), and lists
+the nearest assets. An accepted function ships in the next receta-assets release and turns
+up in everyone's search as reviewed.

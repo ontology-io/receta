@@ -6,7 +6,7 @@
     "declarationMap": false,
     "sourceMap": false,
     "allowImportingTsExtensions": true,
-    "types": ["bun"]
+    "types": ["bun", "@cloudflare/workers-types"]
   },
   "include": ["scripts/**/*", "test/**/*"],
   "exclude": ["node_modules"]

@@ -12,6 +12,16 @@
   "ai": { "binding": "AI" },
   // Created with --dimensions=768 --metric=cosine to match the model in src/cloudflare.ts,
   // with metadata indexes on field, category and status for filtered queries.
-  "vectorize": [{ "binding": "VECTORS", "index_name": "receta-assets" }],
+  // remote: wrangler dev and getPlatformProxy query the real index; there is no local Vectorize.
+  "vectorize": [{ "binding": "VECTORS", "index_name": "receta-assets", "remote": true }],
+  // The public registry: submissions, votes and agents' reports. Schema in migrations/.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "receta-market",
+      "database_id": "809ea7c9-85bd-4bf1-9998-0e7a114f8d84",
+      "migrations_dir": "migrations"
+    }
+  ],
   "observability": { "enabled": true }
 }
