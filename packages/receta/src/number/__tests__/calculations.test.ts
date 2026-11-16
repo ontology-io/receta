@@ -323,6 +323,12 @@ describe('Number Calculations', () => {
         expect(percentage(150, 100)).toBe(1.5)
       })
 
+      it('returns a fraction, which round turns into a whole percent', () => {
+        expect(percentage(29, 100)).toBe(0.29)
+        // 0.29 * 100 is 28.999999999999996
+        expect(round(percentage(29, 100) * 100, 0)).toBe(29)
+      })
+
       it('handles negative values', () => {
         expect(percentage(-25, 100)).toBe(-0.25)
         expect(percentage(25, -100)).toBe(-0.25)

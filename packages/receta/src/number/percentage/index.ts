@@ -6,6 +6,10 @@ import * as R from 'remeda'
  * Returns the percentage as a decimal (0.25 = 25%).
  * Returns 0 if the total is 0 to avoid division by zero.
  *
+ * The result is a fraction, not a number out of 100: `percentage(29, 100)` is 0.29.
+ * `toPercent` formats that fraction as it is. For a whole number, multiply by 100 and
+ * round, because `0.29 * 100` is 28.999999999999996.
+ *
  * @param value - The part value
  * @param total - The total value
  * @returns The percentage as a decimal
@@ -16,6 +20,8 @@ import * as R from 'remeda'
  * percentage(25, 100) // => 0.25
  * percentage(1, 4) // => 0.25
  * percentage(10, 0) // => 0 (safe division)
+ * percentage(29, 100) // => 0.29, a fraction
+ * round(percentage(29, 100) * 100, 0) // => 29
  *
  * // Data-last (in pipe)
  * pipe(
