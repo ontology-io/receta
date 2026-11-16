@@ -251,6 +251,16 @@ export const readAsset = async (absolutePath: string): Promise<Asset> => {
   }
 }
 
+/**
+ * `text` is a category and `maskEmail` an asset name, matched whole, so `text` doesn't also
+ * pick up `withErrorContext`. A filter with a slash is part of a path: `parse/parsePort`.
+ */
+const matchesFilter = (path: string, filter: string): boolean => {
+  if (filter.includes('/')) return path.includes(filter)
+  const [, category = '', name = ''] = path.replace(/\.ts$/, '').split('/')
+  return filter === category || filter === name
+}
+
 const IS_ASSET = /^src\/[a-z]+\/[a-z][A-Za-z0-9]*\.ts$/
 
 /** Every asset under src, or those whose path contains one of the filters. */
@@ -258,7 +268,7 @@ export const readAssets = async (filters: readonly string[] = []): Promise<reado
   const paths = R.pipe(
     await Array.fromAsync(new Glob('src/*/*.ts').scan({ cwd: ROOT })),
     R.filter((path) => IS_ASSET.test(path) && !path.endsWith('/index.ts')),
-    R.filter((path) => filters.length === 0 || filters.some((filter) => path.includes(filter))),
+    R.filter((path) => filters.length === 0 || filters.some((filter) => matchesFilter(path, filter))),
     R.sortBy(R.identity()),
   )
   return mapAsyncOrThrow(paths, (path) => readAsset(join(ROOT, path)), { concurrency: 16 })

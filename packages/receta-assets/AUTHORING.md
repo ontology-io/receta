@@ -118,11 +118,33 @@ One idea usually wants several assets that differ in a single policy, each with 
 
 Name the variant by what differs, and point to its siblings with `@see`.
 
+## Receta traps
+
+These Receta functions misbehave in Receta 0.4.4. The assets that touch them work around
+each one with a comment, so look there first.
+
+| Function | What goes wrong | Instead |
+| --- | --- | --- |
+| `cond` (function) | no match returns the `none` function, not `None` | `switchCase`, or `R.find` over rules |
+| `parseInt` (result) | `'12abc'` is `Ok(12)`, `'1e3'` is `Ok(1)` | test `matches(/^-?\d+$/)` first |
+| `getPath` (object) | finds inherited members: `['toString']` is `Some` | look up own keys with `R.entries` |
+| `parseFormattedNumber` (number) | `'12,50 €'` is 1250, `'1,5'` is 15 | `parse/parseMoneyCents` |
+| `titleCase`, `camelCase` (string) | `MaríA`, `Don'T`; `camelCase('firstName')` is `firstname` | `capitalize` per word |
+| `transformKeys` (object) | `userID` becomes `user_i_d`, `_id` becomes `id` | `object/toSnakeCaseKeys` |
+| `deepMerge` (object) | an explicit `undefined` overwrites a value | `stripUndefined` first |
+| `highlight` (string) | matches inside `&amp;` | `text/searchHighlight` |
+| `round`, `roundTo` (number) | `round(1.005, 2)` is 1; `roundTo(1.15, 0.05)` keeps float noise | `number/roundPrice` |
+| `timeout` (async) | never clears its timer | keep limits short in examples |
+| `retry` (async) | retries only on throw, never on `Err` | `async/retryResult` |
+| `windowSliding` (collection) | `step: 0` never returns | guard the step |
+| `removeAtIndex`, `updateAt` (collection) | `-1` means the last item, so a failed `findIndex` hits it | the `*ById` assets |
+
 ## Commands
 
 ```bash
-bun scripts/check.ts text            # check one category while you work
-bun scripts/check.ts parse/parsePort # or one asset
+bun scripts/check.ts text            # a word is a whole category or asset name
+bun scripts/check.ts maskEmail       # so this checks one asset
+bun scripts/check.ts parse/parse     # with a slash, it's part of a path
 bun scripts/check.ts                 # everything
 bun scripts/catalog.ts               # rebuild catalog.json, CATALOG.md and each index.ts
 bun run typecheck                    # also catches two assets exporting the same name
