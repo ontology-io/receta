@@ -106,6 +106,10 @@ export function descending<T, C extends number | string | Date>(
  * - "file2.txt" comes before "file10.txt" (not after as with lexicographic sort)
  * - Properly handles mixed alphanumeric strings
  *
+ * Letters are compared first, ignoring case and accents. Strings that only differ there
+ * are then ordered by that difference (`a` before `A`), so two different strings never
+ * compare as equal and the result doesn't depend on the order of the input.
+ *
  * @param fn - Function to extract the string value
  * @returns A comparator function for natural string sorting
  *
@@ -146,8 +150,11 @@ export function natural<T>(fn: ComparableExtractor<T, string>): Comparator<T> {
     const aVal = fn(a)
     const bVal = fn(b)
 
-    // Use locale compare with numeric option for natural sorting
-    return aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' })
+    // Letters and numbers first, then case and accents to break a tie
+    return (
+      aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' }) ||
+      aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'variant' })
+    )
   }
 }
 
