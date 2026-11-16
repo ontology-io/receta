@@ -51,6 +51,26 @@ describe('Object.getPath', () => {
       const result = getPath(['value', 'nested'], obj)
       expect(isNone(result)).toBe(true)
     })
+
+    it('does not find inherited members', () => {
+      expect(isNone(getPath(['toString'], {}))).toBe(true)
+      expect(isNone(getPath(['constructor'], {}))).toBe(true)
+      expect(isNone(getPath(['__proto__'], {}))).toBe(true)
+      expect(isNone(getPath(['user', 'hasOwnProperty'], { user: { name: 'Ada' } }))).toBe(true)
+      expect(isNone(getPath(['items', 'map'], { items: [1, 2] }))).toBe(true)
+      expect(isNone(getPath(['constructor', 'name'], {}))).toBe(true)
+    })
+
+    it('still finds own members with those names', () => {
+      expect(getPath(['toString'], { toString: 'own' })).toEqual({ _tag: 'Some', value: 'own' })
+      expect(getPath(['items', 'length'], { items: [1, 2] })).toEqual({ _tag: 'Some', value: 2 })
+      expect(getPath(['a', 'b'], { a: { b: null } })).toEqual({ _tag: 'Some', value: null })
+    })
+
+    it('reads an object that has no prototype', () => {
+      const bare = Object.assign(Object.create(null), { nested: { value: 1 } })
+      expect(getPath(['nested', 'value'], bare)).toEqual({ _tag: 'Some', value: 1 })
+    })
   })
 
   describe('data-last', () => {
@@ -150,5 +170,23 @@ describe('Object.updatePath', () => {
       )
       expect(result).toEqual({ profile: { views: 11, likes: 6 } })
     })
+  })
+})
+
+describe('Object.updatePath and inherited members', () => {
+  it('leaves the object alone when the path names an inherited member', () => {
+    const obj = { name: 'Ada' }
+    let called = false
+    const result = updatePath(
+      ['toString'],
+      (value: unknown) => {
+        called = true
+        return value
+      },
+      obj
+    )
+
+    expect(called).toBe(false)
+    expect(result).toBe(obj)
   })
 })

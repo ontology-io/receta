@@ -17,6 +17,10 @@ import { purryConfig } from '../../utils/purry'
  * undefined. A value of null at the end of the path comes back as Some(null).
  * Unlike optional chaining, the result composes with other Option operations.
  *
+ * Only the object's own keys count. Members inherited from a prototype, such as
+ * `toString` or `constructor`, are not found, so a key that comes from user input can't
+ * reach them.
+ *
  * @param path - The path to follow (array of keys)
  * @param obj - The object to navigate
  * @returns Option<T> - Some(value) if found, None otherwise
@@ -34,6 +38,10 @@ import { purryConfig } from '../../utils/purry'
  * // => None
  *
  * getPath(['api', 'key'], config)
+ * // => None
+ *
+ * // Inherited members are not part of the data
+ * getPath(['toString'], config)
  * // => None
  *
  * // Composing with Option
@@ -67,7 +75,8 @@ function getPathImplementation<T>(path: ObjectPath, obj: PlainObject): Option<T>
   let current: any = obj
 
   for (const key of path) {
-    if (current == null || typeof current !== 'object') {
+    // hasOwn keeps inherited members out: {}.toString is a function, not data
+    if (current == null || typeof current !== 'object' || !Object.hasOwn(current, key)) {
       return none()
     }
 
