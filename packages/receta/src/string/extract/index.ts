@@ -6,7 +6,9 @@ import { purryConfig2 } from '../../utils/purry'
 /**
  * Splits a string into an array of words.
  *
- * By default, splits on non-alphanumeric characters. Custom pattern can be provided.
+ * By default a word is a run of letters and digits in any script. An apostrophe between
+ * letters stays in the word (`don't`), and everything else separates words. Pass `pattern`
+ * to split on that pattern instead.
  *
  * @param str - The string to split
  * @param options - Options for word splitting
@@ -26,6 +28,12 @@ import { purryConfig2 } from '../../utils/purry'
  *
  * words('hello, world!')
  * // => ['hello', 'world']
+ *
+ * words("café don't")
+ * // => ['café', "don't"]
+ *
+ * words('a1b2c3', { pattern: /\d/ })
+ * // => ['a', 'b', 'c']
  *
  * // Data-last (in pipe)
  * pipe(
@@ -52,9 +60,15 @@ export function words(...args: any[]): any {
   return wordsImplementation(args[0] as string, args[1] as WordsOptions | undefined)
 }
 
+// Letters, digits and combining marks in any script, with apostrophes allowed inside
+const WORD = /[\p{L}\p{N}\p{M}]+(?:['’][\p{L}\p{N}\p{M}]+)*/gu
+
 function wordsImplementation(str: string, options?: WordsOptions): string[] {
-  const { pattern = /[^a-zA-Z0-9]+/ } = options ?? {}
-  return str.split(pattern).filter((word) => word.length > 0)
+  const pattern = options?.pattern
+
+  return pattern === undefined
+    ? (str.match(WORD) ?? [])
+    : R.filter(str.split(pattern), R.isTruthy)
 }
 
 /**

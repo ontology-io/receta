@@ -25,6 +25,27 @@ describe('String.words', () => {
       expect(words('oneTwo three_four')).toEqual(['oneTwo', 'three', 'four'])
     })
 
+    it('keeps accented and non-Latin letters in the word', () => {
+      expect(words('café olé')).toEqual(['café', 'olé'])
+      expect(words('naïve über 日本語 x1')).toEqual(['naïve', 'über', '日本語', 'x1'])
+      expect(words('cafe\u0301 au lait')).toEqual(['cafe\u0301', 'au', 'lait'])
+    })
+
+    it('keeps an apostrophe inside a word', () => {
+      expect(words("café don't")).toEqual(['café', "don't"])
+      expect(words('it’s o’clock')).toEqual(['it’s', 'o’clock'])
+    })
+
+    it('drops quotes around a word', () => {
+      expect(words("'quoted' and dogs'")).toEqual(['quoted', 'and', 'dogs'])
+      expect(words("rock 'n' roll")).toEqual(['rock', 'n', 'roll'])
+    })
+
+    it('splits on a custom pattern only', () => {
+      expect(words("don't, stop", { pattern: /,\s*/ })).toEqual(["don't", 'stop'])
+      expect(words('a1b2c3', { pattern: /\d/ })).toEqual(['a', 'b', 'c'])
+    })
+
     it('filters empty strings', () => {
       expect(words('hello    world')).toEqual(['hello', 'world'])
     })

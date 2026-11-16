@@ -45,9 +45,8 @@ export interface CaseOptions {
  */
 export interface WordsOptions {
   /**
-   * Pattern to match word boundaries.
-   *
-   * @default /[^a-zA-Z0-9]+/
+   * Pattern to split on. Without it, a word is a run of letters and digits in any script,
+   * and an apostrophe between letters stays in the word.
    */
   readonly pattern?: RegExp
 }
