@@ -86,7 +86,7 @@ console.log(`Revenue: ${N.toCurrency(stats.revenue, { currency: 'USD' })}`)
 
 // Calculate conversion rate
 const conversionRate = R.pipe(
-  N.percentage(stats.conversions, stats.uniqueVisitors),
+  N.percentage(stats.conversions, stats.uniqueVisitors, { fraction: true }),
   N.toPercent(2)
 )
 console.log(`Conversion Rate: ${conversionRate}`)
@@ -199,11 +199,11 @@ const tasks: Task[] = [
 
 tasks.forEach((task) => {
   const progress = R.pipe(
-    N.percentage(task.completed, task.total),
+    N.percentage(task.completed, task.total, { fraction: true }),
     N.toPercent(1)
   )
   const progressBar = R.pipe(
-    N.percentage(task.completed, task.total),
+    N.percentage(task.completed, task.total, { fraction: true }),
     (p) => N.interpolate(0, 20, p),
     Math.round,
     (filled) => '█'.repeat(filled) + '░'.repeat(20 - filled)

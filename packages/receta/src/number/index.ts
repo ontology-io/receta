@@ -14,8 +14,9 @@
  * N.toCurrency(1234.56, { currency: 'USD' }) // => "$1,234.56"
  *
  * // Percentage calculations
+ * N.percentage(25, 100) // => 25
  * pipe(
- *   N.percentage(25, 100),
+ *   N.percentage(25, 100, { fraction: true }),
  *   N.toPercent(1)
  * ) // => "25.0%"
  *
@@ -36,6 +37,7 @@ export type {
   CompactOptions,
   ByteOptions,
   ByteUnit,
+  PercentageOptions,
 } from './types'
 
 // Validation (Type Guards)
