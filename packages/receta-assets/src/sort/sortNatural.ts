@@ -30,5 +30,7 @@ export function sortNatural(...args: unknown[]): unknown {
 }
 
 const sortNaturalImplementation = <T>(items: readonly T[], text: (item: T) => string): readonly T[] =>
-  // natural treats 'File2' and 'file2' as equal, so byString decides between them.
-  R.sort(items, compose(natural(text), byString(text)))
+  // natural sees lowercased text, so 'File2' and 'file2' tie there and byString decides
+  // between them. Receta 0.5's natural breaks that tie itself, lowercase first; lowercasing
+  // keeps this asset's promise of uppercase first on every Receta version.
+  R.sort(items, compose(natural((item: T) => text(item).toLowerCase()), byString(text)))
