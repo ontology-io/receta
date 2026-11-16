@@ -7,8 +7,12 @@ import * as R from 'remeda'
  * More ergonomic than `splice` for single-element replacement. Built on top of Remeda's
  * `splice` for consistency.
  *
+ * The index counts from the start only. A negative index is out of range, so the -1 that
+ * `findIndex` returns for "not found" replaces nothing. For the last element, pass
+ * `items.length - 1`.
+ *
  * @param items - The array to modify
- * @param index - Position to update
+ * @param index - Position to update, from 0
  * @param value - New value to set
  * @returns New array with element updated, or original array if index is out of bounds
  *
@@ -26,13 +30,13 @@ import * as R from 'remeda'
  * updateAt([1, 2, 3], 2, 30)
  * // => [1, 2, 30]
  *
- * // Negative index (from end)
- * updateAt(['a', 'b', 'c', 'd'], -1, 'Z')
- * // => ['a', 'b', 'c', 'Z']
- *
  * // Out of bounds returns original array
  * updateAt([1, 2, 3], 10, 99)
  * // => [1, 2, 3]
+ *
+ * // So does a negative index, which is what findIndex gives when nothing matches
+ * updateAt(['a', 'b', 'c', 'd'], -1, 'Z')
+ * // => ['a', 'b', 'c', 'd']
  *
  * // Update todo item
  * interface Todo {
@@ -84,16 +88,12 @@ function updateAtImplementation<T>(
   index: number,
   value: T
 ): readonly T[] {
-  const length = items.length
-
-  // Normalize negative index
-  const normalizedIndex = index < 0 ? length + index : index
-
-  // Return original array if index is out of bounds
-  if (normalizedIndex < 0 || normalizedIndex >= length) {
+  // Return original array if index is out of bounds. A negative index is out of bounds too:
+  // counting it from the end would make a failed findIndex (-1) replace the last element.
+  if (index < 0 || index >= items.length) {
     return items
   }
 
   // Use Remeda's splice: splice(array, start, deleteCount, items)
-  return R.splice(items, normalizedIndex, 1, [value])
+  return R.splice(items, index, 1, [value])
 }

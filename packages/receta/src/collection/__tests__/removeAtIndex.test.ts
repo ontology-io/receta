@@ -22,16 +22,25 @@ describe('Collection.removeAtIndex', () => {
       expect(result).toEqual([1, 2])
     })
 
-    it('removes with negative index', () => {
-      const result = removeAtIndex(['a', 'b', 'c', 'd'], -1)
+    it('treats a negative index as out of range', () => {
+      const letters = ['a', 'b', 'c', 'd']
 
-      expect(result).toEqual(['a', 'b', 'c'])
+      expect(removeAtIndex(letters, -1)).toBe(letters)
+      expect(removeAtIndex([1, 2, 3, 4, 5], -3)).toEqual([1, 2, 3, 4, 5])
     })
 
-    it('removes with negative index from middle', () => {
-      const result = removeAtIndex([1, 2, 3, 4, 5], -3)
+    it('removes nothing when findIndex finds nothing', () => {
+      const todos = [{ id: 1 }, { id: 2 }, { id: 3 }]
+      const missing = R.findIndex(todos, (todo) => todo.id === 99)
 
-      expect(result).toEqual([1, 2, 4, 5])
+      expect(missing).toBe(-1)
+      expect(removeAtIndex(todos, missing)).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }])
+    })
+
+    it('removes the last element by its real index', () => {
+      const letters = ['a', 'b', 'c', 'd']
+
+      expect(removeAtIndex(letters, letters.length - 1)).toEqual(['a', 'b', 'c'])
     })
 
     it('returns original array for out of bounds positive index', () => {
@@ -85,7 +94,7 @@ describe('Collection.removeAtIndex', () => {
       const result = R.pipe(
         [1, 2, 3, 4, 5],
         removeAtIndex(0), // [2, 3, 4, 5]
-        removeAtIndex(-1) // [2, 3, 4]
+        removeAtIndex(3) // [2, 3, 4]
       )
 
       expect(result).toEqual([2, 3, 4])

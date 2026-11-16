@@ -22,16 +22,25 @@ describe('Collection.updateAt', () => {
       expect(result).toEqual([1, 2, 30])
     })
 
-    it('updates with negative index', () => {
-      const result = updateAt(['a', 'b', 'c', 'd'], -1, 'Z')
+    it('treats a negative index as out of range', () => {
+      const letters = ['a', 'b', 'c', 'd']
 
-      expect(result).toEqual(['a', 'b', 'c', 'Z'])
+      expect(updateAt(letters, -1, 'Z')).toBe(letters)
+      expect(updateAt([1, 2, 3, 4, 5], -3, 99)).toEqual([1, 2, 3, 4, 5])
     })
 
-    it('updates with negative index from middle', () => {
-      const result = updateAt([1, 2, 3, 4, 5], -3, 99)
+    it('replaces nothing when findIndex finds nothing', () => {
+      const todos = [{ id: 1 }, { id: 2 }, { id: 3 }]
+      const missing = R.findIndex(todos, (todo) => todo.id === 99)
 
-      expect(result).toEqual([1, 2, 99, 4, 5])
+      expect(missing).toBe(-1)
+      expect(updateAt(todos, missing, { id: 99 })).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }])
+    })
+
+    it('updates the last element by its real index', () => {
+      const letters = ['a', 'b', 'c', 'd']
+
+      expect(updateAt(letters, letters.length - 1, 'Z')).toEqual(['a', 'b', 'c', 'Z'])
     })
 
     it('returns original array for out of bounds positive index', () => {
