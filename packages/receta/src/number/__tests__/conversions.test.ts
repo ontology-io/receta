@@ -50,6 +50,22 @@ describe('Number Conversions', () => {
       expect(isErr(fromString('   '))).toBe(true)
     })
 
+    it('returns error for a number that is not finite', () => {
+      for (const input of ['Infinity', '-Infinity', '+Infinity', '1e999', '-1e999']) {
+        const result = fromString(input)
+        expect(isErr(result)).toBe(true)
+        if (isErr(result)) {
+          expect(result.error.code).toBe('PARSE_ERROR')
+          expect(result.error.input).toBe(input)
+        }
+      }
+    })
+
+    it('still parses the largest and smallest finite numbers', () => {
+      expect(fromString('1.7976931348623157e308')).toEqual({ _tag: 'Ok', value: Number.MAX_VALUE })
+      expect(fromString('5e-324')).toEqual({ _tag: 'Ok', value: Number.MIN_VALUE })
+    })
+
     it('includes input in error', () => {
       const result = fromString('invalid')
       expect(isErr(result)).toBe(true)
@@ -390,6 +406,19 @@ describe('Number Conversions', () => {
       expect(isOk(result)).toBe(true)
       if (isOk(result)) {
         expect(result.value).toBe(1234.56)
+      }
+    })
+
+    it('returns error when no amount is left after the symbol', () => {
+      // Number('') is 0, so a lone symbol used to parse as zero
+      for (const input of ['$', '€ ', ' £ ']) {
+        expect(isErr(fromCurrency(input))).toBe(true)
+      }
+    })
+
+    it('returns error for an amount that is not finite', () => {
+      for (const input of ['Infinity', '$Infinity', '-€Infinity', '$1e999']) {
+        expect(isErr(fromCurrency(input))).toBe(true)
       }
     })
 

@@ -7,6 +7,7 @@ import type { ParseError } from '../types'
  *
  * Strips currency symbols, grouping separators, and whitespace before parsing.
  * Handles common formats: "$1,234.56", "€1.234,56", "£1,234.56".
+ * The amount has to be finite, and a symbol with no amount (`"$"`) is an error, not zero.
  *
  * @param input - The currency string to parse
  * @returns Result containing the parsed number or an error
@@ -18,6 +19,7 @@ import type { ParseError } from '../types'
  * fromCurrency("£1,234") // => Ok(1234)
  * fromCurrency("-$50.00") // => Ok(-50)
  * fromCurrency("invalid") // => Err({ code: 'PARSE_ERROR', ... })
+ * fromCurrency("$") // => Err({ code: 'PARSE_ERROR', ... })
  *
  * // Real-world: Parse Stripe amount string
  * const parseStripeAmount = (amountStr: string) =>
@@ -43,7 +45,7 @@ export function fromCurrency(input: string): Result<number, ParseError> {
 
   // Remove currency symbols, spaces, and common grouping separators
   // Keep negative sign, digits, and decimal point
-  let cleaned = trimmed
+  const cleaned = trimmed
     // Remove currency symbols
     .replace(/[$€£¥₹₽₩¢]/g, '')
     // Remove spaces
@@ -54,9 +56,10 @@ export function fromCurrency(input: string): Result<number, ParseError> {
     .replace(/\.(?=\d{3}($|\D))/g, '')
     .replace(/,(\d{1,2})$/, '.$1') // Replace final comma with period
 
-  const parsed = Number(cleaned)
+  // Number('') is 0, so a symbol with nothing after it must not reach Number()
+  const parsed = cleaned === '' ? Number.NaN : Number(cleaned)
 
-  if (Number.isNaN(parsed)) {
+  if (!Number.isFinite(parsed)) {
     return err({
       code: 'PARSE_ERROR',
       message: `Cannot parse "${input}" as a currency value`,

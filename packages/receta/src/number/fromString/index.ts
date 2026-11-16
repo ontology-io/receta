@@ -7,6 +7,8 @@ import type { ParseError } from '../types'
  *
  * Returns Ok with the parsed number, or Err with ParseError if parsing fails.
  * Handles common number formats including decimals, negatives, and scientific notation.
+ * The number has to be finite: `"Infinity"` and anything too large to hold, such as
+ * `"1e999"`, are errors.
  *
  * @param input - The string to parse
  * @returns Result containing the parsed number or an error
@@ -18,6 +20,7 @@ import type { ParseError } from '../types'
  * fromString("-42") // => Ok(-42)
  * fromString("1.23e4") // => Ok(12300)
  * fromString("abc") // => Err({ code: 'PARSE_ERROR', ... })
+ * fromString("Infinity") // => Err({ code: 'PARSE_ERROR', ... })
  * fromString("") // => Err({ code: 'PARSE_ERROR', ... })
  *
  * // Real-world: Form input validation
@@ -49,6 +52,14 @@ export function fromString(input: string): Result<number, ParseError> {
     return err({
       code: 'PARSE_ERROR',
       message: `Cannot parse "${input}" as a number`,
+      input,
+    })
+  }
+
+  if (!Number.isFinite(parsed)) {
+    return err({
+      code: 'PARSE_ERROR',
+      message: `Cannot parse "${input}" as a finite number`,
       input,
     })
   }
