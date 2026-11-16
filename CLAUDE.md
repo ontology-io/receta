@@ -315,6 +315,7 @@ Guides live in `website/content/docs`. The reference under `reference/` is gener
 cd website
 bun run dev             # site and docs on localhost
 bun run check:examples  # compile and lint every docs example, and run its // => claims
+bun run check:examples:workspace  # the same, against packages/receta as it is here (what CI runs)
 bun run deploy          # build, upload to R2, deploy the Worker
 ```
 

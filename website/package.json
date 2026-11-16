@@ -11,6 +11,7 @@
     "preview": "bunx serve out",
     "deploy": "bun run build && bun scripts/deploy.ts",
     "check:examples": "bun scripts/generate-reference.ts && bun scripts/check-examples.ts",
+    "check:examples:workspace": "bun scripts/check-examples-workspace.ts",
     "postinstall": "fumadocs-mdx",
     "generate:docs": "bun scripts/generate-reference.ts && bun scripts/export-markdown.ts",
     "check:links": "bun scripts/check-links.ts"

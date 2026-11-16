@@ -58,7 +58,9 @@ Diagrams are HTML, not ASCII in a code fence, and the agent files have to stay r
 
 ### Examples are checked
 
-`bun run check:examples` compiles every example in the docs and the READMEs against the published package, lints it, then runs the ones with no imaginary helpers and compares each `// => value` with what came back. CI fails on any problem.
+`bun run check:examples` compiles every example in the docs and the READMEs against the published package, lints it, then runs the ones with no imaginary helpers and compares each `// => value` with what came back.
+
+`bun run check:examples:workspace` runs the same check against the library as it is in this checkout. It builds `packages/receta`, puts that build in place of the installed copy for the length of the check, and puts the published copy back. CI runs this one and fails on any problem, because the reference is generated from the JSDoc in the same commit: a fix and the example that documents it arrive together, and the published package only catches up at the next release.
 
 Examples can be fragments. A name nobody declared resolves to an earlier import on the page, then the module the page teaches, then any Receta module, and anything else becomes `any`. Use `ts nocheck` only for code that is deliberately wrong, and `title="Signature"` for a signature with no body.
 
