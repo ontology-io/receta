@@ -4,9 +4,9 @@
  * @module object/transformKeys
  */
 
-import * as R from 'remeda'
 import type { PlainObject } from '../types'
 import { setOwnKey } from '../../utils/setOwnKey'
+import { camelCase, kebabCase, pascalCase, snakeCase } from '../../string/case'
 
 /**
  * Type of key transformation to apply.
@@ -28,92 +28,34 @@ export interface TransformKeysOptions {
   readonly transformArrays?: boolean
 }
 
-/**
- * Converts a string to camelCase.
- *
- * @example
- * ```typescript
- * toCamelCase('hello_world') // => 'helloWorld'
- * toCamelCase('hello-world') // => 'helloWorld'
- * toCamelCase('HelloWorld') // => 'helloWorld'
- * ```
- */
-function toCamelCase(str: string): string {
-  return str
-    .replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
-    .replace(/^[A-Z]/, (c) => c.toLowerCase())
-}
+const CASE_CONVERTERS = {
+  camelCase,
+  snakeCase,
+  kebabCase,
+  pascalCase,
+} as const
 
 /**
- * Converts a string to snake_case.
+ * Wraps a case converter so that underscores at either end of a key survive.
  *
- * @example
- * ```typescript
- * toSnakeCase('helloWorld') // => 'hello_world'
- * toSnakeCase('HelloWorld') // => 'hello_world'
- * toSnakeCase('hello-world') // => 'hello_world'
- * ```
+ * Leading and trailing underscores are part of a key's name, not a word separator: `_id`
+ * and `id` are different keys, and `__typename` has to stay `__typename`.
  */
-function toSnakeCase(str: string): string {
-  return str
-    .replace(/([A-Z])/g, '_$1')
-    .replace(/[-\s]+/g, '_')
-    .toLowerCase()
-    .replace(/^_/, '')
-}
+function keepingOuterUnderscores(convert: (key: string) => string): (key: string) => string {
+  return (key) => {
+    const [, leading = '', inner = '', trailing = ''] = /^(_*)(.*?)(_*)$/s.exec(key) ?? []
 
-/**
- * Converts a string to kebab-case.
- *
- * @example
- * ```typescript
- * toKebabCase('helloWorld') // => 'hello-world'
- * toKebabCase('HelloWorld') // => 'hello-world'
- * toKebabCase('hello_world') // => 'hello-world'
- * ```
- */
-function toKebabCase(str: string): string {
-  return str
-    .replace(/([A-Z])/g, '-$1')
-    .replace(/[_\s]+/g, '-')
-    .toLowerCase()
-    .replace(/^-/, '')
-}
-
-/**
- * Converts a string to PascalCase.
- *
- * @example
- * ```typescript
- * toPascalCase('hello_world') // => 'HelloWorld'
- * toPascalCase('hello-world') // => 'HelloWorld'
- * toPascalCase('helloWorld') // => 'HelloWorld'
- * ```
- */
-function toPascalCase(str: string): string {
-  return str
-    .replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
-    .replace(/^[a-z]/, (c) => c.toUpperCase())
+    return `${leading}${convert(inner)}${trailing}`
+  }
 }
 
 /**
  * Gets the transformation function for a given transform type.
  */
 function getTransformFn(transform: KeyTransform): (key: string) => string {
-  if (typeof transform === 'function') {
-    return transform
-  }
-
-  switch (transform) {
-    case 'camelCase':
-      return toCamelCase
-    case 'snakeCase':
-      return toSnakeCase
-    case 'kebabCase':
-      return toKebabCase
-    case 'pascalCase':
-      return toPascalCase
-  }
+  return typeof transform === 'function'
+    ? transform
+    : keepingOuterUnderscores(CASE_CONVERTERS[transform])
 }
 
 /**
@@ -123,6 +65,11 @@ function getTransformFn(transform: KeyTransform): (key: string) => string {
  * naming conventions (e.g., snake_case from Python APIs to camelCase in JS).
  *
  * Supports deep transformation of nested objects and arrays of objects.
+ *
+ * The named transforms use the same word rules as `camelCase`, `snakeCase`, `kebabCase`
+ * and `pascalCase` from the string module, so a run of capitals is one word (`userID`
+ * becomes `user_id`). Underscores at the start or end of a key are kept as they are:
+ * `_id` stays `_id` and `__typename` stays `__typename`.
  *
  * @param obj - The object whose keys to transform
  * @param transform - The transformation to apply ('camelCase', 'snakeCase', 'kebabCase', 'pascalCase', or custom function)
@@ -192,6 +139,10 @@ function getTransformFn(transform: KeyTransform): (key: string) => string {
  * //     { firstName: 'Bob', userId: 2 }
  * //   ]
  * // }
+ *
+ * // Acronyms stay one word, and outer underscores are kept
+ * transformKeys({ userID: 1, HTMLParser: 2, _id: 3, __typename: 'User' }, 'snakeCase')
+ * // => { user_id: 1, html_parser: 2, _id: 3, __typename: 'User' }
  *
  * // Custom transformation function
  * transformKeys(
