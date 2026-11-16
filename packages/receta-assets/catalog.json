@@ -1,0 +1,122 @@
+{
+  "package": "@ontologyio/receta-assets",
+  "count": 4,
+  "assets": [
+    {
+      "name": "retryWithTimeout",
+      "category": "async",
+      "import": "import { retryWithTimeout } from '@ontologyio/receta-assets/async'",
+      "path": "src/async/retryWithTimeout.ts",
+      "summary": "Runs an async task with a time limit on each attempt, and retries attempts that fail or hang.",
+      "useWhen": "calling a flaky dependency such as an HTTP API, a queue or a database, where one hung call must not hold the caller and a fresh attempt often succeeds. The task is called again for each attempt, so pass a function, not a promise.",
+      "tags": [
+        "retry",
+        "timeout",
+        "resilience",
+        "flaky",
+        "http",
+        "backoff",
+        "network"
+      ],
+      "composes": [
+        "async/retry",
+        "async/timeout",
+        "result/orThrow"
+      ],
+      "signatures": [
+        "export async function retryWithTimeout<T>( task: () => Promise<T>, options: RetryWithTimeoutOptions, ): Promise<Result<T, RetryError>>"
+      ],
+      "hasDiagram": true
+    },
+    {
+      "name": "totalsBy",
+      "category": "collection",
+      "import": "import { totalsBy } from '@ontologyio/receta-assets/collection'",
+      "path": "src/collection/totalsBy.ts",
+      "summary": "Groups items by a key, adds up a number per group, and lists the groups largest first.",
+      "useWhen": "building a report row per category, such as hours per team, revenue per product or errors per endpoint, where the biggest group should come first.",
+      "tags": [
+        "group",
+        "sum",
+        "aggregate",
+        "report",
+        "totals",
+        "leaderboard",
+        "rollup"
+      ],
+      "composes": [
+        "compare/descending",
+        "number/sum",
+        "R.pipe",
+        "R.groupBy",
+        "R.entries",
+        "R.map",
+        "R.sort"
+      ],
+      "signatures": [
+        "export function totalsBy<T>( items: readonly T[], key: (item: T) => string, value: (item: T) => number, ): readonly GroupTotal[]",
+        "export function totalsBy<T>( key: (item: T) => string, value: (item: T) => number, ): (items: readonly T[]) => readonly GroupTotal[]"
+      ],
+      "hasDiagram": true
+    },
+    {
+      "name": "parsePort",
+      "category": "parse",
+      "import": "import { parsePort } from '@ontologyio/receta-assets/parse'",
+      "path": "src/parse/parsePort.ts",
+      "summary": "Parses a TCP or UDP port number from a string, such as an environment variable.",
+      "useWhen": "reading `PORT` or the port part of `host:port` from config, where a value outside 1–65535 must stop startup instead of failing later inside `listen`.",
+      "tags": [
+        "port",
+        "env",
+        "config",
+        "network",
+        "integer",
+        "range"
+      ],
+      "composes": [
+        "predicate/between",
+        "result/err",
+        "result/flatMap",
+        "result/mapErr",
+        "result/ok",
+        "result/parseInt",
+        "R.pipe"
+      ],
+      "signatures": [
+        "export function parsePort(input: string): Result<number, ParsePortError>"
+      ],
+      "hasDiagram": false
+    },
+    {
+      "name": "uniqueSlug",
+      "category": "text",
+      "import": "import { uniqueSlug } from '@ontologyio/receta-assets/text'",
+      "path": "src/text/uniqueSlug.ts",
+      "summary": "Turns a title into a URL slug that doesn't collide with the slugs already taken.",
+      "useWhen": "a new post, page or record needs a readable URL and some slugs are in use. The plain slug comes back when it is free, otherwise the first free `-2`, `-3`, … suffix.",
+      "tags": [
+        "slug",
+        "url",
+        "permalink",
+        "dedupe",
+        "collision",
+        "seo"
+      ],
+      "composes": [
+        "predicate/not",
+        "predicate/oneOf",
+        "string/slugify",
+        "R.pipe",
+        "R.range",
+        "R.map",
+        "R.find"
+      ],
+      "signatures": [
+        "export function uniqueSlug(title: string, taken: readonly string[]): string",
+        "export function uniqueSlug(taken: readonly string[]): (title: string) => string"
+      ],
+      "hasDiagram": false
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "name": "@ontologyio/receta-assets",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Ready-made functions for agents: one function per file, each a composition of Receta and Remeda, documented and checked where it stands",
+  "author": "Khaled Maher",
+  "license": "MIT",
+  "homepage": "https://receta.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ontology-io/receta.git",
+    "directory": "packages/receta-assets"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./async": "./src/async/index.ts",
+    "./cache": "./src/cache/index.ts",
+    "./collection": "./src/collection/index.ts",
+    "./control": "./src/control/index.ts",
+    "./filter": "./src/filter/index.ts",
+    "./number": "./src/number/index.ts",
+    "./object": "./src/object/index.ts",
+    "./parse": "./src/parse/index.ts",
+    "./result": "./src/result/index.ts",
+    "./sort": "./src/sort/index.ts",
+    "./state": "./src/state/index.ts",
+    "./text": "./src/text/index.ts",
+    "./validate": "./src/validate/index.ts",
+    "./catalog.json": "./catalog.json",
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "check": "bun scripts/check.ts",
+    "catalog": "bun scripts/catalog.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun scripts/check.ts"
+  },
+  "peerDependencies": {
+    "@ontologyio/receta": "*",
+    "remeda": "^2.0.0"
+  },
+  "devDependencies": {
+    "@ontologyio/receta": "workspace:*",
+    "remeda": "^2.58.0",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

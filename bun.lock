@@ -18,7 +18,7 @@
     },
     "packages/eslint-plugin-receta": {
       "name": "@ontologyio/eslint-plugin-receta",
-      "version": "0.1.5",
+      "version": "0.1.6",
       "dependencies": {
         "@typescript-eslint/utils": "^8.20.0",
       },
@@ -36,7 +36,7 @@
     },
     "packages/receta": {
       "name": "@ontologyio/receta",
-      "version": "0.4.1",
+      "version": "0.4.4",
       "dependencies": {
         "remeda": "^2.58.0",
       },
@@ -50,9 +50,22 @@
         "typescript",
       ],
     },
+    "packages/receta-assets": {
+      "name": "@ontologyio/receta-assets",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@ontologyio/receta": "workspace:*",
+        "remeda": "^2.58.0",
+        "typescript": "^5.7.3",
+      },
+      "peerDependencies": {
+        "@ontologyio/receta": "*",
+        "remeda": "^2.0.0",
+      },
+    },
     "packages/receta-testing": {
       "name": "@ontologyio/receta-testing",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "devDependencies": {
         "@ontologyio/receta": "workspace:*",
         "fast-check": "^4.5.3",
@@ -397,6 +410,8 @@
     "@ontologyio/eslint-plugin-receta": ["@ontologyio/eslint-plugin-receta@workspace:packages/eslint-plugin-receta"],
 
     "@ontologyio/receta": ["@ontologyio/receta@workspace:packages/receta"],
+
+    "@ontologyio/receta-assets": ["@ontologyio/receta-assets@workspace:packages/receta-assets"],
 
     "@ontologyio/receta-testing": ["@ontologyio/receta-testing@workspace:packages/receta-testing"],
 
