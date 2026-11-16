@@ -21,9 +21,13 @@ export interface PluralizeOptions {
  * Pluralizes a word based on count, with smart English pluralization rules.
  *
  * By default, applies standard English pluralization:
- * - Words ending in 's', 'ss', 'sh', 'ch', 'x', 'z' → add 'es'
+ * - Words ending in 's', 'ss', 'sh', 'ch', 'x', 'z' → add 'es' (`quiz` doubles its z, and
+ *   `stomach`, `monarch` and `epoch` just add 's')
  * - Words ending in consonant + 'y' → replace 'y' with 'ies'
- * - Words ending in 'f' or 'fe' → replace with 'ves'
+ * - The 'f' and 'fe' words that change (`knife`, `leaf`, `wolf`, `half`, `shelf`…) → 'ves'.
+ *   The rest add 's': `chiefs`, `roofs`, `safes`
+ * - The consonant + 'o' words that take it (`hero`, `potato`, `tomato`, `echo`…) → add 'es'.
+ *   The rest add 's': `photos`, `pianos`, `memos`
  * - All others → add 's'
  *
  * For irregular plurals, provide a custom plural form via options.
@@ -50,6 +54,12 @@ export interface PluralizeOptions {
  *
  * pluralize('knife', 4)
  * // => '4 knives'
+ *
+ * pluralize('chief', 2)
+ * // => '2 chiefs'
+ *
+ * pluralize('photo', 3)
+ * // => '3 photos'
  *
  * // Custom plural
  * pluralize('person', 3, { plural: 'people' })
@@ -111,6 +121,20 @@ function pluralizeImplementation(
   return wordOnly ? pluralWord : `${count} ${pluralWord}`
 }
 
+// English has no rule for these endings, only lists. Each list holds the words that change;
+// a word that ends with one of them changes too (bookshelf, superhero).
+const F_TO_VES = ['calf', 'elf', 'half', 'knife', 'leaf', 'life', 'loaf', 'self', 'sheaf', 'thief', 'wife', 'wolf']
+const O_TO_OES = ['domino', 'echo', 'embargo', 'hero', 'mosquito', 'potato', 'tomato', 'tornado', 'torpedo', 'veto', 'volcano']
+const Z_TO_ZZES = ['fez', 'quiz', 'whiz']
+const HARD_CH = ['epoch', 'matriarch', 'monarch', 'patriarch', 'stomach']
+
+const endsWithOneOf =
+  (endings: readonly string[]) =>
+  (word: string): boolean =>
+    endings.some((ending) => word.endsWith(ending))
+
+const SIBILANT_ENDINGS = ['s', 'sh', 'ch', 'x', 'z']
+
 /**
  * Applies standard English pluralization rules.
  */
@@ -121,40 +145,32 @@ function applyPluralRules(word: string): string {
 
   const lower = word.toLowerCase()
 
+  if (endsWithOneOf(Z_TO_ZZES)(lower)) {
+    return word + 'zes'
+  }
+
+  if (endsWithOneOf(HARD_CH)(lower)) {
+    return word + 's'
+  }
+
   // Words ending in s, ss, sh, ch, x, z → add 'es'
-  if (
-    lower.endsWith('s') ||
-    lower.endsWith('ss') ||
-    lower.endsWith('sh') ||
-    lower.endsWith('ch') ||
-    lower.endsWith('x') ||
-    lower.endsWith('z')
-  ) {
+  if (endsWithOneOf(SIBILANT_ENDINGS)(lower)) {
     return word + 'es'
   }
 
   // Words ending in consonant + 'y' → replace 'y' with 'ies'
-  if (lower.endsWith('y') && word.length > 1) {
-    const beforeY = lower[lower.length - 2]
-    if (beforeY && !/[aeiou]/.test(beforeY)) {
-      return word.slice(0, -1) + 'ies'
-    }
+  if (/[^aeiou]y$/.test(lower)) {
+    return word.slice(0, -1) + 'ies'
   }
 
-  // Words ending in 'f' or 'fe' → replace with 'ves'
-  if (lower.endsWith('f')) {
-    return word.slice(0, -1) + 'ves'
-  }
-  if (lower.endsWith('fe')) {
-    return word.slice(0, -2) + 'ves'
+  // knife → knives, leaf → leaves. Other f/fe words just add 's' (chiefs, safes)
+  if (endsWithOneOf(F_TO_VES)(lower)) {
+    return word.slice(0, lower.endsWith('fe') ? -2 : -1) + 'ves'
   }
 
-  // Words ending in consonant + 'o' → add 'es'
-  if (lower.endsWith('o') && word.length > 1) {
-    const beforeO = lower[lower.length - 2]
-    if (beforeO && !/[aeiou]/.test(beforeO)) {
-      return word + 'es'
-    }
+  // hero → heroes. Other words ending in 'o' just add 's' (photos, radios)
+  if (endsWithOneOf(O_TO_OES)(lower)) {
+    return word + 'es'
   }
 
   // Default: add 's'
