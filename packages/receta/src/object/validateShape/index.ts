@@ -17,7 +17,7 @@ type Validator<T> = (value: unknown) => value is T
 /**
  * Schema for object validation.
  */
-export type ObjectSchema<T extends PlainObject> = {
+export type ObjectSchema<T extends object> = {
   readonly [K in keyof T]: Validator<T[K]> | ObjectSchema<any>
 }
 
@@ -81,11 +81,11 @@ export type ObjectSchema<T extends PlainObject> = {
  *
  * @see Validation module - for more complex validation with error accumulation
  */
-export function validateShape<T extends PlainObject>(
+export function validateShape<T extends object>(
   obj: unknown,
   schema: ObjectSchema<T>
 ): Result<T, ObjectError>
-export function validateShape<T extends PlainObject>(
+export function validateShape<T extends object>(
   schema: ObjectSchema<T>
 ): (obj: unknown) => Result<T, ObjectError>
 export function validateShape(...args: unknown[]): unknown {

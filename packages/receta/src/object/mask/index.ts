@@ -45,8 +45,8 @@ import type { PlainObject } from '../types'
  *
  * @see Remeda.pick - for similar functionality with different semantics
  */
-export function mask<T extends PlainObject>(obj: T, allowedKeys: readonly string[]): Partial<T>
-export function mask(allowedKeys: readonly string[]): <T extends PlainObject>(obj: T) => Partial<T>
+export function mask<T extends object>(obj: T, allowedKeys: readonly string[]): Partial<T>
+export function mask(allowedKeys: readonly string[]): <T extends object>(obj: T) => Partial<T>
 export function mask(...args: unknown[]): unknown {
   return R.purry(maskImplementation, args)
 }

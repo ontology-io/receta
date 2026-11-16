@@ -47,13 +47,13 @@ import { setOwnKey } from '../../utils/setOwnKey'
  * @see filterValues - for filtering by values instead of keys
  * @see mask - for allowlist-based filtering with security focus
  */
-export function filterKeys<T extends PlainObject>(
+export function filterKeys<T extends object>(
   obj: T,
   predicate: (key: string) => boolean
 ): Partial<T>
 export function filterKeys(
   predicate: (key: string) => boolean
-): <T extends PlainObject>(obj: T) => Partial<T>
+): <T extends object>(obj: T) => Partial<T>
 export function filterKeys(...args: unknown[]): unknown {
   return R.purry(filterKeysImplementation, args)
 }

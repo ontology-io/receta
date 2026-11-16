@@ -58,9 +58,9 @@ import { setOwnKey } from '../../utils/setOwnKey'
  * @see Remeda.merge - for shallow merge
  * @see Remeda.mergeDeep - for basic deep merge
  */
-export function deepMerge(objects: readonly PlainObject[], options?: DeepMergeOptions): PlainObject
-export function deepMerge(options?: DeepMergeOptions): (objects: readonly PlainObject[]) => PlainObject
-export function deepMerge(objectsOrOptions?: readonly PlainObject[] | DeepMergeOptions, maybeOptions?: DeepMergeOptions): any {
+export function deepMerge(objects: readonly object[], options?: DeepMergeOptions): PlainObject
+export function deepMerge(options?: DeepMergeOptions): (objects: readonly object[]) => PlainObject
+export function deepMerge(objectsOrOptions?: readonly object[] | DeepMergeOptions, maybeOptions?: DeepMergeOptions): any {
   // Data-last: only an array is data, so a lone anything else is the options
   if (maybeOptions === undefined && !Array.isArray(objectsOrOptions)) {
     return (objects: readonly PlainObject[]) =>

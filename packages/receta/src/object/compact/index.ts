@@ -44,7 +44,7 @@ import { setOwnKey } from '../../utils/setOwnKey'
  *
  * @see stripUndefined - for removing only undefined values
  */
-export function compact<T extends PlainObject>(obj: T): Partial<T> {
+export function compact<T extends object>(obj: T): Partial<T> {
   const result: Partial<T> = {}
 
   Object.entries(obj).forEach(([key, value]) => {

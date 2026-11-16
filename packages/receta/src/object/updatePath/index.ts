@@ -48,7 +48,7 @@ import { purryConfig2 } from '../../utils/purry'
  * @see getPath - for reading a value at a path
  * @see setPath - for setting a value directly
  */
-export function updatePath<T extends PlainObject, V>(
+export function updatePath<T extends object, V>(
   path: ObjectPath,
   fn: (value: V) => V,
   obj: T
@@ -56,7 +56,7 @@ export function updatePath<T extends PlainObject, V>(
 export function updatePath<V>(
   path: ObjectPath,
   fn: (value: V) => V
-): <T extends PlainObject>(obj: T) => T
+): <T extends object>(obj: T) => T
 export function updatePath(...args: unknown[]): unknown {
   return purryConfig2(updatePathImplementation, args)
 }

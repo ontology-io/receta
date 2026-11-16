@@ -169,16 +169,16 @@ function getTransformFn(transform: KeyTransform): (key: string) => string {
  * @see mapKeys - for shallow key transformation only
  */
 export function transformKeys(
-  obj: PlainObject,
+  obj: object,
   transform: KeyTransform,
   options?: TransformKeysOptions
 ): PlainObject
 export function transformKeys(
   transform: KeyTransform,
   options?: TransformKeysOptions
-): (obj: PlainObject) => PlainObject
+): (obj: object) => PlainObject
 export function transformKeys(
-  objOrTransform: PlainObject | KeyTransform,
+  objOrTransform: object | KeyTransform,
   transformOrOptions?: KeyTransform | TransformKeysOptions,
   maybeOptions?: TransformKeysOptions
 ): any {

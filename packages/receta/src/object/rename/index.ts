@@ -39,8 +39,8 @@ import { setOwnKey } from '../../utils/setOwnKey'
  *
  * @see mapKeys - for transforming all keys with a function
  */
-export function rename<T extends PlainObject>(obj: T, mapping: Record<string, string>): PlainObject
-export function rename(mapping: Record<string, string>): <T extends PlainObject>(obj: T) => PlainObject
+export function rename<T extends object>(obj: T, mapping: Record<string, string>): PlainObject
+export function rename(mapping: Record<string, string>): <T extends object>(obj: T) => PlainObject
 export function rename(...args: unknown[]): unknown {
   return R.purry(renameImplementation, args)
 }

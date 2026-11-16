@@ -97,6 +97,10 @@ export interface ObjectError {
 
 /**
  * A plain object (not an array, not null, not a primitive).
+ *
+ * This is what the object functions return. As a parameter they take `object` instead,
+ * because a value typed by an interface has no index signature and TypeScript won't accept
+ * it as a `Record<string, unknown>`.
  */
 export type PlainObject = Record<string, unknown>
 

@@ -61,8 +61,8 @@ import { purryConfig } from '../../utils/purry'
  * @see setPath - for immutably setting a value at a path
  * @see updatePath - for updating a value at a path with a function
  */
-export function getPath<T = unknown>(path: ObjectPath, obj: PlainObject): Option<T>
-export function getPath<T = unknown>(path: ObjectPath): (obj: PlainObject) => Option<T>
+export function getPath<T = unknown>(path: ObjectPath, obj: object): Option<T>
+export function getPath<T = unknown>(path: ObjectPath): (obj: object) => Option<T>
 export function getPath(...args: unknown[]): unknown {
   return purryConfig(getPathImplementation, args)
 }
