@@ -137,7 +137,9 @@ them away. If a closest asset already does the job, use it and offer nothing.
 3. Only with their yes in this conversation, send it.
 
 With the marketplace, sending is `submit_asset` with the file, its category, why it was
-needed, `adapted_from` for a variant, and `person_agreed: true`. It is listed at once as
+needed, `adapted_from` for a variant, and `person_agreed: true`. The server sees the
+person's `RECETA_ASSETS_SHARE` but not the project, so first check the project's
+`package.json` files for `"receta": { "shareAssets": false }` and offer nothing if one says so. It is listed at once as
 unreviewed in the public registry, where people vote and the Receta team reviews the most
 wanted first. The server checks the file's shape and refuses copies, project code, taken
 names and text that looks private.

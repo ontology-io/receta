@@ -46,9 +46,15 @@ search or the embedded texts.
 
 ## Connect
 
+It lives at https://market.receta.dev: the registry page at `/`, MCP at `/mcp`. Installing
+the receta-skills plugin connects it, through the plugin's `.mcp.json`. By hand:
+
 ```bash
-claude mcp add --transport http receta-assets <deployment>/mcp
+claude mcp add --transport http receta-assets https://market.receta.dev/mcp
 ```
+
+The plugin sends `X-Receta-Share` from the person's `RECETA_ASSETS_SHARE`, and the server
+refuses `submit_asset` when it says `off`.
 
 ## Work on it
 
@@ -57,9 +63,9 @@ bun run test        # bundle the catalog, then drive every tool through an MCP c
 bun run typecheck
 bun run dev         # wrangler dev; AI and Vectorize are remote bindings
 bun run deploy      # bundle and deploy
-bun scripts/smoke.ts <deployment>/mcp   # call the live server as an agent would
-bun scripts/ask.ts <deployment>/mcp search_assets '{"job":"…"}'   # one tool, whole answer
-RECETA_MARKET_URL=<deployment> bun scripts/eval.ts   # measure search on 47 jobs
+bun scripts/smoke.ts https://market.receta.dev/mcp   # call the live server as an agent would
+bun scripts/ask.ts https://market.receta.dev/mcp search_assets '{"job":"…"}'   # one tool, whole answer
+RECETA_MARKET_URL=https://market.receta.dev bun scripts/eval.ts   # measure search on 47 jobs
 ```
 
 `/admin/reindex` and `/admin/explain` (the raw scores the eval blends) take the admin

@@ -5,8 +5,11 @@
   "compatibility_date": "2026-10-01",
   // The MCP SDK reaches for a few Node built-ins.
   "compatibility_flags": ["nodejs_compat"],
-  // The first address is on workers.dev. A receta.dev subdomain needs a DNS record added in
-  // the dashboard first, since wrangler's login can't edit DNS (see the website's wrangler.jsonc).
+  // A custom domain: Cloudflare creates and owns the DNS record for a name that has none, so
+  // nothing is edited by hand. (receta.dev itself can't be one; see the website's config.)
+  "routes": [{ "pattern": "market.receta.dev", "custom_domain": true }],
+  // workers.dev stays on for the admin calls; its address carries the account's subdomain,
+  // so it is never published.
   "workers_dev": true,
   "preview_urls": false,
   "ai": { "binding": "AI" },
