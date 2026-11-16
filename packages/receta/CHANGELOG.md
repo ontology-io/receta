@@ -5,6 +5,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0](https://github.com/ontology-io/receta/compare/receta@v0.4.4...receta@v0.5.0) (2026-11-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* **number:** percentage returns a number out of 100 where it returned a fraction of 1: percentage(29, 100) is 29, not 0.29. Pass `{ fraction: true }` as the last argument for the old result, for example before toPercent: `percentage(done, total, { fraction: true })`.
+* **collection:** paginateCursor returns `{ items: [], nextCursor: undefined, hasMore: false }` for a cursor that is not in the list. It used to return the first page. To start from the beginning, call it without a cursor.
+* **validation:** schema and partial put each validator's returned value into the result. A validator that returns a different value from the one it was given, which used to have no effect, now changes the validated object. Return the original value from the validator to keep the old result.
+* **object:** transformKeys produces different keys in three cases. Underscores at the start or end of a key are kept (`_id` stays `_id`, it used to become `id`). A run of capitals is one word (`userID` gives `user_id`, not `user_i_d`). And camelCase and pascalCase normalize acronyms the way the string module does (`userID` gives `userId`). Code that read the old key names should read the new ones, or pass its own function as the transform.
+* **function:** cond now returns a None value when no predicate matches, as its docs always said. Code that detected "no match" with `typeof result === 'function'` or `result === none` should call `isNone(result)` instead.
+
+### Bug Fixes
+
+* **async:** clear the timer when timeout's promise settles ([e9a019b](https://github.com/ontology-io/receta/commit/e9a019bc3aa3286da1e48c6de0ee9a26c2385365))
+* **async:** report which batch failed when batches are delayed ([548474f](https://github.com/ontology-io/receta/commit/548474fbf9fc9cda64139998f133ff5032519b88))
+* **collection:** keep list order and falsy items in diff ([2374940](https://github.com/ontology-io/receta/commit/2374940434cacc9b28a98b874176407dbc8337e2))
+* **collection:** return an empty page for an unknown cursor in paginateCursor ([2e75a88](https://github.com/ontology-io/receta/commit/2e75a883e8c218351531accb350ca22bb66d5f15))
+* **collection:** return no windows for a step of zero or less in windowSliding ([3702b28](https://github.com/ontology-io/receta/commit/3702b284ff97ab1a5963204d870c791015d31643))
+* **compare:** break ties by case and accents in natural ([195e9e2](https://github.com/ontology-io/receta/commit/195e9e26fc157301da304abd918c8f899965f8bb))
+* **compare:** let nullsFirst and nullsLast wrap a comparator of plain values ([9bd55ee](https://github.com/ontology-io/receta/commit/9bd55eeda8f24b7bcd8d856a1d5bf96c3f03a479))
+* **compare:** sort invalid dates last in byDate ([40ef50c](https://github.com/ontology-io/receta/commit/40ef50ca4998d1c5dd4c245b54de6c386f338da6))
+* correct the core functions the receta-assets catalog had to work around ([3b7dcbd](https://github.com/ontology-io/receta/commit/3b7dcbdd208fe156cc880be0c893837451efa039))
+* **function:** return a None value from cond when no rule matches ([5ef4ea0](https://github.com/ontology-io/receta/commit/5ef4ea02898c3d921fc7e36f9e6f7f64bdd1c2a3))
+* **memo:** type the cache key by the first argument, not as a string ([f876489](https://github.com/ontology-io/receta/commit/f87648912b4fb31bbfce55a7dd90bcdb5192b1b3))
+* **number:** accept KiB, MiB and the other IEC units in fromBytes ([c0fc9e0](https://github.com/ontology-io/receta/commit/c0fc9e01e0fd388e0ce934a406897f15383511b1))
+* **number:** give negative numbers the right suffix in toOrdinal ([37da2b9](https://github.com/ontology-io/receta/commit/37da2b917922882f81ad67f41eb05a2e6955aa55))
+* **number:** read a lone comma as a decimal comma in parseFormattedNumber ([b2c5e22](https://github.com/ontology-io/receta/commit/b2c5e22739856958493ff3b493881ca0966a8718))
+* **number:** reject non-finite numbers in fromString and fromCurrency ([43183ff](https://github.com/ontology-io/receta/commit/43183ff5a3ea662d9218a781954e2c7982510bd3))
+* **number:** return a number out of 100 from percentage ([de49153](https://github.com/ontology-io/receta/commit/de49153e315776aef049d4e3a763b5f3ee1b9f17))
+* **number:** return exact multiples of the step from roundTo ([9fd05fc](https://github.com/ontology-io/receta/commit/9fd05fc6aaaff31e34d34202cdea8c42523bd391))
+* **number:** round half away from zero for values like 1.005 ([d58e645](https://github.com/ontology-io/receta/commit/d58e6459f822c51a23f12bb5ecdd76191cd1fdf3))
+* **object:** accept values typed by an interface ([36419fc](https://github.com/ontology-io/receta/commit/36419fcfa44bab4a21f275863dc5680ffb641fdb))
+* **object:** keep acronyms and outer underscores in transformKeys ([892da18](https://github.com/ontology-io/receta/commit/892da189c0ea2e98bd6523b8825fc406a18e2611))
+* **object:** look up own keys only in getPath ([4ae6a44](https://github.com/ontology-io/receta/commit/4ae6a4481974f88b163adcbddc6e79e206cf6161))
+* **object:** name the full path in validateShape error messages ([61860f3](https://github.com/ontology-io/receta/commit/61860f30b91939e978c99d24a024fd7a3066b163))
+* **option:** narrow the Option when filter gets a type guard ([3b74e6a](https://github.com/ontology-io/receta/commit/3b74e6a1ebc32ad4e32f0dc198412817941b0b3f))
+* **result:** reject anything but a whole integer in parseInt ([31ada54](https://github.com/ontology-io/receta/commit/31ada548f22ca9c91c47edc8afcda2e6fa8c5e75))
+* **string:** capitalize only the first letter of each word in titleCase ([712fd2a](https://github.com/ontology-io/receta/commit/712fd2a462b2acd1eef1f1024ff5a9b7d6101819))
+* **string:** decode numeric and common named entities in unescapeHtml ([38e0ec8](https://github.com/ontology-io/receta/commit/38e0ec8e42b5f32beecf11c1eab484c23869c00b))
+* **string:** keep accented letters and apostrophes inside words ([332b0e2](https://github.com/ontology-io/receta/commit/332b0e2b4fece8dc04b2257870825925b42511e2))
+* **string:** keep existing word boundaries in camelCase and pascalCase ([6571949](https://github.com/ontology-io/receta/commit/65719491e8b49bf6cbe58a1f15927472384dbac2))
+* **string:** keep the last whole word that fits in truncate ([a040d5f](https://github.com/ontology-io/receta/commit/a040d5f7006b82eef30e5eef7f0373865b0e5d8e))
+* **string:** keep words apart when stripHtml removes block tags ([8ec17ab](https://github.com/ontology-io/receta/commit/8ec17ab034d3a4198bad5522705853cd163116b3))
+* **string:** match the text, not its escaped form, in highlight ([1417d89](https://github.com/ontology-io/receta/commit/1417d89c075ce41c1d4243032973f2000b1bc60f))
+* **string:** pluralize chief, photo, quiz and similar words correctly ([8f5df3e](https://github.com/ontology-io/receta/commit/8f5df3e48ee3467be0bbdae349a0c69fd1053e70))
+* **string:** start a new word at a capital that follows a digit ([ff9f8a2](https://github.com/ontology-io/receta/commit/ff9f8a2fd547c13852b56c1c719c2e5994080ba4))
+* **validation:** accept readonly arrays in nonEmpty, minItems and maxItems ([e7204d4](https://github.com/ontology-io/receta/commit/e7204d4ce637ad11614cd8173513f15ee1589b1d))
+* **validation:** narrow with a type guard in fromPredicate ([3eb9eaf](https://github.com/ontology-io/receta/commit/3eb9eafe82a485ee8701d855522b8c40372df590))
+* **validation:** return the validators' outputs from schema and partial ([34fa71e](https://github.com/ontology-io/receta/commit/34fa71ed9cd12691ce042fb7f5bfebe5a995aff9))
+
 ## [0.4.4](https://github.com/ontology-io/receta/compare/receta@v0.4.3...receta@v0.4.4) (2026-11-06)
 
 
