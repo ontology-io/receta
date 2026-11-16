@@ -40,6 +40,16 @@ describe('Collection.windowSliding', () => {
       expect(result).toEqual([])
     })
 
+    it('returns empty array for a step of zero instead of never returning', () => {
+      // A step of zero never moves the window, so the loop used to run until memory ran out
+      expect(windowSliding([1, 2, 3], { size: 2, step: 0 })).toEqual([])
+    })
+
+    it('returns empty array for a negative or NaN step', () => {
+      expect(windowSliding([1, 2, 3], { size: 2, step: -1 })).toEqual([])
+      expect(windowSliding([1, 2, 3], { size: 2, step: Number.NaN })).toEqual([])
+    })
+
     it('handles size 1', () => {
       const result = windowSliding([1, 2, 3], { size: 1 })
 

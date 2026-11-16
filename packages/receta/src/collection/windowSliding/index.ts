@@ -8,6 +8,8 @@ import type { WindowSlidingConfig } from '../types'
  * across the array. Useful for moving averages, n-gram analysis, pattern detection,
  * and time-series analysis.
  *
+ * A `size` or a `step` of zero or less gives no windows.
+ *
  * @param items - The array to window over
  * @param config - Window size and optional step configuration
  * @returns Array of windows (sub-arrays)
@@ -75,6 +77,11 @@ function windowSlidingImplementation<T>(
   const { size, step = 1 } = config
 
   if (size <= 0) {
+    return []
+  }
+
+  // A step that isn't positive never moves the window forward, so the loop would not end
+  if (!(step > 0)) {
     return []
   }
 
