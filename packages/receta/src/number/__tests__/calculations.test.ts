@@ -213,9 +213,38 @@ describe('Number Calculations', () => {
       })
 
       it('rounds to decimal step', () => {
-        expect(roundTo(1.234, 0.1)).toBeCloseTo(1.2)
-        expect(roundTo(1.266, 0.1)).toBeCloseTo(1.3)
-        expect(roundTo(1.25, 0.1)).toBeCloseTo(1.3)
+        expect(roundTo(1.234, 0.1)).toBe(1.2)
+        expect(roundTo(1.266, 0.1)).toBe(1.3)
+        expect(roundTo(1.25, 0.1)).toBe(1.3)
+      })
+
+      it('returns an exact multiple of the step, with no float noise', () => {
+        // Math.round(1.15 / 0.05) * 0.05 is 1.1500000000000001
+        expect(roundTo(1.15, 0.05)).toBe(1.15)
+        expect(roundTo(-1.15, 0.05)).toBe(-1.15)
+        expect(roundTo(0.3, 0.1)).toBe(0.3)
+        expect(roundTo(10000000000.3, 0.1)).toBe(10000000000.3)
+        expect(roundTo(123.456, 0.01)).toBe(123.46)
+        expect(roundTo(0.1 + 0.2, 0.1)).toBe(0.3)
+      })
+
+      it('rounds a half away from zero, like round', () => {
+        expect(roundTo(2.5, 1)).toBe(3)
+        expect(roundTo(-2.5, 1)).toBe(-3)
+        expect(roundTo(1.005, 0.01)).toBe(1.01)
+        expect(roundTo(0.125, 0.25)).toBe(0.25)
+        expect(roundTo(-0.125, 0.25)).toBe(-0.25)
+      })
+
+      it('handles tiny and huge steps', () => {
+        expect(roundTo(0.00000012, 0.0000001)).toBe(0.0000001)
+        expect(roundTo(1234567, 1000)).toBe(1235000)
+        expect(roundTo(3, 1e21)).toBe(0)
+      })
+
+      it('returns NaN and the infinities as they are', () => {
+        expect(roundTo(NaN, 0.5)).toBeNaN()
+        expect(roundTo(Infinity, 0.5)).toBe(Infinity)
       })
 
       it('handles step of 1', () => {

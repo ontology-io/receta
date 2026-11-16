@@ -1,10 +1,14 @@
-import * as R from 'remeda'
+import { decimalPlaces, roundHalfAwayFromZero, shiftDecimal } from '../decimal'
 
 /**
  * Rounds a number to the nearest multiple of a step value.
  *
  * Useful for quantizing values to specific increments like price steps,
  * slider values, or decimal quantization.
+ *
+ * The result is an exact multiple of the step, with no float noise: `roundTo(1.15, 0.05)`
+ * is 1.15, not 1.1500000000000001. A value halfway between two steps goes away from zero,
+ * like `round`.
  *
  * @param value - The number to round
  * @param step - The step value to round to (must be > 0)
@@ -18,7 +22,8 @@ import * as R from 'remeda'
  * roundTo(4.10, 0.25) // => 4.00
  * roundTo(127, 5) // => 125
  * roundTo(128, 5) // => 130
- * roundTo(1.234, 0.1) // => 1.2000000000000002
+ * roundTo(1.234, 0.1) // => 1.2
+ * roundTo(1.15, 0.05) // => 1.15
  *
  * // Data-last (in pipe)
  * pipe(
@@ -59,6 +64,15 @@ function roundToImpl(value: number, step: number): number {
     throw new Error(`roundTo step must be greater than 0, got ${step}`)
   }
 
-  // Round to nearest multiple of step
-  return Math.round(value / step) * step
+  if (!Number.isFinite(value) || !Number.isFinite(step)) {
+    return Math.round(value / step) * step
+  }
+
+  // Work in whole numbers: 1.15 / 0.05 is 22.999999999999996, but 115 / 5 is exactly 23
+  const places = Math.max(decimalPlaces(value), decimalPlaces(step))
+  const wholeValue = shiftDecimal(value, places)
+  const wholeStep = shiftDecimal(step, places)
+  const steps = roundHalfAwayFromZero(wholeValue / wholeStep)
+
+  return shiftDecimal(steps * wholeStep, -places)
 }
