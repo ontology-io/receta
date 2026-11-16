@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import * as R from 'remeda'
 import { ifElse, when, unless, cond, guard, switchCase } from '../index'
-import { some, none } from '../../option'
+import { some, none, isNone, unwrapOr } from '../../option'
 import { ok, err, isOk, isErr } from '../../result'
 
 describe('function/conditionals', () => {
@@ -177,8 +177,17 @@ describe('function/conditionals', () => {
       it('returns None when no predicate matches', () => {
         const onlyPositive = cond<number, string>([[(n) => n > 0, () => 'positive']])
 
-        expect(onlyPositive(-5)).toEqual(none)
-        expect(onlyPositive(0)).toEqual(none)
+        expect(onlyPositive(-5)).toEqual(none())
+        expect(onlyPositive(0)).toEqual(none())
+      })
+
+      it('returns a None value, not the none constructor', () => {
+        const onlyPositive = cond<number, string>([[(n) => n > 0, () => 'positive']])
+        const result = onlyPositive(-5)
+
+        expect(typeof result).toBe('object')
+        expect(isNone(result)).toBe(true)
+        expect(unwrapOr(result, 'fallback')).toBe('fallback')
       })
 
       it('works in pipe', () => {
@@ -242,7 +251,7 @@ describe('function/conditionals', () => {
           'medium'
         )
 
-        expect(result).toEqual(none)
+        expect(result).toEqual(none())
       })
     })
 
@@ -250,7 +259,7 @@ describe('function/conditionals', () => {
       it('returns None for empty pairs array', () => {
         const noOp = cond<number, string>([])
 
-        expect(noOp(42)).toEqual(none)
+        expect(noOp(42)).toEqual(none())
       })
     })
   })
